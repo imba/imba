@@ -40,6 +40,8 @@ const defaultHeaders = {
 	mp3: {'Content-Type': 'audio/mpeg'}
 	mp4: {'Content-Type': 'video/mp4'}
 	m4a: {'Content-Type': 'audio/m4a'}
+	mov: {'Content-Type': 'video/quicktime'}
+	wmv: {'Content-Type': 'video/x-ms-wmv'}
 	mpeg: {'Content-Type': 'video/mpeg'}
 	wav: {'Content-Type': 'audio/wav'}
 	ogg: {'Content-Type': 'audio/ogg'}
