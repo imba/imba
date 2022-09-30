@@ -11,6 +11,8 @@ tag App
 			# Just supplying a color will default to 1px solid
 			<div[bd:blue] eq={border: '1px solid rgb(0, 0, 255)'}>
 
+			<div[bw:1px bd:none] eq={border: '0px solid rgb(0, 0, 0)'}>
+
 			# these do not currently work - but they should
 			# <div[bw:2px bd:blue] eq={border: '2px solid rgb(0, 0, 255)'}>
 			# <div[bd:2px bd:blue] eq={border: '2px solid rgb(0, 0, 255)'}>

@@ -81,16 +81,6 @@ export const layouts =
 		o.ai = 'center'
 		o['place-content'] = 'center'
 
-	row: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.ai = 'stretch'
-
-	column: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.ai = 'stretch'
-
 export const validTypes = {
 	ease: 'linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end|stepsƒ|cubic-bezierƒ'
 }
@@ -909,12 +899,16 @@ export class StyleTheme
 
 		if isColorish(params[0])
 			if len == 1
-				o["border{side}"] = [['1px','solid',params[0]]]
+				o["border{side}"] = [['1px','solid',params.shift!]]
 			else
 				# add weak border styles
 				o["border{side}-width"] ||= '1px'
 				o["border{side}-style"] = 'solid'
 				o["border{side}-color"] = params.shift!
+
+		# TODO if it is not a variable?
+		if params[0]
+			o["border{side}-style"] = params[0]
 
 		return o
 
