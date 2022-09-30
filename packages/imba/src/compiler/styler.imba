@@ -65,8 +65,8 @@ export const aliases =
 	pr: 'padding-right'
 	pt: 'padding-top'
 	pb: 'padding-bottom'
-	px: ['pl','pr']
-	py: ['pt','pb']
+	px: 'padding-x'
+	py: 'padding-y'
 	
 	# margins
 	m: 'margin'
@@ -74,8 +74,8 @@ export const aliases =
 	mr: 'margin-right'
 	mt: 'margin-top'
 	mb: 'margin-bottom'
-	mx: ['ml','mr']
-	my: ['mt','mb']
+	mx: 'margin-x'
+	my: 'margin-y'
 	
 	# add scroll snap shorthands?
 	
