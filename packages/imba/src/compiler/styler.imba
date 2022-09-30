@@ -15,17 +15,7 @@ const ThemeCache = new WeakMap
 # export const properties =
 
 export const layouts =
-	group: do(o)
-		o.display = 'flex'
-		o.jc = 'flex-start'
-		o.flw = 'wrap'
-		# unique variable for this?
-		o['--u_sx'] = "calc(var(--u_cg,0) * 0.5)"
-		o['--u_sy'] = "calc(var(--u_rg,0) * 0.5)"
-		# this should be added as ultra low specificity
-		o.margin = "calc(var(--u_sy) * -1) calc(var(--u_sx) * -1)"
-		o["&>*"] = {margin: "var(--u_sy) var(--u_sx)"}
-	
+
 	vflex: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
@@ -33,6 +23,47 @@ export const layouts =
 	hflex: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
+	
+	box: do(o)
+		o.display = 'flex'
+		o.ai = 'center'
+		o.jc = 'center'
+
+	vbox: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.ai = 'center'
+		o.jc = 'center'
+	
+	hbox: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.ai = 'center'
+		o.jc = 'center'
+
+	lbox: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.ai = 'center'
+		o.jc = 'flex-start'
+
+	rbox: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.ai = 'center'
+		o.jc = 'flex-end'
+
+	tbox: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.ai = 'center'
+		o.jc = 'flex-start'
+
+	bbox: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.ai = 'center'
+		o.jc = 'flex-end'
 
 	hgrid: do(o)
 		o.display = 'grid'
@@ -42,6 +73,23 @@ export const layouts =
 	vgrid: do(o)
 		o.display = 'grid'
 		o.gaf = 'row'
+	
+	cluster: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.flw = 'wrap'
+		o.ai = 'center'
+		o['place-content'] = 'center'
+
+	row: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.ai = 'stretch'
+
+	column: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.ai = 'stretch'
 
 export const validTypes = {
 	ease: 'linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end|stepsƒ|cubic-bezierƒ'
@@ -105,13 +153,13 @@ export const aliases =
 	jai: 'place-items'
 	jac: 'place-content'
 	jas: 'place-self'
-	ja: ['place-items','justify-items']
+	ja: ['place-items','place-content']
 
-	
-	# place
+	# consider using these instead
 	# pi: 'place-items'
 	# pc: 'place-content'
 	# ps: 'place-self'
+	# pa: 'place-all'
 
 	# flex
 	fl: 'flex'
@@ -267,7 +315,7 @@ export const aliases =
 	tween: 'transition'
 	
 	# easing
-	e: 'ease'
+	e: 'ease' # Deprecate
 
 	ea: 'ease'
 	ead: 'ease-all-duration'

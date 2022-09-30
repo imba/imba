@@ -75,7 +75,7 @@ declare namespace imbacss {
 
     }
 
-    interface ΨeasingΞfunction {
+    interface ΨtimingΞfunction {
         /**
          * @easing cubic-bezier(0.25, 0.1, 0.25, 1.0)
          */
@@ -151,10 +151,11 @@ declare namespace imbacss {
     interface Ψdimension {
 
     }
-    
+
     /** 
      * @detail justify-(items+content)
      * @custom
+     * @deprecated
      * */
     interface j extends _ {
         set(value: justifyΞcontent): void;
@@ -164,6 +165,7 @@ declare namespace imbacss {
     /**
      * @detail align-(items+content)
      * @custom
+     * @deprecated
      * */
     interface a extends _ {
         set(value: alignΞitems): void;
@@ -171,31 +173,9 @@ declare namespace imbacss {
     }
 
     /**
-     * @proxy placeΞitems
-    */
-    interface jai extends _ {
-        set(value: alignΞitems): void;
-        set(value: justifyΞitems): void;
-    }
-
-    /**
-     * @proxy placeΞcontent
-     * */
-    interface jac extends _ {
-        set(value: alignΞcontent): void;
-        set(value: justifyΞcontent): void;
-    }
-
-    /**
-     * @proxy placeΞself
-     */
-    interface jas extends _ {
-        set(value: alignΞself): void;
-        set(value: justifyΞself): void;
-    }
-    /**
      * @detail place-(items+content)
      * @custom
+     * @deprecated
      */
     interface ja extends _ {
         set(value: alignΞcontent): void;
@@ -209,8 +189,8 @@ declare namespace imbacss {
      * @alias tween
     */
     interface transition extends _ {
-        set(val: this | Ψtime | Ψproperty | ΨeasingΞfunction): void;
-        set(props: this | Ψproperty, duration: Ψtime, timing?: ΨeasingΞfunction, arg3?: any): void;
+        set(val: this | Ψtime | Ψproperty | ΨtimingΞfunction): void;
+        set(props: this | Ψproperty, duration: Ψtime, timing?: ΨtimingΞfunction, arg3?: any): void;
 
         /** Every property that is able to undergo a transition will do so. */
         all: ''
@@ -315,8 +295,8 @@ declare namespace imbacss {
     */
     interface ease extends _ {
         set(duration: Ψtime): void;
-        set(timing: ΨeasingΞfunction): void;
-        set(duration: Ψtime, timing: ΨeasingΞfunction): void;
+        set(timing: ΨtimingΞfunction): void;
+        set(duration: Ψtime, timing: ΨtimingΞfunction): void;
     }
 
     /** @proxy ease */ interface e extends ease { }
@@ -337,7 +317,7 @@ declare namespace imbacss {
      * @alias eaf
     */
     interface easeΞallΞfunction extends _ {
-        set(timing: ΨeasingΞfunction): void;
+        set(timing: ΨtimingΞfunction): void;
     }
     /** 
      * Transition delay for all properties

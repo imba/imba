@@ -121,6 +121,36 @@
 					"description": "Flex with flex-direction set to column"
 				},
 				{
+					"name": "vbox",
+					"custom": true,
+					"description": "Column centered across & along"
+				},
+				{
+					"name": "hbox",
+					"custom": true,
+					"description": "Row centered across & along"
+				},
+				{
+					"name": "lbox",
+					"custom": true,
+					"description": "Left-justified flex row"
+				},
+				{
+					"name": "rbox",
+					"custom": true,
+					"description": "Right-justified flex row"
+				},
+				{
+					"name": "tbox",
+					"custom": true,
+					"description": "Column centered across - justified to start"
+				},
+				{
+					"name": "bbox",
+					"custom": true,
+					"description": "Column centered across - justified to bottom"
+				},
+				{
 					"name": "flow-root",
 					"description": "The element generates a block container box, and lays out its contents using flow layout."
 				},

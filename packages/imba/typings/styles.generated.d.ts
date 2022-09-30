@@ -110,6 +110,42 @@ declare namespace imbacss {
 		*/
 		vflex: ''
 
+		/**
+		 * Column centered across & along
+		 * @custom
+		*/
+		vbox: ''
+
+		/**
+		 * Row centered across & along
+		 * @custom
+		*/
+		hbox: ''
+
+		/**
+		 * Left-justified flex row
+		 * @custom
+		*/
+		lbox: ''
+
+		/**
+		 * Right-justified flex row
+		 * @custom
+		*/
+		rbox: ''
+
+		/**
+		 * Column centered across - justified to start
+		 * @custom
+		*/
+		tbox: ''
+
+		/**
+		 * Column centered across - justified to bottom
+		 * @custom
+		*/
+		bbox: ''
+
 		/** The element generates a block container box, and lays out its contents using flow layout. */
 		flowΞroot: ''
 
@@ -6407,7 +6443,7 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 	 * @alias jac
 	*/
 	interface placeΞcontent extends _ {
-		set(val: any): void;
+		set(align: alignΞcontent,justify?: justifyΞcontent): void;
 
 	}
 
@@ -6467,7 +6503,7 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	 * @alias jai
 	*/
 	interface placeΞitems extends _ {
-		set(val: any): void;
+		set(align: alignΞitems,justify?: justifyΞitems): void;
 
 	}
 
@@ -6597,7 +6633,7 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	 * @alias jas
 	*/
 	interface placeΞself extends _ {
-		set(val: any): void;
+		set(align: alignΞself,justify?: justifyΞself): void;
 
 	}
 
@@ -9197,7 +9233,7 @@ Specifying any precise animations or physics used to enforce those snap points i
 		'xl': '8px';
 	}
 
-	interface ΨeasingΞfunction {
+	interface ΨtimingΞfunction {
 		/** @easing cubic-bezier(0.47, 0, 0.745, 0.715) */
 		sineΞin: 'cubic-bezier(0.47, 0, 0.745, 0.715)';
 		/** @easing cubic-bezier(0.39, 0.575, 0.565, 1) */

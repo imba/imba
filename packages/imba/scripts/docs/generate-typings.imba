@@ -17,6 +17,8 @@ extend class String
 import {parser,propertyReference} from './css-syntax-parser'
 
 
+
+
 def write name, data
 	let dest = np.resolve(__dirname,'..','..','typings',name)
 	fs.writeFileSync(dest,data,'utf8')
@@ -29,6 +31,13 @@ const colorDescs = {
 	transparent: 'Clear'
 	clear: 'Clear'
 }
+
+const signatures = {
+	"<'align-self'> <'justify-self'>?": [`align: alignΞself,justify?: justifyΞself`]
+	"<'align-items'> <'justify-items'>?": [`align: alignΞitems,justify?: justifyΞitems`]
+	"<'align-content'> <'justify-content'>?": [`align: alignΞcontent,justify?: justifyΞcontent`]
+}
+
 const formatCache = {}
 def getType format
 	let parsed = parser.prototype.parseSyntax(format)
@@ -158,7 +167,7 @@ def run
 			else
 				let id = entry.split('(')[0]
 				argtypes.add(idify('Ψ' + id))
-				
+
 		let alltypes = Array.from(argtypes)
 		
 		let sign = "val: {alltypes.join(' | ') or 'any'}"
@@ -168,6 +177,9 @@ def run
 
 		while nr < len
 			sign += ", arg{nr++}: any"
+
+		
+
 
 		dts.doc!
 		dts.w(safedoc item.description)
@@ -182,7 +194,11 @@ def run
 		dts.undoc!
 		
 		dts.push("interface {id} extends _")
-		dts.w("set({sign}): void;\n")
+		if signatures[item.syntax]
+			for s in signatures[item.syntax]
+				dts.w("set({s}): void;\n")		
+		else
+			dts.w("set({sign}): void;\n")
 		
 		if item.values..length
 			for {name,description,custom} in item.values
@@ -267,7 +283,7 @@ def run
 			dts.w "/** {size} */"
 			dts.w "'{name}': '{size}';"
 	
-	dts.ind "interface ΨeasingΞfunction" do
+	dts.ind "interface ΨtimingΞfunction" do
 		for own name,value of theme.variants.easings
 			continue unless name.match(/[a-z]/)
 			let size = value isa Array ? value[0] : value

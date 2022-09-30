@@ -436,7 +436,7 @@ global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
 	
-global def eqcss el, match,sel,o
+global def eqcss el, match,sel,o = {}
 	if typeof el == 'string'
 		el = document.querySelector(el)
 	elif el isa Element and !el.parentNode
@@ -454,11 +454,9 @@ global def eqcss el, match,sel,o
 	for own k,expected of match
 		let real = style[k]
 		if expected isa RegExp
-			global.ok(real.match(expected),o)
-			unless real.match(expected)
-				console.log real,'did no match',expected
+			global.ok(real.match(expected),Object.assign(message: "Expected {k} {real} to match {expected}",o))
 		else
-			global.eq(String(real),String(expected),o)
+			global.eq(String(real),String(expected),Object.assign(message: "expected {k} == %2 (was %1)",o))
 	return
 
 window.onerror = do(e)
