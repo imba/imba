@@ -673,6 +673,21 @@ declare namespace imba {
     }
 
 
+
+    interface Storage {
+        [key: string]: any;
+    }
+
+    /**
+     * localStorage as a rich object
+     */
+    let locals: Storage;
+
+    /**
+     * sessionStorage as a rich object
+     */
+    let session: Storage;
+
 }
 
 declare module "data:text/asset;*" {
