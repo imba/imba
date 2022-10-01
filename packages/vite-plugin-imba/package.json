@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-imba",
-  "version": "0.7.3",
+  "version": "0.8.1",
   "license": "MIT",
   "author": "Abdellah Alaoui",
   "files": [
@@ -58,7 +58,7 @@
   "peerDependencies": {
     "diff-match-patch": "^1.0.5",
     "vite": "^3.0.0",
-	"imba": "*"
+    "imba": "*"
   },
   "peerDependenciesMeta": {
     "diff-match-patch": {
@@ -74,6 +74,6 @@
     "rimraf": "^3.0.2",
     "rollup": "^2.78.1",
     "vite": "^3.0.9",
-	"imba": "../imba"
+    "imba": "../imba"
   }
 }
