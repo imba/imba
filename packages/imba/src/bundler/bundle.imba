@@ -258,7 +258,6 @@ export default class Bundle < Component
 			plugins: (o.plugins or []).concat({name: 'imba', setup: plugin.bind(self)})
 			pure: ['Symbol.for','Symbol']
 			treeShaking: o.treeShaking or true
-			keepNames: true
 			supported: {
 				"for-await": true
 			}
