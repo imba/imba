@@ -119,7 +119,7 @@ def parseOptions options, extras = []
 
 	if options.web and command != 'serve'
 		# if we are serving - the entrypoint will be redirected to a server-script
-		options.as ??= 'browser'
+		options.as ??= 'web'
 
 	if command == 'serve'
 		options.watch = yes
