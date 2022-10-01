@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* Include safari15 as a target when compiling for web.
+
+    We recently started using class static initialization blocks to simplify
+    some internals, and this is not yet supported in safari.
+
+## 2.0.0-alpha.222
+
 * Enable `x` and `y` shorthands for all border properties.
 
 * Add `s` shorthand for `size`.
