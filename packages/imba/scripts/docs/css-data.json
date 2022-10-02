@@ -123,31 +123,37 @@
 				{
 					"name": "vbox",
 					"custom": true,
+					"experimental": true,
 					"description": "Column centered across & along"
 				},
 				{
 					"name": "hbox",
 					"custom": true,
+					"experimental": true,
 					"description": "Row centered across & along"
 				},
 				{
 					"name": "lbox",
 					"custom": true,
+					"experimental": true,
 					"description": "Left-justified flex row"
 				},
 				{
 					"name": "rbox",
 					"custom": true,
+					"experimental": true,
 					"description": "Right-justified flex row"
 				},
 				{
 					"name": "tbox",
 					"custom": true,
+					"experimental": true,
 					"description": "Column centered across - justified to start"
 				},
 				{
 					"name": "bbox",
 					"custom": true,
+					"experimental": true,
 					"description": "Column centered across - justified to bottom"
 				},
 				{

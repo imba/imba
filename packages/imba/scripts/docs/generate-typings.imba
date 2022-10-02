@@ -191,6 +191,7 @@ def run
 		dts.br!
 		dts.w("@alias {item.alias}") if item.alias
 		dts.w("@custom") if item.custom
+		dts.w("@experimental") if item.experimental
 		dts.undoc!
 		
 		dts.push("interface {id} extends _")
@@ -201,13 +202,14 @@ def run
 			dts.w("set({sign}): void;\n")
 		
 		if item.values..length
-			for {name,description,custom} in item.values
+			for {name,description,custom,experimental} in item.values
 				continue if name.match(/['",]/)
 				if description
-					if custom
+					if custom or experimental
 						dts.doc!
 						dts.w(safedoc description)
 						dts.w("@custom") if custom
+						dts.w("@experimental") if experimental
 						# dts.w("/** {safedoc description} */")
 						dts.undoc!
 					else
