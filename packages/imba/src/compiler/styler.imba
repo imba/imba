@@ -130,20 +130,21 @@ export const aliases =
 	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
-	# j: ['justify-content','justify-items'] # Deprecate?
+	j: ['justify-content','justify-items'] # Deprecate?
 	
 	# align
 	ai: 'align-items'
 	ac: 'align-content'
 	as: 'align-self'
-	# a: ['align-content','align-items'] # Deprecate?
+	a: ['align-content','align-items'] # Deprecate?
 
 	# justify & align
 	# To fit better with the spec - this ought to be
 	jai: 'place-items'
 	jac: 'place-content'
 	jas: 'place-self'
-	ja: ['place-items','place-content']
+	# ja: ['place-items','place-content']
+	ja: 'justify-align'
 
 	# consider using these instead
 	# pi: 'place-items'
@@ -959,6 +960,15 @@ export class StyleTheme
 
 	def border_right_radius [t,b=t]
 		{'border-top-right-radius': t, 'border-bottom-right-radius': b}
+
+	def justify_align [justify,align = justify]
+		let o = {}
+		if justify == align
+			o['place-items'] = o['place-content'] = justify
+		else
+			o['justify-content'] = o['justify-items'] = justify
+			o['align-content'] = o['align-items'] = align
+		return o
 
 	def outline params		
 		# outlined

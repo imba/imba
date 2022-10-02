@@ -12,6 +12,9 @@ tag App
 			<div[d:vflex] eq={display: 'flex', flexDirection: 'column'}>
 			<div[d:hbox] eq={display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}>
 			<div[d:vbox] eq={display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}>
+		<section title="justify-align">
+			<div[d:flex ja:center flex-start] eq={display: 'flex', justifyContent: 'center', alignItems: 'flex-start'}>
+			<div[d:flex ja:stretch] eq={display: 'flex', justifyContent: 'stretch', alignItems: 'stretch'}>
 
 imba.mount(let app = <App>)
 
