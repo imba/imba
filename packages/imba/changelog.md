@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.223
 
 * Include safari15 as a target when compiling for web.
 
     We recently started using class static initialization blocks to simplify
     some internals, and this is not yet supported in safari.
+
+* Allow two parameters in `ja`/`justify-align` property to set justify/align independently.
 
 ## 2.0.0-alpha.222
 
