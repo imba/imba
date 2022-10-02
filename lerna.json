@@ -3,8 +3,7 @@
     "packages/imba",
     "packages/typescript-imba-plugin",
     "packages/vscode-imba",
-    "packages/imba-monarch",
-    "packages/vite-plugin-imba"
+    "packages/imba-monarch"
   ],
   "version": "independent"
 }
