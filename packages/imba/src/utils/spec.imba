@@ -1,4 +1,4 @@
-const puppy = window.puppy
+const puppy = global.puppy
 
 const KeyMap = {
 	ctrl: 'Control'
@@ -426,7 +426,7 @@ global class SpecAssert < SpecComponent
 		else
 			"ok"
 
-window.spec = global.SPEC = new Spec
+global.spec = global.SPEC = new Spec
 
 # global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
