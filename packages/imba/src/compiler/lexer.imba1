@@ -1578,6 +1578,8 @@ export class Lexer
 
 
 		if (size - @indebt) == @indent
+			@scopes:length = @indents:length
+
 			if noNewlines
 				suppressNewlines()
 			else
