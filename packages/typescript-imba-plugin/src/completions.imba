@@ -727,7 +727,7 @@ export default class Completions
 		# look at the potential paths?
 		let g = ctx.group
 		if g.type == 'path'
-			let start = ctx.before.line.split(/["']/).pop!
+			let start = ctx.before.line.split(/["']/g).pop!
 			let pre = ctx.before.group
 			let fileNames = global.ils.cp.program.getRootFileNames()
 
@@ -763,6 +763,10 @@ export default class Completions
 				# find the actual directory and list items from that?
 				# norm = norm.filter do $1.indexOf(start) == 0
 			# console.log "found sources",[sources,pre,start]
+
+			if start.match(/^@?[\w\-]/)
+				sources = []
+
 			add(sources,o)
 		self
 		
