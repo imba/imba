@@ -2092,7 +2092,7 @@ export class Lexer
 					end = stack[stack:length - 1]
 					continue
 
-			if end is '}' and (letter == '"' or letter == "'")
+			if end is '}' and (letter == '"' or letter == "'" or letter == "`")
 				stack.push(end = letter)
 
 			elif end is '}' and letter is '/' and match = (HEREGEX.exec(str.slice i) or REGEX.exec(str.slice i))
@@ -2101,6 +2101,8 @@ export class Lexer
 			elif end is '}' and letter is '{'
 				stack.push end = '}'
 			elif end is '"' and letter is '{'
+				stack.push end = '}'
+			elif end is '`' and letter is '{'
 				stack.push end = '}'
 			prev = letter
 
