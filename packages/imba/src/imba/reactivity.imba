@@ -126,6 +126,7 @@ class ArrayPatcher
 	def patch
 		end!
 
+
 def getExtensions obj
 	let descriptors = Object.getOwnPropertyDescriptors(obj.prototype)
 	delete descriptors.name
@@ -667,7 +668,6 @@ class Reaction
 			num = 1000 if typeof num != 'number'
 			timeout = setTimeout(&,num) do run!
 			return
-
 		return run!
 
 	def run
@@ -686,6 +686,7 @@ class Reaction
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
+
 		commit! if $web$ and !options.silent
 		return res
 
@@ -693,6 +694,45 @@ class Reaction
 		deactivate!
 		cb = context = options = null
 		self
+
+class Awaits < Reaction
+	def resolve val
+		deactivate!
+		resolved = val
+	
+	def then ...params
+
+		if resolved !== undefined
+			return Promise.resolve(resolved).then(...params)
+		else
+			#promise ||= new Promise do(_resolve)
+				self.resolve = do(val)
+					deactivate!
+					resolved = val
+					_resolve(val)
+			#promise.then(...params)
+
+	def run
+		TRACKING++
+		flags |= F.RUNNING
+		let ctx = CTX.push(self)
+		# let stop
+		let res = cb.call(context)
+		let beacons = CTX.pop(self)
+
+		self.observing = beacons
+
+		checkComputedValues.clear!
+		for item in beacons when item isa Memo
+			cachedComputedVersions.set(item,item.version)
+
+		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
+		TRACKING--
+
+		if res != false and res != undefined and res != null
+			resolve(res)
+			commit! if $web$ and !options.silent
+		return res
 
 class Action
 
@@ -711,8 +751,14 @@ export def autorun cb, options = {}
 	reaction.call!
 	return reaction
 
+export def awaits cb, options = {}
+	let reaction = new Awaits(cb,global,options)
+	reaction.call!
+	return reaction
+
 export def observable object
 	object.##reactive
+
 
 export def run cb
 	let action = new Action(cb,global)
