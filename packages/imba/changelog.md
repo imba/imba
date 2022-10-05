@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+* Fixed parsing of nested template literal strings.
+
+* Added `imba.awaits`
+
 ## 2.0.0-alpha.223
 
 * Include safari15 as a target when compiling for web.
