@@ -143,7 +143,7 @@ def run
 				Get started:
 
 				  > cd {data.name}
-				  > npm start
+				  > npm run dev
 				
 			"""
 			
