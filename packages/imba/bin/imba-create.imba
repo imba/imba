@@ -26,6 +26,7 @@ let imbapkg = read-package(imbadir) # JSON.parse(nfs.readFileSync(np.resolve(imb
 const templates = [
 	['Full Stack', 'Full stack app with backend in Express (Imba bundler)', "base-template"]
 	['Jamstack', 'Client only application (Vite bundler)', "vite-template"],
+	['Module', 'Good for reusable components, libraries, and use in non-Imba projects (Vite bundler)', "module-template"],
 	# ['Electron', 'Desktop application using Electron (Node)', "electron-template"],
 	['Desktop', 'Desktop application using Tauri (Vite bundler)', "tauri-template"]
 ].map do([name,hint, urlPart]) {name: name, hint: hint, urlPart: urlPart}
@@ -143,7 +144,7 @@ def run
 				Get started:
 
 				  > cd {data.name}
-				  > npm start
+				  > npm run dev
 				
 			"""
 			
