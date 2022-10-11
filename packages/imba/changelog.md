@@ -6,6 +6,8 @@
 
 * Added `imba.awaits`
 
+* Make sure automatic `import {...} from 'imba'` is inserted at the very top.
+
 ## 2.0.0-alpha.223
 
 * Include safari15 as a target when compiling for web.

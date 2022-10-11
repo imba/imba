@@ -12597,7 +12597,7 @@ export class ImportProxy < Variable
 		@touched = {}
 		@head = LIT("import ")
 		@head:c = self:head.bind(self)
-		scope.@head.push(@head)
+		scope.@head.unshift(@head)
 		var getter = do |t,p,r| self.access(p)
 		@proxy_ = Proxy.new(self,{get: getter })
 		
