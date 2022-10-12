@@ -33,3 +33,4 @@ dist/
 *.imba.web.js
 test/index.js
 test/apps/**/*.js
+**/.vite-node

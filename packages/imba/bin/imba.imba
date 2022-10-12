@@ -3,7 +3,6 @@ import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
 import {program as cli} from 'commander'
-
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
@@ -193,15 +192,16 @@ def run entry, o, extras
 
 	if o.command == 'build'
 		return
-
-	let run = do(result)
-		if let exec = result..main
-			o.name ||= entry	
-			let runner = new Runner(bundle,o)
-			runner.start!
+	# debugger
+	let run = do
+		o.name ||= entry	
+		let runner = new Runner(bundle,o)
+		if o.vite
+			await runner.initVite!
+		runner.start!
 
 	if out..main
-		run(out)
+		run()
 	elif o.watch
 		bundle.once('built',run)
 	return
@@ -221,6 +221,7 @@ def common cmd
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
+		.option("--vite", "Use Vite as a bundler for the server")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
 		.option("--web","Build entrypoints for the browser")

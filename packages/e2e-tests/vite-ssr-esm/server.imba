@@ -86,7 +86,7 @@ def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "produc
 			res.status(200).set("Content-Type": "text/html").end html
 		catch e
 			vite and vite.ssrFixStacktrace(e)
-			console.log e.stack
+			console.log "err", e.stack
 			res.status(500).end e.stack
 	return
 		app: app

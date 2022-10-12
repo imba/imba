@@ -22,11 +22,6 @@ const server = await createServer
 		disabled: yes
 	server:
 		port: port
-		watch:
-			# // During tests we edit the files too fast and sometimes chokidar
-			# // misses change events, so enforce polling for consistency
-			usePolling: yes
-			interval: 100
 
 const builtins = new RegExp(builtinModules.join("|"), 'gi');
 # this is need to initialize the plugins
@@ -100,6 +95,9 @@ const DEV_CSS_PATH = "./.ssr"
 fs.mkdirSync(DEV_CSS_PATH) unless fs.existsSync(DEV_CSS_PATH)
 for own id, mod of moduleMap when mod.code
 	fs.writeFileSync("{DEV_CSS_PATH}/{id.split("?")[0].split("/")[-1]}.css.js", mod.code.replace("__vite_ssr_exports__.default =", "export default "), 'utf-8')
+
+const req = await runner.directRequest("/Users/abdellah/workspace/scrimba/imba/packages/e2e-tests/vite-ssr-esm/server.imba")
+console.log "rr", req
 
 await runner.executeFile("server.imba").catch error-handler
 await server.close()

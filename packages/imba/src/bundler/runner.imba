@@ -1,10 +1,16 @@
 import cluster from 'cluster'
 import np from 'path'
 import cp from 'child_process'
+import nfs from 'node:fs'
 import Component from './component'
 import {Logger} from '../utils/logger'
+import {createServer} from "vite"
+import {builtinModules} from 'module'
+import {ViteNodeServer} from "vite-node/server"
+import {createHash} from './utils'
+import { imba as imbaPlugin } from '../../../vite-plugin-imba';
 
-class Instance
+class WorkerInstance
 	runner = null
 	fork = null
 	args = {}
@@ -52,15 +58,19 @@ class Instance
 			IMBA_CLUSTER: !bundle.fork?
 			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'warning'
 			PORT: process.env.PORT or o.port
+			VITE: o.vite
 		}
 
 		for own k,v of env
 			env[k] = '' if v === false
 
-		if bundle.fork?
+		if bundle.fork? and !o.vite
 			args.env = Object.assign({},process.env,env)
 			fork = cp.fork(np.resolve(path),args.args,args)
-			fork.on('exit') do(code) process.exit(code)
+			# setup-vite fork
+			fork.on('exit') do(code, s) 
+				console.log "exited with error: exit code", code, s if code == 0
+				process.exit(code)
 			return fork
 
 		
@@ -75,7 +85,6 @@ class Instance
 			# log.info "reloading"
 			prev.#next = worker
 			prev..send(['emit','reloading'])
-
 		worker.on 'exit' do(code, signal)
 			if signal
 				log.info "killed by signal: %d",signal
@@ -94,8 +103,29 @@ class Instance
 			log.info "%red","errorerd"
 
 		# worker.on 'online' do log.info "%green","online"
+		# worker.on 'message' do(message, handle)
 
 		worker.on 'message' do(message, handle)
+			# console.log "msg", message, handle
+			if message.type == 'fetch'
+				console.log "parent: fetching", message
+				const md = await runner.fetchModule(message.id)
+				# console.log "parent md", module
+				worker..send JSON.stringify
+					type: 'fetched'
+					id: message.id
+					md: md
+			elif message.type == 'resolve'
+				# console.log "resolving", message
+				const id = message.payload.id
+				const importer = message.payload.importer
+				const response = JSON.stringify
+					type: 'resolved'
+					output: await runner.resolveId(id, importer)
+					input: {id, importer}
+				worker.send response
+			if message == 'exit'
+				process.exit!
 			if message == 'reload'
 				console.log "RELOAD MESSAGE"
 				reload!
@@ -111,36 +141,75 @@ class Instance
 
 
 export default class Runner < Component
+	viteNodeServer
 	def constructor bundle, options
 		super()
 		o = options
 		bundle = bundle
 		workers = new Set
-
+	def fetchModule(id)
+		viteNodeServer.fetchModule id
+	def resolveId(id)
+		viteNodeServer.resolveId id
+	def initVite		
+		const builtins = new RegExp(builtinModules.join("|"), 'gi');
+		const viteServer = await createServer
+			# It's recommended to disable deps optimization
+			resolve:
+				extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+			plugins: [imbaPlugin()]
+			esbuild: 
+				target: "node16"
+				platform: "node"
+			ssr:
+				target: 'node'
+				external: ["vite-node"]
+			optimizeDeps:
+				disabled: yes
+			server:
+				port: o.port
+		viteNodeServer = new ViteNodeServer viteServer,
+			transformMode:
+				ssr: [builtins]
+		const fileToRun = np.resolve bundle.cwd, o.name
+		const body = nfs.readFileSync(np.resolve(__dirname, "./worker_template.js"), 'utf-8')
+			.replace("__ROOT__", viteServer.config.root)
+			.replace("__BASE__", viteServer.config.base)
+			.replace("__FILE__", fileToRun)
+			.replace("__WATCH__", !!o.watch)
+		
+		const fpath = np.join o.tmpdir, "bundle.{createHash(body)}.mjs"
+		nfs.writeFileSync(fpath, body)
+		# this is need to initialize the plugins
+		await viteServer.pluginContainer.buildStart({})
+		bundle =
+			fork?: yes
+			result:
+				main: fpath
+				hash: ""
 	def start
 		let max = o.instances or 1
 		let nr = 1
-		let args = {
-			windowsHide: yes
-			args: o.extras
-			execArgv: [
-				o.inspect and '--inspect',
-				o.sourcemap and '--enable-source-maps'
-			].filter do $1
-		}
-		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
+		# let args = {
+		# 	windowsHide: yes
+		# 	args: o.extras
+		# 	execArgv: [
+		# 		o.inspect and '--inspect',
+		# 		o.sourcemap and '--enable-source-maps'
+		# 	].filter do $1
+		# }
+		let name = o.name or 'script' # or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
 			let opts = {
 				number: nr,
 				name: max > 1 ? "{name} {nr}/{max}" : name
 			}
-			workers.add new Instance(self,opts)
+			workers.add new WorkerInstance(self,opts)
 			nr++
 
 		for worker of workers
 			worker.start!
-
 		if o.watch
 			#hash = bundle.result.hash
 

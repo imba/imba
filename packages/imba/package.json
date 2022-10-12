@@ -128,6 +128,8 @@
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
+    "vite": "^3.1.6",
+    "vite-node": "^0.23.4",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
