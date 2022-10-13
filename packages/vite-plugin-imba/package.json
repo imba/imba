@@ -23,7 +23,7 @@
   },
   "scripts": {
     "dev": "cross-env npx imba build -wM --keep --node.external +devDependencies --esm src/index.imba",
-    "rename": "node -e \"require('fs').rename('dist/index.js', 'dist/index.cjs', function(err) { if (err) console.log(err); console.log('File successfully renamed!') })\"",
+	"rename": "node -e \"require('fs').rename('dist/index.js', 'dist/index.cjs', function(err) { if (err) console.log(err); console.log('File successfully renamed!') })\"",
     "build": "cross-env rimraf dist && npm run build:esm && npm run build:cjs",
     "build:esm": "npx imba build --keep -M --node.external +devDependencies --esm src/index.imba",
     "build:cjs": "npx imba build --keep -M --node.external +devDependencies src/index.imba && npm run rename",
