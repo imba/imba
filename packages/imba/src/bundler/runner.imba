@@ -7,8 +7,9 @@ import {Logger} from '../utils/logger'
 import {createServer} from "vite"
 import {builtinModules} from 'module'
 import {ViteNodeServer} from "vite-node/server"
-import {createHash} from './utils'
-import { imba as imbaPlugin } from '../../../vite-plugin-imba';
+import {createHash, slash} from './utils'
+import { imba as imbaPlugin } from 'vite-plugin-imba';
+import mm from 'micromatch'
 
 class WorkerInstance
 	runner = null
@@ -108,7 +109,7 @@ class WorkerInstance
 		worker.on 'message' do(message, handle)
 			# console.log "msg", message, handle
 			if message.type == 'fetch'
-				console.log "parent: fetching", message
+				# console.log "parent: fetching", message
 				const md = await runner.fetchModule(message.id)
 				# console.log "parent md", module
 				worker..send JSON.stringify
@@ -125,6 +126,7 @@ class WorkerInstance
 					input: {id, importer}
 				worker.send response
 			if message == 'exit'
+				console.log "exit"
 				process.exit!
 			if message == 'reload'
 				console.log "RELOAD MESSAGE"
@@ -142,22 +144,38 @@ class WorkerInstance
 
 export default class Runner < Component
 	viteNodeServer
+	viteServer
+	fileToRun
 	def constructor bundle, options
 		super()
 		o = options
 		bundle = bundle
 		workers = new Set
+		fileToRun = np.resolve bundle.cwd, o.name
 	def fetchModule(id)
 		viteNodeServer.fetchModule id
 	def resolveId(id)
 		viteNodeServer.resolveId id
+	def handleFileChanged(id)
+		return yes if id == fileToRun
+		const mod = viteServer.moduleGraph.getModuleById(id)
+		return false unless mod
+		return false if o.skipReloadingFor and mm.isMatch(id, o.skipReloadingFor)
+		let rerun = false
+		mod.importers.forEach do(i)
+			if !i.id
+				return
+			const heedsRerun = handleFileChanged(i.id)
+			if heedsRerun
+				rerun = true
+		rerun
 	def initVite		
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
-		const viteServer = await createServer
+		viteServer = await createServer
 			# It's recommended to disable deps optimization
 			resolve:
 				extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-			plugins: [imbaPlugin()]
+			plugins: [imbaPlugin({ssr: yes, })]
 			esbuild: 
 				target: "node16"
 				platform: "node"
@@ -168,22 +186,30 @@ export default class Runner < Component
 				disabled: yes
 			server:
 				port: o.port
+			mode: "development"
+			appType: "custom"
 		viteNodeServer = new ViteNodeServer viteServer,
 			transformMode:
 				ssr: [builtins]
-		const fileToRun = np.resolve bundle.cwd, o.name
+		viteServer.watcher.on "change", do(id)
+			id = slash(id)
+			const needsRerun = handleFileChanged(id)
+			if needsRerun
+				for worker of workers
+					worker.current.process.send "kill"
+				reload()
+		fileToRun = np.resolve bundle.cwd, o.name
 		const body = nfs.readFileSync(np.resolve(__dirname, "./worker_template.js"), 'utf-8')
 			.replace("__ROOT__", viteServer.config.root)
 			.replace("__BASE__", viteServer.config.base)
 			.replace("__FILE__", fileToRun)
-			.replace("__WATCH__", !!o.watch)
 		
 		const fpath = np.join o.tmpdir, "bundle.{createHash(body)}.mjs"
 		nfs.writeFileSync(fpath, body)
 		# this is need to initialize the plugins
 		await viteServer.pluginContainer.buildStart({})
 		bundle =
-			fork?: yes
+			fork?: no
 			result:
 				main: fpath
 				hash: ""

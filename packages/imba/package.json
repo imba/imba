@@ -120,7 +120,7 @@
     "flatted": "^3.1.0",
     "get-port": "^5.1.1",
     "image-size": "^0.9.3",
-    "micromatch": "^4.0.2",
+    "micromatch": "^4.0.5",
     "node-fetch": "^2.6.1",
     "ora": "^5.2.0",
     "picomatch": "^2.2.2",
@@ -130,6 +130,7 @@
     "tree-kill": "^1.2.2",
     "vite": "^3.1.6",
     "vite-node": "^0.23.4",
+    "vite-plugin-imba": "../vite-plugin-imba",
     "workerpool": "^6.0.3"
   },
   "dependencies": {

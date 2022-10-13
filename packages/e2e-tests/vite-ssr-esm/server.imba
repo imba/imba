@@ -19,7 +19,6 @@ const ssr-css-modules = import.meta.glob("./.ssr/*.css.js")
 let ssr-styles = ""
 for own key of ssr-css-modules
 	ssr-styles += (await ssr-css-modules[key]()).default
-
 let port = 3000
 const args = process.argv.slice(2)
 const portArgPos = args.indexOf("--port") + 1
@@ -31,7 +30,7 @@ const CLIENT_ENTRY = "src/main.js"
 # not used here
 const SERVER_ENTRY = "src/App.imba"
 
-def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "production")
+def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "production")
 	const resolve = do(p) path.resolve(root, p)
 
 	const client_dist = path.join(import.meta.url, '../..', 'dist')
@@ -92,16 +91,17 @@ def createServer(root = process.cwd(), isProd = process.env.NODE_ENV === "produc
 		app: app
 		vite: vite
 
-createServer().then do({app})
-	console.log "server created"
-	const server = app.listen port, do console.log "http://localhost:{port}"
-	const exitProcess = do
-		process.off "SIGTERM", exitProcess
-		process.off "SIGINT", exitProcess
-		process.stdin.off "end", exitProcess
-		try await server.close do console.log "server closed" finally process.exit 0
+const {app} = await createServer!
+console.log "server created"
+const server = app.listen port, do console.log "http://localhost:{port}"
+const exitProcess = do
+	console.log "exiting process"
+	process.off "SIGTERM", exitProcess
+	process.off "SIGINT", exitProcess
+	process.stdin.off "end", exitProcess
+	try await server.close do console.log "server closed" finally process.exit 0
 
-	process.once "SIGTERM", exitProcess
-	process.once "SIGINT", exitProcess
-	process.stdin.on "end", exitProcess
+process.once "SIGTERM", exitProcess
+process.once "SIGINT", exitProcess
+process.stdin.on "end", exitProcess
 

@@ -222,6 +222,7 @@ def common cmd
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
 		.option("--vite", "Use Vite as a bundler for the server")
+		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
 		.option("--web","Build entrypoints for the browser")

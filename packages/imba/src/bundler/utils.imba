@@ -205,3 +205,7 @@ export def injectStringBefore target, toInject, patterns = ['']
 		if idx >= 0
 			return target.slice(0,idx) + toInject + target.slice(idx)
 	return target
+
+# vite utils
+export def slash(str)
+	str.replace(/\\/g, "/")

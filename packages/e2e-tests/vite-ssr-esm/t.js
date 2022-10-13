@@ -1,3 +1,0 @@
-
-/*body*/
-console.log('worked');
