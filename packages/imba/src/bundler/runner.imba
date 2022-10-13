@@ -69,9 +69,7 @@ class WorkerInstance
 			args.env = Object.assign({},process.env,env)
 			fork = cp.fork(np.resolve(path),args.args,args)
 			# setup-vite fork
-			fork.on('exit') do(code, s) 
-				console.log "exited with error: exit code", code, s if code == 0
-				process.exit(code)
+			fork.on('exit') do(code) process.exit(code)
 			return fork
 
 		
@@ -216,14 +214,6 @@ export default class Runner < Component
 	def start
 		let max = o.instances or 1
 		let nr = 1
-		# let args = {
-		# 	windowsHide: yes
-		# 	args: o.extras
-		# 	execArgv: [
-		# 		o.inspect and '--inspect',
-		# 		o.sourcemap and '--enable-source-maps'
-		# 	].filter do $1
-		# }
 		let name = o.name or 'script' # or np.basename(bundle.result.main.source.path)
 
 		while nr <= max

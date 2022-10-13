@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development imba launch.imba --esm --",
+    "dev": "imba server.imba --esm --vite --",
     "build": "run-s build:client build:server",
     "build:client": "vite build -c vite.config.client.js --outDir dist",
     "build:server": "vite build -c vite.config.server.js --outDir dist_server",
