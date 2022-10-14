@@ -4,7 +4,7 @@ import cp from 'child_process'
 import nfs from 'node:fs'
 import Component from './component'
 import {Logger} from '../utils/logger'
-import {createServer} from "vite"
+import {createServer, build} from "vite"
 import {builtinModules} from 'module'
 import {ViteNodeServer} from "vite-node/server"
 import {createHash, slash} from './utils'
@@ -169,26 +169,10 @@ export default class Runner < Component
 		rerun
 	def initVite		
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
-		viteServer = await createServer
-			# It's recommended to disable deps optimization
-			resolve:
-				extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-			plugins: [imbaPlugin({ssr: yes, })]
-			esbuild: 
-				target: "node16"
-				platform: "node"
-			ssr:
-				target: 'node'
-				external: ["vite-node"]
-			optimizeDeps:
-				disabled: yes
-			server:
-				port: o.port
-			mode: "development"
-			appType: "custom"
+		viteServer = await createServer configFile: np.resolve("./vite.config.server.js")
 		viteNodeServer = new ViteNodeServer viteServer,
 			transformMode:
-				ssr: [builtins]
+				ssr: [/.*/]
 		viteServer.watcher.on "change", do(id)
 			id = slash(id)
 			const needsRerun = handleFileChanged(id)
@@ -197,12 +181,28 @@ export default class Runner < Component
 					worker.current.process.send "kill"
 				reload()
 		fileToRun = np.resolve bundle.cwd, o.name
-		const body = nfs.readFileSync(np.resolve(__dirname, "./worker_template.js"), 'utf-8')
+		let body = nfs.readFileSync(np.resolve(__dirname, "./worker_template.js"), 'utf-8')
 			.replace("__ROOT__", viteServer.config.root)
 			.replace("__BASE__", viteServer.config.base)
 			.replace("__FILE__", fileToRun)
-		
+		const output = await build
+			optimizeDeps: {disabled: yes}
+			ssr:
+				target: "node"
+			build:
+				rollupOptions:
+					external: builtinModules
+				target: "node16"
+				platform: "node"
+				lib:
+					formats: ["esm"]
+					entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
+					name: "vite-node-client"
+					fileName: "vite-node-client"
 		const fpath = np.join o.tmpdir, "bundle.{createHash(body)}.mjs"
+		const vnpath = np.join o.tmpdir, "vite-node-client.mjs"
+		nfs.writeFileSync(vnpath, output[0].output[0].code)
+		body = body.replace("__VITE_NODE_CLIENT__", vnpath)
 		nfs.writeFileSync(fpath, body)
 		# this is need to initialize the plugins
 		await viteServer.pluginContainer.buildStart({})

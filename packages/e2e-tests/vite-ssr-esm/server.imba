@@ -32,7 +32,6 @@ const SERVER_ENTRY = "src/App.imba"
 
 def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "production")
 	const resolve = do(p) path.resolve(root, p)
-
 	const client_dist = path.join(import.meta.url, '../..', 'dist')
 
 	let manifest\Object

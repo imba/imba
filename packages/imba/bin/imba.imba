@@ -188,7 +188,8 @@ def run entry, o, extras
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))
 
 	let bundle = new Bundler(o,params)
-	let out = await bundle.build!
+	let out 
+	out = await bundle.build! unless o.vite
 
 	if o.command == 'build'
 		return
@@ -199,8 +200,9 @@ def run entry, o, extras
 		if o.vite
 			await runner.initVite!
 		runner.start!
-
-	if out..main
+	if o.vite
+		run()
+	elif out..main
 		run()
 	elif o.watch
 		bundle.once('built',run)

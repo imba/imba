@@ -1,4 +1,5 @@
-import { ViteNodeRunner } from "vite-node/client";
+import { ViteNodeRunner } from "__VITE_NODE_CLIENT__"
+
 function handleError(msg, error) {
 	console.error(msg, error)
 	process.send("exit")
@@ -48,6 +49,6 @@ process.on("message", (msg)=>{
 		process.exit()
 	}
 })
-await runner.executeFile(file).catch(function (error) {
+runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });
