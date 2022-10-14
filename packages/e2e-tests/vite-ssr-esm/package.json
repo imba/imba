@@ -20,6 +20,7 @@
     "serve-static": "^1.15.0"
   },
   "dependencies": {
-    "imba": "../../imba"
+    "imba": "../../imba",
+    "vite-plugin-imba": "^0.9.1"
   }
 }

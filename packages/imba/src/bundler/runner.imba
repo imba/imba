@@ -4,11 +4,8 @@ import cp from 'child_process'
 import nfs from 'node:fs'
 import Component from './component'
 import {Logger} from '../utils/logger'
-import {createServer, build} from "vite"
 import {builtinModules} from 'module'
-import {ViteNodeServer} from "vite-node/server"
 import {createHash, slash} from './utils'
-import { imba as imbaPlugin } from 'vite-plugin-imba';
 import mm from 'micromatch'
 
 class WorkerInstance
@@ -167,12 +164,34 @@ export default class Runner < Component
 			if heedsRerun
 				rerun = true
 		rerun
-	def initVite		
+	def initVite
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
-		viteServer = await createServer configFile: np.resolve("./vite.config.server.js")
-		viteNodeServer = new ViteNodeServer viteServer,
+		let Vite
+		try 
+			Vite = await import("vite")
+		catch e
+			Vite = await import("vite-bundled")
+		let ViteNode
+		try 
+			ViteNode = await import("vite-node/server")
+		catch e
+			ViteNode = await import("vite-node-bundled/server")
+		let VitePlugin
+		try 
+			VitePlugin = await import("vite-plugin-imba")
+		catch e
+			VitePlugin = await import("vite-plugin-imba-bundled")
+		
+		let configFile = np.join(__dirname,"./vite.config.server.js")
+		const userConfig = np.resolve("./vite.config.server.js")
+		if nfs.existsSync(userConfig)
+			configFile = userConfig
+		viteServer = await Vite.createServer
+			configFile: configFile
+			plugins: [VitePlugin.imba(ssr:yes)]
+		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
 			transformMode:
-				ssr: [/.*/]
+				ssr: [builtins]
 		viteServer.watcher.on "change", do(id)
 			id = slash(id)
 			const needsRerun = handleFileChanged(id)
@@ -185,7 +204,7 @@ export default class Runner < Component
 			.replace("__ROOT__", viteServer.config.root)
 			.replace("__BASE__", viteServer.config.base)
 			.replace("__FILE__", fileToRun)
-		const output = await build
+		const output = await Vite.build
 			optimizeDeps: {disabled: yes}
 			ssr:
 				target: "node"
@@ -193,10 +212,9 @@ export default class Runner < Component
 				rollupOptions:
 					external: builtinModules
 				target: "node16"
-				platform: "node"
 				lib:
-					formats: ["esm"]
-					entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
+					formats: ["es"]
+					entry: require.resolve("vite-node-bundled/client").replace(".cjs", ".mjs")
 					name: "vite-node-client"
 					fileName: "vite-node-client"
 		const fpath = np.join o.tmpdir, "bundle.{createHash(body)}.mjs"

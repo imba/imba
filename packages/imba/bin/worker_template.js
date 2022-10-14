@@ -13,7 +13,6 @@ const runner = new ViteNodeRunner({
 			try {
 				process.once('message', (msg) => {
 					const message = JSON.parse(msg)
-
 					if (message.type == "fetched" && id == message.id)
 						resolve(message.md)
 				})
@@ -49,6 +48,7 @@ process.on("message", (msg)=>{
 		process.exit()
 	}
 })
-runner.executeFile(file).catch(function (error) {
+console.log("running file", file)
+await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });
