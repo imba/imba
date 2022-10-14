@@ -45,8 +45,7 @@
     "build": "node scripts/build-parser.js && node scripts/build.js",
     "build-parser": "node scripts/build-parser.js",
     "watch": "node scripts/build.js -w",
-	"build-vite-plugin": "cd ../vite-plugin-imba && npm i && npm run build",
-    "prepublish": "npm run build-vite-plugin && node scripts/build-parser.js && node scripts/build.js",
+    "prepublish": "node scripts/build-parser.js && node scripts/build.js",
     "create-example": "node bin/imba scripts/create-example.imba",
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba"
   },
@@ -131,7 +130,7 @@
     "tree-kill": "^1.2.2",
     "vite": "^3.1.6",
     "vite-node": "^0.23.4",
-    "vite-plugin-imba": "../vite-plugin-imba",
+    "vite-plugin-imba": "latest",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
