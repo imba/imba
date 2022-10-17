@@ -10,7 +10,7 @@ const builtins = new RegExp(builtinModules.join("|"), 'gi');
 export default defineConfig(({ command, mode }) => {
 	return {
 		define: {
-			__APP_VERSION__: "a1"
+			__APP_VERSION__: '"a1"'
 		},
 		appType: "custom",
 		resolve:{
