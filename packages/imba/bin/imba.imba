@@ -220,7 +220,7 @@ def run entry, o, extras
 				configFile = userConfig
 			let config-has-plugin = no
 			try
-				const config = await import(configFile)
+				const config = await import(pathToFileURL configFile)
 				if typeof config.default == "function"
 					config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
 				else
