@@ -330,6 +330,9 @@ export class Scope < Node
 	get extends?
 		class? and keyword and keyword.prev.prev..match('keyword.extend')
 
+	get exports?
+		class? and keyword and keyword.prev.prev..match('keyword.export')
+
 	get global?
 		class? and (!!prevToken(keyword,'keyword.global',3,1) or (component? and name[0] == name[0].toLowerCase!))
 

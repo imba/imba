@@ -40,6 +40,57 @@ export default class AutoImportContext
 		
 	get ps
 		global.ils.ps
+
+	def getMap prefs = {}
+		prefs = Object.assign(userPrefs,prefs)
+		let resolver = ts.codefix.createImportSpecifierResolver(checker.sourceFile,checker.program,checker.project,prefs)
+		let res = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program,prefs)
+		res.$resolver = resolver
+		res.$get = do res.get(checker.sourceFile.path,$1)
+		res.$find = do(pat)
+			Array.from(res.__cache.keys!).filter do $1.indexOf(pat) >= 0
+		
+		res.$resolve = do
+			let item = res.$get($1)
+			let out = resolver.getModuleSpecifierForBestExportInfo(item,$2 or null,$3 or 0,true)
+			return out
+		return res
+
+	def search matches, flagmask, preferCapitalized
+		let res = []
+		let action = do(filtered,name,isAmbient,key)
+			let out = {
+				exportName: name
+				exportCacheKey: key
+				exportInfo: filtered
+				symbol: filtered[0].symbol
+			}
+			res.push(out)
+			return out
+
+		let matcher = do(name,flags)
+			return no if name[0] == 'Ω' or name[0] == 'Γ'
+			if typeof flagmask == 'number'
+				return no if (flags & flagmask) == 0
+			if matches isa RegExp
+				return matches.test(name)
+
+			if typeof matches == 'string'
+				return name.indexOf(matches) >= 0
+			return true if matches == null
+
+			return matches(name,flags)
+
+		exportInfoMap.search(checker.sourceFile.path,preferCapitalized, matcher, action)
+		return res
+
+	def resolve items
+		let resolver = #resolver ||= ts.codefix.createImportSpecifierResolver(checker.sourceFile,checker.program,checker.project,userPrefs)
+		let results = for item,i in items
+
+			let resolved = resolver.getModuleSpecifierForBestExportInfo(item.exportInfo,item.exportName,0,false)
+			item.resolved = resolved
+		return results
 		
 	get exportInfoMap
 		unless ts.codefix.getSymbolToExportInfoMap isa Function or ts.getExportInfoMap isa Function
@@ -51,7 +102,8 @@ export default class AutoImportContext
 		let debugs = ts.Debug.isDebugging
 		ts.Debug.isDebugging = true
 		if ts.getExportInfoMap
-			map = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program)
+			# autoImportFileExcludePatterns
+			map = ts.getExportInfoMap(checker.sourceFile,checker.project,checker.program,{})
 		else
 			map = ts.codefix.getSymbolToExportInfoMap(checker.sourceFile,checker.project,checker.program)
 		ts.Debug.isDebugging = debugs
@@ -222,28 +274,6 @@ export default class AutoImportContext
 		util.log "exportInfoEntries in {Date.now! - t0}ms {Date.now! - t1}ms"
 		return out
 		
-	get exportPaths
-		let packages = getVisiblePackages!
-		let entries = exportInfoEntries
-		
-		let map = {}
-
-		for entry in entries
-			continue if entry.packageName and !packages[entry.packageName]
-			let src = entry.packageName or entry.modulePath
-			let source = map[src] ||= {
-				modulePath: src,
-				name: entry.packageName or np.basename(src).replace(/\.(d\.ts|tsx?|imba|jsx?)$/)
-				exports: []
-			}
-			source.exports.push(entry)
-			if entry.exportKind == 2 or entry.exportKind == 1
-				source.default = entry
-		
-		let items = Object.values(map)
-		items.#map = map
-		return items
-		
 	def getExportedValues
 		let entries = exportInfoEntries.filter do !$1.exportedSymbolIsTypeOnly and !$1.isTypeOnly
 
@@ -258,11 +288,18 @@ export default class AutoImportContext
 		exportInfoEntries.filter do $1.isDecorator
 		
 	def getExportedTypes
-		exportInfoEntries.filter do
-			$1.exportedSymbolIsTypeOnly or $1.isTypeOnly or ($1.symbol.flags & ts.SymbolFlags.Type)
+		let res = search('',ts.SymbolFlags.Type)
+		console.log 'got types!!!' # ,res
+		return res
+		# exportInfoEntries.filter do
+		#	$1.exportedSymbolIsTypeOnly or $1.isTypeOnly or ($1.symbol.flags & ts.SymbolFlags.Type)
 	
 	def getExportedTags
-		exportInfoEntries.filter do $1.isTag
+		let named = checker.getTagDeclarationNames!.filter do $1.body..exports?
+		let names = named.map do $1.value
+		let found = search do(name) names.indexOf(name) >= 0
+		return found
+		# exportInfoEntries.filter do $1.isTag
 			
 	def getPackageNameForPath path
 		let m
