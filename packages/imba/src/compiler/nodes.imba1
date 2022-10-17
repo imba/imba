@@ -7778,6 +7778,9 @@ export class Catch < ControlFlowStatement
 	def visit
 		@scope.visit
 		@variable = @scope.register(@varname,self,type: 'let', pool: 'catchvar')
+		if @body.len == 0
+			@body.push(@variable.accessor)
+
 		@body.traverse
 
 
