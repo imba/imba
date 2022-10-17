@@ -2,6 +2,7 @@ import cluster from 'cluster'
 import np from 'path'
 import cp from 'child_process'
 import nfs from 'node:fs'
+import { pathToFileURL } from 'node:url';
 import Component from './component'
 import {Logger} from '../utils/logger'
 import {builtinModules} from 'module'
@@ -229,7 +230,9 @@ export default class Runner < Component
 					name: "vite-node-client"
 					fileName: "vite-node-client"
 		const fpath = np.join o.tmpdir, "bundle.{createHash(body)}.mjs"
-		const vnpath = np.join o.tmpdir, "vite-node-client.mjs"
+		# in windows, the path would start with c: ...
+		# and esm doesn't support it. 
+		const vnpath = pathToFileURL(np.join o.tmpdir, "vite-node-client.mjs")
 		nfs.writeFileSync(vnpath, output[0].output[0].code)
 		body = body.replace("__VITE_NODE_CLIENT__", vnpath)
 		nfs.writeFileSync(fpath, body)
