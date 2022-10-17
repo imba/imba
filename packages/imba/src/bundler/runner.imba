@@ -39,7 +39,7 @@ class Instance
 			exec: path
 			execArgv: [
 				o.inspect and '--inspect',
-				o.sourcemap and '--enable-source-maps'
+				(o.sourcemap or bundle.sourcemapped?) and '--enable-source-maps'
 			].filter do $1
 		}
 
@@ -125,9 +125,10 @@ export default class Runner < Component
 			args: o.extras
 			execArgv: [
 				o.inspect and '--inspect',
-				o.sourcemap and '--enable-source-maps'
+				(o.sourcemap or bundle.sourcemapped?) and '--enable-source-maps'
 			].filter do $1
 		}
+
 		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
