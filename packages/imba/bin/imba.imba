@@ -7,7 +7,6 @@ import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
-
 import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 
@@ -188,10 +187,40 @@ def run entry, o, extras
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))
 
 	let bundle = new Bundler(o,params)
-	let out 
+	let out
 	out = await bundle.build! unless o.vite
 
 	if o.command == 'build'
+		if o.vite
+			let Vite
+			try 
+				Vite = await import("vite")
+			catch e
+				Vite = await import("vite-bundled")
+
+			let VitePlugin
+			try 
+				VitePlugin = await import("vite-plugin-imba")
+			catch e
+				VitePlugin = await import("vite-plugin-imba-bundled")
+			let configFile = np.join(__dirname,"./vite.config.server.js")
+			const userConfig = np.resolve("./vite.config.server.js")
+			if nfs.existsSync(userConfig)
+				configFile = userConfig
+			let config-has-plugin = no
+			try
+				const config = await import(configFile)
+				config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+			console.log "Building {entry} ..."
+			const plugins = config-has-plugin ? [] : [VitePlugin.imba(ssr:yes)]
+			const output = await Vite.build
+				# configFile: configFile
+				configFile: configFile
+				plugins: plugins
+				build:
+					rollupOptions:
+						input: entry
+
 		return
 	# debugger
 	let run = do

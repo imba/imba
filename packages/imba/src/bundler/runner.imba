@@ -186,16 +186,24 @@ export default class Runner < Component
 		const userConfig = np.resolve("./vite.config.server.js")
 		if nfs.existsSync(userConfig)
 			configFile = userConfig
+		let config-has-plugin = no
+		try
+			const config = await import(configFile)
+			config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+
+		const plugins = config-has-plugin ? [] : [VitePlugin.imba(ssr:yes)]
 		viteServer = await Vite.createServer
 			configFile: configFile
-			plugins: [VitePlugin.imba(ssr:yes)]
+			plugins: plugins
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
 			transformMode:
 				ssr: [builtins]
 		viteServer.watcher.on "change", do(id)
 			id = slash(id)
 			const needsRerun = handleFileChanged(id)
-			if needsRerun
+			const file-path = np.relative(viteServer.config.root, id)
+			const skip? = mm.isMatch(file-path, o.skipReloadingFor)
+			if needsRerun and !skip?
 				for worker of workers
 					worker.current.process.send "kill"
 				reload()

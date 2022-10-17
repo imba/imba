@@ -1,4 +1,7 @@
+import { builtinModules } from 'module'
+
 export default {
+	appType: "custom",
 	resolve: {
 		extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 	},
@@ -7,10 +10,21 @@ export default {
 		platform: "node"
 	},
 	ssr: {
-		target: 'node',
-		external: ["vite-node"]
+		target: "node",
+		transformMode: { ssr: [new RegExp(builtinModules.join("|"), 'gi')] },
+		external: ["imba"]
 	},
-	optimizeDeps: { disabled: true },
-	mode: "development",
-	appType: "custom"
+	build: {
+		outDir: "dist_server",
+		ssr: true,
+		target: 'node16',
+		minify: false,
+		rollupOptions: {
+			external: [new RegExp("/[^\.]^{entry}.*/")],
+			output: {
+				format: 'esm',
+				dir: "dist_server"
+			}
+		},
+	}
 }

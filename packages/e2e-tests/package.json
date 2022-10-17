@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test:serve": "vitest run -c vitest.config.e2e.ts",
+    "test:serve": "vitest run -c vitest.config.e2e.ts --watch false",
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts"
   },
   "devDependencies": {

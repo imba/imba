@@ -62,7 +62,7 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 				<head>
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title> "Imba App"
+					<title> "Imba App __APP_VERSION__"
 					if !isProd
 						<script type="module" src="/@vite/client">
 						<script type="module" src="/{CLIENT_ENTRY}">
@@ -73,7 +73,7 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 						<script type="module" src=prod-src>
 						for css-file in css-files
 							<style src=css-file>
-				<body>
+				<body id=__APP_VERSION__>
 					<App>
 			res.status(200).set("Content-Type": "text/html").end html
 		catch e

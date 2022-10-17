@@ -48,7 +48,6 @@ process.on("message", (msg)=>{
 		process.exit()
 	}
 })
-console.log("running file", file)
 await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });
