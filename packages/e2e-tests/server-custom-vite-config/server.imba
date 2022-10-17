@@ -62,7 +62,7 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 				<head>
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title> "Imba App __APP_VERSION__"
+					<title> "Imba App"
 					if !isProd
 						<script type="module" src="/@vite/client">
 						<script type="module" src="/{CLIENT_ENTRY}">
