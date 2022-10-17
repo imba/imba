@@ -1,38 +1,38 @@
-import { build, defineConfig } from 'vite';
-import { imba } from 'vite-plugin-imba';
-import { resolve } from 'path'
-import {builtinModules} from 'module'
-// Server ENTRY
-// const entry = resolve("server.imba")
-// Needed for dev mode in order to keep built-in node modules
-const builtins = new RegExp(builtinModules.join("|"), 'gi');
+import { builtinModules } from 'module'
+import imbaPlugin from 'imba/plugin'
 
-export default defineConfig(({ command, mode }) => {
-	return {
-		define: {
-			__APP_VERSION__: '"a1"'
+export default {
+	appType: "custom",
+	define: {
+		__APP_VERSION__: '"a1"'
+	},
+	plugins: [imbaPlugin({ssr: true})],
+	resolve: {
+		extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+	},
+	esbuild: {
+		target: "node16",
+		platform: "node"
+	},
+	ssr: {
+		target: "node",
+		transformMode: { ssr: [new RegExp(builtinModules.join("|"), 'gi')] },
+		external: ["imba"]
+	},
+	build: {
+		outDir: "dist_server",
+		ssr: true,
+		target: 'node16',
+		minify: false,
+		rollupOptions: {
+			external: [new RegExp("/[^\.]^{entry}.*/")],
+			output: {
+				format: 'esm',
+				dir: "dist_server"
+			},
+			input: {
+				entry: "server.imba",
+			}
 		},
-		appType: "custom",
-		resolve:{
-			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-		},
-		plugins: [
-			imba({ssr: true})
-		],
-		esbuild: {
-			target: "node16",
-			platform: "node",
-		},
-		ssr: {
-			target:"node",
-			transformMode: {ssr: builtins},
-			external: ["imba"]
-		},
-		build: {
-			outDir: "./dist_server",
-			ssr: true,
-			target: 'node16',
-			minify: false,
-		}
 	}
-});
+}
