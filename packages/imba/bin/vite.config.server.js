@@ -1,7 +1,9 @@
 import { builtinModules } from 'module'
+//eject import imbaPlugin from 'imba/plugin'
 
 export default {
 	appType: "custom",
+	//eject plugins: [imbaPlugin({ssr: true})],
 	resolve: {
 		extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 	},
@@ -24,6 +26,9 @@ export default {
 			output: {
 				format: 'esm',
 				dir: "dist_server"
+			},
+			input: {
+				//eject entry: "server.imba",
 			}
 		},
 	}

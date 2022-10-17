@@ -145,10 +145,21 @@ def parseOptions options, extras = []
 	global.#IMBA_OPTIONS = options
 	options.#parsed = yes
 	return options
-
+def eject(o)
+	o = parseOptions(o)
+	const configPath = "vite.config.server.js"
+	if nfs.existsSync(configPath) and !o.force
+		return console.log "You already have a vite.config.server.js in your project. Delete it or use `imba eject --force` to overwrite"
+	const defaultConfig = np.join(__dirname, configPath)
+	const content = nfs.readFileSync(defaultConfig, 'utf-8')
+	nfs.writeFileSync(configPath, content.replace(/\/\/eject\s/g, ''))
+	console.log "✅ vite.config.server.js has been successfully {o.force ? 'overwritten': 'created'}"
+	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
+	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
+	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
+	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply want to chat"
 def run entry, o, extras
 	return cli.help! unless o.args.length > 0
-	
 	let [path,q] = entry.split('?')
 	
 	path = np.resolve(path)
@@ -210,7 +221,10 @@ def run entry, o, extras
 			let config-has-plugin = no
 			try
 				const config = await import(configFile)
-				config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+				if typeof config.default == "function"
+					config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+				else
+					config-has-plugin = config.default.plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
 			console.log "Building {entry} ..."
 			const plugins = config-has-plugin ? [] : [VitePlugin.imba(ssr:yes)]
 			const output = await Vite.build
@@ -274,6 +288,11 @@ common(cli.command('build <script>').description('Build an imba/js/html entrypoi
 common(cli.command('serve <script>').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.action(run)
+
+cli
+	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
+	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
+	.action(eject)
 
 cli.command('create [project]','Create a new imba project from a template')
 

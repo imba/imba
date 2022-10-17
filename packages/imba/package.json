@@ -84,7 +84,12 @@
       "browser": "./dist/compiler.mjs",
       "require": "./dist/compiler.cjs",
       "default": "./dist/compiler.mjs"
-    }
+    },
+	"./plugin": {
+		"default": "./plugin.mjs",
+		"browser": "./plugin.mjs",
+      	"require": "./plugin.cjs"
+	}
   },
   "bin": {
     "imba": "./bin/imba",

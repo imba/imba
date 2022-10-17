@@ -189,7 +189,10 @@ export default class Runner < Component
 		let config-has-plugin = no
 		try
 			const config = await import(configFile)
-			config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+			if typeof config.default == "function"
+				config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+			else
+				config-has-plugin = config.default.plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
 
 		const plugins = config-has-plugin ? [] : [VitePlugin.imba(ssr:yes)]
 		viteServer = await Vite.createServer
