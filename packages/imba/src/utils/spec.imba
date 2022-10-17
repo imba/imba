@@ -146,7 +146,7 @@ global class Spec < SpecComponent
 	def tick commit = true
 		imba.commit! if commit
 		await imba.scheduler.promise
-		observer.takeRecords!
+		observer..takeRecords!
 
 	def wait time = 100
 		new Promise(do(resolve) setTimeout(resolve,time))
@@ -161,8 +161,9 @@ global class Spec < SpecComponent
 		warnings = []
 		state = {info: [], mutations: [], log: [],commits: 0}
 
-		observer = new MutationObserver do(muts)
-			context.state.mutations.push(...muts)
+		if $web$
+			observer = new MutationObserver do(muts)
+				context.state.mutations.push(...muts)
 
 		self
 
@@ -175,7 +176,7 @@ global class Spec < SpecComponent
 		let after = do
 			stack.pop!
 			context = stack[stack.length - 1]
-			observer.takeRecords!
+			observer..takeRecords! if $web$
 			self
 
 		let err = do(e)
@@ -192,9 +193,20 @@ global class Spec < SpecComponent
 		blocks.push new SpecGroup(name, blk, self)
 	
 	def test name, blk
+		let inline = stack[-1] isa SpecExample
+
 		if name isa Function
 			blk = name
-			name = context.blocks.length + 1
+			name = inline ? "" : (context.blocks.length + 1)
+
+		if inline
+			return blk()
+
+		# if we are currently running - just push it and execute immediately
+		# if stack.length > 1
+		# 	let curr = stack[-1]
+		# 	if curr isa SpecExample
+		# 		console.log "CALLING TEST INSIDE TEST!!!"
 		context.blocks.push new SpecExample(name, blk, context)
 
 	def before name, blk
@@ -214,13 +226,16 @@ global class Spec < SpecComponent
 		imba.once(block,'done') do self.step(i+1)
 		block.run!
 
-	def run
+	def run o = {}
 		new Promise do(resolve,reject)
 			pup("spec:start",{})
 			let prevInfo = console.info
+			if typeof o.only == 'string'
+				blocks = blocks.filter do $1.name.indexOf(o.only) >= 0
+
 			let fn = do context.state.commits++
 			imba.scheduler.on('commit',fn)
-			observer.observe(document.body,{
+			observer..observe(document.body,{
 				attributes: true,
 				childList: true,
 				characterData: true,
@@ -232,7 +247,7 @@ global class Spec < SpecComponent
 				context.state.log.push(params[0])
 
 			imba.once(self,'done') do
-				observer.disconnect!
+				observer..disconnect!
 				console.info = prevInfo
 				imba.scheduler.un('commit',fn)
 				resolve!
@@ -304,13 +319,13 @@ global class SpecGroup < SpecComponent
 		
 	def finish
 		console.groupEnd(name) if console.groupEnd
-		console.log "ENDED SPEC-GROUP"
 		if parent == SPEC
 			cleanup!
 		emit('done', [self])
 		
 	def cleanup
-		document.body.innerHTML = ''
+		if $web$
+			document.body.innerHTML = ''
 		await imba.commit!
 		
 
@@ -334,10 +349,8 @@ global class SpecExample < SpecComponent
 		start!
 		# does a block really need to run here?
 		try
-			console.log 'running block!'
 			let promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
 			let res = await promise
-			console.log 'done running block',failed
 		catch e
 			console.log "error from run!",e
 			error = e
@@ -363,9 +376,15 @@ global class SpecExample < SpecComponent
 		emit('done',[self])
 
 	def fail
-		console.log("%c✘ {fullName}", "color:orangered",state)
+		# if $node$
+		# 	logger.log("%red", "✘ {fullName}")
+		# else
+		console.log("%c✘ {fullName}", "color:orangered",state,error)
 
 	def pass
+		# if $node$
+		# 	logger.log("%green", "✔ {fullName}")
+		# else
 		console.log("%c✔ {fullName}", "color:forestgreen")
 
 	get failed
@@ -459,8 +478,8 @@ global def eqcss el, match,sel,o = {}
 			global.eq(String(real),String(expected),Object.assign(message: "expected {k} == %2 (was %1)",o))
 	return
 
-window.onerror = do(e)
+global.onerror = do(e)
 	console.log('page:error',{message: (e.message or e)})
 
-window.onunhandledrejection = do(e)
+global.onunhandledrejection = do(e)
 	console.log('page:error',{message: e.reason.message})
