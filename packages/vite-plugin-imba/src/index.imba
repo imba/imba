@@ -98,7 +98,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 				return fs.readFileSync(filename, "utf-8")
 	
 	def resolveId(importee, importer, opts)
-		const ssr = !!opts..ssr
+		const ssr = !!opts..ssr or options.ssr
 		const imbaRequest = requestParser(importee, ssr)
 		if imbaRequest..query.imba
 			if imbaRequest.query.type === "style"

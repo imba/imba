@@ -34,7 +34,8 @@ const allowedPluginOptions = new Set([
 	'hot',
 	'ignorePluginPreprocessors',
 	'disableDependencyReinclusion',
-	'experimental'
+	'experimental',
+	'ssr'
 ]);
 
 const knownRootOptions = new Set(['extensions', 'compilerOptions', 'preprocess', 'onwarn']);
@@ -408,7 +409,6 @@ function buildSSROptionsForImba(
 	config: UserConfig
 ): any {
 	const noExternal: (string | RegExp)[] = [];
-
 	// add imba to ssr.noExternal unless it is present in ssr.external
 	// so we can resolve it with imba/ssr
 	if (!config.ssr?.external?.includes('imba')) {
@@ -550,6 +550,12 @@ export interface PluginOptions {
 	 * These options are considered experimental and breaking changes to them can occur in any release
 	 */
 	experimental?: ExperimentalOptions;
+	/**
+	 * Wether to treat all modules as SSR, regardless of where Vite thinks
+	 * they're running. This is needed when running imba in the server
+	 * @default false
+	 */
+	ssr?: boolean;
 }
 
 
