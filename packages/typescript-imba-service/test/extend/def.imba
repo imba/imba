@@ -39,3 +39,6 @@ tag app-something
 
 global.appState = new AppState
 global.localState = new LocalState
+
+export def exportedMethod
+	yes
