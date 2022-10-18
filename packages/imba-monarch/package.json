@@ -1,7 +1,7 @@
 {
     "name": "imba-monarch",
     "description": "Fault-tolerant lexer/parser for imba using monarch",
-    "version": "0.3.4",
+    "version": "0.3.5",
     "author": "Sindre Aarsaether <sindre@identu.no>",
     "main": "dist/index.js",
     "scripts": {
