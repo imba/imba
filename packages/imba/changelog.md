@@ -1,12 +1,29 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.224
 
 * Fixed parsing of nested template literal strings.
+
+* Enable sourcemapping by default when running scripts.
 
 * Added `imba.awaits`
 
 * Make sure automatic `import {...} from 'imba'` is inserted at the very top.
+
+* Make empty catch block return the error
+
+    Useful to be able to handle things like error handling for asynchronous promises in a more compact manner:
+
+    ```imba
+    # will just swallow potential errors like before
+    let res = try await some-function
+    # ending with catch will return the error instead of the result
+    let res = try await some-function catch
+    if res isa Error
+        ...
+    ```
+
+* Various fixes
 
 ## 2.0.0-alpha.223
 
