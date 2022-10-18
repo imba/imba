@@ -170,7 +170,11 @@ export class Logger
 			console.log(sym + ' ' + str,...rest)
 	
 	def debug ...pars do write('debug',...pars)
-	def log ...pars do write('info',...pars)
+		
+	def log ...pars do
+		let [str,...rest] = format(...pars)
+		console.log(str,...rest)
+
 	def info ...pars do write('info',...pars)
 	def warn ...pars do write('warn',...pars)
 	def error ...pars do write('error',...pars)
@@ -192,6 +196,7 @@ export class Logger
 	get proxy
 		let fn = do(...pars) info(...pars)
 		fn.info = info.bind(self)
+		fn.log = log.bind(self)
 		fn.warn = warn.bind(self)
 		fn.error = error.bind(self)
 		fn.debug = debug.bind(self)
