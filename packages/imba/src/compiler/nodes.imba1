@@ -9596,7 +9596,10 @@ export class Tag < TagLike
 
 		if isDynamicType
 			ownCache = yes
-			typ = "{owncvar}.value"
+			if isMemoized
+				typ = "{owncvar}.value"
+			else
+				typ = type.c
 			# @cref = "{parentCache}[{osym('$2')}]"
 
 		# add unique flag to this element if it has inline styles or
@@ -9737,7 +9740,7 @@ export class Tag < TagLike
 				let k = "{parentCache}[{osym}]"
 
 
-				if isDynamicType
+				if isDynamicType and isMemoized
 					if option(:key)
 						# what if this is the only one, should be special?
 						add "{owncvar}={dynamicContextFn}({osym},{option(:key).c})"

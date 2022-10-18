@@ -68,6 +68,17 @@ describe "dynamic template and key" do
 		ok app.children[0] isa Post
 		items[1].type = Category
 
+describe "create dynamic type" do
+
+	test do
+		let typ = 'p'
+		let fn = do(data)
+			return new <{typ} data=data>
+
+		let item = fn(a: 1)
+		ok item isa HTMLParagraphElement
+
+
 describe "With component" do
 	let nr = 0
 	let counters = {
