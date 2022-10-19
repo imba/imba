@@ -29,6 +29,8 @@ export def imba(inlineOptions\Partial<Options> = {})
 	let viteConfig\ResolvedConfig;
 	let api\PluginAPI = {}
 	let resolvedImbaSSR\Promise<PartialResolvedId | null>;
+	let test?\boolean
+
 	validateInlineOptions(inlineOptions)
 	const cache = new VitePluginImbaCache();
 
@@ -40,7 +42,8 @@ export def imba(inlineOptions\Partial<Options> = {})
 			log.setLevel(config.logLevel)
 		options = await preResolveOptions(inlineOptions, config, configEnv)
 		const extraViteConfig = buildExtraViteConfig(options, config);
-		log.debug("additional vite config", extraViteConfig);		
+		log.debug("additional vite config", extraViteConfig);
+		test? = configEnv.mode === "test"
 		extraViteConfig;
 	def configResolved(config)
 		options = resolveOptions(options, config);
@@ -98,6 +101,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 	
 	def resolveId(importee, importer, opts)
 		let ssr = !!opts..ssr or options.ssr
+		ssr = no if test?
 		const imbaRequest = requestParser(importee, ssr)
 		if imbaRequest..query.imba
 			if imbaRequest.query.type === "style"

@@ -771,7 +771,7 @@ export default class Service < EventEmitter
 
 	def findImbaTokensOfType type
 		let res = []
-		for script in imbaScripts
+		for script in imbaScripts when script.doc
 			let matches = script.doc.getMatchingTokens(type)
 			res.push(...matches)
 		return res

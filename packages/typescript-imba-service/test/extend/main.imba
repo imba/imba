@@ -1,11 +1,16 @@
 import { Local } from './local'
 import { TestView } from './views/test'
 
+import { AppButton as ButtonFromApp } from 'ui/button'
+import * as Stars from 'ui/stars'
+
 import './index.css'
 import html from './index.html'
 import tool from './assets/tool.svg'
 
 import stuff from './ns?text'
+
+import './'
 
 const entries = {
 	view: import.iife('./view')
@@ -66,6 +71,7 @@ let m13\AutoGlobal
 
 m13.main
 
+
 let m14\SomeSubClass
 m14.that.sub.num
 
@@ -111,4 +117,8 @@ tag app-main
 		<app-button>
 		<input$text type='text'>
 		# <svg src='./assets/tool.svg'>
-		
+10
+
+
+
+# eof

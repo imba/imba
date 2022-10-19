@@ -71,6 +71,12 @@ export class Completion
 	def setup
 		Object.assign(item,sym)
 
+	def match matcher
+		if matcher isa RegExp
+			return matcher.test(name)
+		return no
+
+
 	def finalize
 		yes
 		
@@ -98,22 +104,7 @@ export class Completion
 	
 	set weight val
 		#weight = val
-		
-	def resolveAutoImport
-		let info = exportInfo
-		return unless info
-		let alias = info.importName or info.name
-		let name = info.importKind == 1 ? 'default' : alias
-		let edits = doc.createImportEdit(info.source,name,alias)
-		
-		if edits.alias
-			item.insertText = edits.alias
-			ns = edits.alias
 
-		elif edits.changes.length
-			item.additionalTextEdits = edits.changes
-		self
-		
 	get doc
 		#context.doc
 		
@@ -144,11 +135,17 @@ export class Completion
 	get kind
 		item.kind
 
+	get cat
+		#options.kind
+
 	set name val do label.name = val
 	get name do label.name
 		
 	set type val do label.type = val
 	get type do label.type
+
+	set desc val do label.description = val
+	get desc do label.description
 
 	set detail val
 		item.detail = val
@@ -208,12 +205,24 @@ export class Completion
 		return item
 		
 	def resolveImportEdits
+		let ii = importInfo or {}
+
+		if ii.namespacePrefix and cat != 'tagname'
+			item.insertText = ii.namespacePrefix + '.' + importName
+			return self
+
+		if ii.importClauseOrBindingPattern
+			let named = ii.importClauseOrBindingPattern..namedBindings..elements
+			for entry in (named or [])
+				if entry.propertyName..escapedText == importName
+					item.insertText = entry.name.escapedText	
+					return self
+
 		if let ei = exportInfo
 			let asType = ei.exportedSymbolIsTypeOnly or #options.kind == 'type'
-			let path = ei.packageName or util.normalizeImportPath(script.fileName,ei.modulePath)
-
-			let alias = ei.importName or ei.exportName
-			let name = (ei.exportKind == 1 or ei.exportKind == 2) ? 'default' : ei.exportName
+			let path = ii.moduleSpecifier or ei.packageName or util.normalizeImportPath(script.fileName,ei.modulePath or ei.moduleSpecifier)
+			let alias = ei.importName or ei.exportName or ei.symbolName
+			let name = (ei.exportKind == 1 or ei.exportKind == 2) ? 'default' : (ei.symbolTableKey or ei.exportName or ei.symbolName)
 			if ei.exportKind == 3
 				name = '*'
 
@@ -221,7 +230,14 @@ export class Completion
 			
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
-				# ns = "from '{path}'"
+		
+		elif ii
+			let path = ii.moduleSpecifier
+			let name = importName
+			let edits = script.doc.createImportEdit(path,util.toImbaIdentifier(name),util.toImbaIdentifier(name),false)
+			if edits.changes.length
+				item.additionalTextEdits = edits.changes
+
 		self
 
 export class SymbolCompletion < Completion
@@ -230,7 +246,7 @@ export class SymbolCompletion < Completion
 		sym.imbaName
 
 	def setup
-		let cat = #options.kind
+		# let cat = #options.kind
 		let par = sym.parent
 		let tags = sym.imbaTags or {}
 		let o = #options
@@ -399,27 +415,53 @@ export class SymbolCompletion < Completion
 				unless cat.indexOf('style') >= 0
 					item.detail = util.displayPartsToString(util.toImbaDisplayParts(dp))
 
-
 			util.log 'resolve completion',item
-			# documentation: this.mapDisplayParts(details.documentation, project),
-			# tags: this.mapJSDocTagInfo(details.tags, project, useDisplayParts),
-			# item.documentation = details.documentation
-			# item.documentation = details.documentation
 			resolveImportEdits!
 		self
 		
 export class AutoImportCompletion < SymbolCompletion
 	
-	def load symbol, context, options = {}
-		exportInfo = symbol
-		sym = symbol.symbol
+	def load data, context, options = {}
+		importData = data
+		exportInfo = data
+		sym = data.symbol
+		# resolve it immediately?
+		self
+
+	def setup
+		name = importData.exportName
+		try resolveSpecifier!
+		self
+
+	def resolveSpecifier
+		let out = #context.checker.autoImports.resolve([importData])
+		importInfo = out[0]
+		exportInfo = importInfo.exportInfo or importData.exportInfo[0]
+		item.detail = importInfo.moduleSpecifier
+		desc = item.source = importInfo.moduleSpecifier
+
+		if importInfo.namespacePrefix and cat != 'tagname'
+			item.insertText = importInfo.namespacePrefix + '.' + importName
+
+		elif importInfo.importClauseOrBindingPattern
+			let named = importInfo.importClauseOrBindingPattern..namedBindings..elements
+			for entry in (named or [])
+				if entry.propertyName..escapedText == importName
+					item.insertText = entry.name.escapedText	
+		return self
+		
+	def resolve
+		resolveImportEdits! unless item.insertText
 		self
 		
 	get symName
-		util.toImbaIdentifier(exportInfo.importName or exportInfo.exportName)
+		util.toImbaIdentifier(importData.exportName)
 		
 	get importPath
-		exportInfo.packagName or exportInfo.modulePath
+		exportInfo..packagName or exportInfo..modulePath
+
+	get importName
+		importData.exportName
 		
 	get uniqueName
 		symName + importPath
@@ -701,7 +743,7 @@ export default class Completions
 			# all globally available types
 			let typesymbols = checker.getSymbols('Type')
 			add(typesymbols,o)
-			add(autoimporter.getExportedTypes!,{kind: 'type', weight: 2000})
+			add(checker.autoImports.getExportedTypes!,{kind: 'type', weight: 2000})
 		
 	def tagattrs o = {}
 		let sym = checker.sym("HTMLElementTagNameMap.{o.name}")
@@ -726,15 +768,47 @@ export default class Completions
 	def paths o = {}
 		# look at the potential paths?
 		let g = ctx.group
-		if g.type == 'path'
-			let start = ctx.before.line.split(/["']/g).pop!
-			let pre = ctx.before.group
-			let fileNames = global.ils.cp.program.getRootFileNames()
+		return self unless g.type == 'path'
 
+		let start = ctx.before.line.split(/["']/g).pop!
+		let sources = []
+
+		if start[0] == '.'
+			let reldir = start.replace(/\/[^\/]+$/,'/')
+			let dir = util.resolveImportPath(script.fileName,reldir) + '/'
+
+			let host = script.project.directoryStructureHost
+			if host
+				let dirs = host.getDirectories(dir)
+				let files = host.readDirectory(dir,['.imba',''],['.DS_Store'],[],1)
+				# console.log 'items!!',files,dirs,[pre]
+
+				sources = []
+
+				for item in dirs
+					sources.push({
+						path: item
+						name: item
+						kind: 'dir'
+					})
+
+				for item in files
+					let name = util.nameForPath(item)
+					sources.push({
+						path: item
+						name: name
+						kind: 'file'
+					})
+
+		elif start.match(/^@?[\w\-]/)
+			sources = []
+
+		else
+			let fileNames = global.ils.cp.program.getRootFileNames()
 			let dirs = fileNames.map(do util.dirForPath($1)).filter do $3.indexOf($1) == $2
 
-			let sources = fileNames.map do
-				{
+			fileNames.map do
+				sources.push {
 					path: $1
 					kind: 'file'
 					importPath: util.normalizeImportPath(script.fileName,$1)
@@ -747,27 +821,15 @@ export default class Completions
 					importPath: util.normalizeImportPath(script.fileName,dir)
 				})
 			
+			# use path info from js/tsconfig?
 
 			# drop dts files
 			sources = sources.filter do !util.isDts($1.path)
 
-			# let norm = sources.map do util.normalizeImportPath(script.fileName,$1)
-			# relative path?
-			if start[0] == '.'
-				let reldir = start.replace(/\/[^\/]+$/,'/')
-				let dir = util.resolveImportPath(script.fileName,reldir) + '/'
-				# console.log 'in dir',dir
-				sources = sources.filter do $1.path.indexOf(dir) == 0
-				sources.map do
-					$1.name = $1.path.slice(dir.length)
-				# find the actual directory and list items from that?
-				# norm = norm.filter do $1.indexOf(start) == 0
-			# console.log "found sources",[sources,pre,start]
+		add(sources,o)
 
-			if start.match(/^@?[\w\-]/)
-				sources = []
+		
 
-			add(sources,o)
 		self
 		
 	def values
@@ -802,10 +864,12 @@ export default class Completions
 		add(checker.globals,weight: 500,matchRegex: prefixRegex, implicitGlobal: yes)
 		
 
-		if prefixRegex
-			let imports = checker.autoImports.getVisibleExportedValues!
-			imports = imports.filter do $1.important or prefixRegex.test($1.importName or $1.exportName)
-			add(imports, weight: 2000)
+		if prefixRegex or prefs.all
+			let imports1 = checker.autoImports.search(prefixRegex,global.ts.SymbolFlags.Value)
+			# let imports = checker.autoImports.getVisibleExportedValues!
+			# util.log('autoExports',prefixRegex,imports1,imports)
+			# imports = imports.filter do $1.important or prefixRegex.test($1.importName or $1.exportName)
+			add(imports1, weight: 2000)
 			# check for the export paths as well
 
 		try
@@ -880,14 +944,21 @@ export default class Completions
 		#added[type] = results or true
 		return self
 
-	def serialize
+	def serialize vals = items
 		let entries = []
 		let stack = {}
-		for item in items
+		for item in vals
 			let entry = item.serialize(stack)
 			entries.push(entry) if entry
 
 		return entries
+
+	def filter filter
+		let fn = filter
+		let items = items
+		if filter isa RegExp
+			fn = do(item) item.match(filter)
+		items.filter(fn)
 		
 	def find item
 		items.find do $1.name == item

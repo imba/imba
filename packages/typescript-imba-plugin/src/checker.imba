@@ -572,7 +572,7 @@ export default class ImbaTypeChecker
 		checker.getDeclaredTypeOfSymbol(cssmodule.exports.get("css${name}"))
 
 	def snippets name
-		props(checker.getDeclaredTypeOfSymbol(resolve('imba_snippets').exports.get(name)))
+		try props(checker.getDeclaredTypeOfSymbol(resolve('imba_snippets').exports.get(name))) catch e []
 
 	def type item, declaredType = no
 		if typeof item == 'string'
@@ -972,6 +972,9 @@ export default class ImbaTypeChecker
 
 	def getStyleCustomUnits
 		global.ils.findImbaTokensOfType('style.property.unit.name')
+
+	def getTagDeclarationNames
+		global.ils.findImbaTokensOfType('entity.name.component')
 
 	def getSignatureHelpForType typ, name
 

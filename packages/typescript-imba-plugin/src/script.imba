@@ -275,6 +275,10 @@ export default class ImbaScript
 			let checker = program.getTypeChecker!
 			return new ImbaTypeChecker(project,program,checker,self)
 
+	
+	get checker
+		$checker ||= getTypeChecker()
+
 		
 	def getSemanticTokens
 		let result\number[] = []

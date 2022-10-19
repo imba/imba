@@ -56,7 +56,8 @@ export default class Bundle < Component
 	get cjs? do o.format == 'cjs'
 	get iife? do o.format == 'iife'
 	get html? do o.format == 'html'
-	
+
+	get sourcemapped? do !!esoptions.sourcemap
 
 	get build?
 		program.command == 'build'
@@ -224,7 +225,7 @@ export default class Bundle < Component
 
 		self.externals = externals
 
-		# console.log "bundle externals",externals
+		
 		esoptions = {
 			entryPoints: entryPoints
 			bundle: o.bundle === false ? false : true

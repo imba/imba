@@ -1130,6 +1130,8 @@ export class Node
 			return OP(node.op,node.left,self)
 		elif node isa Return
 			return Return.new(self)
+		elif node == NumberLike
+			return NumberLike.new(self)
 		return self
 
 	def toExpression
@@ -4813,6 +4815,16 @@ export class Obj < Literal
 	def toString
 		"Obj"
 
+export class NumberLike < ValueNode
+
+	def consume node
+		if node == NumberLike or node isa NumberLike
+			return self
+		super
+
+	def js
+		"({@value.c}).valueOf()"
+
 export class ObjAttr < Node
 
 	prop key
@@ -5049,11 +5061,24 @@ export class Op < Node
 
 	def js o
 		var out = null
+		
+
+		if STACK.tsc and isBitwise
+			if isAssignment
+				let typ = String(@op).split('=')
+				@op = '='
+				@right = OP(typ[0],@left,@right)
+			else
+				@right = @right.consume(NumberLike) if @right
+				@left = @left.consume(NumberLike) if @left
+		
 		var op = @op
 		let opv = op
 
 		var l = @left
 		var r = @right
+
+		# make the left and right consume valueOf
 		
 		if op == '!&'
 			return "({C l} {M '&',@opToken} {C r})==0"
@@ -5101,6 +5126,12 @@ export class Op < Node
 	def isLogical
 		@op == '&&' or @op == '||'
 
+	def isBitwise
+		!!constants.BITWISE_OPERATORS[@op]
+
+	def isAssignment
+		!!constants.ASSIGNMENT_OPERATORS[@op]
+
 	def shouldParenthesize
 		@parens
 		# option(:parens)
@@ -5109,6 +5140,10 @@ export class Op < Node
 		10
 
 	def consume node
+		if node == NumberLike
+			if isBitwise
+				return self
+
 		return super if isExpressable
 
 		# TODO can rather use global caching?
@@ -7778,6 +7813,9 @@ export class Catch < ControlFlowStatement
 	def visit
 		@scope.visit
 		@variable = @scope.register(@varname,self,type: 'let', pool: 'catchvar')
+		if @body.len == 0
+			@body.push(@variable.accessor)
+
 		@body.traverse
 
 
@@ -9558,7 +9596,10 @@ export class Tag < TagLike
 
 		if isDynamicType
 			ownCache = yes
-			typ = "{owncvar}.value"
+			if isMemoized
+				typ = "{owncvar}.value"
+			else
+				typ = type.c
 			# @cref = "{parentCache}[{osym('$2')}]"
 
 		# add unique flag to this element if it has inline styles or
@@ -9699,7 +9740,7 @@ export class Tag < TagLike
 				let k = "{parentCache}[{osym}]"
 
 
-				if isDynamicType
+				if isDynamicType and isMemoized
 					if option(:key)
 						# what if this is the only one, should be special?
 						add "{owncvar}={dynamicContextFn}({osym},{option(:key).c})"

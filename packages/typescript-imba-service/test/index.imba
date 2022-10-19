@@ -60,17 +60,19 @@ def run
 		file = findFile(file)
 		return file.getTypeChecker!
 
-	def completions file, pos, o = {triggerCharacter: ''}
+	def completions file, pos, o = {}, filter = null
+		o.triggerCharacter ??= ''
 		file = findFile(file)
 		let src = file.fileName or file
 		pos = findPos(file,pos)
 		let ctx = file.doc.getContextAtOffset(pos)
-		let res = x.ls.getQuickInfoAtPosition(src,pos)
+		# let res = x.ls.getQuickInfoAtPosition(src,pos)
 		let completions = file.getCompletions(pos,o)
+		completions.items = completions.filter(filter) if filter
 		let plain = completions.serialize!.map do $1.label..name or $1.label
 		console.log 'ctx',src
-		# ,ctx.before
 		console.log plain
+		return completions
 
 	def check doc, pos
 		let ctx = doc.doc.getContextAtOffset(pos)
@@ -78,6 +80,17 @@ def run
 		console.log "at pos",pos,ctx.before.line
 		let plain = completions.serialize!.map do $1.label..name or $1.label
 		console.log plain
+
+	def completion file, filter = null, pos = "~\n# eof", o = {}
+		let res = completions(file, pos,{all: yes},filter)
+		
+		# debugger
+		res.items[0].resolve!
+		console.log res.items[0].importData
+		console.log res.serialize![0]
+		return res.items[0]
+
+
 
 	if false
 		getdef(doc,'<ap~p-button ')
@@ -96,6 +109,37 @@ def run
 		let jsdts = dts.replace(/\extend\/(.*)$/g) do "extendjs/{$1.replace('.imba','.js')}"
 		jsdts = jsdts.replace(/extend\//g,'extendjs/').replace(/\.imba/g,'.js')
 		fs.writeFileSync('./extendjs/global.d.ts',jsdts)
+
+	if true
+		let Value = ts.SymbolFlags.Value
+		let api = doc.checker.autoImports
+		let res = api.search('PrimaryB',Value)
+		let res2 = api.search do(name,flags)
+			console.log name,flags,flags & Value
+			return yes
+		p res
+		let resolved = api.resolve(res)
+		p resolved
+		console.log 8192 & Value
+
+	if 1
+		completion(doc,/PrimaryButt/)
+		completion(doc,/PrimaryDef/)
+		let but = completion(doc,/AppButt/)
+		# console.log but.importInfo.importClauseOrBindingPattern.namedBindings.elements[0]
+		completion(doc,/AppStar/)
+	
+	if 1
+		completions(doc,"import './~'")
+		p completions(doc,"let m14\\~",{},/AppSt/).serialize!
+		
+
+	if 0
+		let res = completions(doc,"~\n# eof",{all: yes},/AppB/)
+		console.log res.items[0]
+		res.items[0].resolve!
+		console.log res.items[0].exportInfo
+		console.log res.serialize![0]
 
 	process.exit(0)
 

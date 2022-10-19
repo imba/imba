@@ -45,7 +45,7 @@ class WorkerInstance
 			exec: path
 			execArgv: [
 				o.inspect and '--inspect',
-				o.sourcemap and '--enable-source-maps'
+				(o.sourcemap or bundle.sourcemapped?) and '--enable-source-maps'
 			].filter do $1
 		}
 
@@ -221,6 +221,7 @@ export default class Runner < Component
 	def start
 		let max = o.instances or 1
 		let nr = 1
+
 		let name = o.name or 'script' # or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
