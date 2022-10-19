@@ -4,8 +4,11 @@ import compression from "compression"
 import serveStatic from "serve-static"
 import App from './src/App.imba'
 import * as Vite from "vite"
-# import moduleGraph from "./server.moduleGraph.json"
+import np from 'node:path'
+import url from 'node:url'
 
+# import moduleGraph from "./server.moduleGraph.json"
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 # We need to load SSR styles manually in order to prevent FOUC
 # We leverage vite-node to create a module graph from the server entry point
 # And we load all the tags CSS in separate files and concatenate them  here
@@ -23,8 +26,6 @@ const portArgPos = args.indexOf("--port") + 1
 if portArgPos > 0
 	port = parseInt(args[portArgPos], 10)
 
-const CLIENT_ENTRY = "src/main.js"
-
 def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "production")
 	const resolve = do(p) path.resolve(root, p)
 
@@ -32,12 +33,13 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 	if isProd
 		manifest = (await import("./dist/manifest.json")).default
 	const app = express()
+	const configFile = np.join(__dirname, "vite.config.client.js")
 	let vite
 	if !isProd
 		vite = await Vite.createServer
 			root: root
 			appType: "custom"
-			configFile: "vite.config.client.js"
+			configFile: configFile
 			server:
 				middlewareMode: true
 				port: port
@@ -65,11 +67,11 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 					<title> "Imba App"
 					if !isProd
 						<script type="module" src="/@vite/client">
-						<script type="module" src="/{CLIENT_ENTRY}">
+						<script type="module" src="/src/main.js">
 						<style id="dev_ssr_css" innerHTML=ssr-styles>
 					else
-						const prod-src = manifest[CLIENT_ENTRY].file
-						const css-files = manifest[CLIENT_ENTRY].css
+						const prod-src = manifest["src/main.js"].file
+						const css-files = manifest["src/main.js"].css
 						<script type="module" src=prod-src>
 						for css-file in css-files
 							<style src=css-file>

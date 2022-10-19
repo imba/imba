@@ -97,4 +97,3 @@ const exitProcess = do
 process.once "SIGTERM", exitProcess
 process.once "SIGINT", exitProcess
 process.stdin.on "end", exitProcess
-

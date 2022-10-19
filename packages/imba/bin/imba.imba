@@ -9,6 +9,8 @@ import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
 import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
+import { spawn } from 'child_process'
+import { viteServerConfigFile, resolveWithFallbacks, importWithFallback } from '../src/utils/vite'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -157,7 +159,21 @@ def eject(o)
 	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
 	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
 	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
-	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply want to chat"
+	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply have a question"
+
+def test o
+	const vitest-path = np.join(__dirname, "../node_modules/.bin", "vitest")
+	const configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
+	const options =
+		cwd: process.cwd()
+		env: {
+			...process.env
+			FORCE_COLOR: yes
+		}
+		stdio: "inherit"
+	const vitest = spawn vitest-path, params, options
+
 def run entry, o, extras
 	return cli.help! unless o.args.length > 0
 	let [path,q] = entry.split('?')
@@ -203,40 +219,19 @@ def run entry, o, extras
 
 	if o.command == 'build'
 		if o.vite
-			let Vite
-			try 
-				Vite = await import("vite")
-			catch e
-				Vite = await import("vite-bundled")
-
-			let VitePlugin
-			try 
-				VitePlugin = await import("vite-plugin-imba")
-			catch e
-				VitePlugin = await import("vite-plugin-imba-bundled")
-			let configFile = np.join(__dirname,"./vite.config.server.js")
+			let Vite = await importWithFallback("vite-bundled", "vite")
+			let configFile = viteServerConfigFile
 			const userConfig = np.resolve("./vite.config.server.js")
 			if nfs.existsSync(userConfig)
 				configFile = userConfig
-			let config-has-plugin = no
-			try
-				const config = await import(pathToFileURL configFile)
-				if typeof config.default == "function"
-					config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
-				else
-					config-has-plugin = config.default.plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
-			console.log "Building {entry} ..."
-			const plugins = config-has-plugin ? [] : [VitePlugin.imba(ssr:yes)]
-			const output = await Vite.build
+			await Vite.build
 				# configFile: configFile
 				configFile: configFile
-				plugins: plugins
 				build:
 					rollupOptions:
 						input: entry
 
 		return
-	# debugger
 	let run = do
 		o.name ||= entry	
 		let runner = new Runner(bundle,o)
@@ -293,6 +288,11 @@ cli
 	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
 	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
 	.action(eject)
+
+cli
+	.command('test').description('Run tests: This is a wrapper on top of vitest')
+	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
+	.action(test)
 
 cli.command('create [project]','Create a new imba project from a template')
 

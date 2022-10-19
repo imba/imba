@@ -7,7 +7,7 @@ export default defineConfig(({ command, mode }) => {
 	console.log("c", command, mode)
 	return ({
 		appType: "custom",
-		plugins: [imbaPlugin({ ssr: false })],
+		plugins: [imbaPlugin({ ssr: mode != "test" })],
 		resolve: {
 			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 		},

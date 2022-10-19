@@ -8,6 +8,7 @@ import {Logger} from '../utils/logger'
 import {builtinModules} from 'module'
 import {createHash, slash} from './utils'
 import mm from 'micromatch'
+import { viteServerConfigFile, resolveWithFallbacks, importWithFallback } from '../utils/vite'
 
 class WorkerInstance
 	runner = null
@@ -167,38 +168,12 @@ export default class Runner < Component
 		rerun
 	def initVite
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
-		let Vite
-		try 
-			Vite = await import("vite")
-		catch e
-			Vite = await import("vite-bundled")
-		let ViteNode
-		try 
-			ViteNode = await import("vite-node/server")
-		catch e
-			ViteNode = await import("vite-node-bundled/server")
-		let VitePlugin
-		try 
-			VitePlugin = await import("vite-plugin-imba")
-		catch e
-			VitePlugin = await import("vite-plugin-imba-bundled")
-		
-		let configFile = np.join(__dirname,"./vite.config.server.js")
-		const userConfig = np.resolve("./vite.config.server.js")
-		if nfs.existsSync(userConfig)
-			configFile = userConfig
-		let config-has-plugin = no
-		try
-			const config = await import(pathToFileURL configFile)
-			if typeof config.default == "function"
-				config-has-plugin = config.default({}).plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
-			else
-				config-has-plugin = config.default.plugins.find(do $1.length and $1[1]..name == "vite-plugin-imba")
+		let Vite = await importWithFallback("vite-bundled", "vite")
+		let ViteNode = await importWithFallback("vite-node-bundled/server", "vite-node/server")
 
-		const plugins = config-has-plugin ? [] : [VitePlugin.imba(ssr:yes)]
+		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.ts", "vite.config.server.js"])
 		viteServer = await Vite.createServer
 			configFile: configFile
-			plugins: plugins
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
 			transformMode:
 				ssr: [builtins]
