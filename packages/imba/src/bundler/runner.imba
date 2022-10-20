@@ -181,7 +181,7 @@ export default class Runner < Component
 			id = slash(id)
 			const needsRerun = handleFileChanged(id)
 			const file-path = np.relative(viteServer.config.root, id)
-			const skip? = mm.isMatch(file-path, o.skipReloadingFor)
+			const skip? = o.skipReloadingFor and mm.isMatch(file-path, o.skipReloadingFor)
 			if needsRerun and !skip?
 				for worker of workers
 					worker.current.process.send "kill"
