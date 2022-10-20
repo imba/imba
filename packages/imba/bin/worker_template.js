@@ -43,11 +43,7 @@ const runner = new ViteNodeRunner({
 );
 const file = '__FILE__'
 
-process.on("message", (msg)=>{
-	if(msg == "kill"){
-		process.exit()
-	}
-})
 await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });
+process.exit(0)

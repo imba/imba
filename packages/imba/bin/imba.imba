@@ -10,7 +10,7 @@ import Cache from '../src/bundler/cache'
 import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
-import { viteServerConfigFile, resolveWithFallbacks, importWithFallback } from '../src/utils/vite'
+import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled } from '../src/utils/vite'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -162,7 +162,8 @@ def eject(o)
 	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply have a question"
 
 def test o
-	const vitest-path = np.join(__dirname, "../node_modules/.bin", "vitest")
+	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 	const configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
 	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
 	const options =
@@ -184,6 +185,7 @@ def run entry, o, extras
 	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
+	await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba'], process.cwd()) if o.vite
 
 	# TODO support multiple entrypoints - especially for html
 	
@@ -219,11 +221,8 @@ def run entry, o, extras
 
 	if o.command == 'build'
 		if o.vite
-			let Vite = await importWithFallback("vite-bundled", "vite")
-			let configFile = viteServerConfigFile
-			const userConfig = np.resolve("./vite.config.server.js")
-			if nfs.existsSync(userConfig)
-				configFile = userConfig
+			let Vite = await import("vite")
+			const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.ts", "vite.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
 			await Vite.build
 				# configFile: configFile
 				configFile: configFile

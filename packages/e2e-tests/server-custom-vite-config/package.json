@@ -10,7 +10,7 @@
     "build:server": "vite build -c vite.config.server.js",
     "preview": "cross-env NODE_ENV=production node dist_server/entry.js",
     "debug": "node --inspect-brk dist/server/server",
-	"test": "imba test"
+    "test": "imba test"
   },
   "devDependencies": {
     "@testing-library/dom": "^8.19.0",
@@ -20,12 +20,13 @@
     "express": "^4.18.1",
     "jsdom": "^20.0.1",
     "npm-run-all": "^4.1.5",
-    "serve-static": "^1.15.0"
+    "serve-static": "^1.15.0",
+    "vitest": "^0.24.3"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "imba": "../../imba",
     "vite": "^3.1.8",
-    "vite-plugin-imba": "^0.9.1"
+    "vite-plugin-imba": "^0.10.0"
   }
 }

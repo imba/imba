@@ -1,13 +1,12 @@
 import { builtinModules } from 'module'
-import imbaPlugin from '../plugin.mjs'
+import {imba} from 'vite-plugin-imba'
 import np from 'node:path'
 import { defineConfig } from 'vite'
 
 export default defineConfig(({ command, mode }) => {
-	console.log("c", command, mode)
 	return ({
 		appType: "custom",
-		plugins: [imbaPlugin({ ssr: mode != "test" })],
+		plugins: [imba({ ssr: true })],
 		resolve: {
 			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 		},

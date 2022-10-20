@@ -166,11 +166,21 @@ export default class Runner < Component
 			if heedsRerun
 				rerun = true
 		rerun
+	# TODO: static variables
+	_rerunTimer
+	restartsCount = 0
+	watcher-debounce = 100
+	def schedule-reload()
+		const currentCount = restartsCount
+		clearTimeout _rerunTimer
+		return if restartsCount !== currentCount
+		_rerunTimer = setTimeout(&, watcher-debounce) do
+			return if restartsCount !== currentCount
+			reload!
 	def initVite
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
-		let Vite = await importWithFallback("vite-bundled", "vite")
-		let ViteNode = await importWithFallback("vite-node-bundled/server", "vite-node/server")
-
+		let Vite = await import("vite")
+		let ViteNode = await import("vite-node/server")
 		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.ts", "vite.config.server.js"])
 		viteServer = await Vite.createServer
 			configFile: configFile
@@ -183,9 +193,7 @@ export default class Runner < Component
 			const file-path = np.relative(viteServer.config.root, id)
 			const skip? = o.skipReloadingFor and mm.isMatch(file-path, o.skipReloadingFor)
 			if needsRerun and !skip?
-				for worker of workers
-					worker.current.process.send "kill"
-				reload()
+				schedule-reload()
 		fileToRun = np.resolve bundle.cwd, o.name
 		let body = nfs.readFileSync(np.resolve(__dirname, "./worker_template.js"), 'utf-8')
 			.replace("__ROOT__", viteServer.config.root)
@@ -201,10 +209,11 @@ export default class Runner < Component
 				target: "node16"
 				lib:
 					formats: ["es"]
-					entry: require.resolve("vite-node-bundled/client").replace(".cjs", ".mjs")
+					entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
 					name: "vite-node-client"
 					fileName: "vite-node-client"
-		const fpath = np.join o.tmpdir, "bundle.{createHash(body)}.mjs"
+		const hash = createHash(body)
+		const fpath = np.join o.tmpdir, "bundle.{hash}.mjs"
 		# in windows, the path would start with c: ...
 		# and esm doesn't support it. 
 		const vnpath = pathToFileURL(np.join o.tmpdir, "vite-node-client.mjs")
@@ -217,7 +226,7 @@ export default class Runner < Component
 			fork?: no
 			result:
 				main: fpath
-				hash: ""
+				hash: hash
 	def start
 		let max = o.instances or 1
 		let nr = 1
@@ -237,10 +246,10 @@ export default class Runner < Component
 		if o.watch
 			#hash = bundle.result.hash
 
-			bundle.on('built') do(result)
+			# running with vite, we use a thinner bundle
+			bundle..on('built') do(result)
 				# console.log "got manifest?"
 				# let hash = result.manifest.hash
-				
 				if #hash =? result.hash
 					reload!
 				else
