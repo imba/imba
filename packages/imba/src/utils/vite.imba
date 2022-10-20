@@ -1,6 +1,6 @@
 import np from 'node:path'
 import nfs from 'node:fs'
-import {isPackageExists} from 'local-pkg'
+const {isPackageExists} = require('local-pkg')
 import c from 'picocolors'
 
 const EXIT_CODE_RESTART = 43
