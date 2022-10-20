@@ -46,4 +46,3 @@ const file = '__FILE__'
 await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });
-process.exit(0)

@@ -93,7 +93,7 @@ class WorkerInstance
 		
 		worker.on 'listening' do(address)
 			o.#listening = address
-			log.success "listening on %address",address
+			log.success "listening on %address",address unless o.vite
 			prev..send(['emit','reloaded'])
 			# now we can kill the reloaded process?
 
