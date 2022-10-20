@@ -30,6 +30,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 	let api\PluginAPI = {}
 	let resolvedImbaSSR\Promise<PartialResolvedId | null>;
 	let test?\boolean
+
 	validateInlineOptions(inlineOptions)
 	const cache = new VitePluginImbaCache();
 

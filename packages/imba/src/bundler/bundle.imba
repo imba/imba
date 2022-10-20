@@ -186,7 +186,7 @@ export default class Bundle < Component
 		devDependencies = Object.keys(pkg.devDependencies or {})
 
 
-
+	
 		for ext in o.external
 			# if ext[0] == '!'
 			#	externals.push(ext)

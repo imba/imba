@@ -16,5 +16,5 @@ export default tag App
 		imba.commit!
 	def render
 		<self>
-			<button[c:green bg:yellow4] @click.log("st")=(count++)> "Hello {count} times hello"
+			<button[c:green] @click.log("st")=(count++)> "Hello {count} times"
 			<my-counter>

@@ -3,14 +3,14 @@ import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
 import {program as cli} from 'commander'
-
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
-
 import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
+import { spawn } from 'child_process'
+import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled } from '../src/utils/vite'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -147,10 +147,36 @@ def parseOptions options, extras = []
 	global.#IMBA_OPTIONS = options
 	options.#parsed = yes
 	return options
+def eject(o)
+	o = parseOptions(o)
+	const configPath = "vite.config.server.js"
+	if nfs.existsSync(configPath) and !o.force
+		return console.log "You already have a vite.config.server.js in your project. Delete it or use `imba eject --force` to overwrite"
+	const defaultConfig = np.join(__dirname, configPath)
+	const content = nfs.readFileSync(defaultConfig, 'utf-8')
+	nfs.writeFileSync(configPath, content.replace(/\/\/eject\s/g, ''))
+	console.log "✅ vite.config.server.js has been successfully {o.force ? 'overwritten': 'created'}"
+	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
+	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
+	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
+	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply have a question"
+
+def test o
+	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
+	const configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
+	const options =
+		cwd: process.cwd()
+		env: {
+			...process.env
+			FORCE_COLOR: yes
+		}
+		stdio: "inherit"
+	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
 	return cli.help! unless o.args.length > 0
-	
 	let [path,q] = entry.split('?')
 	
 	path = np.resolve(path)
@@ -159,6 +185,7 @@ def run entry, o, extras
 	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
+	await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba'], process.cwd()) if o.vite
 
 	# TODO support multiple entrypoints - especially for html
 	
@@ -189,19 +216,31 @@ def run entry, o, extras
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))
 
 	let bundle = new Bundler(o,params)
-	let out = await bundle.build!
+	let out
+	out = await bundle.build! unless o.vite
 
 	if o.command == 'build'
+		if o.vite
+			let Vite = await import("vite")
+			const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.ts", "vite.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+			await Vite.build
+				# configFile: configFile
+				configFile: configFile
+				build:
+					rollupOptions:
+						input: entry
+
 		return
-
-	let run = do(result)
-		if let exec = result..main
-			o.name ||= entry	
-			let runner = new Runner(bundle,o)
-			runner.start!
-
-	if out..main
-		run(out)
+	let run = do
+		o.name ||= entry	
+		let runner = new Runner(bundle,o)
+		if o.vite
+			await runner.initVite!
+		runner.start!
+	if o.vite
+		run()
+	elif out..main
+		run()
 	elif o.watch
 		bundle.once('built',run)
 	return
@@ -221,6 +260,8 @@ def common cmd
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
+		.option("--vite", "Use Vite as a bundler for the server")
+		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
 		.option("--web","Build entrypoints for the browser")
@@ -241,6 +282,16 @@ common(cli.command('build <script>').description('Build an imba/js/html entrypoi
 common(cli.command('serve <script>').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.action(run)
+
+cli
+	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
+	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
+	.action(eject)
+
+cli
+	.command('test').description('Run tests: This is a wrapper on top of vitest')
+	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
+	.action(test)
 
 cli.command('create [project]','Create a new imba project from a template')
 

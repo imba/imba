@@ -236,11 +236,10 @@ let bundles = [
 		],
 		outExtension: { ".js": ".imba.js" },
 		minify: true,
-		external: ["chokidar", "esbuild"],
+		external: ["chokidar", "esbuild", "vite-node/client","vite-node/server", "vite-plugin-imba", "vite"],
 		outdir: ".",
 		format: "cjs",
 		platform: "node",
-	},
+	}
 ];
-
 bundle(bundles)

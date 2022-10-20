@@ -12,9 +12,14 @@ import {
 } from "~utils";
 
 test("SSR and hydration works", async () => {
-  expect(await page.textContent("button")).toMatch("Hello 1 times"); // after hydration
+  // after hydration
   const html = await fetchPageText();
   expect(html).toMatch("Hello 0 times"); // before hydration
+  await untilMatches(
+    () => page.textContent("button"),
+    "Hello 1 times",
+    "button has been hydrated",
+  );
 });
 
 test("Shared and server only styles are respected", async () => {

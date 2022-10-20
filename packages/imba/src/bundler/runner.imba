@@ -1,10 +1,16 @@
 import cluster from 'cluster'
 import np from 'path'
 import cp from 'child_process'
+import nfs from 'node:fs'
+import { pathToFileURL } from 'node:url';
 import Component from './component'
 import {Logger} from '../utils/logger'
+import {builtinModules} from 'module'
+import {createHash, slash} from './utils'
+import mm from 'micromatch'
+import { viteServerConfigFile, resolveWithFallbacks, importWithFallback } from '../utils/vite'
 
-class Instance
+class WorkerInstance
 	runner = null
 	fork = null
 	args = {}
@@ -52,14 +58,16 @@ class Instance
 			IMBA_CLUSTER: !bundle.fork?
 			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'warning'
 			PORT: process.env.PORT or o.port
+			VITE: o.vite
 		}
 
 		for own k,v of env
 			env[k] = '' if v === false
 
-		if bundle.fork?
+		if bundle.fork? and !o.vite
 			args.env = Object.assign({},process.env,env)
 			fork = cp.fork(np.resolve(path),args.args,args)
+			# setup-vite fork
 			fork.on('exit') do(code) process.exit(code)
 			return fork
 
@@ -75,7 +83,6 @@ class Instance
 			# log.info "reloading"
 			prev.#next = worker
 			prev..send(['emit','reloading'])
-
 		worker.on 'exit' do(code, signal)
 			if signal
 				log.info "killed by signal: %d",signal
@@ -86,7 +93,7 @@ class Instance
 		
 		worker.on 'listening' do(address)
 			o.#listening = address
-			log.success "listening on %address",address
+			log.success "listening on %address",address unless o.vite
 			prev..send(['emit','reloaded'])
 			# now we can kill the reloaded process?
 
@@ -94,8 +101,30 @@ class Instance
 			log.info "%red","errorerd"
 
 		# worker.on 'online' do log.info "%green","online"
+		# worker.on 'message' do(message, handle)
 
 		worker.on 'message' do(message, handle)
+			# console.log "msg", message, handle
+			if message.type == 'fetch'
+				# console.log "parent: fetching", message
+				const md = await runner.fetchModule(message.id)
+				# console.log "parent md", module
+				worker..send JSON.stringify
+					type: 'fetched'
+					id: message.id
+					md: md
+			elif message.type == 'resolve'
+				# console.log "resolving", message
+				const id = message.payload.id
+				const importer = message.payload.importer
+				const response = JSON.stringify
+					type: 'resolved'
+					output: await runner.resolveId(id, importer)
+					input: {id, importer}
+				worker.send response
+			if message == 'exit'
+				console.log "exit"
+				process.exit!
 			if message == 'reload'
 				console.log "RELOAD MESSAGE"
 				reload!
@@ -111,44 +140,116 @@ class Instance
 
 
 export default class Runner < Component
+	viteNodeServer
+	viteServer
+	fileToRun
 	def constructor bundle, options
 		super()
 		o = options
 		bundle = bundle
 		workers = new Set
-
+		fileToRun = np.resolve bundle.cwd, o.name
+	def fetchModule(id)
+		viteNodeServer.fetchModule id
+	def resolveId(id)
+		viteNodeServer.resolveId id
+	def handleFileChanged(id)
+		return yes if id == fileToRun
+		const mod = viteServer.moduleGraph.getModuleById(id)
+		return false unless mod
+		return false if o.skipReloadingFor and mm.isMatch(id, o.skipReloadingFor)
+		let rerun = false
+		mod.importers.forEach do(i)
+			if !i.id
+				return
+			const heedsRerun = handleFileChanged(i.id)
+			if heedsRerun
+				rerun = true
+		rerun
+	# TODO: static variables
+	_rerunTimer
+	restartsCount = 0
+	watcher-debounce = 100
+	def schedule-reload()
+		const currentCount = restartsCount
+		clearTimeout _rerunTimer
+		return if restartsCount !== currentCount
+		_rerunTimer = setTimeout(&, watcher-debounce) do
+			return if restartsCount !== currentCount
+			reload!
+	def initVite
+		const builtins = new RegExp(builtinModules.join("|"), 'gi');
+		let Vite = await import("vite")
+		let ViteNode = await import("vite-node/server")
+		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.ts", "vite.config.server.js"])
+		viteServer = await Vite.createServer
+			configFile: configFile
+		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
+			transformMode:
+				ssr: [builtins]
+		viteServer.watcher.on "change", do(id)
+			id = slash(id)
+			const needsRerun = handleFileChanged(id)
+			const file-path = np.relative(viteServer.config.root, id)
+			const skip? = o.skipReloadingFor and mm.isMatch(file-path, o.skipReloadingFor)
+			if needsRerun and !skip?
+				schedule-reload()
+		fileToRun = np.resolve bundle.cwd, o.name
+		let body = nfs.readFileSync(np.resolve(__dirname, "./worker_template.js"), 'utf-8')
+			.replace("__ROOT__", viteServer.config.root)
+			.replace("__BASE__", viteServer.config.base)
+			.replace("__FILE__", fileToRun)
+		const output = await Vite.build
+			optimizeDeps: {disabled: yes}
+			ssr:
+				target: "node"
+			build:
+				rollupOptions:
+					external: builtinModules
+				target: "node16"
+				lib:
+					formats: ["es"]
+					entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
+					name: "vite-node-client"
+					fileName: "vite-node-client"
+		const hash = createHash(body)
+		const fpath = np.join o.tmpdir, "bundle.{hash}.mjs"
+		# in windows, the path would start with c: ...
+		# and esm doesn't support it. 
+		const vnpath = pathToFileURL(np.join o.tmpdir, "vite-node-client.mjs")
+		nfs.writeFileSync(vnpath, output[0].output[0].code)
+		body = body.replace("__VITE_NODE_CLIENT__", vnpath)
+		nfs.writeFileSync(fpath, body)
+		# this is need to initialize the plugins
+		await viteServer.pluginContainer.buildStart({})
+		bundle =
+			fork?: no
+			result:
+				main: fpath
+				hash: hash
 	def start
 		let max = o.instances or 1
 		let nr = 1
-		let args = {
-			windowsHide: yes
-			args: o.extras
-			execArgv: [
-				o.inspect and '--inspect',
-				(o.sourcemap or bundle.sourcemapped?) and '--enable-source-maps'
-			].filter do $1
-		}
 
-		let name = o.name or 'script' or np.basename(bundle.result.main.source.path)
+		let name = o.name or 'script' # or np.basename(bundle.result.main.source.path)
 
 		while nr <= max
 			let opts = {
 				number: nr,
 				name: max > 1 ? "{name} {nr}/{max}" : name
 			}
-			workers.add new Instance(self,opts)
+			workers.add new WorkerInstance(self,opts)
 			nr++
 
 		for worker of workers
 			worker.start!
-
 		if o.watch
 			#hash = bundle.result.hash
 
-			bundle.on('built') do(result)
+			# running with vite, we use a thinner bundle
+			bundle..on('built') do(result)
 				# console.log "got manifest?"
 				# let hash = result.manifest.hash
-				
 				if #hash =? result.hash
 					reload!
 				else
