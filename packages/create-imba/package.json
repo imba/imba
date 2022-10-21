@@ -1,8 +1,8 @@
 {
   "name": "create-imba",
   "bin": {
-    "create-imba": "./index",
-    "imba-create": "./index"
+    "create-imba": "./bin",
+    "imba-create": "./bin"
   },
   "scripts": {
     "build": "imbac main.imba"
