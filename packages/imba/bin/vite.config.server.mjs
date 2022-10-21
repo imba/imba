@@ -43,7 +43,7 @@ export default defineConfig(({ command, mode }) => {
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 			environment: "jsdom",
-			setupFiles: [np.join(__dirname, "./test-setup.imba")],
+			setupFiles: [np.join(__dirname, "./test-setup.js")],
 			/** test/setup.imba content
 			 *  npm i @testing-library/dom @testing-library/jest-dom
 			 *  # Add this file to support testing library things 
