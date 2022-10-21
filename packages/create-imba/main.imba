@@ -14,13 +14,21 @@ def quit msg='Quit'
 	process.exit!
 
 const templates = [
-	name: 'Full Stack'
-	desc: 'Full stack app with backend in Express (Imba bundler)'
-	path: 'base'
+	name: 'Default'
+	desc: 'Client only application (Imba bundler)'
+	path: 'default'
 	-
-	name: 'Jamstack'
+	name: 'Vite'
 	desc: 'Client only application (Vite bundler)'
 	path: 'vite'
+	-
+	name: 'Express'
+	desc: 'Full stack application (Imba bundler)'
+	path: 'express'
+	-
+	name: 'Vitest'
+	desc: 'Client only application with vitest (Vite bundler)'
+	path: 'vitest'
 	-
 	name: 'Module'
 	desc: 'Good for reusable components, libraries, and use in nonImba projects (Vite bundler)'

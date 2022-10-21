@@ -1,0 +1,26 @@
+{
+  "name": "imba-module",
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.umd.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.umd.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "jsdom": "^20.0.1",
+    "vite": "^3.1.8",
+    "imba": "^2.0.0-alpha.224",
+    "vite-plugin-imba": "^0.10.0"
+  }
+}
