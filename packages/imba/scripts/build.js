@@ -230,7 +230,6 @@ let bundles = [
 	{
 		entryPoints: [
 			"bin/imba.imba",
-			"bin/imba-create.imba",
 			"program.imba",
 			"workers.imba"
 		],

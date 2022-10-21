@@ -3,7 +3,8 @@
     "packages/imba",
     "packages/typescript-imba-plugin",
     "packages/vscode-imba",
-    "packages/imba-monarch"
+    "packages/imba-monarch",
+    "packages/imba-create"
   ],
   "version": "independent"
 }

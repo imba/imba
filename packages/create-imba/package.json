@@ -1,0 +1,15 @@
+{
+  "name": "create-imba",
+  "bin": {
+    "create-imba": "./index",
+    "imba-create": "./index"
+  },
+  "scripts": {
+    "build": "imbac main.imba"
+  },
+  "dependencies": {
+    "kolorist": "^1.6.0",
+    "minimist": "^1.2.7",
+    "prompts": "^2.4.2"
+  }
+}
