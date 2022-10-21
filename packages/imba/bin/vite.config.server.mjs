@@ -6,9 +6,10 @@ import { defineConfig } from 'vite'
 export default defineConfig(({ command, mode }) => {
 	return ({
 		appType: "custom",
+		envPrefix: ['IMBA','VITE'],
 		plugins: [imba({ ssr: true })],
 		resolve: {
-			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+			extensions: ['.node.imba','.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 		},
 		esbuild: {
 			target: "node16",

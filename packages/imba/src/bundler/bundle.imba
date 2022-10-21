@@ -522,7 +522,7 @@ export default class Bundle < Component
 			let [path,q] = args.path.split('?')
 			let formats = q.replace(/^as=/,'').split(/[&\-]/g)
 
-			if q.match(/^(url|dataurl|binary|text|base64|file|copy|img|svg|styles|bundle|external)/)
+			if q.match(/^(url|dataurl|binary|raw|text|base64|file|copy|img|svg|styles|bundle|external)/)
 				return
 
 			let resolved
