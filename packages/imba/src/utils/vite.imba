@@ -5,6 +5,7 @@ import c from 'picocolors'
 
 const EXIT_CODE_RESTART = 43
 export const viteServerConfigFile = np.join(__dirname,"./vite.config.server.mjs")
+export const vitestSetupPath = np.join(__dirname,"./test-setup.js")
 
 export def importWithFallback(bundled, user)
 	let pkg

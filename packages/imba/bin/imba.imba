@@ -10,7 +10,7 @@ import Cache from '../src/bundler/cache'
 import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
-import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled } from '../src/utils/vite'
+import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -151,11 +151,16 @@ def eject(o)
 	o = parseOptions(o)
 	const configPath = "vite.config.server.js"
 	if nfs.existsSync(configPath) and !o.force
-		return console.log "You already have a vite.config.server.js in your project. Delete it or use `imba eject --force` to overwrite"
-	const defaultConfig = np.join(__dirname, configPath)
-	const content = nfs.readFileSync(defaultConfig, 'utf-8')
-	nfs.writeFileSync(configPath, content.replace(/\/\/eject\s/g, ''))
-	console.log "✅ vite.config.server.js has been successfully {o.force ? 'overwritten': 'created'}"
+		return console.log "You already have a vite.config.server in your project. Delete it or use `imba eject --force` to overwrite"
+	const configContent = nfs.readFileSync(viteServerConfigFile, 'utf-8')
+	nfs.writeFileSync(configPath, configContent.replace(/\/\/eject\s/g, ''))
+	console.log "✅ vite.config.server.mjs has been successfully {o.force ? 'overwritten': 'created'}"
+	const setupPath = "test-setup.js"
+	if nfs.existsSync(setupPath) and !o.force
+		return console.log "You already have a test-setup.js in your project. Delete it or use `imba eject --force` to overwrite"
+	const setupContent = nfs.readFileSync(vitestSetupPath, 'utf-8')
+	nfs.writeFileSync(setupPath, setupContent.replace(/\/\/eject\s/g, ''))
+	console.log "✅ test-setup.js has been successfully {o.force ? 'overwritten': 'created'}"
 	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
 	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
 	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
