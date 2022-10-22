@@ -39,14 +39,14 @@ const templates =
 		name: 'Tauri'
 		desc: 'Desktop application (Vite bundler)'
 
-const ignore = [
+const noCopy = [
 	'.git'
 	'node_modules'
 	'package-lock.json'
 ]
 
 def copy src, dest
-	return if ignore.includes path.basename(src)
+	return if noCopy.includes path.basename(src)
 	if path.basename(dest) is '_gitignore'
 		dest = path.join(path.dirname(dest), '.gitignore')
 	if fs.statSync(src).isDirectory!
