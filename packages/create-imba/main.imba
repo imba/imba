@@ -56,13 +56,17 @@ def copy src, dest
 	else
 		fs.copyFileSync(src,dest)
 
+def validateProjectName name
+	return 'Project name already exists' if fs.existsSync(name)
+	unless /^[\w.-]+$/.test name
+		return 'Invalid repository name, can only contain a-z A-Z 0-9 _.-'
+	yes
+
 def getValidProjectName name
 	return unless typeof name is 'string'
 	name = name.trim!.replaceAll(/\s+/g,'-')
 	return name if name is '.'
-	throw 'Project name already exists' if fs.existsSync(name)
-	unless /^[\w.-]+$/.test name
-		throw 'Invalid repository name, can only contain a-zA-Z0-9_.-'
+	return if validateProjectName(name) isnt yes
 	name
 
 def getTemplateByName name
@@ -73,47 +77,37 @@ def main
 
 	const args = parseArgs process.argv.slice(2)
 
-	let opts = { onCancel: do quit! }
+	let opts =
+		onCancel: do quit!
 
-	let projectName
-	if args._[0]
-		try
-			projectName = getValidProjectName args._[0]
-		catch e
-			p red(e)
+	let projectName = getValidProjectName args._[0]
 
-	unless projectName
-		{ projectName } = await prompt {
-			type: 'text'
-			name: 'projectName'
-			message: 'Enter a project name or . for current dir'
-			initial: 'imba-project'
-			format: getValidProjectName
-			validate: do
-				try
-					yes if getValidProjectName $1
-				catch e
-					e
-		}, opts
+	projectName ??= (await prompt {
+		type: 'text'
+		message: 'Enter a project name or . for current dir'
+		initial: args._[0] or 'imba-project'
+		format: getValidProjectName
+		validate: validateProjectName
+		name: 'value'
+	}, opts).value
 
 	if projectName is '.'
 		try
-			if execSync("git status --porcelain", { stdio: "pipe" }).toString!
+			if execSync('git status --porcelain',stdio:'pipe').toString!
 				throw 1
 		catch
 			quit 'Creating a project in the current directory requires a clean git status'
 
 	let template = getTemplateByName(args.t or args.template)
 
-	unless template
-		{ template } = await prompt {
-			type: 'select'
-			name: 'template'
-			message: 'Choose a template'
-			choices: templates.map do
-				{ title:$1.name, description:$1.desc, value:$1 }
-			initial: 0
-		}, opts
+	template ??= (await prompt {
+		type: 'select'
+		message: 'Choose a template'
+		choices: templates.map do
+			{ title:$1.name, description:$1.desc, value:$1 }
+		initial: 0
+		name: 'value'
+	}, opts).value
 
 	let src = path.join swd, 'templates', template.path
 	let dest = path.join cwd, projectName
@@ -124,7 +118,7 @@ def main
 	try
 		copy src, dest
 		let dirStr = "./{projectName is '.' ? '' : projectName}"
-		p green("\nCreated project in {dirStr}")
+		p green("\nCreated <{template.name}> project in {dirStr}")
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
@@ -133,7 +127,7 @@ def main
 	try
 		process.chdir dest
 		execSync "npm pkg set name='{projectName}'"
-		execSync 'npm up -S', {stdio: 'inherit'}
+		execSync 'npm up -S',stdio:'inherit'
 	catch e
 		p red("\nFailed to install dependencies:\n\n{e}")
 
