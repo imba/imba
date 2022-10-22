@@ -13,20 +13,20 @@
     "tauri": "tauri"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.1.1",
-    "@testing-library/dom": "^8.19.0",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@vitest/coverage-c8": "^0.24.3",
-    "@vitest/ui": "^0.24.3",
-    "jsdom": "^20.0.1",
-    "vite": "^3.1.8",
-    "vite-plugin-imba": "^0.10.0",
-    "vitest": "^0.24.3",
-    "vitest-github-actions-reporter-temp": "^0.8.3",
-    "imba": "^2.0.0-alpha.224",
-    "source-map": "^0.7.4"
+    "@tauri-apps/cli": "*",
+    "@testing-library/dom": "*",
+    "@testing-library/jest-dom": "*",
+    "@vitest/coverage-c8": "*",
+    "@vitest/ui": "*",
+    "jsdom": "*",
+    "vite": "*",
+    "vite-plugin-imba": "*",
+    "vitest": "*",
+    "vitest-github-actions-reporter-temp": "*",
+    "imba": "*",
+    "source-map": "*"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.1.0"
+    "@tauri-apps/api": "*"
   }
 }

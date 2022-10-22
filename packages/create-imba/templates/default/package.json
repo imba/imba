@@ -7,6 +7,6 @@
 		"preview": "npx http-server dist"
 	},
 	"devDependencies": {
-		"imba": "^2.0.0-alpha.224"
+		"imba": "*"
 	}
 }

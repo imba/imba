@@ -11,14 +11,14 @@
     "test:ui": "vitest --ui"
   },
   "devDependencies": {
-    "@testing-library/dom": "^8.19.0",
-    "@vitest/ui": "^0.24.3",
-    "jsdom": "^20.0.1",
-    "vite": "^3.1.8",
-    "vitest": "^0.24.3",
-    "vitest-github-actions-reporter-temp": "^0.8.3",
-	"@testing-library/jest-dom": "^5.16.5",
-	"imba": "latest",
-	"vite-plugin-imba": "latest"
+    "@testing-library/dom": "*",
+    "@vitest/ui": "*",
+    "jsdom": "*",
+    "vite": "*",
+    "vitest": "*",
+    "vitest-github-actions-reporter-temp": "*",
+    "@testing-library/jest-dom": "*",
+    "imba": "*",
+    "vite-plugin-imba": "*"
   }
 }

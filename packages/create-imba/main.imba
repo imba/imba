@@ -133,7 +133,7 @@ def main
 	try
 		process.chdir dest
 		execSync "npm pkg set name='{projectName}'"
-		execSync 'npm i', {stdio: 'inherit'}
+		execSync 'npm up -S', {stdio: 'inherit'}
 	catch e
 		p red("\nFailed to install dependencies:\n\n{e}")
 

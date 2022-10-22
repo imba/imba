@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^3.1.8",
-    "imba": "^2.0.0-alpha.224",
-    "vite-plugin-imba": "^0.10.0"
+    "vite": "*",
+    "imba": "*",
+    "vite-plugin-imba": "*"
   }
 }
