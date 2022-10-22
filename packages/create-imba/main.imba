@@ -34,8 +34,8 @@ const templates = [
 	desc: 'A module that can be used in any JavaScript project (Vite bundler)'
 	path: 'module'
 	-
-	name: 'Desktop'
-	desc: 'Desktop application using Tauri (Vite bundler)'
+	name: 'Tauri'
+	desc: 'Desktop application (Vite bundler)'
 	path: 'tauri'
 ]
 
