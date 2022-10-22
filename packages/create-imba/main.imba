@@ -39,8 +39,14 @@ const templates = [
 	path: 'tauri'
 ]
 
+const ignore = [
+	'.git'
+	'node_modules'
+	'package-lock.json'
+]
+
 def copy src, dest
-	return if path.basename(src) is '.git'
+	return if ignore.includes path.basename(src)
 	if path.basename(dest) is '_gitignore'
 		dest = path.join(path.dirname(dest), '.gitignore')
 	if fs.statSync(src).isDirectory!
