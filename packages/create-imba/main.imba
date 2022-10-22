@@ -31,7 +31,7 @@ const templates = [
 	path: 'vitest'
 	-
 	name: 'Module'
-	desc: 'Good for reusable components, libraries, and use in nonImba projects (Vite bundler)'
+	desc: 'A module that can be used in any JavaScript project (Vite bundler)'
 	path: 'module'
 	-
 	name: 'Desktop'

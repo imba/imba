@@ -17,7 +17,7 @@ tag app
 	<self[max-width:1280px m:0 auto p:2rem ta:center]>
 
 		# this css applies to nested img elements and not parents
-		css img h:35 w:auto p:1.5em
+		css img h:35 p:1.5em
 			transition:transform 250ms, filter 250ms
 			@hover transform:scale(1.1)
 				filter:drop-shadow(0 0 4em red5)

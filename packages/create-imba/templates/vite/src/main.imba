@@ -17,7 +17,7 @@ tag app
 	<self[max-width:1280px m:0 auto p:2rem ta:center]>
 
 		# this css applies to nested svg elements and not parents
-		css img h:35 w:auto p:1.5em
+		css img h:23 p:1.5em
 			transition:transform 250ms, filter 250ms
 			@hover transform:scale(1.1)
 				filter:drop-shadow(0 0 4em red5)
@@ -25,7 +25,7 @@ tag app
 		<a href="https://imba.io" target="_blank">
 			<img.wing src="https://raw.githubusercontent.com/imba/branding-imba/master/yellow-wing-logo/imba.svg">
 		<a href="https://vitejs.dev" target="_blank">
-			<img[w:35] src="https://raw.githubusercontent.com/imba/branding-imba/master/misc/vite.svg">
+			<img src="https://raw.githubusercontent.com/imba/branding-imba/master/misc/vite.svg">
 				css filter@hover:drop-shadow(0 0 4em white7)
 		<a href="https://imba.io" target="_blank">
 			<[d:inline-block transform:rotateY(180deg)]>
