@@ -1317,7 +1317,7 @@ export class StyleSheet
 						let pre = sels.slice(0,i)
 						let some = pre.find do
 							s.indexOf($1) >= 0
-						if !some or s.match(/[\s\>\,]|:not/)
+						if !some or s.match(/[\s\>\,]|:(not|before|after|marker)|::/)
 							corr.push(s)
 					sel = corr
 					
