@@ -73,6 +73,13 @@ def getTemplateByName name
 	return unless typeof name is 'string'
 	templates.find do $1.name.toLowerCase! is name.toLowerCase!
 
+def assertCleanGit
+	try
+		if execSync('git status --porcelain',stdio:'pipe').toString!
+			throw 1
+	catch
+		quit 'Creating a project in the current directory requires a clean git status'
+
 def main
 
 	const args = parseArgs process.argv.slice(2)
@@ -91,12 +98,7 @@ def main
 		name: 'value'
 	}, opts).value
 
-	if projectName is '.'
-		try
-			if execSync('git status --porcelain',stdio:'pipe').toString!
-				throw 1
-		catch
-			quit 'Creating a project in the current directory requires a clean git status'
+	assertCleanGit! if projectName is '.'
 
 	let template = getTemplateByName(args.t or args.template)
 
@@ -112,7 +114,9 @@ def main
 	let src = path.join swd, 'templates', template.path
 	let dest = path.join cwd, projectName
 
-	if dest isnt cwd and fs.existsSync dest
+	if dest is cwd
+		assertCleanGit!
+	elif fs.existsSync dest
 		quit 'Project dir already exists'
 
 	try
