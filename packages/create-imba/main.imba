@@ -13,31 +13,31 @@ def quit msg='Quit'
 	p red(msg)
 	process.exit!
 
-const templates = [
-	name: 'Default'
-	desc: 'Client only application (Imba bundler)'
-	path: 'default'
-	-
-	name: 'Vite'
-	desc: 'Client only application (Vite bundler)'
-	path: 'vite'
-	-
-	name: 'Express'
-	desc: 'Full stack application (Imba bundler)'
-	path: 'express'
-	-
-	name: 'Vitest'
-	desc: 'Client only application with vitest (Vite bundler)'
-	path: 'vitest'
-	-
-	name: 'Module'
-	desc: 'A module that can be used in any JavaScript project (Vite bundler)'
-	path: 'module'
-	-
-	name: 'Tauri'
-	desc: 'Desktop application (Vite bundler)'
-	path: 'tauri'
-]
+const templates =
+	'default':
+		path: 'default'
+		name: 'Default'
+		desc: 'Client only application (Imba bundler)'
+	'vite':
+		path: 'vite'
+		name: 'Vite'
+		desc: 'Client only application (Vite bundler)'
+	'express':
+		path: 'express'
+		name: 'Express'
+		desc: 'Full stack application (Imba bundler)'
+	'vitest':
+		path: 'vitest'
+		name: 'Vitest'
+		desc: 'Client only application with vitest (Vite bundler)'
+	'module':
+		path: 'module'
+		name: 'Module'
+		desc: 'A module that can be used in any JavaScript project (Vite bundler)'
+	'tauri':
+		path: 'tauri'
+		name: 'Tauri'
+		desc: 'Desktop application (Vite bundler)'
 
 const ignore = [
 	'.git'
@@ -56,22 +56,17 @@ def copy src, dest
 	else
 		fs.copyFileSync(src,dest)
 
-def validateProjectName name
-	return 'Project name already exists' if fs.existsSync(name)
-	unless /^[\w.-]+$/.test name
-		return 'Invalid repository name, can only contain a-z A-Z 0-9 _.-'
-	yes
-
-def getValidProjectName name
+def toValidRepoName name
 	return unless typeof name is 'string'
-	name = name.trim!.replaceAll(/\s+/g,'-')
 	return name if name is '.'
-	return if validateProjectName(name) isnt yes
+	name = name.replaceAll(/[^\s\w.-]/g,'').trim!.replaceAll(/\s+/g,'-')
+	if not name or name is '.'
+		throw 'Project name can only contain a-z A-Z 0-9 _.-'
+	if name is '..'
+		throw "Project name cannot be '..'"
+	if fs.existsSync(name)
+		throw "Project name '{name}' already exists in current directory"
 	name
-
-def getTemplateByName name
-	return unless typeof name is 'string'
-	templates.find do $1.name.toLowerCase! is name.toLowerCase!
 
 def assertCleanGit
 	try
@@ -84,29 +79,32 @@ def main
 
 	const args = parseArgs process.argv.slice(2)
 
-	let opts =
-		onCancel: do quit!
+	let opts = onCancel: do quit!
 
-	let projectName = getValidProjectName args._[0]
+	let projectName
+	try projectName = toValidRepoName args._[0]
+	catch e p(red(e))
 
 	projectName ??= (await prompt {
 		type: 'text'
 		message: 'Enter a project name or . for current dir'
 		initial: args._[0] or 'imba-project'
-		format: getValidProjectName
-		validate: validateProjectName
+		format: toValidRepoName
+		validate: do
+			try yes if toValidRepoName($1)
+			catch e
 		name: 'value'
 	}, opts).value
 
 	assertCleanGit! if projectName is '.'
 
-	let template = getTemplateByName(args.t or args.template)
+	let template = templates[args.t or args.template]
 
 	template ??= (await prompt {
 		type: 'select'
 		message: 'Choose a template'
-		choices: templates.map do
-			{ title:$1.name, description:$1.desc, value:$1 }
+		choices: for own key, t of templates
+			{ title:t.name, description:t.desc, value:t }
 		initial: 0
 		name: 'value'
 	}, opts).value
