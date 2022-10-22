@@ -1231,6 +1231,10 @@ export const StyleExtenders = {
 	'''
 }
 
+export const AutoPrefixes = {
+	'user-select': ['-webkit-user-select']
+}
+
 export class StyleSheet
 	def constructor stack
 		#stack = stack
@@ -1466,6 +1470,11 @@ export class StyleRule
 					meta.size = yes
 
 				parts.push "{key}: {value};"
+
+				if AutoPrefixes[key]
+					for prefixed in AutoPrefixes[key]
+						parts.push "{prefixed}: {value};"
+
 		
 		let content = parts.join('\n')
 		let out = ""
