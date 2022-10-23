@@ -2,12 +2,12 @@ const p = console.log
 const cwd = process.cwd!
 const swd = __dirname
 
-let parseArgs = require 'minimist'
-let prompt = require 'prompts'
-let fs = require 'fs'
-let path = require 'path'
-let { spawnSync } = require 'child_process'
 require 'colors'
+const fs = require 'fs'
+const path = require 'path'
+const prompt = require 'prompts'
+const parseArgs = require 'minimist'
+const { spawnSync } = require 'child_process'
 
 def quit msg='Quit'
 	p msg.red
@@ -76,13 +76,13 @@ def assertCleanGit
 
 def main
 
-	let argOpts =
+	const argOpts =
 		boolean: 'y'
 		alias:
 			't': 'template'
 	const args = parseArgs process.argv.slice(2), argOpts
 
-	let promptOpts = onCancel: do quit!
+	const promptOpts = onCancel: do quit!
 
 	let projectName
 	try projectName = toValidRepoName args._[0]
@@ -113,11 +113,11 @@ def main
 		name: 'value'
 	}, promptOpts).value
 
-	let src = path.join swd, 'templates', template.path
-	let dest = path.join cwd, projectName
+	const src = path.join swd, 'templates', template.path
+	const dest = path.join cwd, projectName
 
-	let packageName = projectName is '.' ? path.basename(cwd) : projectName
-	let dirStr = "./{projectName is '.' ? '' : projectName}"
+	const packageName = projectName is '.' ? path.basename(cwd) : projectName
+	const dirStr = "./{projectName is '.' ? '' : projectName}"
 
 	unless args.y
 		quit! unless (await prompt {
@@ -138,7 +138,7 @@ def main
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
-	p "\nInstalling dependencies".bold
+	p '\nInstalling dependencies'.bold
 
 	try
 		process.chdir(dest) unless projectName is '.'
