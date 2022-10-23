@@ -1,14 +1,15 @@
 {
   "name": "create-imba",
+  "main": "main.js",
   "bin": {
-    "imba-create": "./bin"
+    "create-imba": "./bin"
   },
   "scripts": {
-    "build": "imbac main.imba"
+    "build": "imbac main.imba && imbac create-imba.imba"
   },
   "dependencies": {
     "colors": "^1.4.0",
-    "minimist": "^1.2.7",
+    "commander": "^9.4.1",
     "prompts": "^2.4.2"
   }
 }

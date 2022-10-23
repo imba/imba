@@ -6,7 +6,6 @@ require 'colors'
 const fs = require 'fs'
 const path = require 'path'
 const prompt = require 'prompts'
-const parseArgs = require 'minimist'
 const { spawnSync } = require 'child_process'
 
 def quit msg='Quit'
@@ -74,24 +73,18 @@ def assertCleanGit
 	catch
 		quit 'Creating a project in the current directory requires a clean git status'
 
-def main
-
-	const argOpts =
-		boolean: 'y'
-		alias:
-			't': 'template'
-	const args = parseArgs process.argv.slice(2), argOpts
+def main name, opts
 
 	const promptOpts = onCancel: do quit!
 
 	let projectName
-	try projectName = toValidRepoName args._[0]
+	try projectName = toValidRepoName name
 	catch e p(e.red)
 
 	projectName ??= (await prompt {
 		type: 'text'
 		message: 'Enter a project name or . for current dir'
-		initial: args._[0] or 'imba-project'
+		initial: name or 'imba-project'
 		format: toValidRepoName
 		validate: do
 			try yes if toValidRepoName($1)
@@ -101,8 +94,8 @@ def main
 
 	assertCleanGit! if projectName is '.'
 
-	let template = templates[args.t]
-	p('Template not found'.red) if args.t and not template
+	let template = templates[opts.template]
+	p('Template not found'.red) if opts.template and not template
 
 	template ??= (await prompt {
 		type: 'select'
@@ -119,7 +112,7 @@ def main
 	const packageName = projectName is '.' ? path.basename(cwd) : projectName
 	const dirStr = "./{projectName is '.' ? '' : projectName}"
 
-	unless args.y
+	unless opts.yes
 		quit! unless (await prompt {
 			type: 'confirm'
 			message: "\nCreate {template.name.cyan} project named {packageName.cyan} in {dirStr.cyan}?"
@@ -162,4 +155,4 @@ def main
 
 	"""
 
-main!
+module.exports = main

@@ -1,2 +1,3 @@
 #! /usr/bin/env node
-require('./main.js')
+
+require('./create-imba.js')
