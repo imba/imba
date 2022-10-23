@@ -6,11 +6,11 @@ let parseArgs = require 'minimist'
 let prompt = require 'prompts'
 let fs = require 'fs'
 let path = require 'path'
-let { execSync } = require 'child_process'
-let { red, green, blue, cyan, bold } = require 'kolorist'
+let { spawnSync } = require 'child_process'
+require 'colors'
 
 def quit msg='Quit'
-	p red(msg)
+	p msg.red
 	process.exit!
 
 const templates =
@@ -61,7 +61,7 @@ def toValidRepoName name
 	return name if name is '.'
 	name = name.replaceAll(/[^\s\w.-]/g,'').trim!.replaceAll(/\s+/g,'-')
 	if not name or name is '.'
-		throw 'Project name can only contain a-z A-Z 0-9 _.-'
+		throw 'Project name can only contain a-z A-Z 0-9 _ . -'
 	if name is '..'
 		throw "Project name cannot be '..'"
 	if fs.existsSync(name)
@@ -70,8 +70,7 @@ def toValidRepoName name
 
 def assertCleanGit
 	try
-		if execSync('git status --porcelain',stdio:'pipe').toString!
-			throw 1
+		throw 1 if spawnSync('git',['status','--porcelain']).output.join('')
 	catch
 		quit 'Creating a project in the current directory requires a clean git status'
 
@@ -83,7 +82,7 @@ def main
 
 	let projectName
 	try projectName = toValidRepoName args._[0]
-	catch e p(red(e))
+	catch e p(e.red)
 
 	projectName ??= (await prompt {
 		type: 'text'
@@ -120,31 +119,35 @@ def main
 	try
 		copy src, dest
 		let dirStr = "./{projectName is '.' ? '' : projectName}"
-		p green("\nCreated <{template.name}> project in {dirStr}")
+		p "\nCreated <{template.name}> project in {dirStr}".green
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
-	p bold("\nInstalling dependencies")
+	p "\nInstalling dependencies".bold
 
 	try
-		process.chdir dest
-		execSync "npm pkg set name='{projectName}'"
-		execSync 'npm up -S',stdio:'inherit'
+		let packageName = projectName
+		if projectName is '.'
+			packageName = path.basename(cwd)
+		else
+			process.chdir dest
+		spawnSync 'npm', ['pkg', 'set', "name={packageName}"]
+		spawnSync 'npm', ['up', '-S'], stdio:'inherit'
 	catch e
-		p red("\nFailed to install dependencies:\n\n{e}")
+		p "\nFailed to install dependencies:\n\n{e}".red
 
 	p """
 
 		Install the vscode extension for an optimal experience:
-		  {blue('https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba')}
+		  {'https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba'.blue}
 
 		Join the Imba community on discord for help and friendly discussions:
-		  {blue('https://discord.gg/mkcbkRw')}
+		  {'https://discord.gg/mkcbkRw'.blue}
 
 		Get started:
 
-		  {cyan('➜')} cd {projectName}
-		  {cyan('➜')} npm run dev
+		  {'➜'.cyan} cd {projectName}
+		  {'➜'.cyan} npm run dev
 
 	"""
 

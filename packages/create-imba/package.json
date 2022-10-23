@@ -8,7 +8,7 @@
     "build": "imbac main.imba"
   },
   "dependencies": {
-    "kolorist": "^1.6.0",
+    "colors": "^1.4.0",
     "minimist": "^1.2.7",
     "prompts": "^2.4.2"
   }
