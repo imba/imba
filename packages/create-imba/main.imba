@@ -76,9 +76,13 @@ def assertCleanGit
 
 def main
 
-	const args = parseArgs process.argv.slice(2)
+	let argOpts =
+		boolean: 'y'
+		alias:
+			't': 'template'
+	const args = parseArgs process.argv.slice(2), argOpts
 
-	let opts = onCancel: do quit!
+	let promptOpts = onCancel: do quit!
 
 	let projectName
 	try projectName = toValidRepoName args._[0]
@@ -93,11 +97,12 @@ def main
 			try yes if toValidRepoName($1)
 			catch e
 		name: 'value'
-	}, opts).value
+	}, promptOpts).value
 
 	assertCleanGit! if projectName is '.'
 
-	let template = templates[args.t or args.template]
+	let template = templates[args.t]
+	p('Template not found'.red) if args.t and not template
 
 	template ??= (await prompt {
 		type: 'select'
@@ -106,10 +111,21 @@ def main
 			{ title:t.name, description:t.desc, value:t }
 		initial: 0
 		name: 'value'
-	}, opts).value
+	}, promptOpts).value
 
 	let src = path.join swd, 'templates', template.path
 	let dest = path.join cwd, projectName
+
+	let packageName = projectName is '.' ? path.basename(cwd) : projectName
+	let dirStr = "./{projectName is '.' ? '' : projectName}"
+
+	unless args.y
+		quit! unless (await prompt {
+			type: 'confirm'
+			message: "\nCreate {template.name.cyan} project named {packageName.cyan} in {dirStr.cyan}?"
+			initial: yes
+			name: 'value'
+		}, promptOpts).value
 
 	if dest is cwd
 		assertCleanGit!
@@ -118,19 +134,14 @@ def main
 
 	try
 		copy src, dest
-		let dirStr = "./{projectName is '.' ? '' : projectName}"
-		p "\nCreated <{template.name}> project in {dirStr}".green
+		p "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
 	p "\nInstalling dependencies".bold
 
 	try
-		let packageName = projectName
-		if projectName is '.'
-			packageName = path.basename(cwd)
-		else
-			process.chdir dest
+		process.chdir(dest) unless projectName is '.'
 		spawnSync 'npm', ['pkg', 'set', "name={packageName}"]
 		spawnSync 'npm', ['up', '-S'], stdio:'inherit'
 	catch e

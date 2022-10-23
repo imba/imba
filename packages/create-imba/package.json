@@ -1,7 +1,6 @@
 {
   "name": "create-imba",
   "bin": {
-    "create-imba": "./bin",
     "imba-create": "./bin"
   },
   "scripts": {
