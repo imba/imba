@@ -46,17 +46,18 @@ class Logger
 
 		if TRACING
 			TRACING.push(params)
+		
+		if false
+			if ns == 'send'
+				if data.type == 'event'
+					sent.unshift Object.assign({e: data.event},data.body)
+				elif data.type == 'response'
+					sent.unshift Object.assign({c: data.command},data.body)
+			elif ns == 'receive'
+				if data.type == 'request'
+					received.unshift Object.assign({c: data.command},data.arguments)
 
-		if ns == 'send'
-			if data.type == 'event'
-				sent.unshift Object.assign({e: data.event},data.body)
-			elif data.type == 'response'
-				sent.unshift Object.assign({c: data.command},data.body)
-		elif ns == 'receive'
-			if data.type == 'request'
-				received.unshift Object.assign({c: data.command},data.arguments)
-
-		logs.unshift([id,...params])
+			logs.unshift([id,...params])
 
 global.logger = new Logger
 
