@@ -22,7 +22,7 @@ export function esbuildImbaPlugin(options: ResolvedOptions): EsbuildPlugin {
 			// Otherwise this would heavily slow down the scanning phase.
 			// if (build.initialOptions.plugins?.some((v) => v.name === 'vite:dep-scan')) return;
 
-			const imbaExtensions = (options.extensions ?? ['.imba']).map((ext) => ext.slice(1));
+			const imbaExtensions = (options.extensions ?? ['.imba', '.imba1']).map((ext) => ext.slice(1));
 			const imbaFilter = new RegExp(`\\.(` + imbaExtensions.join('|') + `)(\\?.*)?$`);
 
 			build.onLoad({ filter: imbaFilter }, async ({ path: filename }) => {
