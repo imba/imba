@@ -69,6 +69,7 @@
     "./compiler": "./dist/compiler.mjs"
   },
   "exports": {
+	"./preflight.css": "./preflight.css",
     "./server": "./dist/imba.node.mjs",
     ".": {
       "imba": "./src/imba/imba.imba",
