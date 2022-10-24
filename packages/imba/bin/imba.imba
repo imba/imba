@@ -11,7 +11,7 @@ import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bund
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
 import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
-import create from 'create-imba'
+import create from './create.imba'
 
 import tmp from 'tmp'
 import getport from 'get-port'

@@ -40,6 +40,7 @@ const templates =
 
 const noCopy = [
 	'.git'
+	'dist'
 	'node_modules'
 	'package-lock.json'
 ]
@@ -106,7 +107,7 @@ def main name, opts
 		name: 'value'
 	}, promptOpts).value
 
-	const src = path.join swd, 'templates', template.path
+	const src = path.join swd, '..', 'templates', template.path
 	const dest = path.join cwd, projectName
 
 	const packageName = projectName is '.' ? path.basename(cwd) : projectName
@@ -115,7 +116,7 @@ def main name, opts
 	unless opts.yes
 		quit! unless (await prompt {
 			type: 'confirm'
-			message: "\nCreate {template.name.cyan} project named {packageName.cyan} in {dirStr.cyan}?"
+			message: "Create {template.name.cyan} project named {packageName.cyan} in {dirStr.cyan}?"
 			initial: yes
 			name: 'value'
 		}, promptOpts).value
