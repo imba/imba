@@ -825,6 +825,7 @@ export default class Completions
 
 			# drop dts files
 			sources = sources.filter do !util.isDts($1.path)
+			sources = sources.filter do $1.importPath..indexOf('..') == 0
 
 		add(sources,o)
 
