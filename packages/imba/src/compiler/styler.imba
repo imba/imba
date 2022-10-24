@@ -1233,6 +1233,7 @@ export const StyleExtenders = {
 
 export const AutoPrefixes = {
 	'user-select': ['-webkit-user-select']
+	'backdrop-filter': ['-webkit-backdrop-filter']
 }
 
 export class StyleSheet
