@@ -89,7 +89,7 @@ def main name, opts
 		format: toValidRepoName
 		validate: do
 			try yes if toValidRepoName($1)
-			catch e
+			catch e e
 		name: 'value'
 	}, promptOpts).value
 
