@@ -5475,7 +5475,7 @@ export class LocalVarAccess < Access
 		if right isa Variable and right.type == 'meth'
 			return "{right.c}()" unless up isa Call
 
-		right.c
+		return right.c
 
 	def variable
 		right
@@ -7813,8 +7813,15 @@ export class Catch < ControlFlowStatement
 	def visit
 		@scope.visit
 		@variable = @scope.register(@varname,self,type: 'let', pool: 'catchvar')
+
 		if @body.len == 0
-			@body.push(@variable.accessor)
+			# @variable.datatype = 'Something'
+			let node = @variable.accessor
+			let accessor = node
+			if STACK.tsc
+				node = IF(LIT("{node.c} instanceof Error"),node)
+
+			@body.push(node)
 
 		@body.traverse
 
