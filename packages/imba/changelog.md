@@ -6,6 +6,7 @@
 
 * When errors are thrown inside event handlers - a subsequent `@error` event will be triggered from the element of the throwing handler.
 
+* All new `imba create` command (by @familyfriendlymikey)
 
 
 ## 2.0.0-alpha.224
