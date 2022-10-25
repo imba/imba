@@ -19,9 +19,7 @@ It has language-level support for defining, extending, subclassing, instantiatin
 ## Get started
 
 ```sh
-npx imba create hello-world
-cd hello-world
-npm start
+npx imba create
 ```
 
 ## Documentation
