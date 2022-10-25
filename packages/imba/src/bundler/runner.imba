@@ -199,26 +199,34 @@ export default class Runner < Component
 			.replace("__ROOT__", viteServer.config.root)
 			.replace("__BASE__", viteServer.config.base)
 			.replace("__FILE__", fileToRun)
-		const output = await Vite.build
-			optimizeDeps: {disabled: yes}
-			ssr:
-				target: "node"
-			build:
-				rollupOptions:
-					external: builtinModules
-				target: "node16"
-				lib:
-					formats: ["es"]
-					entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
-					name: "vite-node-client"
-					fileName: "vite-node-client"
+		# start uncommend to upgrade vite-node-client
+		# const output = await Vite.build
+		# 	optimizeDeps: {disabled: yes}
+		# 	ssr:
+		# 		target: "node"
+		# 	build:
+		# 		minify: no
+		# 		rollupOptions:
+		# 			external: builtinModules
+		# 		target: "node16"
+		# 		lib:
+		# 			formats: ["es"]
+		# 			entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
+		# 			name: "vite-node-client"
+		# 			fileName: "vite-node-client"
+		# const license = nfs.readFileSync(np.join(require.resolve("vite-node/client"), "..", "..", "LICENSE"), "utf-8")
+		# const content = "/* {license} */\n{output[0].output[0].code}"
+		# nfs.writeFileSync(np.resolve(__dirname, np.join("..", 'vendor', 'vite-node-client.mjs')), content)
+		# end   uncommend to upgrade vite-node-client
+
 		const hash = createHash(body)
 		const fpath = np.join o.tmpdir, "bundle.{hash}.mjs"
 		# in windows, the path would start with c: ...
 		# and esm doesn't support it. 
 		const vnpath = pathToFileURL(np.join o.tmpdir, "vite-node-client.mjs")
-		nfs.writeFileSync(vnpath, output[0].output[0].code)
-		body = body.replace("__VITE_NODE_CLIENT__", vnpath)
+		const vn-vendored = np.resolve __dirname, np.join("..", "vendor","vite-node-client.mjs")
+		nfs.writeFileSync(vnpath, nfs.readFileSync(vn-vendored, 'utf-8')) unless nfs.existsSync(vnpath)
+		body = body.replace("__VITE_NODE_CLIENT__", vnpath.href)
 		nfs.writeFileSync(fpath, body)
 		# this is need to initialize the plugins
 		await viteServer.pluginContainer.buildStart({})

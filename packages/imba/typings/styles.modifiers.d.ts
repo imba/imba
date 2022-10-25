@@ -59,6 +59,8 @@ declare namespace imbacss {
     interface αlg { media: '(min-width: 1024px)' }
     /** @detail (min-width: 1280px) */
     interface αxl { media: '(min-width: 1280px)' }
+    /** @detail (min-width: 1536px) */
+    interface α2xl { media: '(min-width: 1536px)' }
 
     /** @detail (max-width: 479px) */
     interface αltΞxs { media: '(max-width: 479px)' }
@@ -70,6 +72,8 @@ declare namespace imbacss {
     interface αltΞlg { media: '(max-width: 1023px)' }
     /** @detail (max-width: 1279px) */
     interface αltΞxl { media: '(max-width: 1279px)' }
+    /** @detail (max-width: 1535px) */
+    interface αltΞ2xl { media: '(max-width: 1535px)' }
 
     // color modifiers
 

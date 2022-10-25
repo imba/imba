@@ -11,6 +11,7 @@ import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bund
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
 import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
+import create from './create.imba'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -68,9 +69,9 @@ for item,i in argv
 argv = argv.filter do $1 !== null
 
 def parseOptions options, extras = []
-	if options.#parsed
-		return options
-	
+
+	return options if options.#parsed
+
 	let command = options._name
 
 	options = options.opts! if options.opts isa Function
@@ -147,6 +148,7 @@ def parseOptions options, extras = []
 	global.#IMBA_OPTIONS = options
 	options.#parsed = yes
 	return options
+
 def eject(o)
 	o = parseOptions(o)
 	const configPath = "vite.config.server.js"
@@ -159,7 +161,7 @@ def eject(o)
 	if nfs.existsSync(setupPath) and !o.force
 		return console.log "You already have a test-setup.js in your project. Delete it or use `imba eject --force` to overwrite"
 	const setupContent = nfs.readFileSync(vitestSetupPath, 'utf-8')
-	nfs.writeFileSync(setupPath, setupContent.replace(/\/\/eject\s/g, ''))
+	nfs.writeFileSync(setupPath, setupContent)
 	console.log "✅ test-setup.js has been successfully {o.force ? 'overwritten': 'created'}"
 	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
 	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
@@ -169,7 +171,19 @@ def eject(o)
 def test o
 	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
-	const configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+	let configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+	if configFile == viteServerConfigFile
+		const original-setup-file = np.join(__dirname, "./test-setup.js")
+		# pick test setup file path
+		let setupFile = resolveWithFallbacks("test-setup", ["imba", "ts", "js", "mjs", "cjs"], {ext:"js"})
+		if setupFile == "test-setup.js"
+			setupFile = np.resolve original-setup-file
+		# create a temporary vite config file
+		const tmp-config = np.join __dirname, "temp-config.vite.js"
+		const body = nfs.readFileSync(viteServerConfigFile, "utf-8")
+		# inject the user's test setup file or the default one we provide
+		nfs.writeFileSync tmp-config, body.replace(/\/\*pholder\*\//g, "'{np.resolve(setupFile)}'")
+		configFile = tmp-config
 	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
 	const options =
 		cwd: process.cwd()
@@ -298,7 +312,12 @@ cli
 	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
 	.action(test)
 
-cli.command('create [project]','Create a new imba project from a template')
+cli
+	.command('create [name]')
+	.description('Create a new imba project')
+	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
+	.option('-y, --yes', 'Say yes to any confirmation prompts')
+	.action(do create($1, $2.opts!))
 
 log.ts 'parse options'
 

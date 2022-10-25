@@ -1,6 +1,5 @@
 import { builtinModules } from 'module'
 import {imba} from 'vite-plugin-imba'
-import np from 'node:path'
 import { defineConfig } from 'vite'
 
 export default defineConfig(({ command, mode }) => {
@@ -44,15 +43,7 @@ export default defineConfig(({ command, mode }) => {
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 			environment: "jsdom",
-			setupFiles: [np.join(__dirname, "./test-setup.js")],
-			/** test/setup.imba content
-			 *  npm i @testing-library/dom @testing-library/jest-dom
-			 *  # Add this file to support testing library things 
-			 * 	import '@testing-library/jest-dom'
-				import {vi} from "vitest"
-				class MockPointerEvent
-				vi.stubGlobal "PointerEvent", MockPointerEvent
-			 */
+			setupFiles: [/*pholder*/],
 		}
 	})
 })

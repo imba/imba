@@ -128,7 +128,7 @@ export async function preResolveOptions(
 		root: resolveViteRoot(viteUserConfig)
 	};
 	const defaultOptions: Partial<Options> = {
-		extensions: ['.imba'],
+		extensions: ['.imba', '.imba1'],
 		emitCss: true
 	};
 	const imbaConfig = convertPluginOptions(
@@ -323,7 +323,7 @@ export function buildExtraViteConfig(
 			...extraViteConfig.optimizeDeps,
 			// Experimental Vite API to allow these extensions to be scanned and prebundled
 			// @ts-ignore
-			extensions: options.extensions ?? ['.imba'],
+			extensions: options.extensions ?? ['.imba', '.imba1'],
 			// Add esbuild plugin to prebundle Imba files.
 			// Currently a placeholder as more information is needed after Vite config is resolved,
 			// the real Imba plugin is added in `patchResolvedViteConfig()`
@@ -683,6 +683,7 @@ export interface PreResolvedOptions extends Options {
 export interface ResolvedOptions extends PreResolvedOptions {
 	isProduction: boolean;
 	server?: ViteDevServer;
+	extensions: string[];
 }
 
 export type {

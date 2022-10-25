@@ -15,10 +15,13 @@ export def importWithFallback(bundled, user)
 		pkg = await import(bundled)
 	pkg
 
-export def resolveWithFallbacks(ours, fallbacks)
+export def resolveWithFallbacks(ours, fallbacks, opts = {})
+	const {ext} = opts
 	let pkg = ours
+	pkg += ".{ext}" if ext..length
 	fallbacks = [fallbacks] unless Array.isArray fallbacks
 	for fallback in fallbacks
+		fallback = "{ours}.{fallback}" if ext
 		# const userPkg = np.resolve(fallback)
 		if nfs.existsSync fallback
 			return fallback
