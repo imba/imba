@@ -12,6 +12,7 @@ export type ImbaQueryTypes = 'style' | 'script';
 export interface RequestQuery {
 	// our own
 	imba?: boolean;
+	iife?: boolean;
 	type?: ImbaQueryTypes;
 	// vite specific
 	url?: boolean;
@@ -118,7 +119,10 @@ function buildFilter(
 	extensions: string[]
 ): (filename: string) => boolean {
 	const rollupFilter = createFilter(include, exclude);
-	return (filename) => rollupFilter(filename) && extensions.some((ext) => filename.endsWith(ext));
+	return (filename) => rollupFilter(filename) && extensions.some((ext) => {
+		const [name] = filename.split(`?`, 2)
+		return name.endsWith(ext)
+	});
 }
 
 export type IdParser = (id: string, ssr: boolean, timestamp?: number) => ImbaRequest | undefined;
@@ -132,4 +136,13 @@ export function buildIdParser(options: ResolvedOptions): IdParser {
 			return parseToImbaRequest(id, filename, rawQuery, normalizedRoot, timestamp, ssr);
 		}
 	};
+}
+
+const requestQuerySplitRE = /\?(?!.*[\/|\}])/;
+export function parseRequest(id: string): Record<string, string> | null {
+	const [_, search] = id.split(requestQuerySplitRE, 2);
+	if (!search) {
+		return null;
+	}
+	return Object.fromEntries(new URLSearchParams(search));
 }

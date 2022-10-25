@@ -18,7 +18,7 @@ const runner = new ViteNodeRunner({
 				})
 				process.send({ type: 'fetch', id })
 			} catch (error) {
-				handleError(`Error fetching module {id}`, error)
+				handleError(`Error fetching module ${id}`, error)
 			}
 		})
 
@@ -35,7 +35,7 @@ const runner = new ViteNodeRunner({
 				})
 				process.send({ type: 'resolve', payload: { id, importer } })
 			} catch (error) {
-				handleError(`Error fetching module {id}`, error)
+				handleError(`Error resolving module with id ${id}`, error)
 			}
 		})
 	}

@@ -1,6 +1,7 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
+import {transformWithEsbuild} from 'vite'
 import { buildIdParser, IdParser, ImbaRequest, normalize } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
 import { CompileData, createCompileImba } from "./utils/compile";
@@ -57,7 +58,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 	def transform(code, id, opts)
 		const ssr = !!opts..ssr;
 		const imbaRequest = requestParser(id, ssr);
-
+		
 		return if !imbaRequest or imbaRequest.query.imba
 
 		let compiledData\CompileData
@@ -74,6 +75,10 @@ export def imba(inlineOptions\Partial<Options> = {})
 				ensureWatchedFile options.server.watcher, d, options.root
 
 		log.debug "transform returns compiled js for {imbaRequest.filename}"
+		if imbaRequest.query.iife
+			compiledData.compiled.js = await transformWithEsbuild compiledData.compiled.js.code, imbaRequest.normalizedFilename.replace(".imba", ".js"), {format:"iife"}
+			compiledData.compiled.js.code = "export default {JSON.stringify compiledData.compiled.js.code};"
+
 		return {
 			...compiledData.compiled.js,
 			meta: 
@@ -164,6 +169,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 		resolveId: resolveId
 		configureServer: configureServer
 		handleHotUpdate: handleHotUpdate
+	# plugins.push iifePlugin!
 
 	plugins
 		
