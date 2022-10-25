@@ -219,7 +219,7 @@ export class EventHandler
 			if event.handle$mod.apply(state,mods.options or []) == false
 				return
 
-		let guard = Event[self.type + '$handle'] or Event[event.type + '$handle'] or event.handle$mod
+		let guard = Event[self.type + '$handle'] or Event[event.type + '$handle'] or event.handle$mod or self.guard
 			
 		if guard and guard.apply(state,mods.options or []) == false
 			return
@@ -364,7 +364,18 @@ export class EventHandler
 			self.emit('idle')
 		# what if the result is a promise
 		
-		if error
+		if error != undefined
+			if self.type != 'error'
+				let detail = error isa Error ? error.message : error
+				let custom = new CustomEvent('error',{detail: detail, bubbles: true, cancelable: true})
+				# @ts-ignore
+				custom.error = error
+				# @ts-ignore
+				custom.originalEvent = event
+				let res = element.dispatchEvent(custom)
+				# @ts-ignore
+				return if custom.defaultPrevented
+
 			throw error
 
 		return
@@ -392,4 +403,14 @@ extend class Element
 			handler = self[check](mods,scope,handler,o)
 		else
 			self.addEventListener(type,handler,o)
+		return handler
+
+	def on$error mods,context,handler,o
+		if mods.options..length
+			handler.guard = do(...types)
+				let err = this.event.error
+				let match = types.find do err isa $1
+				return !!match
+
+		self.addEventListener('error',handler,o)
 		return handler

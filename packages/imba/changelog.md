@@ -4,6 +4,10 @@
 
 * Automatically prefix certaib css properties for better browser compatibility.
 
+* When errors are thrown inside event handlers - a subsequent `@error` event will be triggered from the element of the throwing handler.
+
+
+
 ## 2.0.0-alpha.224
 
 * Fixed parsing of nested template literal strings.
