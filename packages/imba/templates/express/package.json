@@ -1,0 +1,22 @@
+{
+    "name": "imba-base-template",
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+        "start": "pm2 start ecosystem.config.js --env production",
+        "reload": "npm run build && pm2 reload ecosystem.config.js",
+        "dev": "imba -wdvsM server.imba",
+        "build": "imba build server.imba"
+    },
+    "engines": {
+        "node": ">=16.17.0",
+        "npm": ">=8.15.0"
+    },
+    "dependencies": {
+        "express": "*",
+        "imba": "*"
+    },
+    "devDependencies": {
+        "@types/express": "*"
+    }
+}

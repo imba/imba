@@ -11,6 +11,7 @@ import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bund
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
 import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
+import create from './create.imba'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -68,9 +69,9 @@ for item,i in argv
 argv = argv.filter do $1 !== null
 
 def parseOptions options, extras = []
-	if options.#parsed
-		return options
-	
+
+	return options if options.#parsed
+
 	let command = options._name
 
 	options = options.opts! if options.opts isa Function
@@ -147,6 +148,7 @@ def parseOptions options, extras = []
 	global.#IMBA_OPTIONS = options
 	options.#parsed = yes
 	return options
+
 def eject(o)
 	o = parseOptions(o)
 	const configPath = "vite.config.server.js"
@@ -310,7 +312,12 @@ cli
 	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
 	.action(test)
 
-cli.command('create [project]','Create a new imba project from a template')
+cli
+	.command('create [name]')
+	.description('Create a new imba project')
+	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
+	.option('-y, --yes', 'Say yes to any confirmation prompts')
+	.action(do create($1, $2.opts!))
 
 log.ts 'parse options'
 

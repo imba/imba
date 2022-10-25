@@ -89,8 +89,7 @@
   },
   "bin": {
     "imba": "./bin/imba",
-    "imbac": "./bin/imbac",
-    "imba-create": "./bin/imba-create"
+    "imbac": "./bin/imbac"
   },
   "preferGlobal": true,
   "homepage": "https://imba.io",
@@ -111,15 +110,16 @@
     "*.d.ts",
     "*.js",
     "*.css",
-    "*.md"
+    "*.md",
+    "templates"
   ],
   "peerDependencies": {
-	"vite": "*",
-	"vite-node": "*",
-	"vite-plugin-imba": "*",
-	"@testing-library/jest-dom": "*",
-	"@testing-library/dom": "*",
-	"vitest": "*"
+    "@testing-library/dom": "*",
+    "@testing-library/jest-dom": "*",
+    "vite": "*",
+    "vite-node": "*",
+    "vite-plugin-imba": "*",
+    "vitest": "*"
   },
   "devDependencies": {
     "commander": "^6.2.1",
@@ -142,6 +142,7 @@
   "dependencies": {
     "@antfu/install-pkg": "^0.1.1",
     "chokidar": "^3.4.3",
+    "colors": "^1.4.0",
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
     "picocolors": "^1.0.0",
