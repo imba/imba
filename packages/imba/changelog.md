@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.225
+
+* Automatically prefix certaib css properties for better browser compatibility.
+
 ## 2.0.0-alpha.224
 
 * Fixed parsing of nested template literal strings.
