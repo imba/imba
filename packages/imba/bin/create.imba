@@ -9,7 +9,7 @@ const prompt = require 'prompts'
 const { spawnSync } = require 'child_process'
 
 def quit msg='Quit'
-	p msg.red
+	console.error msg.red
 	process.exit!
 
 const templates =
