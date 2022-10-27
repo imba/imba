@@ -39,6 +39,7 @@ var parseOpts = {
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
 		sourceId: {type: 'string'},
+		bin: {type: 'string'},
 		hmr: null,
 		raw: null
 	},
@@ -58,6 +59,7 @@ Usage: imbac [options] path/to/script.imba
   -d, --debug            Enable compiler debugging
   -s, --stdio            listen for and compile scripts over stdio
   -t, --tokenize         print out the tokens that the lexer/rewriter produce
+  --bin [bin]            compile file with a hashbang: 'node', 'bun', etc.
   --platform [type]      Specify platform: 'node', 'browser', 'worker'
   --styles [format]      Specify how styles should be added: 'extern', 'inline'
   --silent               only print out errors (skip warnings)
@@ -415,7 +417,14 @@ CLI.prototype.compileFile = function (src){
 	}
 	else if (src.targetPath && out.js !== undefined && !self.o().print) {
 		self.ensureDir(src.targetPath);
-		fs.writeFileSync(src.targetPath,out.js,'utf8');
+		let outString
+		if (opts.bin) {
+			let hashbang = '#! /usr/bin/env ' + opts.bin + '\n'
+			outString = hashbang + out.js
+		} else {
+			outString = out.js
+		}
+		fs.writeFileSync(src.targetPath,outString,'utf8');
 		if (!self.o().print) { self.log(status) };
 
 		if(sourcemap && !opts.print && opts.sourcemap != 'inline') { // And webpack
