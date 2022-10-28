@@ -74,7 +74,7 @@
   "type": "commonjs",
   "browser": {
     ".": "./dist/imba.mjs",
-    "./program": "./program.imba.js",
+    "./program": "./program.browser.imba.js",
     "./compiler": "./dist/compiler.mjs"
   },
   "exports": {
@@ -88,7 +88,10 @@
     "./spec": {
       "imba": "./src/utils/spec.imba"
     },
-    "./program": "./program.imba.js",
+    "./program": {
+		"browser": "./program.browser.imba.js",
+		"require": "./program.imba.js"
+	},
     "./workers": "./workers.imba.js",
     "./compiler": {
       "browser": "./dist/compiler.mjs",
@@ -127,6 +130,7 @@
     "@testing-library/jest-dom": "*",
     "vite": "*",
     "vite-node": "*",
+	"vite-tsconfig-paths": "*",
     "vite-plugin-imba": "*",
     "vitest": "*"
   },

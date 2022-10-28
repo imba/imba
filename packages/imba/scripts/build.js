@@ -209,6 +209,7 @@ let bundles = [
 		entryPoints: ["src/imba/imba.imba"],
 		outdir: "dist",
 		platform: "browser",
+		external: ["vite"],
 		format: "esm",
 		outExtension: { ".js": ".mjs" },
 	},
@@ -224,6 +225,7 @@ let bundles = [
 		outExtension: { ".js": ".node.js" },
 		format: "cjs",
 		outdir: "dist",
+		external: ["vite", 'picocolors', 'local-pkg'],
 		platform: "node",
 	},
 	{
@@ -231,6 +233,7 @@ let bundles = [
 		outExtension: { ".js": ".node.mjs" },
 		format: "esm",
 		outdir: "dist",
+		external: ["vite", 'picocolors', 'local-pkg', 'get-port'],
 		platform: "node",
 	},
 	{
@@ -245,6 +248,17 @@ let bundles = [
 		outdir: ".",
 		format: "cjs",
 		platform: "node",
+	},
+	{
+		entryPoints: [
+			"program.imba"
+		],
+		outExtension: { ".js": ".browser.imba.js" },
+		minify: true,
+		external: ["chokidar", "esbuild", "vite-node/client","vite-node/server", "vite-plugin-imba", "vite"],
+		outdir: ".",
+		format: "esm",
+		platform: "browser",
 	}
 ];
 bundle(bundles)
