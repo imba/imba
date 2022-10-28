@@ -13,8 +13,9 @@ const runner = new ViteNodeRunner({
 			try {
 				process.once('message', (msg) => {
 					const message = JSON.parse(msg)
-					if (message.type == "fetched" && id == message.id)
+					if (message.type == "fetched" && id == message.id){
 						resolve(message.md)
+					}
 				})
 				process.send({ type: 'fetch', id })
 			} catch (error) {
