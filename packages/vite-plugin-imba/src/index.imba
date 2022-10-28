@@ -2,7 +2,7 @@ import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
 import {transformWithEsbuild} from 'vite'
-import { buildIdParser, IdParser, ImbaRequest, normalize } from "./utils/id";
+import { buildIdParser, IdParser, ImbaRequest, normalize, injectQuery } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
 import { CompileData, createCompileImba } from "./utils/compile";
 import {
@@ -21,6 +21,9 @@ import { ensureWatchedFile, setupWatchers } from "./utils/watch";
 import { handleImbaHotUpdate } from './handle-imba-hot-update';
 import url from 'url'
 
+const allCssModuleId = 'virtual:imba/*?css'
+const resolvedAllCssModuleId = "\0{allCssModuleId}"
+
 export def imba(inlineOptions\Partial<Options> = {})
 	let name = "vite-plugin-imba"
 	let enforce = "pre"
@@ -31,6 +34,8 @@ export def imba(inlineOptions\Partial<Options> = {})
 	let api\PluginAPI = {}
 	let resolvedImbaSSR\Promise<PartialResolvedId | null>;
 	let test?\boolean
+	let build?\boolean
+	let dev?\boolean
 
 	validateInlineOptions(inlineOptions)
 	const cache = new VitePluginImbaCache();
@@ -45,6 +50,8 @@ export def imba(inlineOptions\Partial<Options> = {})
 		const extraViteConfig = buildExtraViteConfig(options, config);
 		log.debug("additional vite config", extraViteConfig);
 		test? = configEnv.mode === "test"
+		build? = configEnv.mode === "production"
+		dev? = configEnv.mode === "development"
 		extraViteConfig;
 	def configResolved(config)
 		options = resolveOptions(options, config);
@@ -77,7 +84,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 		log.debug "transform returns compiled js for {imbaRequest.filename}"
 		if imbaRequest.query.iife
 			compiledData.compiled.js = await transformWithEsbuild compiledData.compiled.js.code, imbaRequest.normalizedFilename.replace(".imba", ".js"), {format:"iife"}
-			compiledData.compiled.js.code = "export default {JSON.stringify compiledData.compiled.js.code};"
+			compiledData.compiled.js.code = "const body = {JSON.stringify compiledData.compiled.js.code}; export default \{body: body\}; export \{body\}"
 
 		return {
 			...compiledData.compiled.js,
@@ -85,10 +92,38 @@ export def imba(inlineOptions\Partial<Options> = {})
 				vite:
 					lang: compiledData.lang
 		}
-		
+	
+	def resolveId(id, importer, opts)
+		let ssr = !!opts..ssr or options.ssr
+		ssr = no if test?
+		const imbaRequest = requestParser(id, ssr)
+		return resolvedAllCssModuleId if id == allCssModuleId or id == "*?css" or id == "*"
+		if imbaRequest..query.imba
+			if imbaRequest.query.type === "style"
+				log.debug "resolveId resolved virtual css module {imbaRequest.cssId}"
+				return imbaRequest.cssId
+			log.debug "resolveId resolved {id}"
+			return id
+		if ssr and id === "imba"
+			if !resolvedImbaSSR
+				resolvedImbaSSR = this.resolve("imba/server", undefined, skipSelf: true).then do(imbaSSR)
+					log.debug "resolved imba to imba/server"
+					return imbaSSR
+			return resolvedImbaSSR
+		try
+			const resolved = resolveViaPackageJsonImba(id, importer, cache)
+			if resolved
+				log.debug "resolveId resolved ${resolved} via package.json imba field of {id}"
+				return resolved
+		catch e
+			log.debug.once "error trying to resolve {id} from {importer} via package.json imba field ", e
+
 	def load(id, opts)
 		const ssr = !!opts..ssr
 		const imbaRequest = requestParser(id, !!ssr)
+		if resolvedAllCssModuleId == id
+			# if dev?
+			return 'export default ".dev-ssr/all.css"'
 		if imbaRequest
 			const {filename: filename, query: query} = imbaRequest
 			if query.imba and query.type === "style"
@@ -103,30 +138,6 @@ export def imba(inlineOptions\Partial<Options> = {})
 			if viteConfig.assetsInclude(filename)
 				log.debug "load returns raw content for {filename}"
 				return fs.readFileSync(filename, "utf-8")
-	
-	def resolveId(importee, importer, opts)
-		let ssr = !!opts..ssr or options.ssr
-		ssr = no if test?
-		const imbaRequest = requestParser(importee, ssr)
-		if imbaRequest..query.imba
-			if imbaRequest.query.type === "style"
-				log.debug "resolveId resolved virtual css module {imbaRequest.cssId}"
-				return imbaRequest.cssId
-			log.debug "resolveId resolved {importee}"
-			return importee
-		if ssr and importee === "imba"
-			if !resolvedImbaSSR
-				resolvedImbaSSR = this.resolve("imba/server", undefined, skipSelf: true).then do(imbaSSR)
-					log.debug "resolved imba to imba/server"
-					return imbaSSR
-			return resolvedImbaSSR
-		try
-			const resolved = resolveViaPackageJsonImba(importee, importer, cache)
-			if resolved
-				log.debug "resolveId resolved ${resolved} via package.json imba field of {importee}"
-				return resolved
-		catch e
-			log.debug.once "error trying to resolve {importee} from {importer} via package.json imba field ", e
 	def configureServer(server)
 		options.server = server
 		# Breaks tests, do not use until Vite has a proper fix
@@ -136,6 +147,12 @@ export def imba(inlineOptions\Partial<Options> = {})
 		# 		req.url += "?import"
 		# 		res.setHeader "Content-Type", "application/javascript"
 		# 	next()
+		# server.middlewares.use do(req, res, next)
+		# 	const pathname = url.parse(req.url).pathname
+		# 	if pathname.endsWith ".imba"
+		# 		req.url = injectQuery req.url, 'import'
+		# 		res.setHeader('Content-Type', 'application/javascript')
+		# 	next!
 		setupWatchers options, cache, requestParser
 	def handleHotUpdate(ctx\HmrContext)
 		if !options.hot or !options.emitCss

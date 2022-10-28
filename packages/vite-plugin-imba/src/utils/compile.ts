@@ -73,6 +73,15 @@ const _createCompileImba = (makeHot?: Function) =>
 			: compileOptions;
 		finalCompileOptions.config = finalCompileOptions
 		finalCompileOptions.styles = "extern"
+		finalCompileOptions.platform = "browser"
+		finalCompileOptions.vite = true
+		const q = imbaRequest.query
+		finalCompileOptions.platform = ssr ? "node": "browser"
+		if(q.worker){
+			finalCompileOptions.platform = "worker"
+		}else if(q.web){
+			finalCompileOptions.platform = "browser"
+		}
 		const compiled = compile(finalCode, finalCompileOptions);
 		compiled.js = {code: compiled.js}
 		compiled.css = {code: compiled.css}

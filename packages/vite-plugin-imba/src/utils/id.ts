@@ -2,17 +2,24 @@
 import { createFilter } from '@rollup/pluginutils';
 import { Arrayable, ResolvedOptions } from './options';
 import { normalizePath } from 'vite';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
+import { URL, URLSearchParams, pathToFileURL } from 'node:url'
 
 const VITE_FS_PREFIX = '/@fs/';
 const IS_WINDOWS = process.platform === 'win32';
 
 export type ImbaQueryTypes = 'style' | 'script';
+export const queryRE = /\?.*$/s
+export const hashRE = /#.*$/s
 
+export const cleanUrl = (url: string): string =>
+  url.replace(hashRE, '').replace(queryRE, '')
 export interface RequestQuery {
 	// our own
 	imba?: boolean;
 	iife?: boolean;
+	worker?: boolean;
+	web?: boolean;
 	type?: ImbaQueryTypes;
 	// vite specific
 	url?: boolean;
@@ -138,7 +145,7 @@ export function buildIdParser(options: ResolvedOptions): IdParser {
 	};
 }
 
-const requestQuerySplitRE = /\?(?!.*[\/|\}])/;
+export const requestQuerySplitRE = /\?(?!.*[\/|\}])/;
 export function parseRequest(id: string): Record<string, string> | null {
 	const [_, search] = id.split(requestQuerySplitRE, 2);
 	if (!search) {
@@ -146,3 +153,22 @@ export function parseRequest(id: string): Record<string, string> | null {
 	}
 	return Object.fromEntries(new URLSearchParams(search));
 }
+
+export function slash(p: string): string {
+	return p.replace(/\\/g, '/')
+}
+  
+export function injectQuery(url: string, queryToInject: string): string {
+	// encode percents for consistent behavior with pathToFileURL
+	// see #2614 for details
+	let resolvedUrl = new URL(url.replace(/%/g, '%25'), 'relative:///')
+	if (resolvedUrl.protocol !== 'relative:') {
+	  resolvedUrl = pathToFileURL(url)
+	}
+	const { search, hash } = resolvedUrl
+	let pathname = cleanUrl(url)
+	pathname = IS_WINDOWS ? slash(pathname) : pathname
+	return `${pathname}?${queryToInject}${search ? `&` + search.slice(1) : ''}${
+	  hash ?? ''
+	}`
+  }

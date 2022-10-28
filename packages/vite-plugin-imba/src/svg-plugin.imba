@@ -1,4 +1,5 @@
 import { createCompileImba } from './utils/compile.ts'
+import {readFileSync} from "fs"
 import {parseAsset} from 'imba/compiler'
 
 def compile-svg(body\string, url\string)
@@ -18,6 +19,7 @@ export default def svgPlugin(options = {})
 			if id.endsWith('.svg')
 				let result2 = cache.get(id)
 				if !result2
-					result2 = await compile-svg source, id
+					const body = readFileSync id, 'utf-8'
+					result2 = await compile-svg body, id
 					cache.set id, result2
 				return result2
