@@ -8,6 +8,7 @@ import {Logger} from '../utils/logger'
 import {builtinModules} from 'module'
 import {createHash, slash} from './utils'
 import mm from 'micromatch'
+import {__served__} from '../imba/utils'
 import { viteServerConfigFile, resolveWithFallbacks, importWithFallback } from '../utils/vite'
 
 class WorkerInstance
@@ -33,6 +34,30 @@ class WorkerInstance
 		log = new Logger(prefix: ["%bold%dim",name,": "])
 		current = null
 		restarts = 0
+
+	def get-all-styles
+		const urls = []
+		const ids = []
+		const moduleMap = {}
+		for [id, mod] of runner.viteServer.moduleGraph.idToModuleMap
+			const url = mod.url
+			urls.push url
+			ids.push id
+			# debugger if url.endsWith(".css")
+			moduleMap[url] = 
+				file: mod.file
+				id: mod.id
+				url: url
+				type: mod.type
+				importedModules: Array.from(mod.importedModules.keys()).map(do $1.id)
+				importers: Array.from(mod.importers.keys()).map(do $1.id)
+				code: (url.endsWith('.css') ? mod.ssrTransformResult.code : "")
+		const DEV_CSS_PATH = "./.dev-ssr"
+		nfs.mkdirSync(DEV_CSS_PATH) unless nfs.existsSync(DEV_CSS_PATH)
+		let all-css = ""
+		for own id, mod of moduleMap when mod.code
+			all-css += mod.code.substring(mod.code.indexOf('"') + 1, mod.code.lastIndexOf('"')).replace(/\\n/g, '\n') + "\n"
+		nfs.writeFileSync("{DEV_CSS_PATH}/all.css",all-css)
 
 	def start
 		return if current and current.#next
@@ -107,8 +132,11 @@ class WorkerInstance
 			# console.log "msg", message, handle
 			if message.type == 'fetch'
 				# console.log "parent: fetching", message
-				const md = await runner.fetchModule(message.id)
-				# console.log "parent md", module
+				let md = await runner.fetchModule(message.id)
+				if message.id == '\0virtual:imba/*?css'
+					try await get-all-styles! catch error
+						console.log "error creating DEV SSR styles", error
+				console.log "md {JSON.stringify message.id}", message.id == 'virtual:imba/*?css'
 				worker..send JSON.stringify
 					type: 'fetched'
 					id: message.id
@@ -117,9 +145,10 @@ class WorkerInstance
 				# console.log "resolving", message
 				const id = message.payload.id
 				const importer = message.payload.importer
+				const output = await runner.resolveId(id, importer)
 				const response = JSON.stringify
 					type: 'resolved'
-					output: await runner.resolveId(id, importer)
+					output: output
 					input: {id, importer}
 				worker.send response
 			if message == 'exit'
@@ -153,16 +182,18 @@ export default class Runner < Component
 		viteNodeServer.fetchModule id
 	def resolveId(id)
 		viteNodeServer.resolveId id
-	def handleFileChanged(id)
+	def shouldRerun(id)
 		return yes if id == fileToRun
+		# __served__ contains modules that were served by Vite in the client
+		# These would trigger HMR, so there is no need to live reload the server
+		return false if __served__.has id
 		const mod = viteServer.moduleGraph.getModuleById(id)
 		return false unless mod
-		return false if o.skipReloadingFor and mm.isMatch(id, o.skipReloadingFor)
 		let rerun = false
 		mod.importers.forEach do(i)
 			if !i.id
 				return
-			const heedsRerun = handleFileChanged(i.id)
+			const heedsRerun = shouldRerun(i.id)
 			if heedsRerun
 				rerun = true
 		rerun
@@ -186,10 +217,10 @@ export default class Runner < Component
 			configFile: configFile
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
 			transformMode:
-				ssr: [builtins]
+				ssr: [/.*/g]
 		viteServer.watcher.on "change", do(id)
 			id = slash(id)
-			const needsRerun = handleFileChanged(id)
+			const needsRerun = shouldRerun(id)
 			const file-path = np.relative(viteServer.config.root, id)
 			const skip? = o.skipReloadingFor and mm.isMatch(file-path, o.skipReloadingFor)
 			if needsRerun and !skip?

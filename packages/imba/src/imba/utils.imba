@@ -1,6 +1,6 @@
 const dashRegex = /-./g
 
-
+export const __served__ = new Set
 
 export class LazyProxy
 	static def for getter
