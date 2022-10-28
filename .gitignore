@@ -14,6 +14,7 @@ packages/e2e-tests/**/node_modules
 packages/e2e-tests/**/package-lock.json
 packages/e2e-tests/**/dist
 packages/e2e-tests/**/dist_server
+packages/e2e-tests/**/.dev-ssr
 packages/e2e-tests/**/.vite-node
 packages/e2e-tests/**/.ssr
 
