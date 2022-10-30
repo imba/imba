@@ -1417,7 +1417,13 @@ export class StyleRule
 				# let keys = key.replace(/[\.\~\@\+]/g,'\\$&').split('§')
 				
 				let keys = key.split('§')
-				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
+				# keys.slice(1).join(' ')
+				# using :is it should be much, much easier with the nested selectors?
+				# can even just take the whole outer selector as a simple :is on this element
+				let substr = keys.slice(1).join('')
+				# console.log "SUBSTR",substr
+				# do we unwrap, or can we just use :where etc and trust it?
+				let subsel = selparser.unwrap(selector,substr)
 				let obj = {}
 				obj[keys[0]] = value
 				if subrule = subrules[subsel]

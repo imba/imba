@@ -1,3 +1,6 @@
+import { off } from "process";
+import { modifiers } from "../src/compiler/theme.imba";
+
 /*
 Copyright (c) 2013 Dulin Marat
 
@@ -320,8 +323,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     var currentRule = selector;
     while (rule) {
       rule.type = 'rule';
-      currentRule.rule = rule;
-      currentRule = rule;
+      if(currentRule == rule){
+        // console.log('still at the same rule!');
+      } else {
+        currentRule.rule = rule;
+        currentRule = rule;
+      }
+
       skipWhitespace();
       chr = str.charAt(pos);
       if (pos >= l || chr === ',' || chr === ')') {
@@ -339,7 +347,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
           pos++;
         }
         skipWhitespace();
-        rule = this.parseRule();
+        rule = this.parseRule(null);
 
         if (!rule) {
           if(op == '>' || op == '>>>' || op == '>>'){
@@ -350,7 +358,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         }
         rule.nestingOperator = op;
       } else {
-        rule = this.parseRule();
+        rule = this.parseRule(currentRule);
         if (rule) {
           rule.nestingOperator = null;
         }
@@ -359,33 +367,98 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     return selector;
   };
 
-  this.parseRule = function() {
+  this.parseSubRule = function(type = 'is',simple = false,nest = false){
+    let pseudo = {name: type, valueType: 'selector', up: true};
+    // Should only go forward to the next whitehspace
+    // console.log(this.parseSelector())
+
+    if(simple){
+      let value = this.parseRule();
+      value.type = 'rule';
+      pseudo.value = {type: 'ruleSet',rule: value};
+      if(nest){
+        pseudo.after = value.rule = { tagName: '*', nestingOperator: null, type: 'rule' };
+      }
+    } else {
+      let value = this.parseSelector();
+      pseudo.value = value;
+    }
+
+    
+    
+    return pseudo;
+  }
+
+  this.parseRule = function(currentRule) {
     var rule = null;
+    var unimportant = false;
+    var nextIsPseudo = false;
+    var negate = false;
+    var closest = false;
+    var up = false
+    var part = {}
+    // console.log('parseRule!',str.slice(pos),l);
+
     while (pos < l) {
       chr = str.charAt(pos);
+      console.log('chr is now!!',chr);
+      part = {}
+
+      if (chr == '!') {
+        negate = true;
+        chr = str.charAt(++pos);
+        rule = rule || currentRule;
+        part.not = true;
+        // console.log('chr is now!!',chr);
+      }
+
+      if(chr == '@' && str.charAt(pos + 1) == '@'){
+        part.closest = true;
+        pos++;
+      } else if(chr == '.' && str.charAt(pos + 1) == '.'){
+        part.closest = true;
+        pos++;
+      } else if (chr == '^') {
+        chr = str.charAt(++pos);
+        rule = rule || currentRule;
+        part.up = true;
+      }
+
       if (chr === '&') {
         pos++;
         (rule = rule || {}).isScope = true;
+
+      } else if (chr === '^') {
+        console.log('up selector!!');
+        pos++;
+        let pseudo = this.parseSubRule('is',true,true);
+        (rule = rule || currentRule || []).push(pseudo);
       } else if (chr === '*') {
         pos++;
-        (rule = rule || {}).tagName = '*';
+        (rule = rule || []).tagName = '*';
+        
       } else if (isIdentStart(chr) || chr === '\\') {
-        (rule = rule || {}).tagName = getIdent();
-      } else if (chr === '$' || chr === '%') {
+        (rule = rule || []).tagName = getIdent();
+      } else if (chr === '$') {
         pos++;
-        rule = rule || {};
-        (rule.classNames = rule.classNames || []).push(chr + getIdent());
+        part.flag = 'ref--' + getIdent();
+        part.ref = true;
+        (rule = rule || []).push(part);
+      } else if (chr === '%') {
+        pos++;
+        part.flag = chr + getIdent();
+        // (rule = rule || []).push(part);
       } else if (chr === '.') {
         pos++;
-        rule = rule || {};
-        (rule.classNames = rule.classNames || []).push(getIdent());
+        part.flag = getIdent();
+        (rule = rule || currentRule || []).push(part);
       } else if (chr === '#') {
         pos++;
-        (rule = rule || {}).id = getIdent();
+        (rule = rule || []).id = getIdent();
       } else if (chr === '[') {
         pos++;
         skipWhitespace();
-        var attr = {
+        var attr = part.attr = {
           name: getIdent()
         };
         skipWhitespace();
@@ -438,25 +511,38 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
           pos++;
           attr.value = attrValue;
         }
-        rule = rule || {};
-        (rule.attrs = rule.attrs || []).push(attr);
+        (rule = rule || []).push(part);
+        // (rule.attrs = rule.attrs || []).push(attr);
       } else if (chr === ':' || chr === '@') {
-        let special = chr === '@';
-        
+        // This is the pseudo element
+        if(chr == ':' && str.charAt(pos + 1) == ':'){
+          (rule = rule || currentRule || []).pseudoElement = getIdent({':':true})
+          continue;
+        }
+
         pos++;
+        part.name = chr;
+        var pseudo = part;
 
         var pseudoName = ''
-        while(str.charAt(pos) == '.'){
-          pseudoName += '.';
-          pos++;
-        }
-          
+        pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
 
-        pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true,'!':true});
-        var pseudo = {
-          special: special,
-          name: pseudoName
-        };
+        if(pseudoName == 'unimportant'){
+          unimportant = true;
+          part.type = 'unimportant';
+          
+          (rule = rule || currentRule || []).push(part);
+          //let pseudo = this.parseSubRule('where');
+          // (rule.pseudos = rule.pseudos || []).push(pseudo);
+          continue;
+        }
+
+        part.name += pseudoName;
+        part.pseudo = pseudoName;
+
+        
+        console.log('here')
+
         if (chr === '(') {
           pos++;
           var value = '';
@@ -495,9 +581,9 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
           }
           pos++;
           pseudo.value = value;
+          
         }
-        rule = rule || {};
-        (rule.pseudos = rule.pseudos || []).push(pseudo);
+        (rule = rule || currentRule || []).push(part);
       } else {
         break;
       }
@@ -578,12 +664,14 @@ CssSelectorParser.prototype.render = function(path) {
   return this._renderEntity(path).trim();
 };
 
-CssSelectorParser.prototype._renderEntity = function(entity) {
+var rootSelector = null;
+CssSelectorParser.prototype._renderEntity = function(entity,parent) {
   var currentEntity, parts, res;
   res = '';
   switch (entity.type) {
     case 'ruleSet':
       currentEntity = entity.rule;
+      rootSelector = entity;
       parts = [];
       while (currentEntity) {
         if (currentEntity.nestingOperator) {
@@ -592,7 +680,8 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
         parts.push(this._renderEntity(currentEntity));
         currentEntity = currentEntity.rule;
       }
-      res = parts.join(' ');
+      let media = entity.media && entity.media.length ? ` @media ${entity.media.join(' and ')}` : ''
+      res = parts.join(' ') + media;
       break;
     case 'selectors':
       res = entity.selectors.map(this._renderEntity, this).join(', ');
@@ -611,95 +700,120 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
       if (entity.id) {
         res += "#" + this.escapeIdentifier(entity.id);
       }
-      if (entity.classNames) {
+
+      let idx = 0;
+      let len = entity.length;
+
+      while(idx < len){
         let shortest = null;
+        let part = entity[idx++];
+        let attr = part.attr;
+        let flag = part.flag;
+        let out = "";
+        let neg = part.not;
+        let pseudo = part.pseudo ? part : null;
+        let desc = modifiers[part.pseudo];
 
-        res += entity.classNames.map(function(cn) {
-          if(cn[0] == '!') {
-            return ":not(." + this.escapeIdentifier(cn.slice(1)) + ")";
-          } else {
-            let str = this.escapeIdentifier(cn);
-            if(s1 && (!shortest || shortest.length > str.length)){
-              shortest = str;
-            }
-            return "." + str;
-          }
-        }, this).join('');
+        // Identify numeric media here?
 
-        if(s1 > 0 && shortest && shortest.length < 9){
-          while(--s1 >= 0){
-            res += "." + shortest;
-          }
+        if(part.media){
+          console.log('media',rootSelector);
+          continue;
         }
-      }
 
-      if(entity.pri > 0 && false){
-        let i = entity.pri;
-        // res += ":not(";
-        // while (--i >= 0) res += '#_';
-        // res += ')';
-        while (--i >= 0) res += ":not(#P)";
-      }
-      if(s0 > 0){
-        if(false){
-          res += ":not(";
-          while (s0--) res += '#_';
-          while (--s1 >= 0) res += '._';
-          res += ')';  
-        } else {
-          while (--s0 >= 0) res += ":not(#_)";
+        if(desc && desc.flag){
+          flag = desc.flag;
+          pseudo = null;
         }
-        // while (--i >= 0) res += ":not(#_)";
-      }
-      if(s1 > 0){
-        while (--s0 >= 0) res += ":not(._0)";
-        // res += ":not(";
-        // while (--s1 >= 0) res += (s1 ? '._' : '._0');
-        // res += ')';
-        // while (--i >= 0) res += ":not(._)";
-      }
-      if (entity.attrs) {
-        res += entity.attrs.map(function(attr) {
+
+        if(desc && desc.type == 'el'){
+          pseudo = null;
+          entity.pseudoElement ||= '::' + part.pseudo;
+        }
+        
+        if(flag){
+          out = '.' + flag;
+        }
+
+        if(attr) {
           if (attr.operator) {
             if (attr.valueType === 'substitute') {
-              return "[" + this.escapeIdentifier(attr.name) + attr.operator + "$" + attr.value + "]";
+              out = "[" + this.escapeIdentifier(attr.name) + attr.operator + "$" + attr.value + "]";
             } else {
-              return "[" + this.escapeIdentifier(attr.name) + attr.operator + this.escapeStr(attr.value) + "]";
+              out = "[" + this.escapeIdentifier(attr.name) + attr.operator + this.escapeStr(attr.value) + "]";
             }
           } else {
-            return "[" + this.escapeIdentifier(attr.name) + "]";
+            out = "[" + this.escapeIdentifier(attr.name) + "]";
           }
-        }, this).join('');
-      }
-      if (entity.pseudos) {
-        res += entity.pseudos.map(function(pseudo) {
-          let pre = ":" + this.escapeIdentifier(pseudo.name);
+        }
+
+        if(pseudo){
+          let escaped = this.escapeIdentifier(pseudo.pseudo);
+          
+          
+
+          // Check if it is a well known type
           let post = "";
-
-          if(pseudo.neg){
-            pre = ":not(" + pre;
-            post = ")";
-
-          }
+          let value = pseudo.value || pseudo.name;
+          let neg = pseudo.not;
+          let pre = ":" + escaped;
+          // Hack doesnt work with @[] as selectors
 
           if (pseudo.valueType) {
             if (pseudo.valueType === 'selector') {
-              return pre + "(" + this._renderEntity(pseudo.value) + ")" + post;
+              out = pre + "(" + this._renderEntity(pseudo.value,parent) + ")" + post;
             } else if (pseudo.valueType === 'substitute') {
-              return pre + "($" + pseudo.value + ")" + post;
+              out = pre + "($" + pseudo.value + ")" + post;
             } else if (pseudo.valueType === 'numeric') {
-              return pre + "(" + pseudo.value + ")" + post;
+              out = pre + "(" + pseudo.value + ")" + post;
             } else if (pseudo.valueType === 'raw' || pseudo.valueType === 'string' ) {
-              return pre + "(" + pseudo.value + ")" + post;
+              out = pre + "(" + pseudo.value + ")" + post;
             } else {
-              return pre + "(" + this.escapeIdentifier(pseudo.value) + ")" + post;
+              out = pre + "(" + this.escapeIdentifier(pseudo.value) + ")" + post;
             }
           } else if(pseudo.type == 'el') {
-            return ':' + pre;
+            out = ':' + pre;
+          } else if(!desc || desc.flag) {
+            // Must change to a flag?
+            out = `._${escaped}_`
           } else {
-            return pre + post;
+            out = pre + post;
           }
-        }, this).join('');
+          // console.log('checking pseudo',value);
+
+          if(out.match(/^\:(hover|focus|checked|disabled)$/) && false) {
+            let pre = pseudo.not ? ':not' : ':is';
+            value = `${pre}(:${escaped},._${escaped}_)`;
+            neg = false;
+          }
+        }
+
+        if(part.closest) {
+          out = `:${neg ? 'not' : 'is'}(${out},${out}*)`
+          neg = false;
+        } else if (part.up) {
+          out = `:${neg ? 'not' : 'is'}(${out}*)`
+          neg = false;
+        }
+
+        if(neg){
+          out = `:not(${out})`
+        }
+
+        
+
+        res += out;
+      }
+
+      if(entity.pseudoElement){
+        res += entity.pseudoElement;
+      }
+
+      if(s0 > 0){
+          while (--s0 >= 0) res += ":not(#_)";
+      }
+      if(s1 > 0){
+        while (--s0 >= 0) res += ":not(._0)";
       }
       break;
     default:
@@ -709,12 +823,14 @@ CssSelectorParser.prototype._renderEntity = function(entity) {
 };
 
 var parser = new CssSelectorParser();
-parser.registerSelectorPseudos('has','not','is','matches','any')
+parser.registerSelectorPseudos('has','not','is','matches','any','where')
 parser.registerNumericPseudos('nth-child')
 parser.registerNestingOperators('>>>','>>','>', '+', '~')
 parser.registerAttrEqualityMods('^', '$', '*', '~')
 // parser.enableSubstitutes()
 
-export const parse = function(v){ return parser.parse(v) }
+export const parse = function(v){
+  // console.log('parsing',v);
+  return parser.parse(v) }
 export const render = function(v){ return parser.render(v) }
 // exports.default = parser;
