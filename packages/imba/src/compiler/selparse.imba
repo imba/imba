@@ -87,6 +87,8 @@ export def rewrite rule,ctx,o = {}
 		let prev = parts[i - 1]
 		let next = parts[i + 1]
 
+		# console.log "part",part,parts
+
 		let mods = part.pseudos or []
 		let name = part.tagName
 		let items = part.slice(0)
@@ -166,23 +168,11 @@ export def rewrite rule,ctx,o = {}
 			elif mod.name == 'enter' or mod.name == 'leave'
 				(ctx or rule)["_{name}_"] = yes
 				
-			elif name == 'deep'
-				# we use >>> instead? Or ->
-				mod.remove = yes
-
-				deeppart = part
-				if prev
-					if !prev.isRoot
-						localpart = prev
-					else
-						localpart = prev.rule = {type: 'rule',rule: prev.rule}
-				else
-					localpart = rule.rule = {type: 'rule',rule: rule.rule}
-
 			if mod.media
 				rule.media.push(mod.media)
 
 	# Now inject scope class names etc
+	# console.log "got here!!!",parts
 	let last = parts[parts.length - 1]
 	let scope = parts.find(do $1.isScope)
 
@@ -203,7 +193,7 @@ export def rewrite rule,ctx,o = {}
 				addScopeClass(part,o.scope.cssns!)
 	
 	if scope and o.scope
-		if !scope.classNames.length and !scope.pseudos..length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
+		if !scope.length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
 			yes # no need to scope this?
 		else
 			let id = o.id || (o.scope.cssid ? o.scope.cssid! : o.scope.cssns!)

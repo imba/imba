@@ -315,7 +315,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       type: 'ruleSet'
     };
 
-    var rule = opm ? {type: 'rule', isScope: true} : this.parseRule();
+    var rule = opm ? Object.assign([],{type: 'rule', isScope: true}) : this.parseRule();
 
     if (!rule) {
       return null;
@@ -401,7 +401,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
     while (pos < l) {
       chr = str.charAt(pos);
-      console.log('chr is now!!',chr);
+      // console.log('chr is now!!',chr);
       part = {}
 
       if (chr == '!') {
@@ -426,7 +426,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
       if (chr === '&') {
         pos++;
-        (rule = rule || {}).isScope = true;
+        (rule = rule || []).isScope = true;
 
       } else if (chr === '^') {
         console.log('up selector!!');
@@ -539,9 +539,6 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
         part.name += pseudoName;
         part.pseudo = pseudoName;
-
-        
-        console.log('here')
 
         if (chr === '(') {
           pos++;
@@ -789,10 +786,10 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         }
 
         if(part.closest) {
-          out = `:${neg ? 'not' : 'is'}(${out},${out}*)`
+          out = `:${neg ? 'not' : 'is'}(${out},${out} *)`
           neg = false;
         } else if (part.up) {
-          out = `:${neg ? 'not' : 'is'}(${out}*)`
+          out = `:${neg ? 'not' : 'is'}(${out} *)`
           neg = false;
         }
 
