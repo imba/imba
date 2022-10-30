@@ -10937,7 +10937,7 @@ export class StyleProperty < StyleNode
 	def initialize token
 		@token = token
 		# also split 
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\.\@])/g) # .split(/[\.\@]/g)
+		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@])/g) # .split(/[\.\@]/g)
 		
 		for part,i in @parts
 			@parts[i] = part.replace(/^\./,'@.')

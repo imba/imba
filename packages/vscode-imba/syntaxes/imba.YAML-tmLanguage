@@ -10,13 +10,14 @@ variables:
   propertyAccess: (?:(\.)|(\.\.(?!\s*[[:digit:]]|\s+)))
   propertyAccessPreIdentifier: \??\.\s*
   identifier: '[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?'
-  cssPropertyKey: '(?:[\@\.]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.]+[\!\<\>]?[\w\-\$]+)*(?:\s*\:)'
+  cssPropertyKey: '(?:\^?[\@\.\%]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\<\>]?[\w\-\$]+)*(?:\s*\:)'
   cssVariable: '(?:--|\$)[\w\-\$]+'
   cssPropertyName: '[\w\-\$]+'
   cssNumModifier: '\@[\!\<\>]?[0-9]+'
-  cssModifier: '\@{{cssPropertyName}}'
+  cssModifier: '\@+{{cssPropertyName}}'
   cssUpModifier: '\.\.{{cssPropertyName}}'
   cssIsModifier: '\.{{cssPropertyName}}'
+  cssAnyModifier: '[\.\@\%]{{cssPropertyName}}'
   pascalIdentifier: '[[:upper:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\!]?'
   internalIdentifier: '\${{identifier}}'
   symbolIdentifier: '\:{{identifier}}'
@@ -272,9 +273,13 @@ repository:
       - name: support.type.property-name.modifier.breakpoint.css
         match: '{{cssNumModifier}}'
       - name: support.type.property-name.modifier.css
-        match: '{{cssModifier}}'
+        match: '\^?\@+{{cssPropertyName}}'
+      - name: support.type.property-name.modifier.flag.css
+        match: '\^?\.+{{cssPropertyName}}'
+      - name: support.type.property-name.modifier.state.css
+        match: '\^?\%+{{cssPropertyName}}'
       - name: support.type.property-name.modifier.up.css
-        match: '{{cssUpModifier}}'
+        match: '{{cssUpModifier}}|\^{{cssAnyModifier}}'
       - name: support.type.property-name.modifier.is.css
         match: '{{cssIsModifier}}'
       - name: support.type.property-name.css
