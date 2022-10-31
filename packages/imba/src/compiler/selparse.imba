@@ -1,3 +1,4 @@
+import { atRule } from 'postcss'
 import * as selparser from '../../vendor/css-selector-parser'
 import {modifiers} from './theme.imba'
 
@@ -86,6 +87,15 @@ export def rewrite rule,ctx,o = {}
 
 	# console.log 'separse',rule,o.type
 
+	# only if we are scoped in somewhere
+	if parts[0]..tagName == '*' # and o.scope
+		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: parts[0]}))
+		# addScopeClass(localpart,o.scope.cssid!)
+		# seenDeepOperator = yes
+		# console.log 'got here?',parts
+		# console.log parts
+	
+
 	for part,i in parts
 		let prev = parts[i - 1]
 		let next = parts[i + 1]
@@ -96,9 +106,12 @@ export def rewrite rule,ctx,o = {}
 		let name = part.tagName
 		let items = part.slice(0)
 		
-
-		
 		let op = part.op = part.nestingOperator
+
+		if name == '*'
+			localpart ||= prev
+			escaped = part
+			seenDeepOperator = yes
 
 		if i == 0 and !name and !op and part[0]..pseudo
 			# console.log 'implicit scope?',part
@@ -176,8 +189,6 @@ export def rewrite rule,ctx,o = {}
 				addClass(part,o.ns) if o.ns
 				
 			elif name == 'off' or name == 'out' or name == 'in'
-				# mod.remove = yes
-				# addClass(modTarget,"_{mod.name}_")
 				hasOffStates = yes
 				(ctx or rule).hasTransitionStyles = yes
 				(ctx or rule)["_{name}_"] = yes
@@ -193,9 +204,9 @@ export def rewrite rule,ctx,o = {}
 	let last = parts[parts.length - 1]
 	let scope = parts.find(do $1.isScope)
 
-	if !scope and (o.id or parts[0].nestingOperator)
+	if !scope and (o.id or parts[0].nestingOperator or parts[0].tagName == '*')
 		let idx = parts.findIndex(do $1.isScoped)
-		let parent = idx == 0 ? rule : parts[idx - 1]
+		let parent = 0 >= idx ? rule : parts[idx - 1]
 		scope = parent.rule = Object.assign([],{isScope: yes, rule: parts[idx], type: 'rule'})
 
 	if !scope and parts[0].implicitScope

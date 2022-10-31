@@ -129,16 +129,16 @@ export const modifiers =
 	# blink: {ua: 'blink'}
 	# webkit: {ua: 'webkit'}
 
-	enter: {flag:'_enter_'}
-	leave: {flag:'_leave_'}
+	enter: {flag:'@enter'}
+	leave: {flag:'@leave'}
 
 	# For whole module or single element?
-	touch: {flag: '_touch_'}
-	suspended: {flag: '_suspended_'}
-	'user-invalid': {flag: '_suspended_'}
-	move: {flag: '_move_'}
-	hold: {flag: '_hold_'}
-	ssr: {flag: '_ssr_'}
+	touch: {flag: '@touch'}
+	suspended: {flag: '@suspended'}
+	'user-invalid': {}
+	move: {flag: '@move'}
+	hold: {flag: '@hold'}
+	ssr: {flag: '@ssr'}
 
 # some things should definitely move out of theme
 export const variants =

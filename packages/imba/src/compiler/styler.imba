@@ -1292,7 +1292,7 @@ export class StyleSheet
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
 
 					if easing or k == 'ease'
-						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
+						sel = sel.replace(/\.\\@(off|out|in|on)\b/g,'')
 					sel = sel.replace(/((\:+)[\w\-]+)(?!\()/g) do(m,k) k.length > 1 ? m : ''
 					sel = sel.replace(/^\:root /g,'')
 
@@ -1334,7 +1334,7 @@ export class StyleSheet
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
-				prepend('._enter_:not(#_),._leave_:not(#_) {--e_ad:300ms;}')
+				prepend('.\\@enter:not(#_),.\\@leave:not(#_) {--e_ad:300ms;}')
 				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') # 
 			if easing
 				#register[k] = selectors

@@ -431,7 +431,6 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || []).isScope = true;
 
       } else if (chr === '^') {
-        console.log('up selector!!');
         pos++;
         let pseudo = this.parseSubRule('is',true,true);
         (rule = rule || currentRule || []).push(pseudo);
@@ -444,13 +443,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || []).tagName = getIdent();
       } else if (chr === '$') {
         pos++;
-        part.flag = 'ref--' + getIdent();
+        part.flag = '$' + getIdent();
         part.ref = true;
         (rule = rule || []).push(part);
       } else if (chr === '%') {
         pos++;
         part.flag = chr + getIdent();
-        // (rule = rule || []).push(part);
+
       } else if (chr === '.') {
         pos++;
         part.flag = getIdent();
@@ -732,7 +731,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         }
         
         if(flag){
-          out = '.' + flag;
+          out = '.' + this.escapeIdentifier(flag);
         }
 
         if(attr) {
@@ -748,9 +747,8 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         }
 
         if(pseudo){
+          // check if it is a native one
           let escaped = this.escapeIdentifier(pseudo.pseudo);
-          
-          
 
           // Check if it is a well known type
           let post = "";
@@ -775,7 +773,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
             out = ':' + pre;
           } else if(!desc || desc.flag) {
             // Must change to a flag?
-            out = `._${escaped}_`
+            out = `.\\@${escaped}`
           } else {
             out = pre + post;
           }
@@ -783,7 +781,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
 
           if(out.match(/^\:(hover|focus|checked|disabled)$/) && false) {
             let pre = pseudo.not ? ':not' : ':is';
-            value = `${pre}(:${escaped},._${escaped}_)`;
+            value = `${pre}(:${escaped},.\\@${escaped})`;
             neg = false;
           }
         }

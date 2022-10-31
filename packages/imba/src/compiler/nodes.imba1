@@ -9633,7 +9633,7 @@ export class Tag < TagLike
 		if option(:reference)
 			if oscope
 				let name = String(option(:reference)).slice(1)
-				@classNames.push("ref--{name}")
+				@classNames.push("${name}") # just add the actual ref right?
 		
 		if option(:key)
 			set(detached: yes)
