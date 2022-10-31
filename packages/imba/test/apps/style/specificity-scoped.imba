@@ -23,14 +23,3 @@ tag A3
 
 # should 
 test do eqcss <A3.bold>, 600
-	
-	
-tag A4
-	# should this apply to the self?
-	css %mix fw:500
-	css .cls fw:600
-
-	<self> <div%mix.cls>
-
-# should 
-test do eqcss <A4>,600,'div'

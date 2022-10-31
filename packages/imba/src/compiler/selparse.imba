@@ -82,6 +82,9 @@ export def rewrite rule,ctx,o = {}
 	let escaped = no
 	let seenDeepOperator = !!o.global
 	let hasOffStates = no
+	let importance = 0
+
+	# console.log 'separse',rule,o.type
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -93,7 +96,13 @@ export def rewrite rule,ctx,o = {}
 		let name = part.tagName
 		let items = part.slice(0)
 		
+
+		
 		let op = part.op = part.nestingOperator
+
+		if i == 0 and !name and !op and part[0]..pseudo
+			# console.log 'implicit scope?',part
+			part.implicitScope = yes
 
 		if op == '>>'
 			localpart = prev
@@ -139,9 +148,17 @@ export def rewrite rule,ctx,o = {}
 		for mod,mi in items
 			let name = mod.pseudo
 			let meta = modifiers[mod.pseudo]
-			if mod.pseudo..match(/^\d+$/)
-				let num = parseInt(mod.pseudo)
+
+			if name..match(/^\!?\d+$/)
+				let num = parseInt(name.replace(/\!/,''))
+				mod.not = !mod.not if name[0] == '!'
 				mod.media = mod.not ? "(max-width: {num - 1}px)" : "(min-width: {num}px)"
+
+			if name == 'important' or name == 'force'
+				mod.pseudo = null
+				mod.important = yes
+				importance += 1
+				yes
 
 			if meta..media
 				if mod.not
@@ -190,9 +207,13 @@ export def rewrite rule,ctx,o = {}
 	if true
 		for part in parts
 			if part.isScoped and o.scope
-				addScopeClass(part,o.scope.cssns!)
+				let ns = o.scope.cssns!
+				# let id = o.scope.cssid!
+				# console.log 'add scope class!!',ns,id
+				addScopeClass(part,ns)
 	
 	if scope and o.scope
+		# console.log 'checking the scope?!',scope
 		if !scope.length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
 			yes # no need to scope this?
 		else
@@ -228,11 +249,11 @@ export def rewrite rule,ctx,o = {}
 	if hasOffStates
 		s1 = 4
 
+	s1 += importance
+
 	if true and o.respecify !== false 
 		last.s1 = Math.max(s0,s1)
 		last.s2 = s2
-
-	
 
 	return rule
 
@@ -245,8 +266,9 @@ export def render root, content, options = {}
 
 	for rule in rules
 		let sel = selparser.render(rule)
-		let [base,media] = sel.split(' @media ')
+		let [base,media = ''] = sel.split(' @media ')
 		rule.#string = base
+
 		# can we really group them this way?
 		# let media = rule.media.length ? "@media {rule.media.join(' and ')}" : ''
 		if media
@@ -255,7 +277,7 @@ export def render root, content, options = {}
 		if media != group[0]
 			groups.push(group = [media])
 		
-		group.push(sel)
+		group.push(base)
 		root.#rules.push(rule)
 		
 	let out = []

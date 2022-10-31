@@ -29,27 +29,28 @@ tag App
 		<.f3> "400"
 		<.f2 [fw:500]> "500"
 		<.f4>
-			css @force fw:600
+			css fw:600
 			# You would expect this to be more important? - or would no?
 			"600"
 		<div.f5>
-			css @inline fw:700
+			css fw:700 
 			"700"
 		<div>
 			css .f3 fw:700
 			<div.f3> "700"
 		
 		<div>
-			css .f3 fw@force:701
+			css .f3 fw:701
 			<div.f3> "701"
 
 tag App2 < App
 	css .f2 fw:350
 	# css .f1 fw:350
 
+let app = imba.mount(<App tabIndex=0>)
 
 test do
-	imba.mount(let app = <App tabIndex=0>)
+	# imba.mount(let app = <App tabIndex=0>)
 	let els = app.querySelectorAll('*')
 	for el in els when el.children.length == 0
 		eqcss el,parseInt(el.textContent),null,message: "expected %2 - got %1 ({el.className})"

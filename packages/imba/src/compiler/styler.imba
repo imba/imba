@@ -949,17 +949,18 @@ export class StyleTheme
 	def border_y_color [t,b=t]
 		{bct: t, bcb: b}
 
-	def border_top_radius [l,r=l]
-		{'border-top-left-radius': l, 'border-top-right-radius': r}
+	# it should rather send the same to both
+	def border_top_radius pars
+		{'border-top-left-radius': [pars], 'border-top-right-radius': [pars]}
 
-	def border_left_radius [t,b=t]
-		{'border-top-left-radius': t, 'border-bottom-left-radius': b}
+	def border_left_radius pars
+		{'border-top-left-radius': [pars], 'border-bottom-left-radius': [pars]}
 
-	def border_bottom_radius [t,b=t]
-		{'border-bottom-left-radius': l, 'border-bottom-right-radius': r}
+	def border_bottom_radius pars
+		{'border-bottom-left-radius': [pars], 'border-bottom-right-radius': [pars]}
 
-	def border_right_radius [t,b=t]
-		{'border-top-right-radius': t, 'border-bottom-right-radius': b}
+	def border_right_radius pars
+		{'border-top-right-radius': [pars], 'border-bottom-right-radius': [pars]}
 
 	def justify_align [justify,align = justify]
 		let o = {}
@@ -1287,7 +1288,7 @@ export class StyleSheet
 			for item in v
 				for rule in (item.#rules or [])
 					# console.log rule
-					let ns = rule.#media
+					let ns = rule.#media or ''
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
 
 					if easing or k == 'ease'
@@ -1397,11 +1398,21 @@ export class StyleRule
 			elif options.ns and !options.global
 				subrules.push new StyleRule(null,".{options.ns}",subprops,{})
 
+		let selpri = typeof selector == 'string' and selector.indexOf('@important') >= 0 ? 1 : 0
+
 		for own key,value of self.content
 			continue if value == undefined
 			
 			let subsel = null
-			
+			let important = selpri ? ' !important' : ''
+			let rawkey = key
+
+			# let [m,imp,name,mods] = (key.match(/^(\?*\!*)?([\w\-]+)(\§.+)?/) or [])
+
+			# if imp
+			#	important = imp[0] == '!' ? ' !important' : ''
+			#	key = key.slice(imp.length)
+		
 			if key.indexOf('&') >= 0
 				if isKeyFrames
 					let keyframe = key.replace(/&/g,'')
@@ -1416,7 +1427,7 @@ export class StyleRule
 			elif key.indexOf('§') >= 0
 				# let keys = key.replace(/[\.\~\@\+]/g,'\\$&').split('§')
 				
-				let keys = key.split('§')
+				let keys = rawkey.split('§')
 				# keys.slice(1).join(' ')
 				# using :is it should be much, much easier with the nested selectors?
 				# can even just take the whole outer selector as a simple :is on this element
@@ -1439,7 +1450,7 @@ export class StyleRule
 			elif key[0] == '['
 				# better to just check if key contains '.'
 				# this is only for a single property
-				console.warn "DEPRECATED",key,self
+				# console.warn "DEPRECATED",key,self
 				let o = JSON.parse(key)
 				subrules.push new StyleRule(self,selector,value,options)
 				continue
@@ -1465,28 +1476,25 @@ export class StyleRule
 				if selector.match(/@in\b/)
 					yes
 					# TODO warn about easings not making sense inside here
-					# let subsel = selector.replace(/@in\b/g,'@enter')
-					# let obj = {[key]: value}
-					# subrules.push new StyleRule(self,subsel,obj,options)
-					# continue
 				parts.push "{key}: {value} !important;"
-
 
 			elif key.match(/^__ease__$/)
 				yes
 			else
 				if key.match(/^(width|height)$/)
+					# what about min/max sizes?
 					meta.size = yes
 
-				parts.push "{key}: {value};"
+				parts.push "{key}: {value}{important};"
 
 				if AutoPrefixes[key]
 					for prefixed in AutoPrefixes[key]
-						parts.push "{prefixed}: {value};"
+						parts.push "{prefixed}: {value}{important};"
 
 		
-		let content = parts.join('\n')
 		let out = ""
+
+		let content = parts.join('\n')
 		if o.indent or isKeyFrames
 			content = '\n' + content + '\n'
 

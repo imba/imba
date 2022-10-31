@@ -414,9 +414,11 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
       if(chr == '@' && str.charAt(pos + 1) == '@'){
         part.closest = true;
+        rule = rule || currentRule;
         pos++;
       } else if(chr == '.' && str.charAt(pos + 1) == '.'){
         part.closest = true;
+        rule = rule || currentRule;
         pos++;
       } else if (chr == '^') {
         chr = str.charAt(++pos);
@@ -435,6 +437,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         (rule = rule || currentRule || []).push(pseudo);
       } else if (chr === '*') {
         pos++;
+        // This has to be a new rule right?
         (rule = rule || []).tagName = '*';
         
       } else if (isIdentStart(chr) || chr === '\\') {
@@ -451,7 +454,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       } else if (chr === '.') {
         pos++;
         part.flag = getIdent();
-        (rule = rule || currentRule || []).push(part);
+        (rule = rule || []).push(part);
       } else if (chr === '#') {
         pos++;
         (rule = rule || []).id = getIdent();
@@ -714,7 +717,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         // Identify numeric media here?
 
         if(part.media){
-          console.log('media',rootSelector);
+          // console.log('media',rootSelector);
           continue;
         }
 

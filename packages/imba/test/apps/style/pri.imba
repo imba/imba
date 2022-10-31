@@ -2,10 +2,9 @@ tag app-item
 	css fw:300
 	
 tag app-item2
-	css @force fw:300
+	css fw@important:300
 
 tag app-root
-
 	def render
 		<self.app>
 			<app-item$a1[fw:400]>
