@@ -351,7 +351,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
         if (!rule) {
           if(op == '>' || op == '>>>' || op == '>>'){
-            rule = {tagName: '*'}
+            rule = Object.assign([],{tagName: '*'});
           } else {
             throw Error('Rule expected after "' + op + '".');  
           }
@@ -811,7 +811,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           while (--s0 >= 0) res += ":not(#_)";
       }
       if(s1 > 0){
-        while (--s0 >= 0) res += ":not(._0)";
+        while (--s1 >= 0) res += ":not(._0)";
       }
       break;
     default:

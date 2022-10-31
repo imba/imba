@@ -75,7 +75,9 @@ export def rewrite rule,ctx,o = {}
 		parts.push(curr)
 		curr = curr.rule
 
-	let rev = parts.slice(0).reverse!
+
+	# let rev = parts.slice(0).reverse!
+
 	
 	let container = parts[0]
 	let localpart = null
@@ -89,12 +91,8 @@ export def rewrite rule,ctx,o = {}
 
 	# only if we are scoped in somewhere
 	if parts[0]..tagName == '*' # and o.scope
-		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: parts[0]}))
-		# addScopeClass(localpart,o.scope.cssid!)
-		# seenDeepOperator = yes
-		# console.log 'got here?',parts
-		# console.log parts
-	
+		parts[0].nestingOperator = '>>>'
+		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: parts[0],isScope:yes, nestingOperator: '>>>'}))
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -110,7 +108,7 @@ export def rewrite rule,ctx,o = {}
 
 		if name == '*'
 			localpart ||= prev
-			escaped = part
+			escaped ||= part
 			seenDeepOperator = yes
 
 		if i == 0 and !name and !op and part[0]..pseudo
@@ -153,10 +151,6 @@ export def rewrite rule,ctx,o = {}
 		if o.ns and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
 			if part.isScope or true
 				localpart = part
-
-		
-		let modTarget = part
-		let whereForIs = false
 
 		for mod,mi in items
 			let name = mod.pseudo
@@ -265,6 +259,9 @@ export def rewrite rule,ctx,o = {}
 	if true and o.respecify !== false 
 		last.s1 = Math.max(s0,s1)
 		last.s2 = s2
+
+	if o.respecify === false
+		last.s1 = last.s2 = 0
 
 	return rule
 
