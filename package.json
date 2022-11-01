@@ -5,6 +5,7 @@
         "lerna": "^6.0.1"
     },
     "scripts": {
-        "release": "lerna publish"
+        "release": "lerna publish",
+        "prerelease": "lerna publish --canary --preid alpha --dist-tag experimental --pre-dist-tag next"
     }
 }
