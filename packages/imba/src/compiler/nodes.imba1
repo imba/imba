@@ -6515,9 +6515,10 @@ export class Descriptor < Node
 
 		if option(:default)
 			@default = option(:default)
-			# TODO not if primitive?
+			if @default isa Literal
+				@literal = @default
+
 			unless @default isa Func
-			
 				@default = Func.new([],[@default],null,{})
 			@default.traverse
 	
@@ -6534,7 +6535,6 @@ export class Descriptor < Node
 		false
 		
 	def add item, type
-		# console.log "add item {item} {type}"
 		
 		if item isa ArgList
 			if item.@generated
@@ -6564,11 +6564,13 @@ export class Descriptor < Node
 			item.context = ref
 			parts.push(item)
 
-		parts.add(ref)
 
 		if @default
 			parts.add LIT("{ref.c}.default = {@default.c}")
-			# OP('=',OP('.',ref,LIT('default')),@default)
+		if @literal
+			parts.add LIT("{ref.c}.default.literal = {@literal.c}")
+
+		parts.add(ref)
 		
 		if STACK.tsc
 			return "((self,{ref.c}={val.c(mark: yes)})=>({parts.c}))(this)"
