@@ -28,7 +28,8 @@ tag app-root
 
 	def render
 		<self 
-			@error.trap=handle-error
+			@error(AppError).trap=handle-error
+			@error.trap=console.info('Error')
 			# @error.trap=console.info('Error',e.error,e.detail)
 		>
 			<header>
@@ -44,22 +45,6 @@ imba.mount <app-root>
 
 describe "@error" do
 
-	# tag App
-	# 	<self.parent>
-	# 		<div.target
-	# 			@click.sel('span').log('span')
-	# 			@click.!sel('span').log('!span')
-	# 		>
-	# 			<span> "Button"
-	# 			<b> "bold"
-	# 		
-	# 		# when matching on parent classes we need to
-	# 		# include :scope to refer to this element
-	# 		<div.two
-	# 			@click.sel('.parent :scope').log('parent')
-	# 		> "Button"
-	# 		
-	# let app = imba.mount <App>
 
 	test('specific error type') do
 		await spec.click("button.edit")
