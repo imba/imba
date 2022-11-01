@@ -6,10 +6,10 @@ require 'colors'
 const fs = require 'fs'
 const path = require 'path'
 const prompt = require 'prompts'
-const { spawnSync } = require 'child_process'
+const spawn = require 'cross-spawn'
 
 def quit msg='Quit'
-	p msg.red
+	console.error msg.red
 	process.exit!
 
 const templates =
@@ -70,7 +70,7 @@ def toValidRepoName name
 
 def assertCleanGit
 	try
-		throw 1 if spawnSync('git',['status','--porcelain']).output.join('')
+		throw 1 if spawn.sync('git',['status','--porcelain']).output.join('')
 	catch
 		quit 'Creating a project in the current directory requires a clean git status'
 
@@ -136,8 +136,8 @@ def main name, opts
 
 	try
 		process.chdir(dest) unless projectName is '.'
-		spawnSync 'npm', ['pkg', 'set', "name={packageName}"]
-		spawnSync 'npm', ['up', '-S'], stdio:'inherit'
+		spawn.sync 'npm', ['pkg', 'set', "name={packageName}"]
+		spawn.sync 'npm', ['up', '-S'], stdio:'inherit'
 	catch e
 		p "\nFailed to install dependencies:\n\n{e}".red
 
