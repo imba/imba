@@ -105,7 +105,7 @@ export def rewrite rule,ctx,o = {}
 		let prev = parts[i - 1]
 		let next = parts[i + 1]
 
-		# console.log "part",part,parts
+		
 
 		let mods = part.pseudos or []
 		let name = part.tagName
@@ -118,7 +118,7 @@ export def rewrite rule,ctx,o = {}
 			escaped ||= part
 			seenDeepOperator = yes
 
-		if i == 0 and !name and !op and part[0]..pseudo
+		if i == 0 and !name and !op and (part[0]..pseudo or part[0]..implicitScope)
 			# console.log 'implicit scope?',part
 			part.implicitScope = yes
 

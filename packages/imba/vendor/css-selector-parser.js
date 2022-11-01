@@ -421,7 +421,12 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         // console.log('chr is now!!',chr);
       }
 
-      if(chr == '@' && str.charAt(pos + 1) == '@'){
+      // Legacy support for the @.flag stuff
+      if(chr == '@' && str.charAt(pos + 1) == '.'){
+        rule = rule || currentRule;
+        part.implicitScope = true;
+        pos++; chr = '.';
+      } else if(chr == '@' && str.charAt(pos + 1) == '@'){
         part.closest = true;
         rule = rule || currentRule;
         pos++;
@@ -555,9 +560,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         part.name = chr;
         var pseudo = part;
 
-        var pseudoName = ''
-
-        pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
+        var pseudoName = getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
 
         if(pseudoName == 'unimportant'){
           unimportant = true;
