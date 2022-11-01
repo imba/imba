@@ -56,6 +56,10 @@
           </dict>
           <dict>
             <key>include</key>
+            <string>#mixin-declaration</string>
+          </dict>
+          <dict>
+            <key>include</key>
             <string>#object-keys</string>
           </dict>
           <dict>
@@ -599,7 +603,7 @@
                 <key>name</key>
                 <string>support.type.property-name.modifier.up.css</string>
                 <key>match</key>
-                <string>\.\.[\w\-\$]+|\^[\.\@\%][\w\-\$]+</string>
+                <string>\.\.[\w\-\$]+|\^+[\.\@\%][\w\-\$]+</string>
               </dict>
               <dict>
                 <key>name</key>
@@ -730,6 +734,34 @@
           <dict>
             <key>include</key>
             <string>#css-selector</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#css-comment</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#nested-css-selector</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#inline-styles</string>
+          </dict>
+        </array>
+      </dict>
+      <key>mixin-declaration</key>
+      <dict>
+        <key>name</key>
+        <string>meta.style.imba</string>
+        <key>begin</key>
+        <string>^(\t*)(?=\%[\s\w])</string>
+        <key>end</key>
+        <string>^(?!(\1\t|\s*$))</string>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>include</key>
+            <string>#mixin-css-selector</string>
           </dict>
           <dict>
             <key>include</key>
@@ -1448,6 +1480,38 @@
           </dict>
         </array>
       </dict>
+      <key>mixin-css-selector</key>
+      <dict>
+        <key>name</key>
+        <string>meta.selector.css</string>
+        <key>begin</key>
+        <string>(\%[\w\-]+)</string>
+        <key>beginCaptures</key>
+        <dict>
+          <key>1</key>
+          <dict>
+            <key>name</key>
+            <string>entity.other.attribute-name.mixin.css</string>
+          </dict>
+        </dict>
+        <key>end</key>
+        <string>(\s*(?=(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*\:)[^\:])|\s*$|(?=\s+\#\s))</string>
+        <key>endCaptures</key>
+        <dict>
+          <key>0</key>
+          <dict>
+            <key>name</key>
+            <string>punctuation.separator.sel-properties.css</string>
+          </dict>
+        </dict>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>include</key>
+            <string>#css-selector-innards</string>
+          </dict>
+        </array>
+      </dict>
       <key>inline-css-selector</key>
       <dict>
         <key>name</key>
@@ -1487,6 +1551,12 @@
           <dict>
             <key>include</key>
             <string>#css-combinators</string>
+          </dict>
+          <dict>
+            <key>name</key>
+            <string>entity.other.attribute-name.mixin.css</string>
+            <key>match</key>
+            <string>(\%[\w\-]+)</string>
           </dict>
           <dict>
             <key>name</key>
@@ -1612,6 +1682,10 @@
             <key>include</key>
             <string>#css-pseudo-elements</string>
           </dict>
+          <dict>
+            <key>include</key>
+            <string>#css-mixin</string>
+          </dict>
         </array>
       </dict>
       <key>css-property-values</key>
@@ -1662,7 +1736,7 @@
             <key>name</key>
             <string>meta.tag.imba</string>
             <key>begin</key>
-            <string>(&lt;)(?=[\w\{\[\.\#\$\@\(])</string>
+            <string>(&lt;)(?=[\%\~\w\{\[\.\#\$\@\(])</string>
             <key>beginCaptures</key>
             <dict>
               <key>1</key>
@@ -1723,6 +1797,10 @@
           </dict>
           <dict>
             <key>include</key>
+            <string>#tag-mixin-name</string>
+          </dict>
+          <dict>
+            <key>include</key>
             <string>#tag-classname</string>
           </dict>
           <dict>
@@ -1762,7 +1840,7 @@
         <key>contentName</key>
         <string>entity.name.tag.imba</string>
         <key>end</key>
-        <string>(?=[\.\[\&gt;\s\(])</string>
+        <string>(?=[\%\$\#\.\[\&gt;\s\(])</string>
         <key>patterns</key>
         <array>
           <dict>
@@ -1896,9 +1974,16 @@
       <key>tag-ref</key>
       <dict>
         <key>match</key>
-        <string>(\$[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?)</string>
+        <string>(\$[\w\-]+)</string>
         <key>name</key>
-        <string>entity.other.attribute-name.reference.css</string>
+        <string>entity.other.tag-ref.imba</string>
+      </dict>
+      <key>tag-mixin-name</key>
+      <dict>
+        <key>match</key>
+        <string>(\%[\w\-]+)</string>
+        <key>name</key>
+        <string>entity.other.tag-mixin.imba</string>
       </dict>
       <key>tag-event-handler</key>
       <dict>

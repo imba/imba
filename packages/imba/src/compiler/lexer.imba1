@@ -767,7 +767,6 @@ export class Lexer
 		let ltyp = @lastTyp
 			
 		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
-			# console.log 'selector?',JSON.stringify(chr),@chunk.slice(0,10),ltyp
 			let sel = findBalancedSelector(@chunk)
 			return lexStyleRule(0) if sel
 				
@@ -1068,6 +1067,11 @@ export class Lexer
 		
 		elif typ == '%'
 			# use for something else
+			let ltyp = @lastTyp
+			if ltyp == 'TERMINATOR' or ltyp == 'INDENT'
+				token('CSS', 'CSS',0)
+				queueScope('CSS')
+				return lexStyleRule(0,true)
 			typ = 'MIXIN'
 
 		elif typ == '$' and !colon
@@ -1178,8 +1182,6 @@ export class Lexer
 
 		# prev = last @tokens
 		var len = input:length
-		
-		# switch 
 
 		# should be strict about the order, check this manually instead
 		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'

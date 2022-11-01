@@ -1,5 +1,6 @@
 import { off } from "process";
 import { modifiers } from "../src/compiler/theme.imba";
+import { TAG_NAMES } from '../src/compiler/constants.imba1';
 
 /*
 Copyright (c) 2013 Dulin Marat
@@ -27,6 +28,10 @@ function CssSelectorParser() {
   this.attrEqualityMods = {};
   this.ruleNestingOperators = {};
   this.substitutesEnabled = false;
+}
+
+function RULE(obj,base=[]){
+  return Object.assign(base,obj);
 }
 
 CssSelectorParser.prototype.registerSelectorPseudos = function(name) {
@@ -351,7 +356,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
         if (!rule) {
           if(op == '>' || op == '>>>' || op == '>>'){
-            rule = Object.assign([],{tagName: '*'});
+            rule = RULE({tagName: '*'});
           } else {
             throw Error('Rule expected after "' + op + '".');  
           }
@@ -377,7 +382,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       value.type = 'rule';
       pseudo.value = {type: 'ruleSet',rule: value};
       if(nest){
-        pseudo.after = value.rule = { tagName: '*', nestingOperator: null, type: 'rule' };
+        pseudo.after = value.rule =  RULE({tagName: '*', nestingOperator: null, type: 'rule'});
       }
     } else {
       let value = this.parseSelector();
@@ -395,9 +400,13 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     var nextIsPseudo = false;
     var negate = false;
     var closest = false;
-    var up = false
+    // var up = false
     var part = {}
+
     // console.log('parseRule!',str.slice(pos),l);
+
+    // simplest solution is to just remember
+    var up = 0;
 
     while (pos < l) {
       chr = str.charAt(pos);
@@ -417,14 +426,32 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         rule = rule || currentRule;
         pos++;
       } else if(chr == '.' && str.charAt(pos + 1) == '.'){
-        part.closest = true;
+        closest = part;
         rule = rule || currentRule;
         pos++;
-      } else if (chr == '^') {
+        // Now add a closestRule
+        // rule.closest ||= []
+
+        let next = str.charAt(pos + 1);
+        if(next == '%' || next == '$' || next == '@'){
+          chr = next;
+          pos++;
+        }
+        // console.warn('.. !!!',chr,str.charAt(pos + 1));
+      }
+
+      while (chr == '^') {
         chr = str.charAt(++pos);
         rule = rule || currentRule;
-        part.up = true;
+        up++;
+        // part.up = (part.up || 0) + 1;
       }
+
+      part.up = up;
+      // if(closest && part != closest){
+      // }
+      part.closest = closest;
+      // part.closest = closest;
 
       if (chr === '&') {
         pos++;
@@ -449,10 +476,12 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       } else if (chr === '%') {
         pos++;
         part.flag = chr + getIdent();
-
+        (rule = rule || []).push(part);
       } else if (chr === '.') {
         pos++;
-        part.flag = getIdent();
+        let flag = str.charAt(pos++);
+        flag += getIdent({});
+        part.flag = flag;
         (rule = rule || []).push(part);
       } else if (chr === '#') {
         pos++;
@@ -527,6 +556,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         var pseudo = part;
 
         var pseudoName = ''
+
         pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
 
         if(pseudoName == 'unimportant'){
@@ -688,12 +718,20 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
     case 'rule':
       let s0 = entity.s1;
       let s1 = entity.s2;
+      let tagName = entity.tagName;
       
-      if (entity.tagName) {
-        if (entity.tagName === '*') {
+      if (tagName) {
+        if (tagName === '*') {
           res = '*';
         } else {
-          res = this.escapeIdentifier(entity.tagName);
+          let native = TAG_NAMES[tagName] || tagName == 'svg' || tagName.indexOf('-') > 0;
+          let escaped = this.escapeIdentifier(tagName);
+          // || TAG_NAMES[`svg_${tagName}`]
+          if(native){
+            res = escaped;  
+          } else {
+            res = `:is(${escaped},${escaped}-tag)`
+          }
         }
       }
       if (entity.id) {
@@ -715,7 +753,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
 
         // Identify numeric media here?
 
-        if(part.media){
+        if(part.media || part.skip){
           // console.log('media',rootSelector);
           continue;
         }
@@ -787,10 +825,22 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         }
 
         if(part.closest) {
-          out = `:${neg ? 'not' : 'is'}(${out},${out} *)`
+          // fetch all the other 
+          // out = `:${neg ? 'not' : 'is'}(${out},${out} *)`
+          let parts = entity.filter(v=> v.closest == part);
+          // console.log('found parts',parts.length);
+          parts.map( v=> v.closest = null )
+          part.not = false;
+          let all = this._renderEntity(RULE({type: 'rule'},parts))
+          parts.map( v=> v.skip = true )
+          // console.log("rendered",all);
+          // find better way?
+          out = `:${neg ? 'not' : 'is'}(${all} *)`
+          
           neg = false;
         } else if (part.up) {
-          out = `:${neg ? 'not' : 'is'}(${out} *)`
+          let rest = part.up > 5 ? ' *' : ' > *'.repeat(part.up);
+          out = `:${neg ? 'not' : 'is'}(${out}${rest})`
           neg = false;
         }
 

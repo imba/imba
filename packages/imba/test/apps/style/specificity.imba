@@ -6,7 +6,7 @@ tag app-root
 	css button fw:300 @focus:500
 
 	css $b1
-		fw:300 .on:400 @focus:500 ..app-on:550 ..either-on:560
+		fw:300 .on:400 @focus:500 ..app-on:550
 		
 	css $b2
 		fw:300 .on:400 @focus:500 ..app@focus:600
@@ -57,9 +57,8 @@ test do
 	app.focus!
 	app.flags.add('app-on')
 	eqcss app.$b1, 550
-
-	app.$b1.flags.add('either-on')
-	eqcss app.$b1, 560
+	# app.$b1.flags.add('either-on')
+	# eqcss app.$b1, 560
 
 test 'inline precedence' do
 	eqcss app.$b3, 400

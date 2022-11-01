@@ -3152,7 +3152,10 @@ export class Root < Code
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
 
-				let style = '`\n' + script:css + '\n`'
+				# let style = '`\n' + script:css + '\n`'
+				# - we have to escape it - right?
+				let style = JSON.stringify(script:css)
+
 				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{style});"
 				if o:debug
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
@@ -9644,8 +9647,8 @@ export class Tag < TagLike
 			for cls,i in @classNames
 				if cls isa TagFlag
 					if cls.name isa MixinIdentifier
-						names.push(cls.name.c(as:'substr'))
-						dynamic = yes
+						names.push(cls.name.toRaw)
+						# dynamic = yes
 					else
 						names.push(cls.rawClassName)
 				elif cls isa Node

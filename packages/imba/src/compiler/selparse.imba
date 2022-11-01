@@ -2,6 +2,7 @@ import { atRule } from 'postcss'
 import * as selparser from '../../vendor/css-selector-parser'
 import {modifiers} from './theme.imba'
 
+
 def addClass rule, name
 	# TODO check for negs as well?
 	rule.push({flag: name})
@@ -75,9 +76,15 @@ export def rewrite rule,ctx,o = {}
 		parts.push(curr)
 		curr = curr.rule
 
+	let rev = parts.slice(0).reverse!
 
-	# let rev = parts.slice(0).reverse!
-
+	for part,i in rev
+		let next = rev[i + 1]
+		for item,pi in part
+			if item.up > 0 and next
+				item.up -= 1
+				next.push(item)
+				part[pi] = {}
 	
 	let container = parts[0]
 	let localpart = null
