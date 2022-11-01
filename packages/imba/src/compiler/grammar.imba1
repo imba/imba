@@ -118,7 +118,7 @@ var grammar =
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
-		o 'Decorators'
+		# o 'Decorators'
 
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'
@@ -243,6 +243,8 @@ var grammar =
 	# them somewhat circular.
 	Expression: [
 		o 'Await'
+		o 'FieldDescriptor'
+		o 'FieldDescriptor = Expression' do A1.set(default: A3)
 		o 'Value'
 		o 'Code'
 		o 'Operation'
@@ -494,14 +496,13 @@ var grammar =
 		o 'TagOptions SYMBOL_ID' do A1.addPart(IdentifierExpression.new(A2.cloneSlice(1)),AST.TagId)
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
-		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		o 'TagOptions STYLE_START STYLE_END' do A1 
 		o 'TagOptions STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A3),AST.TagFlag)
 		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
 		o 'TagOptions MIXIN' do A1.addPart(MixinIdentifier.new(A2),AST.TagFlag)
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
-		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
+		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag) # not supported anymore
 		o 'TagOptions T. UNARY TAG_LITERAL' do A1.addPart(A4.prepend('!'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)
 		
@@ -558,17 +559,9 @@ var grammar =
 		o 'Splat'
 		o 'LOGIC'
 		o 'Comment'
-		o 'TagHandler'
 		o 'StyleBlockDeclaration' do A1.set(inTagTree: yes)
 	]
 
-	TagHandler: [
-		o 'DECORATOR' do TagHandler.new(IdentifierExpression.new(A1.cloneSlice(1,'TAG_LITERAL')))
-		o 'TagHandler . IDENTIFIER' do A1.add(A3)
-		o 'TagHandler CALL_START ArgList CALL_END' do
-			A1.add(A3,A2:generated ? AST.TagHandlerCallback : AST.TagArgList,A2,A4)
-	]
-	
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
 	TagDeclaration: [
@@ -975,6 +968,7 @@ var grammar =
 
 	FieldDescriptor: [
 		o 'DECORATOR' do Descriptor.new A1 # kinda hacky, should be defined as something else
+		o '@ ( Expression )' do Descriptor.new A3
 		o 'FieldDescriptor ( )' do A1.add(ArgList.new([]))
 		o 'FieldDescriptor ( ArgList )' do A1.add(A3,'!')
 		o 'FieldDescriptor INDEX_START ArgList INDEX_END' do A1.add(A3,'=')
