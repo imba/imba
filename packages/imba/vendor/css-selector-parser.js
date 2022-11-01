@@ -786,7 +786,8 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
 
         if(pseudo){
           // check if it is a native one
-          let escaped = this.escapeIdentifier(pseudo.pseudo);
+          let name = (desc && desc.name) ?? pseudo.pseudo;
+          let escaped = this.escapeIdentifier(name);
 
           // Check if it is a well known type
           let post = "";
@@ -853,15 +854,15 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         res += out;
       }
 
-      if(entity.pseudoElement){
-        res += entity.pseudoElement;
-      }
-
       if(s0 > 0){
           while (--s0 >= 0) res += ":not(#_)";
       }
       if(s1 > 0){
         while (--s1 >= 0) res += ":not(._0)";
+      }
+
+      if(entity.pseudoElement){
+        res += entity.pseudoElement;
       }
       break;
     default:

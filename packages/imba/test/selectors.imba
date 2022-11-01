@@ -61,6 +61,9 @@ let tests = {
 	'div ..a.b': 'div:is(.a.b *)'
 	'div ..$app@focus': 'div:is(.\\$app:focus *)'
 	'div ..@hover': 'div:is(:hover *)'
+
+	'div @focin': 'div:focus-within'
+	'div @first': 'div:first-child'
 }
 
 # Test with others as well
