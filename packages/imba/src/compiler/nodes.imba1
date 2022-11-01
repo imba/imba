@@ -22,6 +22,8 @@ var TAG_GLOBAL_ATTRIBUTES = constants.TAG_GLOBAL_ATTRIBUTES
 var TAG_TYPES = {}
 var TAG_ATTRS = {}
 
+
+
 var EXT_LOADER_MAP = {
 	svg: 'image'
 	png: 'image'
@@ -1723,6 +1725,7 @@ export class ArgList < ListNode
 		super
 
 	def setEnds start,end
+		@generated = start and start:generated
 		if end and end:endLoc and end.endLoc != -1
 			@endLoc = end.endLoc
 		if start and start:startLoc and start.startLoc != -1
@@ -1981,13 +1984,28 @@ export class ClassField < Node
 
 
 		if wrapper
-			yes
-			wrapper.@scope = @vscope = FieldScope.new(wrapper)
-			wrapper.@scope.@parent = scope__
-			wrapper.traverse
+			# worth of a full function
 			@vslot = osym('slot',String(@name))
 			@fslot = osym('meta')
 			@fname = @name.metaIdentifier
+
+			# let body = []
+			
+			# let fn = @accessor = MethodDeclaration.new([],[LIT('"ets"'),CodeBlock.new([wrapper])],Identifier.new('render__'),null,{})
+			# let block = fn.body.add(CodeBlock.new([wrapper]))
+			# let desc = @accessor.scope.declare('desc',wrapper)
+			# console.log "wrapper {wrapper}"
+			# @accessor.body.add(Return.new(desc))
+			
+			# if STACK.tsc
+			#	body = [OP('=')]
+			# fn.traverse
+			# console.log fn.c
+			wrapper.@scope = @vscope = FieldScope.new(wrapper)
+			wrapper.@scope.@parent = scope__
+			wrapper.traverse
+
+			
 			# @vslot = osym('meta')
 			# @getter = CALL(OP('.',THIS,@name),[])
 		self
@@ -2064,9 +2082,9 @@ export class ClassField < Node
 				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
 				
 				if STACK.tsc
-					inner = "return {runtime:accessor}({wrapper.c}).accessor({args},{metasym},{context})"
+					inner = "return {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
 				else
-					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c},{args},{metasym},{context})"
+					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
 					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
@@ -3074,6 +3092,25 @@ export class Code < Node
 		# @scope.parent = STACK.scope(1) if @scope
 		self
 
+export class CodeBlock < Code
+	def initialize body, opts
+		@traversed = no
+		@body = AST.blk(body)
+		@scope = FlowScope.new(self)
+		@body.head = @scope.head
+		@options = {}
+
+	def visit
+		@scope.visit
+		@body.traverse
+
+		self
+
+	def c
+		# add curly braces?
+		@body.c
+
+
 # Rename to Program?
 export class Root < Code
 
@@ -3106,12 +3143,14 @@ export class Root < Code
 		STACK.root = @scope
 		@scope.@imba.configure(o)
 		traverse
+
 		STACK.root = @scope
 
 		if o:bundle
 			if o:cwd and STACK.isNode
 				let abs = fspath.resolve(o:cwd,o:sourcePath)
 				let rel = fspath.relative(o:cwd,abs).split(fspath:sep).join('/')
+
 				let np = @scope.importProxy('path').proxy
 				# TODO Test this thoroughly - better to replace fater the fact?
 				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
@@ -3137,6 +3176,9 @@ export class Root < Code
 		if STACK.tsc
 			# out = "import 'imba/index.d.ts';\n{out}"
 			out = "export \{\};String();\n{out}\n"
+			if script:sourceCode and script:sourceCode.match(/(^|[\r\n])\# @nocheck[\n\r]/)
+				out = "// @ts-nocheck\n{out}"
+			
 
 		script:rawResult = {
 			js: out
@@ -3157,7 +3199,7 @@ export class Root < Code
 				let style = JSON.stringify(script:css)
 
 				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{style});"
-				if o:debug
+				if o:debug or true
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
@@ -4152,10 +4194,10 @@ export class MethodDeclaration < Func
 		
 		var closure = @context = scope.parent.closure
 		
-		if closure isa RootScope and !target
+		if closure isa RootScope and !target and !(@name isa DecoratorIdentifier)
 			scope.@context = closure.context
 		
-		elif closure isa MethodScope and !target
+		elif closure isa MethodScope and !target and !(@name isa DecoratorIdentifier)
 			scope.@selfless = yes
 
 		@params.traverse
@@ -4266,6 +4308,10 @@ export class MethodDeclaration < Func
 			out = jsdoc() + out
 			# out = @params.jsdoc() + out
 
+			if option(:declareOnly) and !STACK.tsc
+				return ''
+			
+
 			return out
 
 		var func = "({params.c})" + code
@@ -4315,6 +4361,9 @@ export class MethodDeclaration < Func
 			out = "return {out}"
 		
 		out = jsdoc() + out
+
+		if option(:declareOnly) and !STACK.tsc
+			return ''
 
 		return out
 
@@ -6263,6 +6312,7 @@ export class MixinIdentifier < Identifier
 	
 	def symbol
 		"mixin${@value.slice(1)}"
+
 		
 	def traverse o
 		if @traversed
@@ -6362,7 +6412,6 @@ export class Ivar < Identifier
 	def js o
 		return symbol
 
-
 export class Decorator < ValueNode
 
 	def name
@@ -6394,8 +6443,6 @@ export class Decorator < ValueNode
 
 		if content
 			out += ".wrap({content})"
-
-		# out += ".get(this,{content or 'null'})"
 		
 		return out
 
@@ -6410,6 +6457,127 @@ export class Decorator < ValueNode
 		else
 			out += ".bind([])"
 		return out
+
+
+export class DescriptorPart < Node
+	prop params
+	prop value
+	prop context
+
+	def initialize value, owner
+		@name = value
+
+	def js
+		if context
+			let op = OP('.',context,@name)
+			if params
+				yes
+				# TODO - implement this
+				op = CALL(op,params)
+				# op = OP('=',op,params.@nodes[0])
+			elif value
+				op = OP('=',op,value)
+			else
+				op = OP('=',op,TRUE)
+			return op.c
+
+export class Descriptor < Node
+
+	prop name
+	prop value
+	prop params
+	
+	def initialize value, owner
+		@name = @value = load(value)
+		@chain = []
+		@special = no
+		@params = null
+		self
+
+	def load value
+		DecoratorIdentifier.new(value)
+		# value
+		
+	def isSpecial
+		@special
+		
+	def visit
+		# console.log "Descriptor scope {scope__}"
+		@variable = scope__.lookup(@name.js)
+		@value.@variable ||= @variable
+
+		unless @variable
+			@value = OP('.',THIS,@name)
+
+		# @call.traverse if @call
+		@params.traverse if @params
+		@chain.map(|v| v.traverse )
+
+		if option(:default)
+			@default = option(:default)
+			# TODO not if primitive?
+			unless @default isa Func
+			
+				@default = Func.new([],[@default],null,{})
+			@default.traverse
+	
+	def quoted
+		@quoted ||= (@name isa IdentifierExpression ? @name.asString : helpers.singlequote(@name))
+	
+	def valueIsStatic
+		!value or value.isPrimitive or (value isa Func and !value.nonlocals)
+
+	def isStatic
+		valueIsStatic
+
+	def isProxy
+		false
+		
+	def add item, type
+		# console.log "add item {item} {type}"
+		
+		if item isa ArgList
+			if item.@generated
+				# extract options etc
+				let part = DescriptorPart.new(KEY('configure'))
+				part.params = item
+				@chain.push(@last = part)
+			else
+				# console.log 'add',item.@generated
+				if type == '='
+					# notify if multiple nodes?!
+					(@last or self).value = item.@nodes[0]
+				else
+					(@last or self).params = item or ListNode.new([])
+		else
+			@chain.push(@last = DescriptorPart.new(item))
+		return self
+
+	def js
+		let ref = scope__.root.declare('desc',null,system: yes)
+
+		let val = @variable ? New.new(@value,params or []) : CALL(@value,params or [])
+
+		let parts = AST.blk([])
+
+		for item in @chain
+			item.context = ref
+			parts.push(item)
+
+		parts.add(ref)
+
+		if @default
+			parts.add LIT("{ref.c}.default = {@default.c}")
+			# OP('=',OP('.',ref,LIT('default')),@default)
+		
+		if STACK.tsc
+			return "((self,{ref.c}={val.c(mark: yes)})=>({parts.c}))(this)"
+
+		else
+			parts.unshift(OP('=',ref,val))
+		
+		return '(' + parts.c + ')'
+
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -10955,6 +11123,7 @@ export class StyleProperty < StyleNode
 		if !@name.match(/^[\w\-]/)
 			@parts.unshift(@name = null)
 
+		# console.log "parts",@parts
 		self
 	
 	def name= value
@@ -11086,7 +11255,6 @@ export class StyleExpression < ListNode
 	def visit stack, o
 		if o and o:property
 			let name = o:property.@name
-
 			if name == 'gt' or name == 'grid-template'
 				reclaimParams
 		super
@@ -12907,6 +13075,7 @@ export var NULL = 'null'
 
 export var RESERVED = ['default','native','enum','with']
 export var RESERVED_REGEX = /^(default|native|enum|with|new|char)$/
+
 
 
 
