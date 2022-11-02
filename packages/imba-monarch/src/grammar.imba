@@ -441,7 +441,7 @@ export const states = {
 		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
 		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
 
-		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
+		[/(class)(\s)(@classid)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
 
@@ -638,12 +638,39 @@ export const states = {
 	]
 
 	decorator_: [
-		[/(@decid)(\()/,['decorator','$2','@_decorator_params']]
-		[/(@decid)/,'decorator']
+		# [/(@decid)(\()/,['decorator','$2','@_decorator_params']]
+		# [/(@decid)/,'decorator']
+		[/(?=@decid)/,'','@_decorator&-_decorator']
+	]
+
+	_decorator: [
+		[/(@decid)/,'decorator.name']
+		[/(\.)(\!?@optid)/,['decorator.modifier.start','decorator.modifier.name']]
+		[/\(/,token: 'decorator.parens.open', next: '@_decorator_parens/0']
+		[/\[/,token: 'decorator.brackets.open', next: '@_decorator_brackets/0']
+		[/\{/,token: 'decorator.braces.open', next: '@_decorator_braces/0']
+		[/(\s*\=\s*)/,'operator.equals.decorator/', '@_tag_value&handler']
+		[/\s+/,'@rematch','@pop']
+	]
+
+	_decorator_parens: [
+		[/\)/,'decorator.$/.parens.close', '@pop']
+		'arglist_'
+		[/\]|\}/,'invalid']
 	]
 
 	_decorator_params: [
 		[/\)/,')','@pop']
+		'expr_'
+		[/\s*\,\s*/,'delimiter.comma']
+	]
+	_decorator_brackets: [
+		[/\]/,']','@pop']
+		'expr_'
+		[/\s*\,\s*/,'delimiter.comma']
+	]
+	_decorator_braces: [
+		[/\}/,'}','@pop']
 		'expr_'
 		[/\s*\,\s*/,'delimiter.comma']
 	]
@@ -881,6 +908,10 @@ export const states = {
 	css_: [
 		[/global(?=\s+css@B)/,'keyword.$#']
 		[/css(?=\s+|$)/, 'keyword.css','@>css_selector&rule-_sel']
+		# [/(\%\w+)/,'@rematch','@>css_selector&rule-_sel']
+		# [/(\%)(?=\w+)/,'keyword.css','@>css_selector&rule-_sel']
+		[/(\%[\w\-]+)/,'style.selector.mixin.decl','@>css_selector&rule-_sel']
+
 	]
 
 	sel_: [
@@ -940,12 +971,14 @@ export const states = {
 		[/((--|\$)@id)/, 'style.property.var']
 		[/(-*@id)/, 'style.property.name']
 		# [/(\@+)([\>\<\!]?[\w\-]+)/, ['style.property.modifier.start','style.property.modifier']]
+		# [/[\^]+/,'style.property.modifier']
+		[/(\^+)(@cssModifier)/,['style.property.modifier.up','style.property.modifier']]
 		[/@cssModifier/,'style.property.modifier']
-		[/(\@+|\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
+		[/(\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
 		[/\+(@id)/, 'style.property.scope']
 		[/\s*([\:]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
 		[/\s*([\:]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
-	]
+	] 
 
 	css_value_: [
 		[/(x?xs|sm\-?|md\-?|lg\-?|xx*l|\dxl|hg|x+h)\b/, 'style.value.size'],
@@ -1353,6 +1386,7 @@ export const grammar = {
 	# anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
 	id:  /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	classid: /\@?[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	fieldid: /[\@\#]*@plainid/ 
 	propid: /[\@\#]*@plainid/
@@ -1378,7 +1412,7 @@ export const grammar = {
 	cssVariable: /(?:--|\$)[\w\-\$]+/
 	cssPropertyName: /[\w\-\$]+/
 	# cssModifier: /\@[\w\-\$]+/
-	cssPropertyKey2: /(?:@cssPropertyName(?:@cssModifier)*|@cssModifier+)(?:\s*\:)/
+	cssPropertyKey2: /(?:@cssPropertyName(?:@cssModifier)*|\^*@cssModifier+)(?:\s*\:)/
 	cssUpModifier: /\.\.[\w\-\$]+/
 	cssIsModifier: /\.[\w\-\$]+/
 	

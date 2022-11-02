@@ -347,8 +347,13 @@ export default class ImbaScriptInfo
 					meta.eventModifierName = 'options'
 				meta.parens = parens
 		
-		if tok.match('decorator')
+		if tok.match('decorator.name')
 			flags = CompletionTypes.Decorator
+
+		if tok.match('decorator.modifier')
+			flags |= CompletionTypes.DecoratorModifier
+			suggest.decorator = group.closest('decorator')
+			target = suggest.decorator
 
 		if tok.match('tag.event.name tag.event-modifier.name')
 			target = tok.prev

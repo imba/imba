@@ -154,10 +154,10 @@ export class Session
 		let state = {}
 
 		if project.projectKind == 0 and isImba(file)
-			util.log('skip diagnostics')
+			# util.log('skip diagnostics')
 			return []
 
-		util.log('filterDiagnostics!',diagnostics,project)
+		# util.log('filterDiagnostics!',diagnostics,project)
 		
 		# return diagnostics unless script.#imba
 		
@@ -225,8 +225,8 @@ export class Session
 			###
 			# for item in script.diagnostics
 		
-		if diags.length
-			util.log('sendDiagnosticsEvent',file, project, diags.slice(0,5), kind)
+		# if diags.length
+		#	util.log('sendDiagnosticsEvent',file, project, diags.slice(0,5), kind)
 		#sendDiagnosticsEvent(file,project,diags,kind)
 		
 	def convertToDiagnosticsWithLinePosition diagnostics, script

@@ -93,6 +93,17 @@ export default class ImbaTypeChecker
 		#globals ||= allGlobals.filter do
 			($1.pascal? or Globals.indexOf($1.escapedName) >= 0) and !$1.isWebComponent
 
+	def getResultTypeAtLocation node
+		let match = {209: yes, 208: yes}
+		while node
+			if match[node.kind]
+				let typ = checker.getTypeAtLocation(node)
+				return typ if typ
+			node = node.parent
+		# CallExpression = 208,
+		# NewExpression = 209,
+		return null
+
 	def getTypeAtLocation node
 		return unless node
 		if node.kind == 24 # Dot
@@ -766,25 +777,33 @@ export default class ImbaTypeChecker
 
 		if tok isa ImbaNode
 			let node = tok
-			if tok.type == 'type'
+			let g = tok
+			if g.type == 'type'
 				let val = String(tok)
 				return parseType(val,tok)
-				# console.log 'DATATYPE',tok.datatype,val
-				# we do need to resolve the type to
-				# if basetypes[val.slice(1)]
-				#	return basetypes[val.slice(1)]
+
+			if g.match('decorator')
+				# util.log('infer type of decorator')
+				# might as well just go for the name token?
+				let tstok = findExactLocationForToken(g.nameToken)
+				if tstok
+					let typ = tok.#otyp = getResultTypeAtLocation(tstok)
+					return typ
+				return null
 			
-			if tok.match('value') or tok.match('parens')
-				let end = tok.end.prev
-				while end and end.match('br')
+			if g.match('value') or g.match('parens')
+				let end = g.end.prev
+				while end and g.match('br')
 					end = end.prev
 				# end = end.prev if end.match('br')
 				tok = end
 				let typ = inferType(tok,doc,tok)
 				# console.log 'resolved type',typ
+				# move away from this hack - prioritize compiled inference
 				if node.start.next.match('keyword.new')
 					typ = [typ,'prototype']
 				return typ
+			
 				
 			# console.log 'checking imba node!!!',tok
 		
@@ -849,6 +868,7 @@ export default class ImbaTypeChecker
 			# return ['ImbaEvents',tok.value]
 		
 		if typ == ')' and tok.start
+			# usually better to look for the exact token location first
 			return [inferType(tok.start.prev),'!']
 
 		if tok.match('number')
@@ -937,6 +957,7 @@ export default class ImbaTypeChecker
 			let dpos = token.endOffset
 			let ipos = mapper.d2i(dpos)
 			let opos = mapper.i2o(ipos)
+			util.log('find token pos',dpos,ipos,opos)
 			let otok = ts.findPrecedingToken(opos,sourceFile)
 
 			if ipos == dpos and otok
@@ -945,6 +966,20 @@ export default class ImbaTypeChecker
 				# see if it is the same type as well
 			return null
 
+	def findExactLocationForOffset dpos
+		try
+			if typeof dpos.start == 'number' and typeof dpos.length == 'number'
+				dpos = dpos.start + dpos.length
+			# see if it has moved since before
+			let ipos = mapper.d2i(dpos)
+			let opos = mapper.i2o(ipos)
+			let otok = ts.findPrecedingToken(opos,sourceFile)
+
+			if ipos == dpos and otok
+				return otok
+				# see if it is the same type as well
+			return null
+	
 	def findExactSymbolForToken dtok
 		let otok = findExactLocationForToken(dtok)
 		if otok

@@ -116,7 +116,12 @@ export default class Service < EventEmitter
 		return false if cp or !ip or !ip.shouldSupportImba!
 		let jspath = resolvePath('jsconfig.json')
 		let tspath = resolvePath('tsconfig.json')
-		return false if ps.host.fileExists(jspath) or virtualFiles[jspath] or ps.host.fileExists(tspath)
+
+
+		# Still need to inject stuff into the file in this virtual project
+		if ps.host.fileExists(jspath) or virtualFiles[jspath] or ps.host.fileExists(tspath)
+			util.log('found js/tsconfig')
+			return false 
 		util.log('createVirtualProjectFile')
 		
 		# notify about configuring their own tspath
@@ -217,6 +222,7 @@ export default class Service < EventEmitter
 		
 		# console.warn "LIBS!!",opts.lib
 		# proj.setCompilerOptions(opts)
+		opts.target = DefaultConfig.compilerOptions.target
 		util.log('compilerOptions',proj,opts)
 		return proj
 
@@ -443,6 +449,8 @@ export default class Service < EventEmitter
 		let intercept = Object.create(null)
 		ls.#proxied = yes
 		# no need to recreate this for every new languageservice?!
+
+		util.log('decorate service')
 		
 		intercept.getEncodedSemanticClassifications = do(filename,span,format)
 			if util.isImba(filename)

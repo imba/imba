@@ -613,6 +613,13 @@ export default class Completions
 			
 		if flags & CT.Decorator
 			add 'decorators', kind: 'decorator'
+
+		if flags & CT.DecoratorModifier
+			try
+				let typ = checker.inferType(ctx.target,script.doc)
+				if typ
+					let props = checker.valueprops(typ).filter do !$1.isWebComponent
+					add props, kind: 'access', matchRegex: /^[^\#\$\@\_]/
 			
 		if flags & CT.TagEvent
 			add checker.props("ImbaEvents"), kind: 'tagevent'
@@ -694,6 +701,14 @@ export default class Completions
 
 		let vars = script.doc.varsAtOffset(pos).filter do $1.name[0] == '@'
 		add(vars,o)
+
+		try
+			let selfpath = ctx.selfPath
+			let selfprops = checker.props(selfpath)
+			add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: /^\@[^\@]/)
+			
+
+		# get decorators from the class body
 
 		# add the defaults from imba
 		let builtins = checker.props('imba').filter do $1.isDecorator
@@ -843,6 +858,7 @@ export default class Completions
 	
 		for item in vars
 			# hide decorators
+			# not if we are in the right context?
 			continue if item.name[0] == '@'
 
 			let found = checker.findExactSymbolForToken(item.node)

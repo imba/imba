@@ -412,7 +412,7 @@ class LineIndexSnapshot implements IScriptSnapshot {
     }
 
     getText(rangeStart: number, rangeEnd: number) {
-        return this.index.getText(rangeStart, rangeEnd - rangeStart);
+        return this.index.getText(rangeStart, Math.min(rangeEnd,this.getLength()) - rangeStart);
     }
 
     getLength() {

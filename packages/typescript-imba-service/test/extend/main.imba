@@ -92,6 +92,10 @@ tag app-main
 	get helloz
 		yes
 
+	set test val
+		yes
+
+
 	def mount
 		space
 		space.ext2

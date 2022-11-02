@@ -21,7 +21,8 @@ class State
 		if #loc =? val
 			context = doc.getContextAtOffset(val)
 			focus = context.token
-			window.localStorage.setItem('loc',val)
+			imba.locals.loc = val
+			# window.localStorage.setItem('loc',val)
 			console.group("location {val} {context.before.line}**{context.after.line}")
 			console.log(context)
 			console.log(context.token)
@@ -32,16 +33,18 @@ class State
 			window.doc = doc
 			window.scop = context.scope
 			window.ctx = context
+			window.ct = context.token.context
 			imba.commit!
 	
 	get loc
 		#loc
 
 	def constructor
-		let code = window.localStorage.getItem('code') or txt
+		let code = imba.locals.code or txt
 		owner = {fileName: "/a/b/index.imba"}
 		doc = window.doc = new Script(owner,code)
-		loc = parseInt(window.localStorage.getItem('loc') or '0')
+		loc = imba.locals.loc or 0
+		# parseInt(window.localStorage.getItem('loc') or '0')
 		
 const state = window.state = new State()
 
@@ -118,6 +121,11 @@ global css @root
 		c:blue4 .field:sky3
 	.white
 		bdb:white/5
+	.selector c:amber3
+	.style.name c:purple4
+	.style.modifier c:fuchsia4
+	.style.value c:indigo4
+	
 
 extend tag textarea
 	def on$caretmove mods, ctx, handler, o
@@ -263,6 +271,8 @@ tag Code
 			off.setStart(document.querySelector('pre code'),0)
 			let loc = off.toString!.length
 			if state.loc =? loc
+				console.log "getting for loc",loc
+
 				state.context = data.getContextAtOffset(loc)
 				state.focus = state.context.token
 				imba.commit!
@@ -271,12 +281,14 @@ tag Code
 		innerText
 
 	def save
-		window.localStorage.setItem('code',code)
+		imba.locals.code = code
+		# window.localStorage.setItem('code',code)
 
 	def pasted e
 		log 'pasted',e
 		let txt = e.clipboardData.getData('text')
-		window.localStorage.setItem('code',txt)
+		imba.locals.code = txt
+		# window.localStorage.setItem('code',txt)
 		document.location.reload!
 		# log innerText,txt
 		# setTimeout(&,100) do save!
@@ -291,28 +303,40 @@ tag Code
 tag App	
 
 	def mount
-		render!
+		try
+			render!
+		catch e
+			console.log 'could not render',e
 		$dts.innerText = state.doc.getGeneratedDTS!
 		let ol = state.doc.getOutline!.childItems
 		console.group 'outline'
 		for item in ol
 			console.log item
 		console.groupEnd!
+
+	def reset
+		imba.locals.loc = 0
+		document.location.reload!
+
+
 	def render
-		<self[inset:0 fs:12px d:hgrid g:1 bg:black]
+		<self[inset:0 fs:12px d:vflex g:1 bg:black]
 			@hotkey('esc')=(state.focus = null)
 		>
-			css section bg:gray9 pos:relative c:white
-			<section[of:auto]>
-				<Code data=state.doc>
-			<section[d:vflex]>
-				css section p:4
-				<section>
-					if let item = state.focus or state.hover
-						<ast-node-info data=item>
-					if state.context
-						<ast-context data=state.context>
-				<section> <pre$dts>
-					
+			<header>
+				<button @click=reset> "reset"
+			<[d:hgrid]>
+				css section bg:gray9 pos:relative c:white
+				<section[of:auto]>
+					<Code data=state.doc>
+				<section[d:vflex]>
+					css section p:4
+					<section>
+						if let item = state.focus or state.hover
+							<ast-node-info data=item>
+						if state.context
+							<ast-context data=state.context>
+					<section> <pre$dts>
+						
 	
 imba.mount <App>

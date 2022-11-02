@@ -579,6 +579,22 @@ export class Listener < Group
 	get name
 		findChildren('tag.event.name').join('').replace('@','')
 
+export class Decorator < Group
+
+	get name
+		findChildren('decorator.name').join('')
+
+	get nameToken
+		findChildren('decorator.name',yes)[0]
+
+	get valueSpan
+		let starts = start.startOffset
+		let [dot] = findChildren('decorator.modifier.start',yes)
+		if dot
+			{start: starts, length: (dot.offset - starts)}
+		else
+			span
+
 export class ParensNode < Group
 
 export class BracketsNode < Group
@@ -671,6 +687,7 @@ export const ScopeTypeMap = {
 	tagattrvalue: TagAttrValueNode
 	tagcontent: TagContent
 	listener: Listener
+	decorator: Decorator # call descriptors?
 	styleinterpolation: StyleInterpolation
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
