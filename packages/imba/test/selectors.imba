@@ -7,6 +7,7 @@ let tests = {
 	'div !.test': 'div:not(.test)'
 	'div ^@checked': 'div:is(:checked > *)'
 	'div !^@checked': 'div:not(:checked > *)'
+	'div ..checked': 'div:is(.checked *)'
 	'div !..@checked': 'div:not(:checked *)'
 	'div !..checked': 'div:not(.checked *)'
 	'.input @focus @valid': '.input:focus:valid'

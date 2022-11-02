@@ -104,10 +104,6 @@ export def rewrite rule,ctx,o = {}
 	for part,i in parts
 		let prev = parts[i - 1]
 		let next = parts[i + 1]
-
-		
-
-		let mods = part.pseudos or []
 		let name = part.tagName
 		let items = part.slice(0)
 		

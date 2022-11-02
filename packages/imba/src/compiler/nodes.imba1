@@ -11113,9 +11113,8 @@ export class StyleProperty < StyleNode
 		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
 		
 		for part,i in @parts
-			@parts[i] = part.replace(/^\./,'@.')
-			
-		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
+			@parts[i] = part.replace(/^\.(?=[^\.])/,'@.')
+
 		@name  = String(@parts[0])
 		
 		if let m = @name.match(/^(\d+)([a-zA-Z]+)$/)
@@ -11125,7 +11124,6 @@ export class StyleProperty < StyleNode
 		if !@name.match(/^[\w\-]/)
 			@parts.unshift(@name = null)
 
-		# console.log "parts",@parts
 		self
 	
 	def name= value
