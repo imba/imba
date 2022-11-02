@@ -8,7 +8,7 @@
 	"build": "imba build server.imba --vite",
     "build:client": "vite build -c vite.config.client.js --outDir dist",
     "build:server": "imba build --vite server.imba",
-    "preview": "cross-env NODE_ENV=production node dist_server/server.js",
+    "preview": "cross-env NODE_ENV=production node dist/server.js",
     "debug": "node --inspect-brk dist/server/server",
     "test": "imba test run src"
   },
@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "imba": "../../imba",
-    "vite": "^3.1.8",
-    "vite-plugin-imba": "^0.10.0"
+    "vite": "^3.2.1"
   }
 }

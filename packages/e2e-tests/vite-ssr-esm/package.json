@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "imba": "../../imba",
-    "vite": "^4.0.4",
-    "vite-plugin-imba": "../../vite-plugin-imba"
+    "vite": "^4.0.4"
   }
 }

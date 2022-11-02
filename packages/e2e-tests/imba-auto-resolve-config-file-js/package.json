@@ -8,7 +8,6 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite-plugin-imba": "../../vite-plugin-imba",
 	"imba": "../../imba",
     "vite": "^3.0.9"
   },

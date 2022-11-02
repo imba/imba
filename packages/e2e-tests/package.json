@@ -1,10 +1,11 @@
 {
-  "name": "vite-plugin-imba-e2e-tests",
+  "name": "e2e-tests",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "test:serve": "vitest run -c vitest.config.e2e.ts --watch false",
-    "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts"
+    "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
+	"test": "rm -rf ../../temp && npm run test:serve && npm run test:build"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
@@ -13,7 +14,6 @@
     "imba": "../imba",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
-    "vite-plugin-imba": "../vite-plugin-imba",
     "vitest": "^0.22.1"
   },
   "type": "module",

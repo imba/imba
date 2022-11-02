@@ -12,8 +12,7 @@
 	},
   "devDependencies": {
     "imba": "file:../../imba",
-    "vite": "^3.0.9",
-    "vite-plugin-imba": "../../vite-plugin-imba"
+    "vite": "^3.0.9"
   },
   "type": "module"
 }

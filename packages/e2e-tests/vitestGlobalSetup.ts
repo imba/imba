@@ -6,7 +6,7 @@ import { execa } from 'execa';
 import { fileURLToPath } from 'url';
 
 const tempTestDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'tmp', 'e2e-tests');
-const pluginDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'vite-plugin-imba');
+const pluginDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'imba');
 
 const isBuildTest = !!process.env.TEST_BUILD;
 const isCI = !!process.env.CI;
@@ -38,7 +38,7 @@ const syncNodeModules = async () => {
 	)
 	await Promise.all(
 		testDirs
-			.map(dir=>execa('npm', ['link', 'imba', 'vite-plugin-imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+			.map(dir=>execa('npm', ['link', 'imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
 	)
 };
 

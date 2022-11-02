@@ -6,15 +6,32 @@ import App from './src/App.imba'
 import Home from './src/Home.imba'
 import np from 'node:path'
 import url from 'node:url'
+# tag vite-script
+# 	prop src
+# 	prop type = "module"
+# 	get _src
+# 		src.replace("./", "")
+# 	def render
+# 		<self>
+# 			if __vite_manifest__
+# 				const prod-src = manifest[_src].file
+# 				const css-files = manifest[_src].css
+# 				<script type="module" src=prod-src>
+# 				for css-file in css-files
+# 					<style src=css-file>
+# 			else
+# 				<script src=_src type=type>
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 let port = 3000
 const args = process.argv.slice(2)
 const portArgPos = args.indexOf("--port") + 1
 if portArgPos > 0
 	port = parseInt(args[portArgPos], 10)
 
+let manifest
 def createServer(root = process.cwd())
+	# if import.meta.env.MODE === "production"
+	# 	manifest = (await import("./client/manifest.json")).default
 	const resolve = do(p) path.resolve(root, p)
 	const app = express()
 	await imba.setupVite app, import.meta.env.MODE, do(dist)
@@ -30,8 +47,7 @@ def createServer(root = process.cwd())
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title> "Imba App"
 				<style src="*">
-				# <script type="module" src="src/main.js">
-				<script type="module" src="src/Home.imba">
+				<script type="module" src="./src/Home.imba">
 			<body>
 				<Home>
 		res.status(200).set("Content-Type": "text/html").end String html
@@ -44,8 +60,7 @@ def createServer(root = process.cwd())
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title> "Imba App"
 				<style src="*">
-				# <script type="module" src="src/main.js">
-				<script type="module" src="src/App.imba">
+				<script type="module" src="./src/App.imba">
 			<body>
 				<App>
 		res.status(200).set("Content-Type": "text/html").end String html
