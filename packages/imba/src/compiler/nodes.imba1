@@ -6488,30 +6488,37 @@ export class Descriptor < Node
 	prop params
 	
 	def initialize value, owner
-		@name = @value = load(value)
+		if value isa Token
+			@name = @value = DecoratorIdentifier.new(value)
+		else
+			@value = value
+			@value.@parens = yes
+
 		@chain = []
 		@special = no
 		@params = null
 		self
 
-	def load value
-		DecoratorIdentifier.new(value)
-		# value
-		
 	def isSpecial
 		@special
 		
 	def visit
-		# console.log "Descriptor scope {scope__}"
-		@variable = scope__.lookup(@name.js)
-		@value.@variable ||= @variable
+		if @name
+			# console.log "Descriptor scope {scope__}"
+			@variable = scope__.lookup(@name.js)
+			@value.@variable ||= @variable
 
-		unless @variable
-			@value = OP('.',THIS,@name)
+			unless @variable
+				@value = OP('.',THIS,@name)
+
+		else
+			@value.traverse if @value
 
 		# @call.traverse if @call
 		@params.traverse if @params
 		@chain.map(|v| v.traverse )
+
+
 
 		if option(:default)
 			@default = option(:default)
@@ -6521,9 +6528,6 @@ export class Descriptor < Node
 			unless @default isa Func
 				@default = Func.new([],[@default],null,{})
 			@default.traverse
-	
-	def quoted
-		@quoted ||= (@name isa IdentifierExpression ? @name.asString : helpers.singlequote(@name))
 	
 	def valueIsStatic
 		!value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -6535,7 +6539,6 @@ export class Descriptor < Node
 		false
 		
 	def add item, type
-		
 		if item isa ArgList
 			if item.@generated
 				# extract options etc
@@ -6555,8 +6558,7 @@ export class Descriptor < Node
 
 	def js
 		let ref = scope__.root.declare('desc',null,system: yes)
-
-		let val = @variable ? New.new(@value,params or []) : CALL(@value,params or [])
+		let val = @variable ? New.new(@value,params or []) : (@name ? CALL(@value,params or []) : @value)
 
 		let parts = AST.blk([])
 
@@ -6578,7 +6580,7 @@ export class Descriptor < Node
 		else
 			parts.unshift(OP('=',ref,val))
 		
-		return '(' + parts.c + ')'
+		return '(' + parts.c(expression: yes) + ')'
 
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
