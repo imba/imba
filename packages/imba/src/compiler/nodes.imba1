@@ -3997,8 +3997,12 @@ export class Func < Code
 		datatype
 
 	def visit stack, o
-		scope.visit
+		# any function inside descriptors should compile as strong scopes
+		if stack.@descriptor and !stack.tsc
+			@scope = MethodScope.new(self) # (o and o:scope) || typ.new(self)
+			@scope.params = @params # = ParamList.new([])
 
+		scope.visit
 
 		@context = scope.parent
 
@@ -6502,7 +6506,9 @@ export class Descriptor < Node
 	def isSpecial
 		@special
 		
-	def visit
+	def visit stack
+		let pre = stack.@descriptor
+		stack.@descriptor = self
 		if @name
 			# console.log "Descriptor scope {scope__}"
 			@variable = scope__.lookup(@name.js)
@@ -6518,7 +6524,9 @@ export class Descriptor < Node
 		@params.traverse if @params
 		@chain.map(|v| v.traverse )
 
-
+		if @callback = option(:callback)
+			# make sure it is not bound to the actual target
+			@callback.traverse
 
 		if option(:default)
 			@default = option(:default)
@@ -6528,6 +6536,8 @@ export class Descriptor < Node
 			unless @default isa Func
 				@default = Func.new([],[@default],null,{})
 			@default.traverse
+		
+		stack.@descriptor = pre
 	
 	def valueIsStatic
 		!value or value.isPrimitive or (value isa Func and !value.nonlocals)
@@ -6571,6 +6581,9 @@ export class Descriptor < Node
 			parts.add LIT("{ref.c}.default = {@default.c}")
 		if @literal
 			parts.add LIT("{ref.c}.default.literal = {@literal.c}")
+
+		if @callback
+			parts.add LIT("{ref.c}.callback = {@callback.c}")
 
 		parts.add(ref)
 		

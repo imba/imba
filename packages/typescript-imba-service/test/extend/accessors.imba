@@ -7,7 +7,7 @@ class Field
 	def $set target
 		yes
 
-class @test
+class @test < Field
 	static stuff = yes
 	required = no
 
@@ -19,14 +19,16 @@ class @test
 
 
 class Hello
+	
+	prop something @test
 
 	def @num val = 0
 		new Field
 
-
-	description as @test.required.name['hello'].stuff
-	score as @num(100).stuff.required
-	other as @num
+	title @num.lazy.required
+	description @test.required.name['hello'].stuff.name
+	score as @num(100).required
+	other as @num.lazy.required.stuff
 
 	def ping
 		yes

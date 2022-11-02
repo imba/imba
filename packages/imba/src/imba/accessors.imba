@@ -42,7 +42,7 @@ export class Accessor
 			if prev != value
 				target[key] = value
 				for watcher,i in #watchers
-					let res = watcher.call(target,value,prev,name)
+					let res = watcher.call(target,value,prev,self)
 		else
 			target[key] = value
 		return

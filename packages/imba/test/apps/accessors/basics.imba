@@ -40,8 +40,8 @@ const Upcase = {
 
 
 class Main
-	prop title @ new Accessor
-	prop initials @ Upcase
+	title @(new Accessor)
+	initials @(Upcase)
 
 class Sub < Main
 
@@ -60,7 +60,7 @@ test "basics" do
 	
 test "defaults" do
 	class Item
-		prop title = "hello" @ Upcase
+		prop title = "hello" @(Upcase)
 
 		get stuff
 			Upcase.get(10)

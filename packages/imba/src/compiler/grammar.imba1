@@ -118,7 +118,7 @@ var grammar =
 		# o 'HEADER' do Terminator.new(A1)
 		o 'Comment'
 		o 'Statement'
-		# o 'Decorators'
+		o 'Decorators'
 
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'
@@ -243,8 +243,8 @@ var grammar =
 	# them somewhat circular.
 	Expression: [
 		o 'Await'
-		o 'FieldDescriptor'
-		o 'FieldDescriptor = Expression' do A1.set(default: A3)
+		# o 'FieldDescriptor'
+		# o 'FieldDescriptor = Expression' do A1.set(default: A3)
 		o 'Value'
 		o 'Code'
 		o 'Operation'
@@ -300,8 +300,8 @@ var grammar =
 	
 	Decorator: [
 		o 'DecoratorIdentifier' do Decorator.new A1 # kinda hacky, should be defined as something else
-		o 'DecoratorIdentifier ( )' do Decorator.new(A1)
-		o 'DecoratorIdentifier ( ArgList )' do Decorator.new(A1).set(params: A3)
+		o 'DecoratorIdentifier Arguments' do Decorator.new(A1).set(params: A2)
+		# o 'DecoratorIdentifier ( ArgList )' do Decorator.new(A1).set(params: A3)
 		o 'Decorator . Identifier' do A1.add(A3)
 	]
 
@@ -958,21 +958,21 @@ var grammar =
 	ClassFieldDeclaration: [
 		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
-		o 'ClassFieldDeclaration @ Expression' do A1.set(wrapper: A3)
+		# o 'ClassFieldDeclaration @ Expression' do A1.set(wrapper: A3)
 		o 'ClassFieldDeclaration AS AccessorBody' do A1.set(wrapper: A3)
-		# o 'ClassFieldDeclaration FieldDescriptorFull' do A1.set(wrapper: A2)
+		o 'ClassFieldDeclaration FieldDescriptorFull' do A1.set(wrapper: A2)
 		# Legacy support for the @set - should remove and replace
-		o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
+		# o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
 
 	]
 
 	FieldDescriptor: [
 		o 'DECORATOR' do Descriptor.new A1 # kinda hacky, should be defined as something else
-		o '@ ( Expression )' do Descriptor.new A3
-		o 'FieldDescriptor ( )' do A1.add(ArgList.new([]))
-		o 'FieldDescriptor ( ArgList )' do A1.add(A3,'!')
-		o 'FieldDescriptor INDEX_START ArgList INDEX_END' do A1.add(A3,'=')
+		o '@ CALL_START Expression CALL_END' do Descriptor.new A3
+		# o 'FieldDescriptor ( )' do A1.add(ArgList.new([]))
+		# o 'FieldDescriptor ( ArgList )' do A1.add(A3,'!')
 		o 'FieldDescriptor Arguments' do A1.add(A2,'!')
+		o 'FieldDescriptor INDEX_START ArgList INDEX_END' do A1.add(A3,'=')
 		o 'FieldDescriptor . Identifier' do A1.add(A3)
 		# o 'FieldDescriptor = Value' do A1.add(A3,'value')
 		# o 'FieldDescriptor = DescriptorValue' do A1.add(A3,'value')
@@ -981,6 +981,7 @@ var grammar =
 	FieldDescriptorFull: [
 		o 'FieldDescriptor'
 		o 'FieldDescriptor = Expression' do A1.set(default: A3)
+		o 'FieldDescriptor Do' do A1.set(callback: A2)
 	]
 
 	AccessorBody: [
