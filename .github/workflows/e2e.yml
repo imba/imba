@@ -43,13 +43,6 @@ jobs:
           npm link
         env:
           CI: true
-      - name: build the vite plugin
-        run: |
-          cd packages/vite-plugin-imba
-          npm install
-          npm run build
-          npm link imba
-          npm link
       - name: run tests
         run: |
           cd packages/e2e-tests
