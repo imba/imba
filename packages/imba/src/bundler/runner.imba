@@ -136,7 +136,6 @@ class WorkerInstance
 				if message.id == '\0virtual:imba/*?css'
 					try await get-all-styles! catch error
 						console.log "error creating DEV SSR styles", error
-				console.log "md {JSON.stringify message.id}", message.id == 'virtual:imba/*?css'
 				worker..send JSON.stringify
 					type: 'fetched'
 					id: message.id
@@ -213,8 +212,12 @@ export default class Runner < Component
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")
 		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.ts", "vite.config.server.js"])
-		viteServer = await Vite.createServer
-			configFile: configFile
+		let {default: config} = await import(configFile)
+		if typeof config == "function"
+			config = config({command: "serve", mode: "development"})
+		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
+		config.configFile = no
+		viteServer = await Vite.createServer config
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
 			transformMode:
 				ssr: [/.*/g]

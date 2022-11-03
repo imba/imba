@@ -1,5 +1,5 @@
 import { builtinModules } from 'module'
-import {imba} from 'vite-plugin-imba'
+import imbaPlugin from 'imba/plugin'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import np from 'node:path'
@@ -9,27 +9,31 @@ export default defineConfig(({ command, mode }) => {
 	return ({
 		appType: "custom",
 		envPrefix: ['IMBA','VITE'],
-		plugins: [imba({ ssr: true }), tsconfigPaths({loose: true,extensions, projects: [np.resolve(".")]}),],
+		plugins: [imbaPlugin({ ssr: true }), tsconfigPaths({loose: true,extensions, projects: [np.resolve(".")]}),],
 		resolve: { extensions },
 		esbuild: {
 			target: "node16",
 			platform: "node"
 		},
+		optimizeDeps:{
+			disabled: true
+		},
 		ssr: {
 			target: "node",
 			transformMode: { ssr: [new RegExp(builtinModules.join("|"), 'gi')] },
-			external: ["imba"]
+			external: ["imba", "imba/plugin"]
 		},
 		build: {
-			outDir: "dist_server",
+			assetsInlineLimit: 0,
 			ssr: true,
 			target: 'node16',
 			minify: false,
 			rollupOptions: {
-				external: [new RegExp("/[^\.]^{entry}.*/")],
+				external: [new RegExp("/[^\.]^{entry}.*/"), "imba", "imba/plugin"],
 				output: {
 					format: 'esm',
-					dir: "dist_server"
+					dir: "dist",
+					entryFileNames: "[name].mjs"
 				},
 				input: {
 					//eject entry: "server.imba",
@@ -37,7 +41,7 @@ export default defineConfig(({ command, mode }) => {
 			},
 		},
 		define: {
-			'import.meta.vitest': 'undefined',
+			'import.meta.vitest': undefined,
 		},
 		test: {
 			globals: true,

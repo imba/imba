@@ -731,6 +731,12 @@ export class HTMLHtmlElement < HTMLElement
 		if global.IMBA_HMR_PATH and hmr !== false
 			inject.push("<script src='/__hmr__.js'></script>")
 		
+		if global.__vite_manifest__
+			for script, i in self.scripts when src = global.__vite_manifest__[script.src]
+				inject.push "<script type=\"module\" src=\"{src.file}\"></script>"
+				for css-file in src.css
+					inject.push "<link rel='stylesheet' href=\"{css-file}\">"
+
 		# if we havent included any styles in the html at all
 		unless self.styles
 			# maybe only if there are no 
@@ -766,6 +772,10 @@ export class HTMLScriptElement < HTMLElement
 	get outerHTML
 		if HtmlContext
 			(HtmlContext.scripts||=[]).push(self)
+			if global.__vite_manifest__ and global.__vite_manifest__[self.src]
+				# The HTMLElement will take care of resolving the entry
+				# to js and css files as defined in the manifest
+				return ''
 
 		if #asset
 			if #asset.js

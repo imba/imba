@@ -210,7 +210,7 @@ def run entry, o, extras
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 	if o.vite
-		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba', 'vite-tsconfig-paths'], process.cwd()) 
+		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-tsconfig-paths'], process.cwd()) 
 
 	# TODO support multiple entrypoints - especially for html
 	
@@ -247,14 +247,52 @@ def run entry, o, extras
 	if o.command == 'build'
 		if o.vite
 			let Vite = await import("vite")
-			const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.ts", "vite.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
-			await Vite.build
-				# configFile: configFile
-				configFile: configFile
-				build:
-					rollupOptions:
-						input: entry
+			# build client
+			let clientConfigFile = resolveWithFallbacks("vite.config", ["ts", "js", "mjs", "cjs"], {ext:"mjs", resolve:yes})
+			let serverConfigFile = resolveWithFallbacks("vite.config.server", ["ts", "js", "mjs", "cjs"], {ext:"mjs", resolve: yes})
+			# const clientConfigFile = resolveWithFallbacks("vite.config", ["vite.config.ts", "vite.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+			let {default: clientConfig} = await import(clientConfigFile)
+			let {default: serverConfig} = await import(serverConfigFile)
+			if typeof clientConfig == "function"
+				clientConfig = clientConfig({command: "build", mode: "production"})
+			if typeof serverConfig == "function"
+				serverConfig = serverConfig({command: "build", mode: "production"})
+			# const client = await Vite.build config
+			const serverBuild = await Vite.build({
+				...serverConfig,
+				configFile: no,
+				build: {
+					...serverConfig.build,
+					rollupOptions: {
+						...serverConfig.build.rollupOptions,
+						input: np.join(process.cwd(), entry)
+					}
+				}
+			})
 
+			const entry-points = Object.keys(serverBuild.output[0].modules).filter(do $1.endsWith "?url&entry").map(do $1.replace("?url&entry", ""))
+
+			return unless entry-points.length
+			
+			const clientBuild = await Vite.build({
+				...clientConfig,
+				build: {
+					...clientConfig.build,
+					entry:{
+						input: entry-points
+					},
+					rollupOptions: {
+						...clientConfig.build.rollupOptions,
+						input: entry-points
+					}
+				}
+			})
+			# # configFile: configFile
+			# root: process.cwd()
+			# configFile: serverConfigFile
+			# build:
+			# 	rollupOptions:
+			# 		input: np.join(process.cwd(), entry)
 		return
 	let run = do
 		o.name ||= entry	

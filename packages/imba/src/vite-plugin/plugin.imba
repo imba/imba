@@ -20,7 +20,8 @@ import { VitePluginImbaCache } from "./utils/vite-plugin-imba-cache";
 import { resolveViaPackageJsonImba } from "./utils/resolve";
 import { ensureWatchedFile, setupWatchers } from "./utils/watch";
 import { handleImbaHotUpdate } from './handle-imba-hot-update';
-import url from 'url'
+import url from 'node:url'
+import np from 'node:path'
 
 const allCssModuleId = 'virtual:imba/*?css'
 const resolvedAllCssModuleId = "\0{allCssModuleId}"
@@ -42,6 +43,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	const cache = new VitePluginImbaCache();
 
 	const plugins\Plugin[] = []
+
 	def config(config, configEnv)
 		if process.env.DEBUG
 			log.setLevel("debug")
@@ -54,6 +56,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		build? = configEnv.mode === "production"
 		dev? = configEnv.mode === "development"
 		extraViteConfig;
+
 	def configResolved(config)
 		options = resolveOptions(options, config);
 		# patchResolvedViteConfig(config, options);
@@ -63,6 +66,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		# // TODO deep clone to avoid mutability from outside?
 		api.options = options;
 		log.debug("resolved options", options);
+
 	def transform(code, id, opts)
 		const ssr = !!opts..ssr;
 		const imbaRequest = requestParser(id, ssr);
@@ -73,7 +77,6 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		try compiledData = await compileImba(imbaRequest, code, options) catch e
 			cache.setError(imbaRequest, e);
 			throw toRollupError(e, options);
-		console.log compiledData.compiled.warnings
 		logCompilerWarnings
 			imbaRequest,
 			compiledData.compiled.warnings,
@@ -122,10 +125,16 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 
 	def load(id, opts)
 		const ssr = !!opts..ssr
+		if id.includes("?url&entry")
+			const path = np.relative(viteConfig.root, id.replace('?url&entry', ''))			
+			return "export default '{path}'"
 		const imbaRequest = requestParser(id, !!ssr)
-		if resolvedAllCssModuleId == id
-			# if dev?
-			return 'export default ".dev-ssr/all.css"'
+		if resolvedAllCssModuleId == id 
+			return 'export default ".dev-ssr/all.css"' if dev?
+			if build?
+				# empty style tag in production
+				# we could include critical css at some point
+				return "export default ''"
 		if imbaRequest
 			const {filename: filename, query: query} = imbaRequest
 			if query.imba and query.type === "style"
@@ -140,21 +149,9 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			if viteConfig.assetsInclude(filename)
 				log.debug "load returns raw content for {filename}"
 				return fs.readFileSync(filename, "utf-8")
+
 	def configureServer(server)
 		options.server = server
-		# Breaks tests, do not use until Vite has a proper fix
-		# server.middlewares.use do(req, res, next)
-		# 	const pathname = url.parse(req.url).pathname;
-		# 	if pathname.endsWith ".imba"
-		# 		req.url += "?import"
-		# 		res.setHeader "Content-Type", "application/javascript"
-		# 	next()
-		# server.middlewares.use do(req, res, next)
-		# 	const pathname = url.parse(req.url).pathname
-		# 	if pathname.endsWith ".imba"
-		# 		req.url = injectQuery req.url, 'import'
-		# 		res.setHeader('Content-Type', 'application/javascript')
-		# 	next!
 		setupWatchers options, cache, requestParser
 	def handleHotUpdate(ctx\HmrContext)
 		if !options.hot or !options.emitCss
@@ -165,16 +162,6 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				await handleImbaHotUpdate(compileImba, ctx, imbaRequest, cache, options)
 			catch e
 				throw toRollupError(e, options)
-
-	# def handleHotUpdate(context\HmrContext)
-	# 	console.log "context", context
-	# 	const normalizedFilename = normalize(context.file, options.root);
-	# 	const old-js-file = cache.getJS({ssr: no, normalizedFilename})
-	# 	const new-js-file = await context.read!
-
-	# 	debugger	
-	# 	if new-js-file == old-js-file.code
-	# 		return context.modules.filter do $1.url.includes "type=style"
 
 	plugins.push svgPlugin!
 	plugins.push
