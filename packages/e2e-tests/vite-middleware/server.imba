@@ -38,9 +38,6 @@ def createServer(root = process.cwd())
 		app.use compression()
 		app.use serveStatic(dist, index: false)
 	app.use "/home", do(req, res)
-		console.log "served", imba.__served__
-		unless req.accepts(['image/*', 'html']) == 'html'
-			return res.sendStatus(404)
 		let html = <html lang="en">
 			<head>
 				<meta charset="UTF-8">
@@ -52,8 +49,6 @@ def createServer(root = process.cwd())
 				<Home>
 		res.status(200).set("Content-Type": "text/html").end String html
 	app.use "/", do(req, res)
-		unless req.accepts(['image/*', 'html']) == 'html'
-			return res.sendStatus(404)
 		let html = <html lang="en">
 			<head>
 				<meta charset="UTF-8">

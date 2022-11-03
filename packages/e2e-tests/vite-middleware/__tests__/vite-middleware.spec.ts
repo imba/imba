@@ -12,6 +12,7 @@ import {
 } from "~utils";
 
 test("SSR and hydration works", async () => {
+	debugger
   // after hydration
   const html = await fetchPageText();
   expect(html).toMatch("Hello 0 times"); // before hydration

@@ -26,16 +26,16 @@ const portArgPos = args.indexOf("--port") + 1
 if portArgPos > 0
 	port = parseInt(args[portArgPos], 10)
 
-def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "production")
+def createServer(root = process.cwd(), isDev = import.meta.env.MODE === "development")
 	const resolve = do(p) path.resolve(root, p)
 
 	let manifest\Object
-	if isProd
-		manifest = (await import("./dist/manifest.json")).default
+	if !isDev
+		manifest = (await import("./dist_client/manifest.json")).default
 	const app = express()
-	const configFile = np.join(__dirname, "vite.config.client.js")
+	const configFile = np.join(__dirname, "vite.config.mjs")
 	let vite
-	if !isProd
+	if isDev
 		vite = await Vite.createServer
 			root: root
 			appType: "custom"
@@ -54,9 +54,8 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 			server:
 				middlewareMode: true
 		# maybe use a different config
-		vite = await Vite.createServer()
 		app.use compression()
-		app.use serveStatic(resolve("dist"), index: false)
+		app.use serveStatic("dist_client", index: false)
 	app.use "*", do(req, res)
 		const url = req.originalUrl
 		try
@@ -65,7 +64,7 @@ def createServer(root = process.cwd(), isProd = import.meta.env.MODE === "produc
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<title> "Imba App"
-					if !isProd
+					if isDev
 						<script type="module" src="/@vite/client">
 						<script type="module" src="/src/main.js">
 						<style id="dev_ssr_css" innerHTML=ssr-styles>
@@ -99,4 +98,3 @@ const exitProcess = do
 process.once "SIGTERM", exitProcess
 process.once "SIGINT", exitProcess
 process.stdin.on "end", exitProcess
-

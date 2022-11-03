@@ -2,8 +2,10 @@ import { build, defineConfig } from 'vite';
 import imbaPlugin from 'imba/plugin';
 import { resolve } from 'path'
 import {builtinModules} from 'module'
+import url from 'node:url'
 
 // ENTRY
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const entry = resolve(__dirname, "src/main.js")
 
 export default defineConfig(({ command, mode }) => {
@@ -14,14 +16,15 @@ export default defineConfig(({ command, mode }) => {
 		resolve:{
 			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 		},
-		ssr: true,
+		define: {
+			"import.meta.vitest": undefined
+		},
 		build: {
-			ssrManifest: true,
 			manifest: true,
 			minify: true,
 			rollupOptions: {
 				output: {
-					dir: "./dist",
+					dir: "./dist_client",
 					name: "main",
 				},
 				input:{
