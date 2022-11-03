@@ -543,6 +543,40 @@ declare namespace imba {
      */
     function commit(): Promise<void>;
     
+	type mode = "development" | "production"
+	interface setupCallback {
+		(dist:string) : any
+	}
+	interface setupOptions {
+		mode: mode
+		serverOptions: import("Vite").ServerOptions
+	}
+    /**
+     * Setup Vite middleware in dev (takes care of fouc + live reloading refinement)
+	 *  and configuration (manifest and resolve entry points) for production
+	 * 
+	 * @example No configuration (only pass in the mode)
+	 * ```
+	 *   await imba.setupVite(app, import.meta.env.MODE, do(dist) app.use(serveStatic(dist, index: false))
+	 * ```
+	 * @example configure Vite server for client side bundling. Useful e.g when using https in dev
+	 * ```
+	 * const serverOptions = {
+			server: {	
+				https: {
+					key: fs.readFileSync(EXPRESS_SSL_CERTIFICATE_KEY)
+					cert: fs.readFileSync(EXPRESS_SSL_CERTIFICATE)
+				}
+			}
+	 *  }
+	 * await imba.setupVite(app, {mode:import.meta.env.MODE, serverOptions}) do(dist)
+	 * app.use serveStatic(np.resolve(dist), index: false)
+
+	 * ```
+     */
+    function setupVite(server: any, mode: mode, cb: setupCallback): Promise<string>;
+    function setupVite(server: any, options: setupOptions, cb: setupCallback): Promise<string>;
+    
     /**
      * Render elements in custom context
      */

@@ -26,7 +26,7 @@ export def setupVite(srv, options, cb)
 		options = {mode: "development"}
 	const prod? = options.mode == "production" or options.prod == yes
 	const port = await getport(port: getport.makeRange(24000, 26000))
-	let {serverOptions = {server: {hmr: {port}}}, } = options
+	let serverOptions = options.serverOptions or { server: { hmr: {port} } }
 	let configFile = resolveWithFallbacks(viteClientConfigFile, ["ts", "js", "mjs", "cjs"])
 	let manifest\Object
 
@@ -41,8 +41,8 @@ export def setupVite(srv, options, cb)
 	}
 	let vite = await Vite.createServer vite-options
 	global.__vite__ = yes
+	const dist = np.join(vite.config.root, vite.config.build.outDir)
 	if prod?
-		const dist = np.join(vite.config.root, vite.config.build.outDir)
 		global.__vite_manifest__ = JSON.parse nfs.readFileSync("{dist}/manifest.json", 'utf-8')
 		cb(dist) if cb
 	else
@@ -53,3 +53,4 @@ export def setupVite(srv, options, cb)
 		srv.use do(req, res, next)
 			__served__.delete req.url
 			next()
+	return dist
