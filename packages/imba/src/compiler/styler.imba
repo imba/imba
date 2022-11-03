@@ -378,7 +378,7 @@ export class Color
 
 	static def from raw
 		if typeof raw == 'string'
-			if raw[0] == '#' and !raw.match(/^\#([A-F0-9]{6})([A-F0-9]{2})?$/)
+			if raw[0] == '#' and !raw.match(/^\#([A-Fa-f0-9]{6})([A-Fa-f0-9]{2})?$/)
 				return new NamedColor(raw.slice(1))
 
 			raw = parseColorString(raw)
@@ -1054,7 +1054,7 @@ export class StyleTheme
 	#	{}
 
 	def $color name
-		let m = name.match(/^([A-Za-z\-]+)(\d{1,3})(?:\-(\d+))?$/)
+		let m = name.match(/^([A-Za-z\-]+)(\d)(\d*)$/)
 		let ns = m and m[1]
 		
 		# aliased colors
@@ -1069,15 +1069,15 @@ export class StyleTheme
 
 		if m
 			let nr = parseInt(m[2])
-			let fraction = parseInt(m[3]) or 0
+			let fraction = m[3] ? parseFloat("0.{m[3]}") : 0
 			let from = null
 			let to = null
 
 			# what if it is fractional?
 
-			if nr > 9
-				fraction = (nr % 100) / 10
-				nr = Math.floor(nr / 100)
+			# if nr > 9
+			#	fraction = (nr % 100) / 10
+			#	nr = Math.floor(nr / 100)
 
 			let n0 = nr + 1
 			let n1 = nr
@@ -1093,7 +1093,7 @@ export class StyleTheme
 				to = palette[ns + (++n1)]
 
 			# only when we could not find colors?
-			let weight = ((nr - n0) + (fraction / 10)) / (n1 - n0)
+			let weight = ((nr - n0) + (fraction)) / (n1 - n0)
 			let hw = weight
 			let sw = weight
 			let lw = weight
@@ -1101,12 +1101,12 @@ export class StyleTheme
 			if !to
 				to = palette.black
 				hw = 0
-				sw = lw = fraction / 10
+				sw = lw = fraction
 			
 			if !from
 				from = palette.blue1
 				hw = 1
-				sw = lw = 1 - (fraction / 10)
+				sw = lw = 1 - fraction
 
 			if from and to
 				return palette[name] = from.mix(to,hw,sw,lw)

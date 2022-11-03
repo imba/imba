@@ -2073,8 +2073,12 @@ export class ClassField < Node
 				let slot = @vslot
 				let metasym = @fslot
 				let inner
-
-				let context = isStatic ? cls.name.c : "{cls.name.c}.prototype"
+				let context = null
+				
+				if isStatic
+					context = cls.classReference.c
+				else
+					context = "{cls.classReference.c}.prototype"
 				
 				let op = OP('.',LIT('this'),meta)
 				let args = "this,{slot},{@name.c(as: 'value')}"
@@ -3353,6 +3357,9 @@ export class ClassDeclaration < Code
 	def virtualSuper
 		@virtualSuper ||= @scope.parent.declare(:tmp,null,system: yes, type: 'let')
 
+	def classReference
+		@name
+
 	def instanceInit
 		return @instanceInit if @instanceInit
 		let call = Super.callOp(initKey)
@@ -3798,6 +3805,9 @@ export class TagDeclaration < ClassDeclaration
 
 	def cssid
 		@cssid ||= @scope.cssid
+
+	def classReference
+		LIT(@name.toClassName)
 		
 	def cssref scope
 		if isNeverExtended and !superclass
@@ -11131,8 +11141,6 @@ export class StyleProperty < StyleNode
 			# console.log 'color property!!',raw
 			# raw = raw.slice(1)
 			@kind = 'color'
-
-
 		# also split 
 		@parts = raw.replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
 		
@@ -11397,8 +11405,6 @@ export class StyleFunction < Node
 		let out = "{name}({pars})"
 
 		if (@property and @property.isColor)
-			# unless you're using variables it should work with anything
-			console.log "property is color!!"
 			if let res = Color.from(out)
 				return res.toVar
 
@@ -11445,47 +11451,13 @@ export class StyleColor < StyleTerm
 	def c o
 		let raw = toRaw
 		let name = raw.slice(1)
-		let hex = null
-		# console.log 'rendering color',raw,@property
+		let rich = Color.from(raw)
+		let a = self:param ? self:param.toAlpha : 1
 
-		if name.match(/^[A-F0-9]{3,8}$/) and (name:length == 6 or name:length == 8)
-			# treat as regular raw color
-			hex = name
-
-		# deconstruct this
 		if @property and @property.isColor
-			let rich = Color.from(raw)
-			# if this is also a custom color
-			# console.log 'parsed color string!',rich.toVar
-			# we will likely need multiple variables - so cannot decide it here.
-
 			return rich.toVar
-		
-		let a = 1
-		if self:param
-			a = self:param.toAlpha
-		return "hsla(var(--c_{name}),{a})"
-		# if it is clearly a hex - just do the hex
-		# otherwise we could fallback to the hex value of said color right?
-		# unless it is clearly a hex color
-		return super
 
-
-		if color
-			let val = color.toString
-			# if option(:parameterize)
-			#	val = val.replace('/*#*/','/*##*/')
-			let pre = option(:parameterize) ? '/*##*/' : '/*#*/'
-			return pre + val
-
-
-		let val = toString
-		if val[0] == '$'
-			val = "var(--{val.slice(1)})"
-			val = helpers.singlequote(val) if o and o:as == 'js'
-			return val
-		else
-			super
+		return "hsla({rich.toVar},{a})"
 
 
 export class StyleVar < StyleTerm
