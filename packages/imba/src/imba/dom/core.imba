@@ -732,11 +732,19 @@ export class HTMLHtmlElement < HTMLElement
 			inject.push("<script src='/__hmr__.js'></script>")
 		
 		if global.__vite_manifest__
+			# in production
 			for script, i in self.scripts when src = global.__vite_manifest__[script.src]
 				inject.push "<script type=\"module\" src=\"{src.file}\"></script>"
 				for css-file in src.css
 					inject.push "<link rel='stylesheet' href=\"{css-file}\">"
-
+		elif global.__vite__
+			# in development
+			inject.push '''
+				<link rel='stylesheet' id='imba-dev-ssr' href='.dev-ssr/all.css'>
+				<script>addEventListener('DOMContentLoaded', (event) => {
+					document.getElementById("imba-dev-ssr").remove()
+				});</script>
+			'''
 		# if we havent included any styles in the html at all
 		unless self.styles
 			# maybe only if there are no 

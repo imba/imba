@@ -43,7 +43,6 @@ def createServer(root = process.cwd())
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title> "Imba App"
-				<style src="*">
 				<script type="module" src="./src/Home.imba">
 			<body>
 				<Home>
@@ -54,7 +53,6 @@ def createServer(root = process.cwd())
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title> "Imba App"
-				<style src="*">
 				<script type="module" src="./src/App.imba">
 			<body>
 				<App>
