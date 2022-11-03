@@ -2082,8 +2082,8 @@ export class ClassField < Node
 				
 				let op = OP('.',LIT('this'),meta)
 				let args = "this,{slot},{@name.c(as: 'value')}"
-				@getter = LIT("()\{ return {op.c}.get({args}) \}")
-				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
+				@getter = LIT("()\{ return {op.c}.$get({args}) \}")
+				@setter = LIT("(val)\{ {op.c}.$set(val,{args}) \}")
 				
 				if STACK.tsc
 					inner = "return {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
@@ -2213,7 +2213,7 @@ export class ClassField < Node
 
 			if wrapper
 				out = CALL(
-					OP('.',OP('.',THIS,@fname),STR('init')),
+					OP('.',OP('.',THIS,@fname),STR('$init')),
 					[val,THIS,@vslot,LIT(@name.c(as: 'value'))]
 				)
 
@@ -2230,7 +2230,7 @@ export class ClassField < Node
 	def getter
 		@getter ||= if true
 			if wrapper
-				LIT("()\{ return this.__{name.c}.get(this,{name.toStr.c},{osym}) \}")
+				LIT("()\{ return this.__{name.c}.$get(this,{name.toStr.c},{osym}) \}")
 			else
 				parseTemplate('(){ return $get$; }')
 

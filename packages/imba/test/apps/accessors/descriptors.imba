@@ -7,9 +7,9 @@ class Model
 	def @uppercase
 		return {
 			log: no
-			init: do yes
-			get: do(target, key) target[key]
-			set: do(value,target,key,name)
+			$init: do yes
+			$get: do(target, key) target[key]
+			$set: do(value,target,key,name)
 				console.info(`setting {name}`) if this.log
 				target[key] = value.toUpperCase!
 		}
@@ -17,9 +17,9 @@ class Model
 	def @rich type
 		return {
 			log: no
-			init: do yes
-			get: do(target, key) target[key]
-			set: do(value,target,key,name)
+			$init: do yes
+			$get: do(target, key) target[key]
+			$set: do(value,target,key,name)
 				unless value isa type
 					value = new type(value)
 					

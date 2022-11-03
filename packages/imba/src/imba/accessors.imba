@@ -2,16 +2,16 @@
 import {emit,listen} from './utils'
 
 export def accessor value, target, key, name, slot, context
-	if value and value.accessor isa Function
-		value = value.accessor(target, key, name, slot, context)
+	if value and value.$accessor isa Function
+		value = value.$accessor(target, key, name, slot, context)
 	else
 		# cache this by default?
 		# must implement custom .accessor method to bypass
 		context[slot] = value
 
 	# if accessor has no init method - forward to accessor.set
-	if value and !value.init
-		value.init = value.set or do yes
+	if value and !value.$init
+		value.$init = value.$set or do yes
 	return value
 
 export def descriptor context, value, args = []
@@ -33,12 +33,12 @@ export class Accessor
 	def watch cb
 		(#watchers ||= []).push(cb)
 
-	def get target, key
+	def $get target, key
 		target[key]
 
-	def set value, target, key, name
+	def $set value, target, key, name
 		if #watchers
-			let prev = self.get(target,key,name)
+			let prev = self.$get(target,key,name)
 			if prev != value
 				target[key] = value
 				for watcher,i in #watchers
@@ -49,7 +49,7 @@ export class Accessor
 
 	# by default we are caching the @prop descriptor
 	# so that it is only created once for all instances of a class
-	def accessor target, key, name, slot, context
+	def $accessor target, key, name, slot, context
 		# finalize it now - or stay slow?
 		context[slot] = self
 
