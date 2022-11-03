@@ -34,7 +34,14 @@ def createServer(root = process.cwd())
 	# 	manifest = (await import("./client/manifest.json")).default
 	const resolve = do(p) path.resolve(root, p)
 	const app = express()
-	await imba.setupVite app, import.meta.env.MODE, do(dist)
+	const options = 
+		mode: import.meta.env.MODE
+		serverOptions: 
+			server:
+				watch: 
+					usePolling: yes
+					interval: 100
+	await imba.setupVite app, options, do(dist)
 		app.use compression()
 		app.use serveStatic(dist, index: false)
 	app.use "/home", do(req, res)
