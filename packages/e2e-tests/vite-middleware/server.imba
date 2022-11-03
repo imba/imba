@@ -36,11 +36,11 @@ def createServer(root = process.cwd())
 	const app = express()
 	const options = 
 		mode: import.meta.env.MODE
-		serverOptions: 
-			server:
-				watch: 
-					usePolling: yes
-					interval: 100
+		# serverOptions: 
+		# 	server:
+		# 		watch: 
+		# 			usePolling: yes
+		# 			interval: 100
 	await imba.setupVite app, options, do(dist)
 		app.use compression()
 		app.use serveStatic(dist, index: false)
