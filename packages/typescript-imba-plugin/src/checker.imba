@@ -316,7 +316,7 @@ export default class ImbaTypeChecker
 				md.push `**Style variable**`
 				md.push `[Reference](https://imba.io/docs/css/variables)`
 
-			elif symbol.match('style.value.unit')
+			elif symbol.match('style.value.unit') or symbol.match('style.property.unit')
 				let defs = getStyleCustomUnits().filter do $1.value == symbol.value
 				out.definitions = defs.map do getDefinitionForImbaToken($1)
 

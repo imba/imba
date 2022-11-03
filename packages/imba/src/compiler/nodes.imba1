@@ -10,7 +10,7 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
-import StyleRule,StyleTheme,Color,StyleSheet from './styler.imba'
+import StyleRule,StyleTheme,Color,StyleSheet,parseColorString from './styler.imba'
 import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier,toCustomTagIdentifier from '../utils/identifiers.imba'
 import Compilation from './compilation'
 
@@ -11120,12 +11120,21 @@ export class StyleProperty < StyleNode
 	prop name
 	prop number
 	prop unit
+	prop kind
 	# modifiers
 	# values
 	def initialize token
 		@token = token
+		let raw = String(@token)
+
+		if raw[0] == '#'
+			# console.log 'color property!!',raw
+			# raw = raw.slice(1)
+			@kind = 'color'
+
+
 		# also split 
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
+		@parts = raw.replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
 		
 		for part,i in @parts
 			@parts[i] = part.replace(/^\.(?=[^\.])/,'@.')
@@ -11136,7 +11145,7 @@ export class StyleProperty < StyleNode
 			@number = parseInt(m[1])
 			@unit = m[2]
 			
-		if !@name.match(/^[\w\-]/)
+		if !@name.match(/^[\#\w\-]/)
 			@parts.unshift(@name = null)
 
 		self
@@ -11162,6 +11171,9 @@ export class StyleProperty < StyleNode
 	def isUnit
 		@unit
 
+	def isColor
+		@kind == 'color'
+
 	def modifiers
 		@parts.slice(1)
 
@@ -11172,7 +11184,7 @@ export class StyleProperty < StyleNode
 		name + modifiers.join("§")
 		
 	def toKey
-		let name = isUnit ? "--u_{@unit}" : self.name
+		let name = isUnit ? "--u_{@unit}" : (isColor ? "--c_{@name.slice(1)}" : self.name)
 		[name].concat(modifiers).join('§')
 		# @parts.join('.')
 
@@ -11370,6 +11382,8 @@ export class StyleFunction < Node
 		@params = params
 	
 	def visit stack, o
+		@property = o:property
+		@propname = o:property and o:property.@name
 		@params.traverse if @params and @params:traverse
 		self
 		
@@ -11377,11 +11391,17 @@ export class StyleFunction < Node
 		c
 		
 	def c o
-		# console.log "style function {@name}"
+
 		let name = String(@name)
 		let pars = @params.c
-
 		let out = "{name}({pars})"
+
+		if (@property and @property.isColor)
+			# unless you're using variables it should work with anything
+			console.log "property is color!!"
+			if let res = Color.from(out)
+				return res.toVar
+
 		out = helpers.singlequote(out) if o and o:as == 'js'
 		return out
 
@@ -11406,9 +11426,8 @@ export class StyleIdentifier < StyleTerm
 	def c o
 		if color
 			let val = color.toString
-			# if option(:parameterize)
-			#	val = val.replace('/*#*/','/*##*/')
-			let pre = option(:parameterize) ? '/*##*/' : '/*#*/'
+			let asvar = option(:parameterize) or (@property and @property.isColor)
+			let pre = asvar ? '/*##*/' : '/*#*/'
 			return pre + val
 
 
@@ -11423,6 +11442,51 @@ export class StyleIdentifier < StyleTerm
 export class StyleString < StyleTerm
 
 export class StyleColor < StyleTerm
+	def c o
+		let raw = toRaw
+		let name = raw.slice(1)
+		let hex = null
+		# console.log 'rendering color',raw,@property
+
+		if name.match(/^[A-F0-9]{3,8}$/) and (name:length == 6 or name:length == 8)
+			# treat as regular raw color
+			hex = name
+
+		# deconstruct this
+		if @property and @property.isColor
+			let rich = Color.from(raw)
+			# if this is also a custom color
+			# console.log 'parsed color string!',rich.toVar
+			# we will likely need multiple variables - so cannot decide it here.
+
+			return rich.toVar
+		
+		let a = 1
+		if self:param
+			a = self:param.toAlpha
+		return "hsla(var(--c_{name}),{a})"
+		# if it is clearly a hex - just do the hex
+		# otherwise we could fallback to the hex value of said color right?
+		# unless it is clearly a hex color
+		return super
+
+
+		if color
+			let val = color.toString
+			# if option(:parameterize)
+			#	val = val.replace('/*#*/','/*##*/')
+			let pre = option(:parameterize) ? '/*##*/' : '/*#*/'
+			return pre + val
+
+
+		let val = toString
+		if val[0] == '$'
+			val = "var(--{val.slice(1)})"
+			val = helpers.singlequote(val) if o and o:as == 'js'
+			return val
+		else
+			super
+
 
 export class StyleVar < StyleTerm
 

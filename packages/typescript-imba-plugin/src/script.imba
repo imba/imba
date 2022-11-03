@@ -327,7 +327,7 @@ export default class ImbaScript
 		
 	def getInfoAt pos, ls
 		let ctx = doc.getContextAtOffset(pos)
-		let out = {}
+		let out = {}		
 
 		if ctx.after.token == '' and !ctx.before.character.match(/\w/)
 			if ctx.after.character.match(/[\w\$\@\#\-]/)
@@ -338,7 +338,7 @@ export default class ImbaScript
 		let tok = ctx.token or {match: (do no)}
 		let checker = getTypeChecker!
 
-		# console.log('context for quick info',ctx)
+		util.log('getInfoAt',ctx)
 		
 		out.textSpan = tok.span
 		
@@ -375,7 +375,7 @@ export default class ImbaScript
 			if post.match(/^\d+$/)
 				util.log("this is a numeric thing(!!!)",tok)
 		
-		if tok.match('style.value.unit')
+		if tok.match('style.value.unit style.property.unit')
 			hit(checker.getTokenMetaSymbol(tok) or tok,'unit')
 				
 		elif g = grp.closest('stylevalue')

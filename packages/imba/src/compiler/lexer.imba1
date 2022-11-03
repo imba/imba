@@ -125,7 +125,7 @@ var SYMBOL = ///^
 ///
 
 var STYLE_HEX = ///^
-	\#[0-9a-fA-F]{3,8}
+	\#[\w\-]+
 ///
 
 var STYLE_NUMERIC = ///^
@@ -148,7 +148,7 @@ var STYLE_PROPERTY = ///^
 ///
 
 var STYLE_PROPERTY2 = ///^
-	(\^?[\w\-\$\@\.\!]+)(?=\:([^\:]|$))
+	(\^?[\w\-\$\@\.\!\#]+)(?=\:([^\:]|$))
 ///
 
 var STYLE_MODIFIERS = ///^

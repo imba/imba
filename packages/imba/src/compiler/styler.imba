@@ -350,7 +350,43 @@ def isNumber val
 		return true
 	return false
 
+export def parseColorString str
+	if named_colors[str]
+		str = named_colors[str]
+
+	if str[0] == '#'
+		let hex = conv.hex.rgb(str)
+		return conv.rgb.hsl(hex)
+
+	if let m = str.match(/^(hsla?|rgba?)\((.+)\)$/)
+		let [a,b,c,d = ''] = m[2].replace(/[\,\/]g/,' ').split(/\s+/g)
+
+		let hsl
+
+		if m[1] == 'rgb' or m[1] == 'rgba'
+			hsl = conv.rgb.hsl([parseFloat(a),parseFloat(b),parseFloat(c)])
+
+		if m[1] == 'hsl' or m[1] == 'hsla'
+			hsl = [parseFloat(a),parseFloat(b),parseFloat(c)]
+
+		return hsl
+
+	return null
+
+
 export class Color
+
+	static def from raw
+		if typeof raw == 'string'
+			if raw[0] == '#' and !raw.match(/^\#([A-F0-9]{6})([A-F0-9]{2})?$/)
+				return new NamedColor(raw.slice(1))
+
+			raw = parseColorString(raw)
+
+		if raw isa Array
+			return new self('',raw[0],raw[1],raw[2])
+		
+		return null
 	
 	def constructor name,h,s,l,a = 1
 		name = name
@@ -385,6 +421,11 @@ export class Color
 	def c
 		toString!
 
+export class NamedColor < Color
+
+	def toVar
+		"var(--c_{name})"
+		
 
 export class Tint < Color
 
@@ -478,18 +519,7 @@ let defaultPalette = {
 	white: new Color('white',0,0,100,'100%')
 }
 
-def parseColorString str
-	if named_colors[str]
-		str = named_colors[str]
 
-	if let m = str.match(/hsl\((\d+), *(\d+\%), *(\d+\%?)/)
-		let h = parseInt(m[1])
-		let s = parseInt(m[2])
-		let l = parseInt(m[3])
-		return [h,s,l]
-	elif str[0] == '#'
-		return conv.rgb.hsl(conv.hex.rgb(str))
-	
 		
 
 
@@ -1024,7 +1054,7 @@ export class StyleTheme
 	#	{}
 
 	def $color name
-		let m = name.match(/^(\w+)(\d)(?:\-(\d+))?$/)
+		let m = name.match(/^([A-Za-z\-]+)(\d{1,3})(?:\-(\d+))?$/)
 		let ns = m and m[1]
 		
 		# aliased colors
@@ -1037,13 +1067,18 @@ export class StyleTheme
 		if palette[name]
 			return palette[name]
 
-
-
 		if m
 			let nr = parseInt(m[2])
 			let fraction = parseInt(m[3]) or 0
 			let from = null
 			let to = null
+
+			# what if it is fractional?
+
+			if nr > 9
+				fraction = (nr % 100) / 10
+				nr = Math.floor(nr / 100)
+
 			let n0 = nr + 1
 			let n1 = nr
 			
@@ -1057,18 +1092,21 @@ export class StyleTheme
 			while n1 < 9 and !to
 				to = palette[ns + (++n1)]
 
+			# only when we could not find colors?
 			let weight = ((nr - n0) + (fraction / 10)) / (n1 - n0)
 			let hw = weight
 			let sw = weight
 			let lw = weight
 
 			if !to
-				to = palette.blue9
+				to = palette.black
 				hw = 0
+				sw = lw = fraction / 10
 			
 			if !from
 				from = palette.blue1
 				hw = 1
+				sw = lw = 1 - (fraction / 10)
 
 			if from and to
 				return palette[name] = from.mix(to,hw,sw,lw)
@@ -1087,6 +1125,7 @@ export class StyleTheme
 		return true if $parseColor(val)
 		return false
 
+	# too many methods doing the same thing
 	def $parseColor identifier
 		let key = String(identifier)
 		if let color = $color(key)
@@ -1185,7 +1224,6 @@ export class StyleTheme
 		
 	def transformColors text
 		text = text.replace(/\/\*(#+)\*\/(\#?\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
-
 			if let color = $color(c)
 				if typ == '#'
 					return color.toString(a,typ)
