@@ -9,7 +9,7 @@ import {builtinModules} from 'module'
 import {createHash, slash} from './utils'
 import mm from 'micromatch'
 import {__served__} from '../imba/utils'
-import { viteServerConfigFile, resolveWithFallbacks, importWithFallback } from '../utils/vite'
+import { viteServerConfigFile, resolveWithFallbacks } from '../utils/vite'
 
 class WorkerInstance
 	runner = null
@@ -171,16 +171,17 @@ export default class Runner < Component
 	viteNodeServer
 	viteServer
 	fileToRun
+
 	def constructor bundle, options
 		super()
 		o = options
 		bundle = bundle
 		workers = new Set
 		fileToRun = np.resolve bundle.cwd, o.name
-	def fetchModule(id)
-		viteNodeServer.fetchModule id
-	def resolveId(id)
-		viteNodeServer.resolveId id
+
+	def fetchModule do viteNodeServer.fetchModule $1
+	def resolveId do viteNodeServer.resolveId $1
+
 	def shouldRerun(id)
 		return yes if id == fileToRun
 		# __served__ contains modules that were served by Vite in the client
@@ -196,6 +197,7 @@ export default class Runner < Component
 			if heedsRerun
 				rerun = true
 		rerun
+
 	# TODO: static variables
 	_rerunTimer
 	restartsCount = 0
@@ -207,12 +209,13 @@ export default class Runner < Component
 		_rerunTimer = setTimeout(&, watcher-debounce) do
 			return if restartsCount !== currentCount
 			reload!
+
 	def initVite
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")
 		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.ts", "vite.config.server.js"])
-		let {default: config} = await import(configFile)
+		let {default: config} = await import(String pathToFileURL configFile)
 		if typeof config == "function"
 			config = config({command: "serve", mode: "development"})
 		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
@@ -269,6 +272,7 @@ export default class Runner < Component
 			result:
 				main: fpath
 				hash: hash
+
 	def start
 		let max = o.instances or 1
 		let nr = 1

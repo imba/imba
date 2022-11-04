@@ -9,14 +9,6 @@ export const viteServerConfigFile = np.join(_dirname, "..", "bin", "./vite.confi
 export const viteClientConfigFile = np.join(_dirname, "..", "bin", "./vite.config.mjs")
 export const vitestSetupPath = np.join(_dirname, "..", "bin", "./test-setup.js")
 
-export def importWithFallback(bundled, user)
-	let pkg
-	try 
-		pkg = await import(user) 
-	catch error
-		pkg = await import(bundled)
-	pkg
-
 export def resolveWithFallbacks(ours, fallbacks, opts = {})
 	const {ext, resolve} = opts
 	let pkg = ours

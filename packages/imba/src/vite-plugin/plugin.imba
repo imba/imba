@@ -153,6 +153,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	def configureServer(server)
 		options.server = server
 		setupWatchers options, cache, requestParser
+
 	def handleHotUpdate(ctx\HmrContext)
 		if !options.hot or !options.emitCss
 			return

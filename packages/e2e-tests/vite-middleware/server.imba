@@ -6,21 +6,6 @@ import App from './src/App.imba'
 import Home from './src/Home.imba'
 import np from 'node:path'
 import url from 'node:url'
-# tag vite-script
-# 	prop src
-# 	prop type = "module"
-# 	get _src
-# 		src.replace("./", "")
-# 	def render
-# 		<self>
-# 			if __vite_manifest__
-# 				const prod-src = manifest[_src].file
-# 				const css-files = manifest[_src].css
-# 				<script type="module" src=prod-src>
-# 				for css-file in css-files
-# 					<style src=css-file>
-# 			else
-# 				<script src=_src type=type>
 
 let port = 3000
 const args = process.argv.slice(2)

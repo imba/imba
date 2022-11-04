@@ -287,12 +287,6 @@ def run entry, o, extras
 					}
 				}
 			})
-			# # configFile: configFile
-			# root: process.cwd()
-			# configFile: serverConfigFile
-			# build:
-			# 	rollupOptions:
-			# 		input: np.join(process.cwd(), entry)
 		return
 	let run = do
 		o.name ||= entry	
