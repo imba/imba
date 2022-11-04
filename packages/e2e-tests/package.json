@@ -7,17 +7,15 @@
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
 	"test": "rm -rf ../../temp && npm run test:serve && npm run test:build"
   },
-  "devDependencies": {
-    "cross-env": "^7.0.3",
+  "type": "module",
+  "dependencies": {
+	"cross-env": "^7.0.3",
     "css-color-names": "^1.0.1",
     "fs-extra": "^10.1.0",
     "imba": "../imba",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
-    "vitest": "^0.22.1"
-  },
-  "type": "module",
-  "dependencies": {
+    "vitest": "^0.22.1",
     "execa": "^6.1.0",
     "node-fetch": "^3.2.10"
   }

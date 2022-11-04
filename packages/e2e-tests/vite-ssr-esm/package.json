@@ -12,8 +12,8 @@
     "debug": "node --inspect-brk dist/server/server",
     "test": "imba test run src"
   },
-  "devDependencies": {
-    "@testing-library/dom": "^8.19.0",
+  "dependencies": {
+	"@testing-library/dom": "^8.19.0",
     "@testing-library/jest-dom": "^5.16.5",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
@@ -24,9 +24,7 @@
     "serve-static": "^1.15.0",
     "vite-node": "^0.24.3",
     "vite-tsconfig-paths": "^3.5.2",
-    "vitest": "^0.24.3"
-  },
-  "dependencies": {
+    "vitest": "^0.24.3",
     "imba": "../../imba",
     "vite": "^4.0.4"
   }

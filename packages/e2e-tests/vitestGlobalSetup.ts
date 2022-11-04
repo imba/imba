@@ -26,7 +26,7 @@ const syncNodeModules = async () => {
 	console.log('syncing node_modules');
 	await execa(
 		'npm',
-		['install', '--prefer-frozen-lockfile', '--prefer-offline', '--no-lockfile', '--silent'],
+		['install', '--no-audit'],
 		{ stdio: 'inherit' }
 	);
 	console.log('install dependencies in all subfolders');
@@ -34,7 +34,7 @@ const syncNodeModules = async () => {
 	testDirs = testDirs.filter(dir=> dir.isDirectory() && dir.name !== "node_modules")
 	await Promise.all(
 		testDirs
-			.map(dir=>execa('npm', ['install'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+			.map(dir=>execa('npm', ['install', '--no-audit'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
 	)
 	await Promise.all(
 		testDirs
