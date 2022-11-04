@@ -6,7 +6,7 @@ import { execa } from 'execa';
 import { fileURLToPath } from 'url';
 
 const tempTestDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'tmp', 'e2e-tests');
-const pluginDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'imba');
+// const pluginDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'imba');
 
 const isBuildTest = !!process.env.TEST_BUILD;
 const isCI = !!process.env.CI;
@@ -15,18 +15,18 @@ const preserveArtifacts = !!process.env.TEST_PRESERVE_ARTIFACTS || isCI;
 
 const DIR = path.join(os.tmpdir(), 'vitest_playwright_global_setup');
 
-const buildPackagesUnderTest = async () => {
-	console.log('building packages');
-	await execa('npm', ['install'], { stdio: 'inherit', cwd: pluginDir });
-	console.log('building packages done');
-};
+// const buildPackagesUnderTest = async () => {
+// 	console.log('building packages');
+// 	await execa('npm', ['install', '--no-audit', '--prefer-offline'], { stdio: 'inherit', cwd: pluginDir });
+// 	console.log('building packages done');
+// };
 
 const syncNodeModules = async () => {
 	// tests use symbolic linked node_modules directories. make sure the workspace is up for it
 	console.log('syncing node_modules');
 	await execa(
 		'npm',
-		['install', '--no-audit'],
+		['install', '--no-audit', '--prefer-offline'],
 		{ stdio: 'inherit' }
 	);
 	console.log('install dependencies in all subfolders');
@@ -34,7 +34,7 @@ const syncNodeModules = async () => {
 	testDirs = testDirs.filter(dir=> dir.isDirectory() && dir.name !== "node_modules")
 	await Promise.all(
 		testDirs
-			.map(dir=>execa('npm', ['install', '--no-audit'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+			.map(dir=>execa('npm', ['install', '--no-audit', '--prefer-offline'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
 	)
 	await Promise.all(
 		testDirs
@@ -64,7 +64,7 @@ export async function setup() {
 	console.log('');
 	console.log('preparing non ci env...');
 	await syncNodeModules();
-	await buildPackagesUnderTest();
+	// await buildPackagesUnderTest();
 	console.log('preparations done');
 	// }
 	console.log('Starting playwright server ...');

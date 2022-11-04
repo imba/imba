@@ -14,7 +14,7 @@ jobs:
   # this is the test matrix, it runs with node16 on linux,windows,macos + node14,18 on linux
   # it is skipped if the build step of the checks job wasn't successful (still runs if lint or audit fail)
   test:
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
