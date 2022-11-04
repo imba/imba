@@ -130,11 +130,12 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			return "export default '{path}'"
 		const imbaRequest = requestParser(id, !!ssr)
 		if resolvedAllCssModuleId == id 
-			return 'export default ".dev-ssr/all.css"' if dev?
-			if build?
-				# empty style tag in production
-				# we could include critical css at some point
-				return "export default ''"
+			return "export default ''"
+			# return 'export default ".dev-ssr/all.css"' if dev?
+			# if build?
+			# 	# empty style tag in production
+			# 	# we could include critical css at some point
+			# 	return "export default ''"
 		if imbaRequest
 			const {filename: filename, query: query} = imbaRequest
 			if query.imba and query.type === "style"

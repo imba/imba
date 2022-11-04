@@ -34,8 +34,7 @@ class WorkerInstance
 		log = new Logger(prefix: ["%bold%dim",name,": "])
 		current = null
 		restarts = 0
-
-	def get-all-styles
+	def create-dev-styles
 		const urls = []
 		const ids = []
 		const moduleMap = {}
@@ -133,8 +132,8 @@ class WorkerInstance
 			if message.type == 'fetch'
 				# console.log "parent: fetching", message
 				let md = await runner.fetchModule(message.id)
-				if message.id == '\0virtual:imba/*?css'
-					try await get-all-styles! catch error
+				if message.id.endsWith("?url&entry")
+					try await create-dev-styles! catch error
 						console.log "error creating DEV SSR styles", error
 				worker..send JSON.stringify
 					type: 'fetched'
