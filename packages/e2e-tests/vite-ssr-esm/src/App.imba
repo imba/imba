@@ -8,6 +8,7 @@ export default tag App
 	count = 0
 	def mount
 		count++
+		document.getElementById("dev_ssr_css")..remove()
 
 	def hydrate
 		innerHTML = ''
