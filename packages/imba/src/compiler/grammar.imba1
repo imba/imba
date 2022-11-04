@@ -380,7 +380,7 @@ var grammar =
 	]
 	
 	StyleBlockDeclaration: [
-		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3)
+		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3).set(name: A1)
 	]
 	
 	CSSDeclaration: [

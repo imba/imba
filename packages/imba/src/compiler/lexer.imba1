@@ -148,7 +148,7 @@ var STYLE_PROPERTY = ///^
 ///
 
 var STYLE_PROPERTY2 = ///^
-	(\^?[\w\-\$\@\.\!\#]+)(?=\:([^\:]|$))
+	(\^?[\w\-\$\@\.\!\#\^]+)(?=\:([^\:]|$))
 ///
 
 var STYLE_MODIFIERS = ///^
@@ -1068,8 +1068,8 @@ export class Lexer
 		elif typ == '%'
 			# use for something else
 			let ltyp = @lastTyp
-			if ltyp == 'TERMINATOR' or ltyp == 'INDENT'
-				token('CSS', 'CSS',0)
+			if ltyp == 'TERMINATOR' or ltyp == 'INDENT' or ltyp == 'EXPORT'
+				token('CSS', id,0)
 				queueScope('CSS')
 				return lexStyleRule(0,true)
 			typ = 'MIXIN'

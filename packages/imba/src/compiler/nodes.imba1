@@ -408,11 +408,11 @@ def AST.compileRaw item
 		o = o.slice(0,-1) + ']'
 
 	elif item isa Object
-		o = '{'
+		o = '{ '
 		for own k,v of item
 			# maybe quote?
-			o =+ "{k}:{AST.compileRaw(v)},"
-		o = o.slice(0,-1) + '}'
+			o += "{k}: {AST.compileRaw(v)},"
+		o = o.slice(0,-1) + ' }'
 	else
 		o = JSON.stringify(item)
 	return o
