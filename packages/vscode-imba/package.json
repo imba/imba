@@ -34,11 +34,11 @@
 		"commands": [
 			{
 				"command": "imba.getProgramDiagnostics",
-				"title": "Find Imba problems in Project"
+				"title": "Imba: Find Imba problems in Project"
 			},
 			{
 				"command": "imba.clearProgramProblems",
-				"title": "Clear Imba problems in Project"
+				"title": "Imba: Clear Imba problems in Project"
 			},
 			{
 				"command": "imba.debugService",
@@ -46,27 +46,31 @@
 			},
 			{
 				"command": "ximba.incrementByOne",
-				"title": "Increment by 1"
+				"title": "Imba: Increment by 1"
 			},
 			{
 				"command": "ximba.decrementByOne",
-				"title": "Decrement by 1"
+				"title": "Imba: Decrement by 1"
 			},
 			{
 				"command": "imba.foldStyles",
-				"title": "Fold Style Blocks"
+				"title": "Imba: Fold Style Blocks"
 			},
 			{
 				"command": "imba.unfoldStyles",
-				"title": "Unfold Style Blocks"
+				"title": "Imba: Unfold Style Blocks"
 			},
 			{
 				"command": "imba.toggleStyles",
-				"title": "Toggle Style Blocks folding"
+				"title": "Imba: Toggle Style Blocks folding"
 			},
 			{
 				"command": "imba.setDefaultSettings",
-				"title": "Update Workspace Settings for Imba"
+				"title": "Imba: Update Workspace Settings"
+			},
+			{
+				"command": "imba.migrateStyleOperators",
+				"title": "Imba: Rewrite legacy style operators"
 			}
 		],
 		"keybindings": [

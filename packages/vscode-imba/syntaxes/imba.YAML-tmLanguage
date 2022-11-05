@@ -10,7 +10,8 @@ variables:
   propertyAccess: (?:(\.)|(\.\.(?!\s*[[:digit:]]|\s+)))
   propertyAccessPreIdentifier: \??\.\s*
   identifier: '[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?'
-  cssPropertyKey: '(?:\^?[\@\.\%]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\<\>]?[\w\-\$]+)*(?:\s*[\:\=])'
+  cssPropertyKey2: '(?:\^?[\@\.\%]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\<\>]?[\w\-\$]+)*(?:\s*[\:\=])'
+  cssPropertyKey: '(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])'
   cssVariable: '(?:--|\$)[\w\-\$]+'
   cssPropertyName: '[\w\-\$]+'
   cssNumModifier: '\@[\!\<\>]?[0-9]+'
@@ -330,10 +331,12 @@ repository:
   
   mixin-declaration:
     name: meta.style.imba
-    begin: ^(\t*)(?=\%[\s\w])
+    begin: ^(\t*)(\%[\w\-]+)
+    beginCaptures:
+      '2': { name: entity.other.attribute-name.mixin.css }
     end: ^(?!(\1\t|\s*$))
     patterns:
-    - include: '#mixin-css-selector'
+    - include: '#mixin-css-selector-after'
     - include: '#css-comment'
     - include: '#nested-css-selector'
     - include: '#inline-styles'
@@ -620,6 +623,15 @@ repository:
   css-selector:
     name: meta.selector.css
     begin: (?<=css\s)(?!{{cssPropertyKey}}[^\:])
+    end: (\s*(?={{cssPropertyKey}}[^\:])|\s*$|(?=\s+\#\s))
+    endCaptures:
+      '0': {name: punctuation.separator.sel-properties.css}
+    patterns:
+    - include: '#css-selector-innards'
+
+  mixin-css-selector-after:
+    name: meta.selector.css
+    begin: (?<=%[\w\-]+)(?!{{cssPropertyKey}}[^\:])
     end: (\s*(?={{cssPropertyKey}}[^\:])|\s*$|(?=\s+\#\s))
     endCaptures:
       '0': {name: punctuation.separator.sel-properties.css}

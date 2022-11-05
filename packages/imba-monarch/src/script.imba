@@ -1028,6 +1028,16 @@ export default class ImbaScriptInfo
 				if sym.body and sym.body.path == path
 					return sym.node
 		return
+
+	def migrateStyleOperators
+		let edits = []
+		for tok in tokens
+			let val = (tok.value or '')
+			if tok.match('style.property.operator') and val.indexOf(':') >= 0
+				val = val.replace(':','=')
+				edits.push([tok.offset,val.length,val])
+
+		return edits
 	
 	def createImportEdit path, name, alias = name, asType = no
 		

@@ -1,4 +1,4 @@
-import {window, commands, languages, IndentAction, workspace,Range, extensions} from 'vscode'
+import {window, commands, languages, IndentAction, workspace,Range, extensions, TextEdit} from 'vscode'
 
 import path from 'path'
 import * as util from './util'
@@ -6,6 +6,9 @@ import * as util from './util'
 import CompletionsProvider from './providers/completions'
 import DocumentSymbolProvider from './providers/symbols'
 import Bridge from './bridge'
+import ImbaScript from 'imba-monarch'
+
+# include
 
 let bridge = null
 let log = util.log
@@ -29,9 +32,23 @@ languages.setLanguageConfiguration('imba',{
 
 const foldingToggles = {}
 
+def scriptForDoc doc
+	let body = doc.getText!
+	let script = new ImbaScript(doc.fileName,body)
+	return script
+
+def applyEdits editor, doc, edits
+	editor.edit do(builder)
+		for edit in edits
+			let start = doc.positionAt(edit[0])
+			let end = doc.positionAt(edit[0] + edit[1])
+			let range = new Range(start,end)
+			builder.replace(range,edit[2] or '')
+
 def adjustmentCommand amount = 1
 	return do(editor,edit)
 		let doc = editor.document
+		# Should just work locally
 		let edits = await bridge.call('increment',util.toPath(doc.uri),{
 			by: amount
 			selections: editor.selections
@@ -44,6 +61,16 @@ def adjustmentCommand amount = 1
 
 			editor.edit do(edit)
 				edit.replace(range,edits[2])
+
+def documentFormatCommand name = ''
+	return do(editor,edit)
+		let doc = editor.document
+		let script = scriptForDoc(doc)
+		if script and script[name]
+			if let res = script[name]()
+				applyEdits(editor,doc,res)
+
+		window.showWarningMessage("Formatting document {name}")
 
 def getStyleBlockLines doc
 	let count = doc.lineCount
@@ -142,6 +169,9 @@ export def activate context
 
 	commands.registerTextEditorCommand('ximba.incrementByOne',adjustmentCommand(1))
 	commands.registerTextEditorCommand('ximba.decrementByOne',adjustmentCommand(-1))
+
+	for item in ['migrateStyleOperators']
+		commands.registerTextEditorCommand(`imba.{item}`,documentFormatCommand(item))
 
 	commands.registerTextEditorCommand('imba.foldStyles') do(editor,edit)
 		let key = editor.document.uri.toString!

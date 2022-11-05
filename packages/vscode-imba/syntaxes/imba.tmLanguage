@@ -543,7 +543,7 @@
             <key>name</key>
             <string>meta.property-name.css</string>
             <key>begin</key>
-            <string>(?=(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=]))</string>
+            <string>(?=(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=]))</string>
             <key>beginCaptures</key>
             <dict>
               <key>1</key>
@@ -754,14 +754,22 @@
         <key>name</key>
         <string>meta.style.imba</string>
         <key>begin</key>
-        <string>^(\t*)(?=\%[\s\w])</string>
+        <string>^(\t*)(\%[\w\-]+)</string>
+        <key>beginCaptures</key>
+        <dict>
+          <key>2</key>
+          <dict>
+            <key>name</key>
+            <string>entity.other.attribute-name.mixin.css</string>
+          </dict>
+        </dict>
         <key>end</key>
         <string>^(?!(\1\t|\s*$))</string>
         <key>patterns</key>
         <array>
           <dict>
             <key>include</key>
-            <string>#mixin-css-selector</string>
+            <string>#mixin-css-selector-after</string>
           </dict>
           <dict>
             <key>include</key>
@@ -1437,9 +1445,33 @@
         <key>name</key>
         <string>meta.selector.css</string>
         <key>begin</key>
-        <string>(?&lt;=css\s)(?!(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=])[^\:])</string>
+        <string>(?&lt;=css\s)(?!(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])</string>
         <key>end</key>
-        <string>(\s*(?=(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
+        <string>(\s*(?=(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
+        <key>endCaptures</key>
+        <dict>
+          <key>0</key>
+          <dict>
+            <key>name</key>
+            <string>punctuation.separator.sel-properties.css</string>
+          </dict>
+        </dict>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>include</key>
+            <string>#css-selector-innards</string>
+          </dict>
+        </array>
+      </dict>
+      <key>mixin-css-selector-after</key>
+      <dict>
+        <key>name</key>
+        <string>meta.selector.css</string>
+        <key>begin</key>
+        <string>(?&lt;=%[\w\-]+)(?!(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])</string>
+        <key>end</key>
+        <string>(\s*(?=(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
         <key>endCaptures</key>
         <dict>
           <key>0</key>
@@ -1461,9 +1493,9 @@
         <key>name</key>
         <string>meta.selector.css</string>
         <key>begin</key>
-        <string>(^\t+)(?!(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=])[^\:])</string>
+        <string>(^\t+)(?!(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])</string>
         <key>end</key>
-        <string>(\s*(?=(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
+        <string>(\s*(?=(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
         <key>endCaptures</key>
         <dict>
           <key>0</key>
@@ -1495,7 +1527,7 @@
           </dict>
         </dict>
         <key>end</key>
-        <string>(\s*(?=(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
+        <string>(\s*(?=(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])[^\:])|\s*$|(?=\s+\#\s))</string>
         <key>endCaptures</key>
         <dict>
           <key>0</key>
@@ -1517,9 +1549,9 @@
         <key>name</key>
         <string>meta.selector.css</string>
         <key>begin</key>
-        <string>(^\t+)(?!(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=]))</string>
+        <string>(^\t+)(?!(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=]))</string>
         <key>end</key>
-        <string>(\s*(?=(?:\^?[\@\.\%]+[\!\&lt;\&gt;]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\&lt;\&gt;]?[\w\-\$]+)*(?:\s*[\:\=])|\)|\])|\s*$)</string>
+        <string>(\s*(?=(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])|\)|\])|\s*$)</string>
         <key>endCaptures</key>
         <dict>
           <key>0</key>

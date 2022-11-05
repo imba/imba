@@ -414,7 +414,7 @@ export let scopes = [
 	['punctuation.separator.combinator.css','#eec487'] # 6d829b
 	['meta.selector entity.other.attribute-name','#eec487'] # 6d829b
 	['meta.selector entity.other.attribute-name.class','#e9e19b'] # 6d829b
-	['meta.selector entity.other.attribute-name.mixin','#ffc799'] # 6d829b
+	['meta.style entity.other.attribute-name.mixin','#ffc799'] # 6d829b
 
 	['constant.other.color','#a49feb'] # 6d829b
 	

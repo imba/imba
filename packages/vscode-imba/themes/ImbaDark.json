@@ -539,8 +539,8 @@
       }
     },
     {
-      "name": "meta.selector entity.other.attribute-name.mixin",
-      "scope": "meta.selector entity.other.attribute-name.mixin",
+      "name": "meta.style entity.other.attribute-name.mixin",
+      "scope": "meta.style entity.other.attribute-name.mixin",
       "settings": {
         "foreground": "#ffc799"
       }
