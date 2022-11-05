@@ -6331,6 +6331,9 @@ export class MixinIdentifier < Identifier
 	def traverse o
 		if @traversed
 			return self
+		# should not really look in the scope
+		@mixin = scope__.mixin(@value.slice(1))
+		# console.log 'found mixin?!',@mixin
 		unless @variable
 			resolveVariable
 		@traversed = yes
@@ -10710,6 +10713,30 @@ export class ExportDeclaration < ESMDeclaration
 export class ExportAllDeclaration < ExportDeclaration
 export class ExportNamedDeclaration < ExportDeclaration
 
+export class MixinReference
+	prop name
+	prop scope
+
+	prop options
+	prop rule
+
+	def initialize name, scope
+		@name = name
+		@scope = scope
+		@options = {}
+
+
+export class MixinExports < Node
+
+	def add name, val
+		@mixins ||= {}
+		@mixins[name] = val
+		self
+
+	def c
+		"export const mixins$ = {AST.compileRaw(@mixins or {})}"
+
+
 export class Export < ValueNode
 		
 	def loc
@@ -10839,6 +10866,16 @@ export class StyleRuleSet < StyleNode
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
 
+		let keywordName = String(option(:name) || '')
+		if keywordName[0] == '%'
+			# need to be safely converted to a reference? Can do that later
+			@mixin = scope__.mixin(keywordName.slice(1))
+			@mixin.rule = self
+			@mixin.options:id = cssid
+		
+		if option(:export)
+			STACK.root.mixinExports.add(@mixin.name,@mixin.options)
+
 		let sel = String(@selectors).trim
 
 		if stack.parent isa ClassBody
@@ -10953,7 +10990,8 @@ export class StyleRuleSet < StyleNode
 		
 	def c
 		if option(:toplevel) and option(:export)
-			return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+			# console.log "EXPORT??!",@identifier,@mixin,@name
+			return ""
 
 		if @tvar
 			let out = ["{@tvar} = '{@name}'"]
@@ -11859,6 +11897,7 @@ export class Scope
 		@varmap  = {}
 		@counters = {}
 		@varpool = []
+		@mixins = {}
 		@refcounter = 0
 		@declListeners = []
 		@level = (parent ? parent.@level : -1) + 1
@@ -11886,6 +11925,9 @@ export class Scope
 			# temporary(null,{reuse: yes},"{name}")
 			
 		return item
+
+	def mixin name
+		@mixins[name] ||= MixinReference.new(name,self)
 	
 	# def cssMixinFlag name
 	def captureVariableDeclarations blk
@@ -12239,6 +12281,12 @@ export class RootScope < Scope
 
 	def globalRef
 		@globalRef ||= LIT('globalThis')
+
+	def mixinExports
+		unless @mixinExports
+			@head.push(@mixinExports = MixinExports.new())
+		return @mixinExports
+
 
 	def registerAsset path, kind, context, pathToken
 		let key = path + kind
