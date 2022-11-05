@@ -36,7 +36,7 @@ const Upcase = {
 
 	def $init value, target, key, name
 		if value
-			set(value,target,key,name)
+			$set(value,target,key,name)
 		return
 }
 
@@ -44,7 +44,6 @@ const Upcase = {
 class Main
 	title @(new Accessor)
 	initials @(Upcase)
-	other @any.get
 
 class Sub < Main
 

@@ -1,10 +1,10 @@
 class @set
 	callback = null
 
-	def get target,key
+	def $get target,key
 		target[key]
 	
-	def set value,target,key,name
+	def $set value,target,key,name
 		let prev = target[key]
 		if prev != value
 			target[key] = value
