@@ -1,3 +1,4 @@
+# SKIP
 ###
 The descriptor syntax allows you to concisely set/toggle properties on an object
 ###
