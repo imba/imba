@@ -275,7 +275,6 @@ export default class ImbaTypeChecker
 		return out
 
 	def getReferenceForImbaToken tok
-		util.log 'getReferenceForImbaToken',tok
 		let script = tok.context.doc.owner
 		let out = {
 			textSpan: tok.span # {start:0, length:1}
@@ -283,6 +282,7 @@ export default class ImbaTypeChecker
 			fileName: script.fileName
 			isWriteAccess: true
 		}
+		util.log 'getReferenceForImbaToken',tok,out
 		
 		return out
 
@@ -291,6 +291,9 @@ export default class ImbaTypeChecker
 		# special rules if it is an ImbaToken
 		if symbol isa ImbaToken
 			# util.log('getSymbolInfo for ImbaToken',symbol)
+			let doc = symbol.context.doc # .owner
+			let defs
+			let refs
 			
 			let out = {
 				displayParts: []
@@ -331,6 +334,22 @@ export default class ImbaTypeChecker
 				md.push `Custom CSS unit`
 				md.push `[Reference](https://imba.io/docs/css/values)`
 
+			elif symbol.match('tag.mixin.name')
+				defs = doc.getMatchingTokens('style.selector.mixin.name').filter do $1.value == symbol.value
+			
+			elif symbol.match('style.selector.mixin.name')
+				defs = doc.getMatchingTokens('tag.mixin.name').filter do $1.value == symbol.value
+				# md.push(`---`) if md.length
+				# md.push `**Style variable**`
+				# md.push `[Reference](https://imba.io/docs/css/variables)`
+
+			if defs
+				out.definitions ??= defs.map do getDefinitionForImbaToken($1)
+				out.definition ??= out.definitions[0]
+
+				for item in out.definitions
+						if item.#comment
+							md.push(item.#comment)
 
 			out.documentation = [{text: md.join('\n\n'), kind: 'markdown'}]
 

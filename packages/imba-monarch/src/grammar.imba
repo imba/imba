@@ -911,7 +911,7 @@ export const states = {
 		[/css(?=\s+|$)/, 'keyword.css','@>css_selector&rule-_sel']
 		# [/(\%\w+)/,'@rematch','@>css_selector&rule-_sel']
 		# [/(\%)(?=\w+)/,'keyword.css','@>css_selector&rule-_sel']
-		[/(\%[\w\-]+)/,'style.selector.mixin.name','@>css_selector&rule-_sel']
+		[/(\%)([\w\-]+)/,['style.selector.mixin.prefix','style.selector.mixin.name','@>css_selector&rule-_sel']]
 
 	]
 
