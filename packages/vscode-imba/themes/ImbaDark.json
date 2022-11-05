@@ -574,8 +574,8 @@
       }
     },
     {
-      "name": "meta.style.imba punctuation.separator.key-value.css",
-      "scope": "meta.style.imba punctuation.separator.key-value.css",
+      "name": "source.imba punctuation.separator.key-value.css",
+      "scope": "source.imba punctuation.separator.key-value.css",
       "settings": {
         "foreground": "#b37bb6"
       }
