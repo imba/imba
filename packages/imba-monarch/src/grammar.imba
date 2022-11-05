@@ -935,7 +935,7 @@ export const states = {
 
 	css_props: [
 		denter(null,-1,0)
-		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
+		[/(?=@cssPropertyKey)/,'','@css_property&-_styleprop-_stylepropkey']
 		[/#(\s.*)?\n?$/, 'comment']
 		[/(?=[\%\*\w\&\$\>\.\[\@\!]|\#[\w\-])/,'','@>css_selector&rule-_sel']
 		[/\s+/, 'white']
@@ -944,14 +944,14 @@ export const states = {
 	css_selector: [
 		denter({switchTo: '@css_props&_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
 		[/(\}|\)|\])/,'@rematch', '@pop']
-		[/(?=\s*@cssPropertyKey2)/,'',switchTo:'@css_props&_props']
+		[/(?=\s*@cssPropertyKey)/,'',switchTo:'@css_props&_props']
 		[/\s*#\s/,'@rematch',switchTo:'@css_props&_props']
 		'sel_'
 	]
 
 	css_inline: [
 		[/\]/,'style.close','@pop']
-		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
+		[/(?=@cssPropertyKey)/,'','@css_property&-_styleprop-_stylepropkey']
 		[/(?=@cssPropertyPath\])/,'','@css_property&-_styleprop-_stylepropkey']
 	]
 
@@ -977,8 +977,8 @@ export const states = {
 		[/@cssModifier/,'style.property.modifier']
 		[/(\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
 		[/\+(@id)/, 'style.property.scope']
-		[/\s*([\:]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
-		[/\s*([\:]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
+		[/\s*([\:\=]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
+		[/\s*([\:\=]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
 	] 
 
 	css_value_: [
@@ -1005,7 +1005,7 @@ export const states = {
 	css_value: [
 		denter({switchTo: '@>css_multiline_value'},-1,-1)
 		# [/@cssModifier/, '@rematch', '@pop']
-		[/@cssPropertyKey2/, '@rematch', '@pop']
+		[/@cssPropertyKey/, '@rematch', '@pop']
 		[/;/, 'style.delimiter', '@pop']
 		[/(\}|\)|\])/, '@rematch', '@pop']
 		'css_value_'
@@ -1013,7 +1013,7 @@ export const states = {
 
 	css_multiline_value: [
 		denter(null,-1,0)
-		[/@cssPropertyKey2/, 'invalid']
+		[/@cssPropertyKey/, 'invalid']
 		'css_value_'
 	]
 
@@ -1408,12 +1408,11 @@ export const grammar = {
 	implicitCall: /(?!\s(?:and|or|is|isa)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
 	cssModifier: /(?:\@+[\<\>\!]?[\w\-]+\+?|\.+@id\-?)/
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
-	cssPropertyKey: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*(?:\s*\:)/
 	
 	cssVariable: /(?:--|\$)[\w\-\$]+/
 	cssPropertyName: /[\w\-\$]+/
 	# cssModifier: /\@[\w\-\$]+/
-	cssPropertyKey2: /(?:@cssPropertyName(?:@cssModifier)*|\^*@cssModifier+)(?:\s*\:)/
+	cssPropertyKey: /(?:@cssPropertyName(?:@cssModifier)*|\^*@cssModifier+)(?:\s*[\:\=])/
 	cssUpModifier: /\.\.[\w\-\$]+/
 	cssIsModifier: /\.[\w\-\$]+/
 	

@@ -141,14 +141,7 @@ var STYLE_URL = ///^
 ///
 
 var STYLE_PROPERTY = ///^
-	([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
-	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*(\&([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
-	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*)*
-	(?=\:([^\:]|$))
-///
-
-var STYLE_PROPERTY2 = ///^
-	(\^?[\w\-\$\@\.\!\#\^]+)(?=\:([^\:]|$))
+	(\^?[\w\-\$\@\.\!\#\^]+)(?=\:([^\:]|$)|\s*\=)
 ///
 
 var STYLE_MODIFIERS = ///^
@@ -710,7 +703,7 @@ export class Lexer
 			
 			if !end and letter == ' '
 				let after = str.slice(i + 1)
-				if STYLE_PROPERTY2.exec(after)
+				if STYLE_PROPERTY.exec(after)
 					break
 				
 				if INLINE_COMMENT.exec(after)
@@ -763,7 +756,7 @@ export class Lexer
 		let chr = @chunk[0]
 		var m
 
-		let styleprop = STYLE_PROPERTY2.exec(@chunk)
+		let styleprop = STYLE_PROPERTY.exec(@chunk)
 		let ltyp = @lastTyp
 			
 		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')

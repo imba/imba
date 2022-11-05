@@ -420,6 +420,8 @@ export let scopes = [
 	
 	['meta.style.imba support.constant.color','#a49feb'] # 6d829b
 	['meta.style.imba support.constant.color','#a49feb'] # 6d829b
+	['meta.style.imba style.property.operator','#b37bb6']
+	['meta.style.imba punctuation.separator.key-value.css','#b37bb6']
 	
 	# markdown
 	# ['entity.name.section.markdown','#ffffff']

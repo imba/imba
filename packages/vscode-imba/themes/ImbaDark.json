@@ -567,6 +567,20 @@
       }
     },
     {
+      "name": "meta.style.imba style.property.operator",
+      "scope": "meta.style.imba style.property.operator",
+      "settings": {
+        "foreground": "#b37bb6"
+      }
+    },
+    {
+      "name": "meta.style.imba punctuation.separator.key-value.css",
+      "scope": "meta.style.imba punctuation.separator.key-value.css",
+      "settings": {
+        "foreground": "#b37bb6"
+      }
+    },
+    {
       "name": "markup.fenced_code.block.markdown",
       "scope": "markup.fenced_code.block.markdown",
       "settings": {

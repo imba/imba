@@ -10,7 +10,7 @@ variables:
   propertyAccess: (?:(\.)|(\.\.(?!\s*[[:digit:]]|\s+)))
   propertyAccessPreIdentifier: \??\.\s*
   identifier: '[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?'
-  cssPropertyKey: '(?:\^?[\@\.\%]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\<\>]?[\w\-\$]+)*(?:\s*\:)'
+  cssPropertyKey: '(?:\^?[\@\.\%]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\<\>]?[\w\-\$]+)*(?:\s*[\:\=])'
   cssVariable: '(?:--|\$)[\w\-\$]+'
   cssPropertyName: '[\w\-\$]+'
   cssNumModifier: '\@[\!\<\>]?[0-9]+'
@@ -265,7 +265,7 @@ repository:
       beginCaptures:
         '1': {name: support.function.calc.css}
         '2': {name: punctuation.section.function.begin.bracket.round.css}
-      end: '\s*\:'
+      end: '\s*[\:\=]'
       endCaptures:
         '0': {name: punctuation.separator.key-value.css}
       patterns:

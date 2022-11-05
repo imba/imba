@@ -279,7 +279,7 @@ export class SymbolCompletion < Completion
 				item.insertText = ns = tags.alias
 			elif tags.proxy
 				ns = tags.proxy
-			triggers ':@.'
+			triggers ':@.=^'
 			kind = 9
 
 		elif cat == 'styleval'
@@ -310,7 +310,7 @@ export class SymbolCompletion < Completion
 			ns = tags.detail
 			# name = name.slice(1)
 			kind = 'event'
-			triggers ': '
+			triggers ':= '
 
 		elif cat == 'stylesel'
 			triggers ' [.(@'
