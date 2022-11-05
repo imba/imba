@@ -175,6 +175,7 @@ export const aliases =
 	tds: 'text-decoration-style'
 	tdt: 'text-decoration-thickness'
 	tdsi: 'text-decoration-skip-ink'
+	tuo: 'text-underline-offset'
 	
 	# text-emphasis
 	te: 'text-emphasis'
