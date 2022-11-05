@@ -483,6 +483,9 @@ export class ImbaTokenCompletion < Completion
 		let o = #options
 		name = sym.value
 
+		if cat == 'mixin'
+			name = ('%' + name).replace(/\%/g,'')
+
 		if o.prefixCompletion
 			name = o.prefixCompletion + name
 			item.filterText = name
@@ -583,6 +586,15 @@ export default class Completions
 		elif tok.match('unit')
 			let num = tok.prev.value
 			add('numberunits',kind: 'numberunit', prefixCompletion: num)
+
+		elif tok.match('.mixin') or ctx.before.line.match(/^\t*\<?\%\w*$/) or ctx.before.line.match(/^\<\%\w*$/)
+			# util.log "match mixin!"
+			let mixins = checker.getMixinReferences()
+			# util.log('add custom units',mixins)
+			# util.log('add default units??',checker.getMetaSymbols('style.value.unit '))
+			add(mixins,kind: 'mixin')
+			return self
+			# add(checker.getMetaSymbols('style.value.unit '),o)
 
 			# only if in styles
 		elif tok.match('number')

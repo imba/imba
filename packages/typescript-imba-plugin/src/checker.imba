@@ -1007,6 +1007,9 @@ export default class ImbaTypeChecker
 
 	def getStyleCustomUnits
 		global.ils.findImbaTokensOfType('style.property.unit.name')
+	
+	def getMixinReferences
+		global.ils.findImbaTokensOfType('.mixin.name')
 
 	def getTagDeclarationNames
 		global.ils.findImbaTokensOfType('entity.name.component')

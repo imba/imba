@@ -911,12 +911,12 @@ export const states = {
 		[/css(?=\s+|$)/, 'keyword.css','@>css_selector&rule-_sel']
 		# [/(\%\w+)/,'@rematch','@>css_selector&rule-_sel']
 		# [/(\%)(?=\w+)/,'keyword.css','@>css_selector&rule-_sel']
-		[/(\%[\w\-]+)/,'style.selector.mixin.decl','@>css_selector&rule-_sel']
+		[/(\%[\w\-]+)/,'style.selector.mixin.name','@>css_selector&rule-_sel']
 
 	]
 
 	sel_: [
-		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin']]
+		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin.name']]
 		[/(\@)(\.{0,2}[\w\-\<\>\!]*\+?)/,'style.selector.modifier']
 		[/(\@)(\.{0,2}[\w\-\<\>\!]*)/,'style.selector.modifier']
 		[/\.([\w\-]+)?/,'style.selector.class-name']
@@ -1069,7 +1069,7 @@ export const states = {
 		# '@>css_selector&rule-_sel'
 		[/>/,'tag.close','@pop']
 		[/(\-?\d+)/,'tag.$S3']
-		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin']]
+		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin.name']]
 		[/\#@id/,'tag.id']
 
 		[/\./,{ cases: {

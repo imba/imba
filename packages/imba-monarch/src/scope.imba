@@ -527,7 +527,7 @@ export class TagNode < Group
 		"<{name}>"
 	
 	get outlineText
-		let inner = findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('').trim()
+		let inner = findChildren(/tag\.(reference|name|id|white|flag|mixin|event(?!\-))/).join('').trim()
 		inner = inner.replace(/\.\s+/g,'')
 		"<{inner}>"
 		
