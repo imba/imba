@@ -33,10 +33,6 @@ const templates =
 		path: 'module'
 		name: 'Module'
 		desc: 'A module that can be used in any JavaScript project (Vite bundler)'
-	'tauri':
-		path: 'tauri'
-		name: 'Tauri'
-		desc: 'Desktop application (Vite bundler)'
 
 const noCopy = [
 	'.git'
@@ -100,7 +96,7 @@ def main name, opts
 
 	template ??= (await prompt {
 		type: 'select'
-		message: 'Choose a template'
+		message: 'Choose a template or find more at ' + 'https://imba.io/templates'.blue
 		choices: for own key, t of templates
 			{ title:t.name, description:t.desc, value:t }
 		initial: 0
