@@ -736,7 +736,7 @@ export class HTMLHtmlElement < HTMLElement
 			for script, i in self.scripts when src = global.__vite_manifest__[script.src]
 				inject.push "<script type=\"module\" src=\"{src.file}\"></script>"
 				for css-file in src.css
-					inject.push "<link rel='stylesheet' href=\"{css-file}\">"
+					sheets.add url:css-file
 		elif global.__vite__
 			# in development
 			inject.push '''
