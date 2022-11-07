@@ -258,6 +258,7 @@ def run entry, o, extras
 			if typeof serverConfig == "function"
 				serverConfig = serverConfig({command: "build", mode: "production"})
 			# const client = await Vite.build config
+			
 			const serverBuild = await Vite.build({
 				...serverConfig,
 				configFile: no,
@@ -265,7 +266,11 @@ def run entry, o, extras
 					...serverConfig.build,
 					rollupOptions: {
 						...serverConfig.build.rollupOptions,
-						input: np.join(process.cwd(), entry)
+						output: {
+							...serverConfig.build.rollupOptions.output,
+							dir: o.outdir
+						}
+						input: np.join(process.cwd(), entry),
 					}
 				}
 			})
@@ -283,6 +288,10 @@ def run entry, o, extras
 					},
 					rollupOptions: {
 						...clientConfig.build.rollupOptions,
+						output: {
+							...serverConfig.build.rollupOptions.output,
+							dir: np.join(o.outdir, 'public')
+						},
 						input: entry-points
 					}
 				}
