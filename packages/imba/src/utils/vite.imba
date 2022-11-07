@@ -24,6 +24,7 @@ export def resolveWithFallbacks(ours, fallbacks, opts = {})
 			pkg = np.resolve np.join _dirname, pkg
 		else
 			pkg = np.resolve np.join process.cwd(), pkg
+		pkg = "{url.pathToFileURL pkg}"
 	pkg
 
 export def ensurePackagesInstalled(dependencies, root)

@@ -12,7 +12,7 @@ export default defineConfig(({ command, mode }) => {
 		plugins: [imbaPlugin(),  tsconfigPaths({loose: true,extensions, projects: [np.resolve(".")]})],
 		resolve: { extensions },
 		build: {
-			outDir: "dist/client",
+			outDir: "dist/public",
 			manifest: true,
 			target: ["chrome88", "edge79", "safari15"],
 			ssrManifest: true,

@@ -266,10 +266,6 @@ def run entry, o, extras
 					...serverConfig.build,
 					rollupOptions: {
 						...serverConfig.build.rollupOptions,
-						output: {
-							...serverConfig.build.rollupOptions.output,
-							dir: o.outdir
-						}
 						input: np.join(process.cwd(), entry),
 					}
 				}
@@ -278,8 +274,7 @@ def run entry, o, extras
 			const entry-points = Object.keys(serverBuild.output[0].modules).filter(do $1.endsWith "?url&entry").map(do $1.replace("?url&entry", ""))
 
 			return unless entry-points.length
-			
-			const clientBuild = await Vite.build({
+			await Vite.build({
 				...clientConfig,
 				build: {
 					...clientConfig.build,
@@ -288,10 +283,6 @@ def run entry, o, extras
 					},
 					rollupOptions: {
 						...clientConfig.build.rollupOptions,
-						output: {
-							...serverConfig.build.rollupOptions.output,
-							dir: np.join(o.outdir, 'public')
-						},
 						input: entry-points
 					}
 				}
