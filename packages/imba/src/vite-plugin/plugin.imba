@@ -1,7 +1,7 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
-import {transformWithEsbuild} from 'vite'
+import {transformWithEsbuild, normalizePath} from 'vite'
 import { buildIdParser,  normalize, injectQuery } from "./utils/id";
 import type { IdParser, ImbaRequest } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
@@ -127,7 +127,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		const ssr = !!opts..ssr
 		if id.includes("?url&entry")
 			const path = np.relative(viteConfig.root, id.replace('?url&entry', ''))			
-			return "export default '{path}'"
+			return "export default '{normalizePath path}'"
 		const imbaRequest = requestParser(id, !!ssr)
 		if resolvedAllCssModuleId == id 
 			return "export default ''"
