@@ -89,6 +89,8 @@ class VirtualFragment < Fragment
 	def #appendChild child
 		if parentNode
 			child.#insertInto(parentNode,#end)
+		else
+			child.##up ??= (##up or self)
 		childNodes.push(child)
 	
 	def insertBefore node,refnode
