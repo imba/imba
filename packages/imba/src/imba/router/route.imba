@@ -111,10 +111,11 @@ export class Route
 			# what about :id.:format?
 			dynamic = yes
 			groups.push(id) unless id == '*'
+			let pattern = router.matchers[id] or (dot ? "([^\/\#\.\?]+)" : "([^\/\#\?]+)")
 			if dot
-				return "([^\/\#\.\?]+)\."
+				return "{pattern}\."
 			else
-				return "([^\/\#\?]+)"
+				return pattern
 		
 		if path == '' and query
 			return

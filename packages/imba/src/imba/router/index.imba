@@ -32,6 +32,7 @@ export class Router < EventEmitter
 		aliases = {}
 		redirects = {}
 		rules = {}
+		matchers = {}
 		options = o
 		busy = []
 		queue = new Queue
@@ -39,6 +40,7 @@ export class Router < EventEmitter
 		location = new Location(o.url or doc.location.href,self)
 		history = new History(self)
 		mode = o.mode or 'history'
+
 
 		if $web$
 			queue.on 'busy' do
