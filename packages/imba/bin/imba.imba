@@ -283,6 +283,7 @@ def common cmd
 		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
+		.option("--assets-dir <url>", "Base dir for assets","assets")
 		.option("--web","Build entrypoints for the browser")
 		.option("--esm","Output module files")
 
