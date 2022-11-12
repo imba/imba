@@ -281,6 +281,7 @@ export const aliases =
 	'ofx':'overflow-x'
 	'ofy':'overflow-y'
 	'ofa':'overflow-anchor'
+	'tof': 'text-overflow'
 	
 	# content
 	prefix: 'content@before'
