@@ -6581,7 +6581,7 @@ export class Descriptor < Node
 
 	def js
 		let ref = scope__.root.declare('desc',null,system: yes)
-		let val = @variable ? New.new(@value,params or []) : (@name ? CALL(@value,params or []) : @value)
+		let val = @variable ? Instantiation.new(CALL(@value,params or [])) : (@name ? CALL(@value,params or []) : @value)
 
 		let parts = AST.blk([])
 
