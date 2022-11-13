@@ -71,6 +71,7 @@ export const NODE_BUILTINS = [
 export const LOADER_EXTENSIONS = {
 	".png": "file",
 	".bmp": "file",
+	".pdf": "file",
 	".apng": "file",
 	".webp": "file",
 	".heif": "file",

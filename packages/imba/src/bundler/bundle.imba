@@ -666,15 +666,19 @@ export default class Bundle < Component
 
 				return {external: true}
 
+			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
+
 			# if this is an absolute path let esbuild resolve
 			if abs?
+				# or rather let do not resolve it?
+				if args.kind == 'url-token'
+					return {external: true}
 				return null
 
 			if q == 'img'
 				let resolved = await esresolve(args)
 				return {path: resolved.path}
 
-			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
 			
 			if isImba(args.importer) and img? and args.kind != 'url-token'
 				let resolved = await esresolve(args)

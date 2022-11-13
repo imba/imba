@@ -33,6 +33,7 @@ const defaultHeaders = {
 	jpeg: {'Content-Type': 'image/jpeg'}
 	ico: {'Content-Type': 'image/x-icon'}
 	bmp: {'Content-Type': 'image/bmp'}
+	pdf: {'Content-Type': 'application/pdf'}
 	
 	webm: {'Content-Type': 'video/webm'}
 	weba: {'Content-Type': 'audio/webm'}
