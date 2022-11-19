@@ -692,7 +692,7 @@ export default class Bundle < Component
 				let res = await esresolve(args)
 				if args.importer..match(/\.html$/)
 					return {path: res.path, suffix: "?url"}
-				if web? and esoptions.splitting
+				if web? and esoptions.splitting and isImba(args.importer)
 					# should still be treated as a watching dependency?
 					return {path: res.path + '.js', suffix: "?external"}
 
