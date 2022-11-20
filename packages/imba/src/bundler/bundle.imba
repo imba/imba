@@ -1377,7 +1377,8 @@ export default class Bundle < Component
 
 				smap.file = name
 
-				body += "\n/*# sourceMappingURL=./{name}.map */"
+				if esoptions.sourcemap
+					body += "\n/*# sourceMappingURL=./{name}.map */"
 
 				let asset = {
 					#type: 'output'
