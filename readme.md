@@ -75,7 +75,26 @@ app.get '/' do (req,res)
 
 Inspired by Tailwind, Imba brings styles directly into your code. Styles can be scoped to files, components, and even parts of your tag trees. Style modifiers like @hover, @lg, @landscape and @dark can be used for extremely concise yet powerful styling.
 
-![ "styles"](https://user-images.githubusercontent.com/8467/121170905-1e897680-c856-11eb-8b67-2014f0c508e6.png)
+```imba
+# global styles
+global css button
+	position: relative
+	display: block
+	background: #b2f5ea
+	@hover background: #b2f9ea
+
+# tailwind-inspired shorthands
+global css button
+	pos:relative d:block bg:blue5 bg@hover:blue6
+
+tag App
+	# scoped styles
+	css item bg:blue4 m:2
+
+	<self[d:grid pos:relative]> # inline styles
+		<ul> for {type,title} in items
+			<li.item is-{type}> title
+```
 
 ### Blazing fast, Zero config
 
