@@ -115,7 +115,19 @@ When you run your app with the `imba` command, it automatically bundles and comp
 
 The tooling is implemented as a typescript server plugin giving us great intellisense, diagnostics, and even cross-file refactorings that works with js/ts files in the same project. You can import types just like in typescript, and annotate variables, parameters and expressions. Like the language, the tooling is still in alpha, but improving every day.
 
-![ "types"](https://user-images.githubusercontent.com/8467/121170940-29440b80-c856-11eb-82bb-ac821d0d0c36.png)
+```imba
+import type { CookieOptions } from 'express-serve-static-core'
+
+def flash res\Response, body\string, settings = {}
+	let options\CookieOptions = {
+		...settings
+		maxAge: 86400
+		secure: true
+		httpOnly: false
+	}
+
+	res.cookie('flash',body,options)
+```
 
 ## Community
 
