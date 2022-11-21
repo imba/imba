@@ -32,7 +32,23 @@ To get started with Imba, we recommend reading through the [official guide](http
 
 Imba's syntax is minimal, beautiful, and packed with clever features. It combines logic, markup and styling in a powerful way. Fewer keystrokes and less switching files mean you'll be able to build things fast.
 
-![ "basics"](https://user-images.githubusercontent.com/8467/121170829-074a8900-c856-11eb-88d9-d4a922c24893.png)
+```imba
+import './util/reset.css'
+
+global css html,body m:0 p:0 w:100% h:100%
+
+tag login-form < form
+
+	css input rd:md bc:gray3 h:20px fs:md
+	css button rd:md c:white bg:gray4 @hover:blue4
+
+	<self @submit.prevent=api.login(name,secret)>
+		<input.username type='text' bind=name>
+		<input.password type='password' bind=secret>
+		<button> "Login as {name}"
+
+imba.mount <login-form[pos:abs d:grid ja:center]>
+```
 
 ### Runs on both server and client
 
