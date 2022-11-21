@@ -54,7 +54,22 @@ imba.mount <login-form[pos:abs d:grid ja:center]>
 
 Imba powers both the frontend and the backend of Scrimba.com, our learning platform with 100K+ monthly active users. On the frontend, Imba replaces e.g., Vue or React, and on the backend, it works with the Node ecosystem (e.g., npm).
 
-![ "server"](https://user-images.githubusercontent.com/8467/121170852-0fa2c400-c856-11eb-8aab-322d4b6a875d.png)
+```imba
+import express from 'express'
+import services from './services.ts'
+import html from './index.html'
+import image from './confused-cat.png'
+
+const app = express!
+
+app.get '/404' do (req,res)
+	res.send String <html> <body>
+		<img src=image>
+		<h1> "We could not find this page!"
+
+app.get '/' do (req,res)
+	res.send html.body
+```
 
 ### Integrated styling
 
