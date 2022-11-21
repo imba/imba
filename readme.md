@@ -100,7 +100,14 @@ tag App
 
 Imba comes with a built-in bundler based on the blazing fast esbuild. Import stylesheets, images, typescript, html, workers and more without any configuration. Bundling is so fast that there is no difference between production and development mode - it all happens on-demand.
 
-![ "bundling"](https://user-images.githubusercontent.com/8467/121170927-247f5780-c856-11eb-95bf-fa09ca5f8cff.png)
+```imba
+# importing a worker
+const worker = import.worker './analyzer'
+const analyzer = new Worker(worker.url)
+# import an image
+const logo = import './images/logo.png'
+console.log "logo size: {logo.width}x{logo.height} - at {logo.url}"
+```
 
 When you run your app with the `imba` command, it automatically bundles and compiles your imba code, along with typescript, css and many other file types. It provides automatic reloading of both the server and client.
 
