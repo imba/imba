@@ -1,9 +1,9 @@
 {
-	"name": "imba-base-template",
+	"name": "imba-default-template",
 	"scripts": {
-		"dev": "imba --base . -w src/index.html",
+		"dev": "imba -w src/index.html",
 		"start": "npm run dev",
-		"build": "imba build --base . src/index.html",
+		"build": "imba build src/index.html",
 		"preview": "npx http-server dist"
 	},
 	"devDependencies": {
