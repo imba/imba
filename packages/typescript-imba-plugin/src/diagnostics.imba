@@ -28,6 +28,9 @@ const Rules = [
 	code: 2339
 	message: /Property '_\$SYM\$/
 	---
+	code: 2350
+	message: /Only a void function can be called/
+	---
 	code: 2551
 	test: do({message},item)
 		return no unless typeof message == 'string'
