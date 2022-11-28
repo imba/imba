@@ -4011,15 +4011,13 @@ export class Func < Code
 		if stack.@descriptor and !stack.tsc
 			@scope = MethodScope.new(self) # (o and o:scope) || typ.new(self)
 			@scope.params = @params # = ParamList.new([])
-
+			
 		scope.visit
 
 		@context = scope.parent
 
 		@params.traverse(declaring: 'arg')
 		@body.traverse # so soon?
-
-
 
 	def funcKeyword
 		let str = "function"
@@ -6484,6 +6482,13 @@ export class DescriptorPart < Node
 	def initialize value, owner
 		@name = value
 
+	def visit stack
+		if params
+			params.traverse
+		if value
+			value.traverse
+		self
+
 	def js
 		if context
 			let op = OP('.',context,@name)
@@ -7752,7 +7757,7 @@ export class ForOf < For
 		var v
 
 		# possibly proxy the index-variable?
-
+		
 		if o:own
 			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 			o:value = o:index
