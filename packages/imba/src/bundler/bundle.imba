@@ -602,8 +602,8 @@ export default class Bundle < Component
 			let rel? = path[0] == '.'
 			let pkg? = !abs? and !rel?
 			let pkg = pkg? and path.match(/^(@[\w\.\-]+\/)?\w[\w\.\-]*/)[0] or null
-			let external? = (externs.indexOf(path) >= 0) or (pkg? and externs.indexOf(pkg) >= 0)
 			let q = (path.split('?')[1] or '')
+			let external? = (externs.indexOf(path) >= 0) or (pkg? and externs.indexOf(pkg) >= 0) or q == 'external'
 			let pathname = q ? path.split('?')[0] : path
 
 			if q == 'style'
@@ -627,15 +627,12 @@ export default class Bundle < Component
 				let res = await esb.resolve(pathname,opts)
 				return {path: res.path}
 
-			if q == 'external'
+			if q == 'external' and (!nodeish? or !run?)
 				return {path: pathname, external: true}
 
-			
-				
 			# should this be the default for all external modules?
-			if pkg? and nodeish? and run? and !standalone? and !program.tmpdir
-				if externs.indexOf("!{path}") >= 0
-					# console.log "don't externalize",path
+			if pkg? and nodeish? and run? and !standalone? # and !program.tmpdir
+				if externs.indexOf("!{path}") >= 0 and q != 'external'
 					return null
 
 				let reachable? = no
@@ -647,6 +644,7 @@ export default class Bundle < Component
 					kind: esm? ? 'import-statement' : 'require-call'
 					pluginData: 'skip'
 				}
+
 				let res = await esb.resolve(args.path,opts)
 					
 				if res.path
@@ -689,9 +687,11 @@ export default class Bundle < Component
 
 			# FIXME Formalize this behaviour
 			if path.match(/\.json(\?copy)?$/)
+				
 				let res = await esresolve(args)
 				if args.importer..match(/\.html$/)
 					return {path: res.path, suffix: "?url"}
+
 				if web? and esoptions.splitting and isImba(args.importer)
 					# should still be treated as a watching dependency?
 					return {path: res.path + '.js', suffix: "?external"}
