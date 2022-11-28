@@ -39,6 +39,8 @@ export const Extensions = [
 	'.avif'
 ]
 
+const Suffixes = ["._ils",""]
+
 
 export const DefaultConfig = {
 	include: ['**/*.imba','**/*']
@@ -63,7 +65,41 @@ export const DefaultConfig = {
 		module: 'esnext'
 		target: 'esnext'
 		newLine: 'lf'
+		maxNodeModuleJsDepth: 2
 		moduleResolution: "node"
+		moduleSuffixes: Suffixes
+	}
+}
+
+export const DefaultRichConfig = {
+	include: ['**/*.imba']
+	exclude: ['node_modules/**/*','node_modules/**/*.imba','dist/**/*']
+	compilerOptions: {
+		allowJs: true
+		# checkJs: true
+		noEmit: true
+
+		# emitDeclarationOnly: true
+		skipLibCheck: true
+		skipDefaultLibCheck: true
+		allowUnreachableCode: true
+		allowSyntheticDefaultImports: true
+		allowUmdGlobalAccess: false
+		esModuleInterop: true
+		suppressExcessPropertyErrors: false
+		suppressImplicitAnyIndexErrors: false
+		importsNotUsedAsValues: 'preserve'
+		declaration: false
+		strict: false
+		resolveJsonModule: true
+		noResolve: false
+
+		module: 'esnext'
+		target: 'esnext'
+		newLine: 'lf'
+		moduleResolution: 2
+		maxNodeModuleJsDepth: 2
+		moduleSuffixes: Suffixes
 	}
 }
 

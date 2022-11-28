@@ -1,7 +1,7 @@
 import np from 'path'
 export {tagNameToClassName} from './schemas'
 
-const DEBUGGING = process.env.TSS_DEBUG
+const DEBUGGING = process.env.TSS_DEBUG or process.env.ILS_DEBUG
 let TRACING = null
 class Logger
 	constructor
@@ -21,18 +21,18 @@ class Logger
 		call('groupEnd',...params)
 		
 	def warn ...params
-		return unless process.env.TSS_DEBUG
+		return unless DEBUGGING
 		call('warn',...params)
 	
 	def call typ, ...params
-		return unless process.env.TSS_DEBUG
+		return unless DEBUGGING
 		
 		if console.context isa Function
 			console.context![typ](...params)
 			return
 	
 	def log ...params
-		return unless process.env.TSS_DEBUG
+		return unless DEBUGGING
 
 		let ns = params[0]
 		let data = params[1]
@@ -59,7 +59,7 @@ class Logger
 
 			logs.unshift([id,...params])
 
-global.logger = new Logger
+global.logger = process.env.ILS_DEBUG ? global.console : new Logger
 
 export const state = {
 	

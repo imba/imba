@@ -221,13 +221,13 @@ export class Completion
 		if let ei = exportInfo
 			let asType = ei.exportedSymbolIsTypeOnly or #options.kind == 'type'
 			let path = ii.moduleSpecifier or ei.packageName or util.normalizeImportPath(script.fileName,ei.modulePath or ei.moduleSpecifier)
-			let alias = ei.importName or ei.exportName or ei.symbolName
-			let name = (ei.exportKind == 1 or ei.exportKind == 2) ? 'default' : (ei.symbolTableKey or ei.exportName or ei.symbolName)
+			let alias = ei.importName or ei.exportName or ei.symbolName or importName or ei.symbol..escapedName
+			let name = (ei.exportKind == 1 or ei.exportKind == 2) ? 'default' : (ei.symbolTableKey or ei.exportName or ei.symbolName or importName or ei.symbol..escapedName)
 			if ei.exportKind == 3
 				name = '*'
 
 			let edits = script.doc.createImportEdit(path,util.toImbaIdentifier(name),util.toImbaIdentifier(alias),asType)
-			
+
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
 		
@@ -237,6 +237,7 @@ export class Completion
 			let edits = script.doc.createImportEdit(path,util.toImbaIdentifier(name),util.toImbaIdentifier(name),false)
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
+
 
 		self
 
@@ -447,7 +448,7 @@ export class AutoImportCompletion < SymbolCompletion
 			let named = importInfo.importClauseOrBindingPattern..namedBindings..elements
 			for entry in (named or [])
 				if entry.propertyName..escapedText == importName
-					item.insertText = entry.name.escapedText	
+					item.insertText = entry.name.escapedText
 		return self
 		
 	def resolve
@@ -461,7 +462,7 @@ export class AutoImportCompletion < SymbolCompletion
 		exportInfo..packagName or exportInfo..modulePath
 
 	get importName
-		importData.exportName
+		importData..exportName
 		
 	get uniqueName
 		symName + importPath

@@ -289,7 +289,6 @@ export default class AutoImportContext
 		
 	def getExportedTypes
 		let res = search('',ts.SymbolFlags.Type)
-		console.log 'got types!!!' # ,res
 		return res
 		# exportInfoEntries.filter do
 		#	$1.exportedSymbolIsTypeOnly or $1.isTypeOnly or ($1.symbol.flags & ts.SymbolFlags.Type)

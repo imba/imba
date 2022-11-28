@@ -5,7 +5,7 @@ import * as util from './util'
 import Bridge from './bridge'
 import ipc from 'node-ipc'
 import {EventEmitter} from 'events'
-import {DefaultConfig} from './constants'
+import {DefaultConfig, DefaultRichConfig} from './constants'
 
 let libDir = np.resolve(__realname,'..','..','lib')
 
@@ -104,7 +104,7 @@ export default class Service < EventEmitter
 		
 	def getExternalFiles proj
 		let paths = Object.keys(virtualScripts)
-		util.log('got external files?!',paths)
+		# console.log('got external files?!',paths)
 		return paths
 		
 	def handleRequest {id,data}
@@ -121,7 +121,8 @@ export default class Service < EventEmitter
 		# Still need to inject stuff into the file in this virtual project
 		if ps.host.fileExists(jspath) or virtualFiles[jspath] or ps.host.fileExists(tspath)
 			util.log('found js/tsconfig')
-			return false 
+			return false
+			
 		util.log('createVirtualProjectFile')
 		
 		# notify about configuring their own tspath
@@ -136,10 +137,6 @@ export default class Service < EventEmitter
 
 	def setVirtualFile path, body
 		virtualFiles[path] = body
-		# (fileName: NormalizedPath, openedByClient: boolean, fileContent?: string, scriptKind?: ScriptKind, hasMixedContent?: boolean, hostToQueryFileExistsOn?: {
-		#    fileExists(path: string): boolean;
-		# })
-		# could we rather fake its existence?
 		let script = ps.getOrCreateScriptInfoForNormalizedPath(path,true,body,ts.ScriptKind.TS,false)
 		virtualScripts[path] = script
 		return script
@@ -222,23 +219,33 @@ export default class Service < EventEmitter
 		
 		# console.warn "LIBS!!",opts.lib
 		# proj.setCompilerOptions(opts)
+		# console.log "PREPARING IMBA FOR PROJECT",opts
 		opts.target = DefaultConfig.compilerOptions.target
 		util.log('compilerOptions',proj,opts)
+
+		# at least if not defined
+		let copts = DefaultRichConfig.compilerOptions
+		for own k,v of copts
+			opts[k] = v
 		return proj
 
 	def create info
 		#cwd ||= global.IMBASERVER_CWD or info.project.currentDirectory
 		# Should the initial InferredProject even be inited?
+		let service = info.project.projectService
+		let inferred = info.project isa ts.server.InferredProject
 		let proj = info.project
-		proj.NR ||= ++counter
 
+		service.NR ||= ++counter
+		proj.NR ||= ++counter
+		# console.log 'creating project?!',#cwd,proj.currentDirectory,inferred,service.currentDirectory,service.NR
 		util.log('create',info)
 		setups.push(info)
 
+		self.ps = service
+		self.project = proj
 		self.info = info
-		self.project = info.project
-		self.ps = project.projectService
-		
+
 		if ps.#patched =? yes
 			setup!
 			
@@ -248,7 +255,7 @@ export default class Service < EventEmitter
 		prepareProjectForImba(proj) if proj
 		info.ls = info.languageService
 		let decorated = decorate(info.languageService)
-		emit('create',info)
+		emit('create',info) unless inferred
 		createVirtualProjectConfig!
 		return decorated
 		

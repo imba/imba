@@ -5,8 +5,11 @@ import Service from '../index'
 import * as ts from 'typescript/lib/tsserverlibrary'
 
 def run
-	let s = new Service(np.resolve(__dirname,'extend'))
+	let base = np.resolve(__dirname,'extend')
+	let t0 = Date.now!
+	let s = new Service(base)
 	await s.ready
+	console.log 'ready!'
 	let x = global.ils
 	let doc = s.file('main.imba')
 	let ext = s.file('ext.imba')
@@ -101,8 +104,12 @@ def run
 		completions(doc,"from './views/~")
 		# getinfo(doc,'def ti~c')
 
-	ils.getDiagnostics!.map do
-		console.log $1.code,$1.messageText,$1.category,$1.file..fileName
+	
+	
+
+	# console.log s.file('accessors.imba').js
+	# return
+	# return process.exit(0)
 
 	if false
 		let dts = ils.dts.content
@@ -141,6 +148,14 @@ def run
 		console.log res.items[0].exportInfo
 		console.log res.serialize![0]
 
+	let took = Date.now! - t0
+	let errors = ils.getDiagnostics!
+	errors.map do
+		console.log $1.code,$1.messageText,$1.category,$1.file..fileName
+	# console.log x.cp.rootFiles
+	for f in x.cp.rootFiles
+		console.log f.fileName
+	console.log "found {errors.length} errors",took
 	process.exit(0)
 
 run!

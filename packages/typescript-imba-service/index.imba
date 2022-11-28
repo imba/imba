@@ -38,7 +38,7 @@ const defaults = {
 	logger: new Logger
 	globalPlugins: ['typescript-imba-plugin']
 	LanguageServiceMode: ts.LanguageServiceMode.Semantic
-	useSingleInferredProject: true
+	useSingleInferredProject: false
 }
 
 let old = ts.sys.require
@@ -51,16 +51,33 @@ export const TypeObject = ts.objectAllocator.getTypeConstructor!
 
 export default class Service
 
-	def constructor cwd\string,options = {}
+	def constructor cwd\string,options = {open: 'main.imba'}
+
 		self.cwd = cwd
 		self.options = options # Object.assign({},defaults,options)
 		global.IMBASERVER_CWD = cwd
 		global.LOADED_PROJECT = loaded.bind(self)
+		self.startTime = Date.now!
 		self.ps = new ts.server.ProjectService(defaults)
 		self.ready = new Promise do #ready = $1
-		self.startTime = Date.now!
+		
 		console.log 'start with project',cwd
-		open('index.imba')
+		if options.open
+			open(options.open)
+
+	def summarize
+		await self.ready
+		let errors = global.ils.getDiagnostics!
+		let locals = errors.filter do
+			let rel = np.relative(self.cwd,$1.file..fileName)
+			return rel.indexOf('node_modules') == -1
+
+		locals.map do
+			console.log $1.code,$1.messageText,$1.category,$1.file..fileName
+		# console.log x.cp.rootFiles
+		# for f in global.ils.cp.rootFiles
+		#	console.log f.fileName
+		console.log "found {locals.length} errors ({errors.length} including dependencies)"
 
 	get ils
 		global.ils
@@ -92,4 +109,8 @@ export default class Service
 	def script src
 		global.ils.getScriptInfo(abs(src))
 
-		
+if process.env.IMBA_LS_INIT
+	let cwd = process.env.PWD
+	let service = global.service = new Service(cwd,open: process.env.IMBA_LS_INIT)
+	global.service.summarize!.then do 
+		console.log 'done in',Date.now! - service.startTime
