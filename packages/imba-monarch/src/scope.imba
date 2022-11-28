@@ -325,7 +325,7 @@ export class Scope < Node
 		# namespaced? ? keyword.next.next : null
 
 	get namespaced?
-		class? and (ident.value.indexOf('.') > 0)
+		class? and (ident..value..indexOf('.') > 0)
 
 	get extends?
 		class? and keyword and keyword.prev.prev..match('keyword.extend')
