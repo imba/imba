@@ -727,6 +727,11 @@ declare namespace imba {
         * Trigger even if outside of the originating hotkey group
         */
         αglobal(): void;
+
+        /**
+        * Trigger only if KeyboardEvent originates from this element or a child.
+        */
+         αlocal(): void;
         
         /**
         * Allow subsequent hotkey handlers for the same combo
