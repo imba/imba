@@ -97,7 +97,8 @@ export const LOADER_EXTENSIONS = {
 	".ogg": "file",
 	".ogv": "file",
 	".oga": "file",
-	".opus": "file"
+	".opus": "file",
+	".wasm": "file"
 }
 
 
