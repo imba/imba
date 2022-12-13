@@ -66,6 +66,7 @@ export const DefaultConfig = {
 		target: 'esnext'
 		newLine: 'lf'
 		maxNodeModuleJsDepth: 2
+		downlevelIteration: true
 		moduleResolution: "node"
 		moduleSuffixes: Suffixes
 	}
@@ -76,7 +77,7 @@ export const DefaultRichConfig = {
 	exclude: ['node_modules/**/*','node_modules/**/*.imba','dist/**/*']
 	compilerOptions: {
 		allowJs: true
-		# checkJs: true
+		checkJs: true
 		noEmit: true
 
 		# emitDeclarationOnly: true
@@ -93,7 +94,7 @@ export const DefaultRichConfig = {
 		strict: false
 		resolveJsonModule: true
 		noResolve: false
-
+		downlevelIteration: true
 		module: 'esnext'
 		target: 'esnext'
 		newLine: 'lf'
