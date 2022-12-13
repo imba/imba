@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "checkJs": true,
-        "paths": {
-            "ui/*": ["./views/shared/*","./views/controls/*"]
-        }
-    }
-}
