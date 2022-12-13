@@ -164,12 +164,12 @@ class AssetResponder
 			'Access-Control-Allow-Origin': '*'
 			'cache-control': 'public, max-age=31536000'
 		}
-
+		Object.assign(headers,server.options.assetHeaders or {})
 		Object.assign(headers,defaultHeaders[ext.slice(1)] or {})
 
 		headers["max-age"] = 86400000
 
-		if asset.imports
+		if asset.imports and server.options.preload !== no
 			headers['Link'] = deepImports(url).map(do "<{$1}>; rel=modulepreload; as=script").join(', ')
 
 		path = server.localPathForUrl(url)
@@ -182,6 +182,8 @@ class AssetResponder
 				return res.end!
 
 			try
+				if server.options.setHeaders
+						server.options.setHeaders(res,path)
 				if global.BUN
 					nfs.readFile(path) do(err,data)
 						res.writeHead(200,headers)
@@ -226,7 +228,7 @@ class Server
 	get manifest
 		global.IMBA_MANIFEST or {}
 
-	def constructor srv,options
+	def constructor srv,options = {}
 		servers.add(self)
 		id = Math.random!
 		options = options
@@ -267,6 +269,9 @@ class Server
 			# unless proc.env.IMBA_CLUSTER
 			unless proc.env.IMBA_CLUSTER
 				console.log "listening on {url}"
+
+		if global.IMBA_HMR
+			global.IMBA_HMR_PATH = '/__hmr__.js'
 
 		handler = do(req,res)
 			let ishttp2 = req.constructor.name == 'Http2ServerRequest'
@@ -330,6 +335,8 @@ class Server
 				if let path = localPathForUrl(url)
 					try
 						let headers = headersForAsset(path)
+						if options.setHeaders
+							options.setHeaders(res,path)
 						if global.BUN
 							return nfs.readFile(path) do(err,data)
 								if err
