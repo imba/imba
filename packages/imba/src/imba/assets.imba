@@ -51,7 +51,7 @@ class HtmlAsset
 				return asset.url
 			return ref
 
-		if global.IMBA_HMR
+		if global.IMBA_HMR_PATH
 			res = injectStringBefore(res,"<script src='/__hmr__.js'></script>",['<!--$head$-->','<!--$body$-->','<html',''])
 		return res
 
