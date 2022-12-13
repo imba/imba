@@ -175,7 +175,7 @@ export def resolveFile name,cwd,handler
 			path: src
 			body: nfs.readFileSync(src,'utf-8')
 		}
-		return handler(file)
+		return handler ? handler(file) : file
 	return null
 
 export def resolvePackage cwd

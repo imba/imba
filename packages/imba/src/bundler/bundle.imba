@@ -366,6 +366,26 @@ export default class Bundle < Component
 		defines["globalThis.IMBA_DEV"] ||= String(hmr?)
 		defines["globalThis.IMBA_RUN"] ||= String(run?)
 
+		if nodeish? and main? and esm?
+			# backwards compatibility with other things?
+			# only if there is no other require already imported this is a bit risky
+			esoptions.banner.js += '\nimport { createRequire as $require$ } from "module"; let require = $require$(import.meta.url);'
+
+		if program.dotvars
+			# In this initial implementation we are all vars from env file directly into the build script
+			if webish? or true
+				for own name,value of program.dotvars
+					defines["process.env.{name}"] = JSON.stringify(value)
+
+			elif main? and esm?
+				esoptions.banner.js += '\nimport * as $dotenv from "dotenv";$dotenv.config();'
+			elif main?
+				esoptions.banner.js += '\nrequire("dotenv").config();'
+
+			if webish?
+				# process.env should return an empty object when compiled to web
+				defines["process.env"] = '{}'
+
 		if o.bundle == false
 			esoptions.bundle = false
 			delete esoptions.external
@@ -1457,8 +1477,8 @@ export default class Bundle < Component
 					asset.hash ||= createHash(body)
 				
 				if !asset.public
-					# only if it is the main entrypoint?
-					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"]
+					# should probably use process.env for this instead
+					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}","globalThis.IMBA_ASSETS_PATH='{assetsDir}'"]
 					if staticFilesPath and program.tmpdir
 						parts.push("globalThis.IMBA_STATICDIR='{staticFilesPath}'")
 					head = parts.join(';')

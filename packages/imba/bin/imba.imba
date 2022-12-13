@@ -7,11 +7,12 @@ import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
-import {resolveConfig,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
+import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
 import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
 import create from './create.imba'
+import * as dotenv from 'dotenv'
 
 import tmp from 'tmp'
 import getport from 'get-port'
@@ -83,7 +84,11 @@ def parseOptions options, extras = []
 	
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
+	options.dotenv = resolveFile('.env',cwd)
 	options.nodeModulesPath = resolvePath('node_modules',cwd)
+
+	if options.dotenv
+		options.dotvars = dotenv.parse(options.dotenv.body)
 
 	if options.esm
 		options.as ??= 'esm'
@@ -204,7 +209,9 @@ def run entry, o, extras
 	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
-	await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba'], process.cwd()) if o.vite
+
+	if o.vite
+		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba'], process.cwd())
 
 	# TODO support multiple entrypoints - especially for html
 	
