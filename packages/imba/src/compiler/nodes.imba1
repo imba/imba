@@ -10647,8 +10647,8 @@ export class ImportDeclaration < ESMDeclaration
 			# let raw = src.slice(1,-1)
 			let [raw,q] = @source.raw.split('?')
 			src = M("'{raw}'",@source)
-			
-			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/))
+
+			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/) and q != 'external')
 				if @specifiers and @source
 					let out = "{M(keyword.c,keyword)} {src};\nimport {AST.cary(@specifiers).join(',')} from 'data:text/asset;';"
 					return out
