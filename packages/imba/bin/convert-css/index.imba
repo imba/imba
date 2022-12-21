@@ -7,10 +7,12 @@ let aliases = Object.fromEntries(Object.entries(al).map(do([a,b]) [b,a]))
 
 let styles = clipboard.readSync!
 
+let re-comments = /\/\*[\s\S]*?\*\//g
+styles = styles.replaceAll(re-comments,'')
+
 let lines = styles.split '\n'
 lines = lines.filter do(line)
 	return unless line.trim!
-	return if line.startsWith '/*'
 	yes
 
 let out = ''
@@ -19,5 +21,7 @@ for line in lines
 	out += "{aliases[key] or key}:{val}\n"
 
 L out
-clipboard.writeSync(out)
-L 'COPIED TO CLIPBOARD'
+
+unless process.env.NOCOPY
+	clipboard.writeSync(out)
+	L 'COPIED TO CLIPBOARD'

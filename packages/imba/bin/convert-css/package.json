@@ -7,7 +7,7 @@
 		"css": "./index.js"
 	},
 	"scripts": {
-		"build": "imbac --bin node index.imba"
+		"dev": "imbac index.imba && NOCOPY=yes node index.js"
 	},
 	"dependencies": {
 		"clipboardy": "^3.0.0"
