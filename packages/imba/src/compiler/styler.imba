@@ -1,4 +1,3 @@
-
 # var conv = require('../../vendor/colors')
 import * as selparser from './selparse'
 import {conv} from '../../vendor/colors'
@@ -15,6 +14,222 @@ const ThemeCache = new WeakMap
 # export const properties =
 
 export const layouts =
+
+	h: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'center'
+		o.ai = 'center'
+
+	hl: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'start'
+		o.ai = 'center'
+
+	hr: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'end'
+		o.ai = 'center'
+
+	ht: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'center'
+		o.ai = 'start'
+
+	hb: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'center'
+		o.ai = 'end'
+
+	htl: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'start'
+		o.ai = 'start'
+
+	htr: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'end'
+		o.ai = 'start'
+
+	hbl: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'start'
+		o.ai = 'end'
+
+	hbr: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'end'
+		o.ai = 'end'
+
+	hsb: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-between'
+		o.ai = 'center'
+
+	htsb: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-between'
+		o.ai = 'start'
+
+	hbsb: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-between'
+		o.ai = 'end'
+
+	hsa: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-around'
+		o.ai = 'center'
+
+	htsa: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-around'
+		o.ai = 'start'
+
+	hbsa: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-around'
+		o.ai = 'end'
+
+	hse: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-evenly'
+		o.ai = 'center'
+
+	htse: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-evenly'
+		o.ai = 'start'
+
+	hbse: do(o)
+		o.display = 'flex'
+		o.fld = 'row'
+		o.jc = 'space-evenly'
+		o.ai = 'end'
+
+	v: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'center'
+		o.ai = 'center'
+
+	vl: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'center'
+		o.ai = 'start'
+
+	vr: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'center'
+		o.ai = 'end'
+
+	vt: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'start'
+		o.ai = 'center'
+
+	vb: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'end'
+		o.ai = 'center'
+
+	vtl: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'start'
+		o.ai = 'start'
+
+	vtr: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'start'
+		o.ai = 'end'
+
+	vbl: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'end'
+		o.ai = 'start'
+
+	vbr: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'end'
+		o.ai = 'end'
+
+	vsb: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-between'
+		o.ai = 'center'
+
+	vlsb: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-between'
+		o.ai = 'start'
+
+	vrsb: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-between'
+		o.ai = 'end'
+
+	vsa: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-around'
+		o.ai = 'center'
+
+	vlsa: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-around'
+		o.ai = 'start'
+
+	vrsa: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-around'
+		o.ai = 'end'
+
+	vse: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-evenly'
+		o.ai = 'center'
+
+	vlse: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-evenly'
+		o.ai = 'start'
+
+	vrse: do(o)
+		o.display = 'flex'
+		o.fld = 'column'
+		o.jc = 'space-evenly'
+		o.ai = 'end'
 
 	vflex: do(o)
 		o.display = 'flex'
