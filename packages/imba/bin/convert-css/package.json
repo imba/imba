@@ -1,0 +1,15 @@
+{
+	"name": "convert-css",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "index.js",
+	"bin": {
+		"css": "./index.js"
+	},
+	"scripts": {
+		"build": "imbac --bin node index.imba"
+	},
+	"dependencies": {
+		"clipboardy": "^3.0.0"
+	}
+}
