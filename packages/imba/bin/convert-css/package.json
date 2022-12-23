@@ -3,9 +3,6 @@
 	"version": "1.0.0",
 	"type": "module",
 	"main": "index.js",
-	"bin": {
-		"css": "./index.js"
-	},
 	"scripts": {
 		"dev": "imbac index.imba && NOCOPY=yes node index.js"
 	}
