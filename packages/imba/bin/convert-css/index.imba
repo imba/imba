@@ -2,7 +2,7 @@ let L = console.log
 
 import fs from 'fs'
 
-import { aliases as imba-to-css } from 'imba/dist/compiler.mjs'
+import { aliases as imba-to-css } from 'imba/compiler'
 
 const css-to-imba = Object.fromEntries(Object.entries(imba-to-css).map(do([a,b]) [b,a]))
 
@@ -50,7 +50,7 @@ ff fw fs lh
 
 '''
 
-let out = []
+let out = ['css']
 let temp
 
 for line in ordering.split '\n\n'
@@ -70,4 +70,4 @@ for own key, val of styles
 
 out.push temp.join(' ')
 
-L out.join("\n").trim!
+L out.join("\n\t").trim!
