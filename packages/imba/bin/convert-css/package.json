@@ -8,8 +8,5 @@
 	},
 	"scripts": {
 		"dev": "imbac index.imba && NOCOPY=yes node index.js"
-	},
-	"dependencies": {
-		"clipboardy": "^3.0.0"
 	}
 }

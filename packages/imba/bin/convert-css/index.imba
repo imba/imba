@@ -1,27 +1,73 @@
 let L = console.log
 
-import clipboard from 'clipboardy'
-import al from './styler.js'
+import fs from 'fs'
 
-let aliases = Object.fromEntries(Object.entries(al).map(do([a,b]) [b,a]))
+import { aliases as imba-to-css } from 'imba/dist/compiler.mjs'
 
-let styles = clipboard.readSync!
+const css-to-imba = Object.fromEntries(Object.entries(imba-to-css).map(do([a,b]) [b,a]))
 
-let re-comments = /\/\*[\s\S]*?\*\//g
-styles = styles.replaceAll(re-comments,'')
+let input = fs.readFileSync(process.stdin.fd,'utf8')
 
-let lines = styles.split '\n'
+const re-comments = /\/\*[\s\S]*?\*\//g
+
+input = input.replaceAll(re-comments,'')
+input = input.replaceAll(';','\n')
+
+let lines = input.split '\n'
 lines = lines.filter do(line)
-	return unless line.trim!
-	yes
+	return line.trim!
 
-let out = ''
+let styles = {}
 for line in lines
-	let [key, val] = line.slice(0,-1).split(/\s*:\s*/)
-	out += "{aliases[key] or key}:{val}\n"
+	const re-colons = /\s*:\s*/
+	let [key, val] = line.split(re-colons)
+	styles[css-to-imba[key] or key] = val
 
-L out
+if styles.d is 'flex' and styles.fld is 'row'
+	delete styles.d
+	delete styles.fld
+	styles.d = 'hflex'
 
-unless process.env.NOCOPY
-	clipboard.writeSync(out)
-	L 'COPIED TO CLIPBOARD'
+let ordering = '''
+
+e us
+
+pos d fld ja jc ai fl
+
+m mx my mt mb ml mr
+p px py pt pb pl pr
+rd
+
+w min-width max-width
+h min-height max-height
+s
+
+c bg bgc
+
+bd
+
+ff fw fs lh
+
+'''
+
+let out = []
+let temp
+
+for line in ordering.split '\n\n'
+	continue unless line.trim!
+	let props = line.split /\s+/
+	temp = []
+	for prop in props
+		if styles[prop]
+			temp.push "{prop}:{styles[prop]}"
+			delete styles[prop]
+	if temp.length
+		out.push temp.join(' ')
+
+temp = []
+for own key, val of styles
+	temp.push "{key}:{val}"
+
+out.push temp.join(' ')
+
+L out.join("\n").trim!
