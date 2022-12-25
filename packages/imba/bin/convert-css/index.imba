@@ -32,7 +32,7 @@ let ordering = '''
 
 e us
 
-pos d fld ja jc ai fl
+pos d fld ja jc ai fl g
 
 m mx my mt mb ml mr
 p px py pt pb pl pr
