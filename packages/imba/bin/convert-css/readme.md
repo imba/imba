@@ -25,3 +25,4 @@ pbpaste | css | pbcopy
 - Convert px to imba units?
 - Convert colors to imba colors?
 - Convert `p:0 8px` to `py:0 px:2`?
+- Convert `w:1 h:1` to `s:1`
