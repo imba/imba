@@ -14,8 +14,7 @@ input = input.replaceAll(re-comments,'')
 input = input.replaceAll(';','\n')
 
 let lines = input.split '\n'
-lines = lines.filter do(line)
-	return line.trim!
+lines = lines.filter(do $1.trim!).map(do $1.trim!)
 
 let styles = {}
 for line in lines
