@@ -62,4 +62,4 @@ export default class Host
 		
 	def send msg
 		let cfg = {id: id, data: msg}
-		self.api._pluginManager._onDidUpdateConfig.fire({ pluginId: 'imba',config: cfg})
+		self.api.configurePlugin('imba',cfg)
