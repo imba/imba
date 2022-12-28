@@ -31,11 +31,11 @@ let ordering = '''
 
 e us
 
-pos d fld ja jc ai fl g
+pos d fld ja jc ai fl
 
-m mx my mt mb ml mr
+g
 p px py pt pb pl pr
-rd
+m mx my mt mb ml mr
 
 w min-width max-width
 h min-height max-height
@@ -43,6 +43,7 @@ s
 
 c bg bgc
 
+rd
 bd
 
 ff fw fs lh
