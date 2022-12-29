@@ -14,6 +14,7 @@ It has language-level support for defining, extending, subclassing, instantiatin
 ```sh
 npx imba create hello-world
 cd hello-world
+npm install
 npm start
 ```
 
