@@ -832,17 +832,17 @@ export class StyleTheme
 		pars = pars.slice(0)
 
 		let o = {__ease__: k}
-		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(\w+)?$/
-		if String(pars[0]).match(durRegex)
+
+		if pars[0]..unit
 			o["--e_{k}d"] = pars[0]
 			pars.shift!
 	
-		if pars[0] and !String(pars[0]).match(durRegex)
+		if pars[0] and !pars[0].unit
 			let ev = $varFallback('ease',[pars[0]])
 			o["--e_{k}f"] = ev
 			pars.shift!
 	
-		if String(pars[0]).match(durRegex)
+		if pars[0] and pars[0].unit
 			o["--e_{k}w"] = pars[0]
 			pars.shift!
 			
