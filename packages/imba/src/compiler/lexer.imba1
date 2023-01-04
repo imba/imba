@@ -50,7 +50,7 @@ var IMBA_KEYWORDS = [
 	'when','def','tag','do','elif','begin','var','let','const','await','import','module','export','static','extend'
 ]
 
-var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop','lazy']
+var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop']
 
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
@@ -125,7 +125,7 @@ var SYMBOL = ///^
 ///
 
 var STYLE_HEX = ///^
-	\#[0-9a-fA-F]{3,8}
+	\#[\w\-]+
 ///
 
 var STYLE_NUMERIC = ///^
@@ -141,14 +141,7 @@ var STYLE_URL = ///^
 ///
 
 var STYLE_PROPERTY = ///^
-	([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
-	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*(\&([\.\@]*[\w\-\$]*\w[\w\-\$]*[\~\+]?)
-	([\.\@]+[\w\-\$]*\w[\w\-\$]*[\~\+]?)*)*
-	(?=\:([^\:]|$))
-///
-
-var STYLE_PROPERTY2 = ///^
-	([\w\-\$\@\.\!]+)(?=\:([^\:]|$))
+	(\^?[\w\-\$\@\.\!\#\^]+)(?=\:([^\:]|$)|\s*\=)
 ///
 
 var STYLE_MODIFIERS = ///^
@@ -288,7 +281,7 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.','UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER','SYMBOLID', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END']
+var CALLABLE  = ['IDENTIFIER','SYMBOLID', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END','DECORATOR','@']
 
 # optimize for FixedArray
 var INDEXABLE = [
@@ -710,7 +703,7 @@ export class Lexer
 			
 			if !end and letter == ' '
 				let after = str.slice(i + 1)
-				if STYLE_PROPERTY2.exec(after)
+				if STYLE_PROPERTY.exec(after)
 					break
 				
 				if INLINE_COMMENT.exec(after)
@@ -763,11 +756,10 @@ export class Lexer
 		let chr = @chunk[0]
 		var m
 
-		let styleprop = STYLE_PROPERTY2.exec(@chunk)
+		let styleprop = STYLE_PROPERTY.exec(@chunk)
 		let ltyp = @lastTyp
 			
 		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
-			# console.log 'selector?',JSON.stringify(chr),@chunk.slice(0,10),ltyp
 			let sel = findBalancedSelector(@chunk)
 			return lexStyleRule(0) if sel
 				
@@ -968,7 +960,7 @@ export class Lexer
 
 			
 
-		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'lazy' or id == 'css' or id == 'constructor' or id == 'declare')
+		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'css' or id == 'constructor' or id == 'declare')
 		
 			var scop = getScope
 			var incls = scop == 'CLASS' or scop == 'TAG' or scop == 'EXTEND'
@@ -979,7 +971,7 @@ export class Lexer
 			# if id == 'css' and (@lastVal in ['global','local','export'])
 			# 	return true
 
-			if id == 'lazy' or id == 'declare'
+			if id == 'declare'
 				return incls and @lastTyp in ['INDENT','TERMINATOR','DECORATOR']
 				
 			if id == 'constructor'
@@ -1068,6 +1060,11 @@ export class Lexer
 		
 		elif typ == '%'
 			# use for something else
+			let ltyp = @lastTyp
+			if ltyp == 'TERMINATOR' or ltyp == 'INDENT' or ltyp == 'EXPORT'
+				token('CSS', id,0)
+				queueScope('CSS')
+				return lexStyleRule(0,true)
 			typ = 'MIXIN'
 
 		elif typ == '$' and !colon
@@ -1178,8 +1175,6 @@ export class Lexer
 
 		# prev = last @tokens
 		var len = input:length
-		
-		# switch 
 
 		# should be strict about the order, check this manually instead
 		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'

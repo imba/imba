@@ -25,6 +25,10 @@ class HotkeyEvent < CustomEvent
 			
 		return yes
 
+	def @local
+		return yes
+
+
 	def @repeat
 		return yes
 
@@ -127,6 +131,9 @@ export const hotkeys = new class HotKeyManager
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
 				if handler.#combos[combo] or handler.#combos['*']
+					if handler.params.local and !handler.#target.contains(source)
+						continue
+
 					if !e.#inEditable or (handler.capture? or handler.params.force)
 						let el = handler.#target
 						if group.contains(el) or el.contains(group) or (handler.global?)

@@ -34,6 +34,9 @@
           "include": "#style-declaration"
         },
         {
+          "include": "#mixin-declaration"
+        },
+        {
           "include": "#object-keys"
         },
         {
@@ -365,7 +368,7 @@
       "patterns": [
         {
           "name": "meta.property-name.css",
-          "begin": "(?=(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:))",
+          "begin": "(?=(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=]))",
           "beginCaptures": {
             "1": {
               "name": "support.function.calc.css"
@@ -374,7 +377,7 @@
               "name": "punctuation.section.function.begin.bracket.round.css"
             }
           },
-          "end": "\\s*\\:",
+          "end": "\\s*[\\:\\=]",
           "endCaptures": {
             "0": {
               "name": "punctuation.separator.key-value.css"
@@ -391,11 +394,19 @@
             },
             {
               "name": "support.type.property-name.modifier.css",
-              "match": "\\@[\\w\\-\\$]+"
+              "match": "\\^?\\@+[\\w\\-\\$]+"
+            },
+            {
+              "name": "support.type.property-name.modifier.flag.css",
+              "match": "\\^?\\.+[\\w\\-\\$]+"
+            },
+            {
+              "name": "support.type.property-name.modifier.state.css",
+              "match": "\\^?\\%+[\\w\\-\\$]+"
             },
             {
               "name": "support.type.property-name.modifier.up.css",
-              "match": "\\.\\.[\\w\\-\\$]+"
+              "match": "\\.\\.[\\w\\-\\$]+|\\^+[\\.\\@\\%][\\w\\-\\$]+"
             },
             {
               "name": "support.type.property-name.modifier.is.css",
@@ -482,6 +493,30 @@
       "patterns": [
         {
           "include": "#css-selector"
+        },
+        {
+          "include": "#css-comment"
+        },
+        {
+          "include": "#nested-css-selector"
+        },
+        {
+          "include": "#inline-styles"
+        }
+      ]
+    },
+    "mixin-declaration": {
+      "name": "meta.style.imba",
+      "begin": "^(\\t*)(\\%[\\w\\-]+)",
+      "beginCaptures": {
+        "2": {
+          "name": "entity.other.attribute-name.mixin.css"
+        }
+      },
+      "end": "^(?!(\\1\\t|\\s*$))",
+      "patterns": [
+        {
+          "include": "#mixin-css-selector-after"
         },
         {
           "include": "#css-comment"
@@ -860,8 +895,23 @@
     },
     "css-selector": {
       "name": "meta.selector.css",
-      "begin": "(?<=css\\s)(?!(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:)[^\\:])",
-      "end": "(\\s*(?=(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:)[^\\:])|\\s*$|(?=\\s+\\#\\s))",
+      "begin": "(?<=css\\s)(?!(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])",
+      "end": "(\\s*(?=(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])|\\s*$|(?=\\s+\\#\\s))",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.separator.sel-properties.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#css-selector-innards"
+        }
+      ]
+    },
+    "mixin-css-selector-after": {
+      "name": "meta.selector.css",
+      "begin": "(?<=%[\\w\\-]+)(?!(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])",
+      "end": "(\\s*(?=(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])|\\s*$|(?=\\s+\\#\\s))",
       "endCaptures": {
         "0": {
           "name": "punctuation.separator.sel-properties.css"
@@ -875,8 +925,28 @@
     },
     "nested-css-selector": {
       "name": "meta.selector.css",
-      "begin": "(^\\t+)(?!(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:)[^\\:])",
-      "end": "(\\s*(?=(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:)[^\\:])|\\s*$|(?=\\s+\\#\\s))",
+      "begin": "(^\\t+)(?!(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])",
+      "end": "(\\s*(?=(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])|\\s*$|(?=\\s+\\#\\s))",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.separator.sel-properties.css"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#css-selector-innards"
+        }
+      ]
+    },
+    "mixin-css-selector": {
+      "name": "meta.selector.css",
+      "begin": "(\\%[\\w\\-]+)",
+      "beginCaptures": {
+        "1": {
+          "name": "entity.other.attribute-name.mixin.css"
+        }
+      },
+      "end": "(\\s*(?=(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])[^\\:])|\\s*$|(?=\\s+\\#\\s))",
       "endCaptures": {
         "0": {
           "name": "punctuation.separator.sel-properties.css"
@@ -890,8 +960,8 @@
     },
     "inline-css-selector": {
       "name": "meta.selector.css",
-      "begin": "(^\\t+)(?!(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:))",
-      "end": "(\\s*(?=(?:[\\@\\.]+[\\!\\<\\>]?)?[\\w\\-\\$]+(?:[\\@\\.]+[\\!\\<\\>]?[\\w\\-\\$]+)*(?:\\s*\\:)|\\)|\\])|\\s*$)",
+      "begin": "(^\\t+)(?!(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=]))",
+      "end": "(\\s*(?=(?:[\\^\\@\\.\\%\\w\\$\\!\\-]+)(?:\\s*[\\:\\=])|\\)|\\])|\\s*$)",
       "endCaptures": {
         "0": {
           "name": "punctuation.separator.sel-properties.css"
@@ -913,6 +983,10 @@
         },
         {
           "include": "#css-combinators"
+        },
+        {
+          "name": "entity.other.attribute-name.mixin.css",
+          "match": "(\\%[\\w\\-]+)"
         },
         {
           "name": "entity.name.tag.wildcard.css",
@@ -986,6 +1060,9 @@
         },
         {
           "include": "#css-pseudo-elements"
+        },
+        {
+          "include": "#css-mixin"
         }
       ]
     },
@@ -1022,7 +1099,7 @@
       "patterns": [
         {
           "name": "meta.tag.imba",
-          "begin": "(<)(?=[\\w\\{\\[\\.\\#\\$\\@\\(])",
+          "begin": "(<)(?=[\\%\\~\\w\\{\\[\\.\\#\\$\\@\\(])",
           "beginCaptures": {
             "1": {
               "name": "punctuation.section.tag.open.imba"
@@ -1064,6 +1141,9 @@
           "include": "#tag-event-handler"
         },
         {
+          "include": "#tag-mixin-name"
+        },
+        {
           "include": "#tag-classname"
         },
         {
@@ -1091,7 +1171,7 @@
     "tag-expr-name": {
       "begin": "(?<=<)(?=[\\w\\{])",
       "contentName": "entity.name.tag.imba",
-      "end": "(?=[\\.\\[\\>\\s\\(])",
+      "end": "(?=[\\%\\$\\#\\.\\[\\>\\s\\(])",
       "patterns": [
         {
           "include": "#tag-interpolated-content"
@@ -1175,8 +1255,12 @@
       "contentName": "entity.other.attribute-name.class.css"
     },
     "tag-ref": {
-      "match": "(\\$[_$[:alpha:]][_$[:alnum:]]*(?:\\-[_$[:alnum:]]+)*[\\?\\!]?)",
-      "name": "entity.other.attribute-name.reference.css"
+      "match": "(\\$[\\w\\-]+)",
+      "name": "entity.other.tag-ref.imba"
+    },
+    "tag-mixin-name": {
+      "match": "(\\%[\\w\\-]+)",
+      "name": "entity.other.tag-mixin.imba"
     },
     "tag-event-handler": {
       "begin": "(\\@[\\w$_]+(?:\\-[\\w$_]+)*)",

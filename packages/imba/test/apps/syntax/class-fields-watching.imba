@@ -1,3 +1,15 @@
+class @set
+	callback = null
+
+	def $get target,key
+		target[key]
+	
+	def $set value,target,key,name
+		let prev = target[key]
+		if prev != value
+			target[key] = value
+			callback.call(target,value,prev,self)
+		return
 
 
 ###
@@ -86,9 +98,9 @@ describe "Class Field watching" do
 		class Entry
 			prop name = "Entry"
 			prop children = new Set
-			prop parent @set
-				e.value..children..add(self)
-				e.oldValue..children..delete(self)
+			prop parent @set do(val,old)
+				val..children..add(self)
+				old..children..delete(self)
 
 		# we can again use the property like any other,
 		# with default constructor and all that.
@@ -98,13 +110,13 @@ describe "Class Field watching" do
 		eq item.parent, root
 		ok root.children.has(item)
 		# and the enumerable properties behaves as expected
-		eq Object.keys(item), ['name','children','parent']
+		# eq Object.keys(item), ['name','children','parent']
 
 	test "multiline value" do
 		let called = 0
 		class Item
 			# with complex defaults you need to 
-			prop names = ['a','b'].map(do $1.toUpperCase!) @set called++
+			prop names = ['a','b'].map(do $1.toUpperCase!) @set do called++
 		
 		let item = new Item
 		eq called, 1

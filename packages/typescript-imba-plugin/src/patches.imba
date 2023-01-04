@@ -9,6 +9,7 @@ import np from 'path'
 let EDITING = no
 global.state = {command: ''}
 
+let TSX_HOOK = no
 let EXTRA_HIT = null
 let EXTRA_EXTENSIONS = ['.imba']
 
@@ -154,10 +155,10 @@ export class Session
 		let state = {}
 
 		if project.projectKind == 0 and isImba(file)
-			util.log('skip diagnostics')
+			# util.log('skip diagnostics')
 			return []
 
-		util.log('filterDiagnostics!',diagnostics,project)
+		# util.log('filterDiagnostics!',diagnostics,project)
 		
 		# return diagnostics unless script.#imba
 		
@@ -225,8 +226,8 @@ export class Session
 			###
 			# for item in script.diagnostics
 		
-		if diags.length
-			util.log('sendDiagnosticsEvent',file, project, diags.slice(0,5), kind)
+		# if diags.length
+		#	util.log('sendDiagnosticsEvent',file, project, diags.slice(0,5), kind)
 		#sendDiagnosticsEvent(file,project,diags,kind)
 		
 	def convertToDiagnosticsWithLinePosition diagnostics, script
@@ -336,12 +337,23 @@ export class System
 		typeof body == 'string' ? body : undefined
 		 
 	def fileExists path
+		# util.log('fileExists',path)
 		if path.indexOf('.imba._.d.ts') >= 0
-			util.log('fileExists',path)
 			if virtualFileMap[path]
 				return true
 
-		if (/\.tsx$/).test(path)
+		if !TSX_HOOK
+			if let m = path.match(/(\.imba)?\._ils\.(\w+)$/)
+				return no if m[2] != 'ts'
+				path = path.replace(m[0],'.imba')
+
+			# TODO - use a special _ils_ subtype instead to check
+			elif path.indexOf('.imba') >= 0
+				let ipath = path.replace(/\.ts$/,'')
+				if #fileExists(ipath)
+					return yes
+
+		if (/\.tsx$/).test(path) and TSX_HOOK
 			for ext in EXTRA_EXTENSIONS
 				let ipath = path.replace('.tsx',ext).replace(ext + ext,ext)
 				if #fileExists(ipath)
@@ -371,23 +383,18 @@ export class System
 		return res
 	
 	def readFile path,encoding = null
-		util.log("readFile",path)
-		
 		if path.indexOf('imba-typings') >= 0 or path.indexOf('.imba._.d.ts') >= 0
 			return readVirtualFile(path)
-		
+
 		if (/[jt]sconfig\.json/).test(path)
 			if let body = readVirtualFile(path)
 				util.log("return virtual file",path,body)
 				return body
 			
 		const body = #readFile(...arguments)
+		
 		# if this is an imba file we want to compile it on the spot?
 		# if the script doesnt already exist...
-		if util.isImba(path)
-			# first see if script exists?
-			util.log("readFile imba",path,body,global.ils)
-			# return Compiler.readFile(path,body)
 
 		return body
 		
@@ -600,14 +607,19 @@ export class TS
 		let res = #resolveModuleName.apply(self,arguments)
 		let hit = res..resolvedModule
 		let name = hit..resolvedFileName
-		
-		if hit..extension == '.tsx'
+
+		if name..match(/\.imba\.ts$/) and !TSX_HOOK
+			hit.resolvedFileName = name.replace(/\.ts$/,'')
+			hit.extension = '.js'
+
+		elif name..match(/\._ils\.ts$/) and !TSX_HOOK
+			hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
+			# util.log 'resolved!!',hit.resolvedFileName
+			hit.extension = '.js'
+
+		if hit..extension == '.tsx' and TSX_HOOK
 			if EXTRA_HIT and EXTRA_HIT[0] == name
-				# util.log "rewrite resolveModuleName",name,EXTRA_HIT[1]
 				name = EXTRA_HIT[1]
-				# for ext in checkExtraExtensions
-				# 	let name = ext.replace()
-				# 	let name = hit.resolvedFileName.replace('.tsx','.imba')
 				# @ts-ignore
 				if self.sys.fileExists(name)
 					hit.resolvedFileName = name

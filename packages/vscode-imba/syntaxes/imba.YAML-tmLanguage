@@ -10,13 +10,15 @@ variables:
   propertyAccess: (?:(\.)|(\.\.(?!\s*[[:digit:]]|\s+)))
   propertyAccessPreIdentifier: \??\.\s*
   identifier: '[_$[:alpha:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\?\!]?'
-  cssPropertyKey: '(?:[\@\.]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.]+[\!\<\>]?[\w\-\$]+)*(?:\s*\:)'
+  cssPropertyKey2: '(?:\^?[\@\.\%]+[\!\<\>]?)?[\w\-\$]+(?:[\@\.\^\%]+[\!\<\>]?[\w\-\$]+)*(?:\s*[\:\=])'
+  cssPropertyKey: '(?:[\^\@\.\%\w\$\!\-]+)(?:\s*[\:\=])'
   cssVariable: '(?:--|\$)[\w\-\$]+'
   cssPropertyName: '[\w\-\$]+'
   cssNumModifier: '\@[\!\<\>]?[0-9]+'
-  cssModifier: '\@{{cssPropertyName}}'
+  cssModifier: '\@+{{cssPropertyName}}'
   cssUpModifier: '\.\.{{cssPropertyName}}'
   cssIsModifier: '\.{{cssPropertyName}}'
+  cssAnyModifier: '[\.\@\%]{{cssPropertyName}}'
   pascalIdentifier: '[[:upper:]][_$[:alnum:]]*(?:\-[_$[:alnum:]]+)*[\!]?'
   internalIdentifier: '\${{identifier}}'
   symbolIdentifier: '\:{{identifier}}'
@@ -87,6 +89,7 @@ repository:
   block:
     patterns:
     - include: '#style-declaration'
+    - include: '#mixin-declaration'
     - include: '#object-keys'
     - include: '#tag-literal'
     - include: '#regex'
@@ -263,7 +266,7 @@ repository:
       beginCaptures:
         '1': {name: support.function.calc.css}
         '2': {name: punctuation.section.function.begin.bracket.round.css}
-      end: '\s*\:'
+      end: '\s*[\:\=]'
       endCaptures:
         '0': {name: punctuation.separator.key-value.css}
       patterns:
@@ -272,9 +275,13 @@ repository:
       - name: support.type.property-name.modifier.breakpoint.css
         match: '{{cssNumModifier}}'
       - name: support.type.property-name.modifier.css
-        match: '{{cssModifier}}'
+        match: '\^?\@+{{cssPropertyName}}'
+      - name: support.type.property-name.modifier.flag.css
+        match: '\^?\.+{{cssPropertyName}}'
+      - name: support.type.property-name.modifier.state.css
+        match: '\^?\%+{{cssPropertyName}}'
       - name: support.type.property-name.modifier.up.css
-        match: '{{cssUpModifier}}'
+        match: '{{cssUpModifier}}|\^+{{cssAnyModifier}}'
       - name: support.type.property-name.modifier.is.css
         match: '{{cssIsModifier}}'
       - name: support.type.property-name.css
@@ -321,7 +328,18 @@ repository:
     - include: '#css-comment'
     - include: '#nested-css-selector'
     - include: '#inline-styles'
-      
+  
+  mixin-declaration:
+    name: meta.style.imba
+    begin: ^(\t*)(\%[\w\-]+)
+    beginCaptures:
+      '2': { name: entity.other.attribute-name.mixin.css }
+    end: ^(?!(\1\t|\s*$))
+    patterns:
+    - include: '#mixin-css-selector-after'
+    - include: '#css-comment'
+    - include: '#nested-css-selector'
+    - include: '#inline-styles'
     
   nested-style-declaration:
     name: meta.style.imba
@@ -531,6 +549,8 @@ repository:
       match: '>>>|>>|>|\+|~'
     - name: keyword.other.parent-selector.css
       match: '&'
+
+  
   
   css-pseudo-classes:
     name: entity.other.attribute-name.pseudo-class.css
@@ -609,10 +629,30 @@ repository:
       '0': {name: punctuation.separator.sel-properties.css}
     patterns:
     - include: '#css-selector-innards'
+
+  mixin-css-selector-after:
+    name: meta.selector.css
+    begin: (?<=%[\w\-]+)(?!{{cssPropertyKey}}[^\:])
+    end: (\s*(?={{cssPropertyKey}}[^\:])|\s*$|(?=\s+\#\s))
+    endCaptures:
+      '0': {name: punctuation.separator.sel-properties.css}
+    patterns:
+    - include: '#css-selector-innards'
     
   nested-css-selector:
     name: meta.selector.css
     begin: (^\t+)(?!{{cssPropertyKey}}[^\:])
+    end: (\s*(?={{cssPropertyKey}}[^\:])|\s*$|(?=\s+\#\s))
+    endCaptures:
+      '0': {name: punctuation.separator.sel-properties.css}
+    patterns:
+    - include: '#css-selector-innards'
+
+  mixin-css-selector:
+    name: meta.selector.css
+    begin: (\%[\w\-]+)
+    beginCaptures:
+      '1': {name: entity.other.attribute-name.mixin.css}
     end: (\s*(?={{cssPropertyKey}}[^\:])|\s*$|(?=\s+\#\s))
     endCaptures:
       '0': {name: punctuation.separator.sel-properties.css}
@@ -633,6 +673,9 @@ repository:
     - include: '#css-commas'
     - include: '#css-escapes'
     - include: '#css-combinators'
+    
+    - name: entity.other.attribute-name.mixin.css
+      match: (\%[\w\-]+)
     # - include: '#tag-names'
     - name: entity.name.tag.wildcard.css
       match: \*
@@ -684,6 +727,7 @@ repository:
             name: entity.other.attribute-name.css
     - include: '#css-pseudo-classes'
     - include: '#css-pseudo-elements'
+    - include: '#css-mixin'
     
   css-property-values:
     patterns:
@@ -702,7 +746,7 @@ repository:
   tag-literal:
     patterns:
     - name: meta.tag.imba
-      begin: '(<)(?=[\w\{\[\.\#\$\@\(])'
+      begin: '(<)(?=[\%\~\w\{\[\.\#\$\@\(])'
       beginCaptures:
         '1': { name: punctuation.section.tag.open.imba }
       end: '(>)'
@@ -720,6 +764,7 @@ repository:
     - include: '#tag-interpolated-parens'
     - include: '#tag-interpolated-brackets'
     - include: '#tag-event-handler'
+    - include: '#tag-mixin-name'
     - include: '#tag-classname'
     - include: '#tag-ref'
     - include: '#tag-attr-value'
@@ -734,7 +779,7 @@ repository:
   tag-expr-name:
     begin: '(?<=<)(?=[\w\{])'
     contentName: entity.name.tag.imba
-    end: '(?=[\.\[\>\s\(])'
+    end: '(?=[\%\$\#\.\[\>\s\(])'
     patterns:
     - include: '#tag-interpolated-content'
 
@@ -784,8 +829,12 @@ repository:
   
     
   tag-ref:
-    match: (\${{identifier}})
-    name: entity.other.attribute-name.reference.css
+    match: (\$[\w\-]+)
+    name: entity.other.tag-ref.imba
+
+  tag-mixin-name:
+    match: (\%[\w\-]+)
+    name: entity.other.tag-mixin.imba
 
   tag-event-handler:
     begin: (\@{{tagAttrIdentifier}})

@@ -10,7 +10,7 @@ import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
 import SourceMap from './sourcemap'
 
-import StyleRule,StyleTheme,Color,StyleSheet from './styler.imba'
+import StyleRule,StyleTheme,Color,StyleSheet,parseColorString from './styler.imba'
 import ReservedIdentifierRegex,InternalPrefixes,toJSIdentifier,toCustomTagIdentifier from '../utils/identifiers.imba'
 import Compilation from './compilation'
 
@@ -21,6 +21,8 @@ var TAG_GLOBAL_ATTRIBUTES = constants.TAG_GLOBAL_ATTRIBUTES
 
 var TAG_TYPES = {}
 var TAG_ATTRS = {}
+
+
 
 var EXT_LOADER_MAP = {
 	svg: 'image'
@@ -406,11 +408,11 @@ def AST.compileRaw item
 		o = o.slice(0,-1) + ']'
 
 	elif item isa Object
-		o = '{'
+		o = '{ '
 		for own k,v of item
 			# maybe quote?
-			o =+ "{k}:{AST.compileRaw(v)},"
-		o = o.slice(0,-1) + '}'
+			o += "{k}: {AST.compileRaw(v)},"
+		o = o.slice(0,-1) + ' }'
 	else
 		o = JSON.stringify(item)
 	return o
@@ -1723,6 +1725,7 @@ export class ArgList < ListNode
 		super
 
 	def setEnds start,end
+		@generated = start and start:generated
 		if end and end:endLoc and end.endLoc != -1
 			@endLoc = end.endLoc
 		if start and start:startLoc and start.startLoc != -1
@@ -1981,13 +1984,28 @@ export class ClassField < Node
 
 
 		if wrapper
-			yes
-			wrapper.@scope = @vscope = FieldScope.new(wrapper)
-			wrapper.@scope.@parent = scope__
-			wrapper.traverse
+			# worth of a full function
 			@vslot = osym('slot',String(@name))
 			@fslot = osym('meta')
 			@fname = @name.metaIdentifier
+
+			# let body = []
+			
+			# let fn = @accessor = MethodDeclaration.new([],[LIT('"ets"'),CodeBlock.new([wrapper])],Identifier.new('render__'),null,{})
+			# let block = fn.body.add(CodeBlock.new([wrapper]))
+			# let desc = @accessor.scope.declare('desc',wrapper)
+			# console.log "wrapper {wrapper}"
+			# @accessor.body.add(Return.new(desc))
+			
+			# if STACK.tsc
+			#	body = [OP('=')]
+			# fn.traverse
+			# console.log fn.c
+			wrapper.@scope = @vscope = FieldScope.new(wrapper)
+			wrapper.@scope.@parent = scope__
+			wrapper.traverse
+
+			
 			# @vslot = osym('meta')
 			# @getter = CALL(OP('.',THIS,@name),[])
 		self
@@ -2055,18 +2073,22 @@ export class ClassField < Node
 				let slot = @vslot
 				let metasym = @fslot
 				let inner
-
-				let context = isStatic ? cls.name.c : "{cls.name.c}.prototype"
+				let context = null
+				
+				if isStatic
+					context = cls.classReference.c
+				else
+					context = "{cls.classReference.c}.prototype"
 				
 				let op = OP('.',LIT('this'),meta)
 				let args = "this,{slot},{@name.c(as: 'value')}"
-				@getter = LIT("()\{ return {op.c}.get({args}) \}")
-				@setter = LIT("(val)\{ {op.c}.set(val,{args}) \}")
+				@getter = LIT("()\{ return {op.c}.$get({args}) \}")
+				@setter = LIT("(val)\{ {op.c}.$set(val,{args}) \}")
 				
 				if STACK.tsc
-					inner = "return {runtime:accessor}({wrapper.c}).accessor({args},{metasym},{context})"
+					inner = "return {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
 				else
-					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c},{args},{metasym},{context})"
+					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
 					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
@@ -2191,7 +2213,7 @@ export class ClassField < Node
 
 			if wrapper
 				out = CALL(
-					OP('.',OP('.',THIS,@fname),STR('init')),
+					OP('.',OP('.',THIS,@fname),STR('$init')),
 					[val,THIS,@vslot,LIT(@name.c(as: 'value'))]
 				)
 
@@ -2208,7 +2230,7 @@ export class ClassField < Node
 	def getter
 		@getter ||= if true
 			if wrapper
-				LIT("()\{ return this.__{name.c}.get(this,{name.toStr.c},{osym}) \}")
+				LIT("()\{ return this.__{name.c}.$get(this,{name.toStr.c},{osym}) \}")
 			else
 				parseTemplate('(){ return $get$; }')
 
@@ -3074,6 +3096,25 @@ export class Code < Node
 		# @scope.parent = STACK.scope(1) if @scope
 		self
 
+export class CodeBlock < Code
+	def initialize body, opts
+		@traversed = no
+		@body = AST.blk(body)
+		@scope = FlowScope.new(self)
+		@body.head = @scope.head
+		@options = {}
+
+	def visit
+		@scope.visit
+		@body.traverse
+
+		self
+
+	def c
+		# add curly braces?
+		@body.c
+
+
 # Rename to Program?
 export class Root < Code
 
@@ -3106,12 +3147,14 @@ export class Root < Code
 		STACK.root = @scope
 		@scope.@imba.configure(o)
 		traverse
+
 		STACK.root = @scope
 
 		if o:bundle
 			if o:cwd and STACK.isNode
 				let abs = fspath.resolve(o:cwd,o:sourcePath)
 				let rel = fspath.relative(o:cwd,abs).split(fspath:sep).join('/')
+
 				let np = @scope.importProxy('path').proxy
 				# TODO Test this thoroughly - better to replace fater the fact?
 				@scope.lookup('__filename'):c = do LIT("{np:resolve}({STR(rel).c})").c
@@ -3137,6 +3180,9 @@ export class Root < Code
 		if STACK.tsc
 			# out = "import 'imba/index.d.ts';\n{out}"
 			out = "export \{\};String();\n{out}\n"
+			if script:sourceCode and script:sourceCode.match(/(^|[\r\n])\# @nocheck[\n\r]/)
+				out = "// @ts-nocheck\n{out}"
+			
 
 		script:rawResult = {
 			js: out
@@ -3152,9 +3198,12 @@ export class Root < Code
 		if !STACK.tsc
 			if script:css and (!o:styles or o:styles == 'inline')
 
-				let style = '`\n' + script:css + '\n`'
+				# let style = '`\n' + script:css + '\n`'
+				# - we have to escape it - right?
+				let style = JSON.stringify(script:css)
+
 				script:js = "{script:js}\n{runtime:styles}.register('{script:sourceId}',{style});"
-				if o:debug
+				if o:debug or true
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
 		# always create the sourcemap?
@@ -3307,6 +3356,9 @@ export class ClassDeclaration < Code
 		
 	def virtualSuper
 		@virtualSuper ||= @scope.parent.declare(:tmp,null,system: yes, type: 'let')
+
+	def classReference
+		@name
 
 	def instanceInit
 		return @instanceInit if @instanceInit
@@ -3753,6 +3805,9 @@ export class TagDeclaration < ClassDeclaration
 
 	def cssid
 		@cssid ||= @scope.cssid
+
+	def classReference
+		LIT(@name.toClassName)
 		
 	def cssref scope
 		if isNeverExtended and !superclass
@@ -3952,15 +4007,17 @@ export class Func < Code
 		datatype
 
 	def visit stack, o
+		# any function inside descriptors should compile as strong scopes
+		if stack.@descriptor and !stack.tsc
+			@scope = MethodScope.new(self) # (o and o:scope) || typ.new(self)
+			@scope.params = @params # = ParamList.new([])
+			
 		scope.visit
-
 
 		@context = scope.parent
 
 		@params.traverse(declaring: 'arg')
 		@body.traverse # so soon?
-
-
 
 	def funcKeyword
 		let str = "function"
@@ -4149,10 +4206,10 @@ export class MethodDeclaration < Func
 		
 		var closure = @context = scope.parent.closure
 		
-		if closure isa RootScope and !target
+		if closure isa RootScope and !target and !(@name isa DecoratorIdentifier)
 			scope.@context = closure.context
 		
-		elif closure isa MethodScope and !target
+		elif closure isa MethodScope and !target and !(@name isa DecoratorIdentifier)
 			scope.@selfless = yes
 
 		@params.traverse
@@ -4263,6 +4320,10 @@ export class MethodDeclaration < Func
 			out = jsdoc() + out
 			# out = @params.jsdoc() + out
 
+			if option(:declareOnly) and !STACK.tsc
+				return ''
+			
+
 			return out
 
 		var func = "({params.c})" + code
@@ -4312,6 +4373,9 @@ export class MethodDeclaration < Func
 			out = "return {out}"
 		
 		out = jsdoc() + out
+
+		if option(:declareOnly) and !STACK.tsc
+			return ''
 
 		return out
 
@@ -6260,10 +6324,14 @@ export class MixinIdentifier < Identifier
 	
 	def symbol
 		"mixin${@value.slice(1)}"
+
 		
 	def traverse o
 		if @traversed
 			return self
+		# should not really look in the scope
+		@mixin = scope__.mixin(@value.slice(1))
+		# console.log 'found mixin?!',@mixin
 		unless @variable
 			resolveVariable
 		@traversed = yes
@@ -6359,7 +6427,6 @@ export class Ivar < Identifier
 	def js o
 		return symbol
 
-
 export class Decorator < ValueNode
 
 	def name
@@ -6391,8 +6458,6 @@ export class Decorator < ValueNode
 
 		if content
 			out += ".wrap({content})"
-
-		# out += ".get(this,{content or 'null'})"
 		
 		return out
 
@@ -6407,6 +6472,147 @@ export class Decorator < ValueNode
 		else
 			out += ".bind([])"
 		return out
+
+
+export class DescriptorPart < Node
+	prop params
+	prop value
+	prop context
+
+	def initialize value, owner
+		@name = value
+
+	def visit stack
+		if params
+			params.traverse
+		if value
+			value.traverse
+		self
+
+	def js
+		if context
+			let op = OP('.',context,@name)
+			if params
+				yes
+				# TODO - implement this
+				op = CALL(op,params)
+				# op = OP('=',op,params.@nodes[0])
+			elif value
+				op = OP('=',op,value)
+			else
+				op = OP('=',op,TRUE)
+			return op.c
+
+export class Descriptor < Node
+
+	prop name
+	prop value
+	prop params
+	
+	def initialize value, owner
+		if value isa Token
+			@name = @value = DecoratorIdentifier.new(value)
+		else
+			@value = value
+			@value.@parens = yes
+
+		@chain = []
+		@special = no
+		@params = null
+		self
+
+	def isSpecial
+		@special
+		
+	def visit stack
+		let pre = stack.@descriptor
+		stack.@descriptor = self
+		if @name
+			# console.log "Descriptor scope {scope__}"
+			@variable = scope__.lookup(@name.js)
+			@value.@variable ||= @variable
+
+			unless @variable
+				@value = OP('.',THIS,@name)
+
+		else
+			@value.traverse if @value
+
+		# @call.traverse if @call
+		@params.traverse if @params
+		@chain.map(|v| v.traverse )
+
+		if @callback = option(:callback)
+			# make sure it is not bound to the actual target
+			@callback.traverse
+
+		if option(:default)
+			@default = option(:default)
+			if @default isa Literal
+				@literal = @default
+
+			unless @default isa Func
+				@default = Func.new([],[@default],null,{})
+			@default.traverse
+		
+		stack.@descriptor = pre
+	
+	def valueIsStatic
+		!value or value.isPrimitive or (value isa Func and !value.nonlocals)
+
+	def isStatic
+		valueIsStatic
+
+	def isProxy
+		false
+		
+	def add item, type
+		if item isa ArgList
+			if item.@generated
+				# extract options etc
+				let part = DescriptorPart.new(KEY('configure'))
+				part.params = item
+				@chain.push(@last = part)
+			else
+				# console.log 'add',item.@generated
+				if type == '='
+					# notify if multiple nodes?!
+					(@last or self).value = item.@nodes[0]
+				else
+					(@last or self).params = item or ListNode.new([])
+		else
+			@chain.push(@last = DescriptorPart.new(item))
+		return self
+
+	def js
+		let ref = scope__.root.declare('desc',null,system: yes)
+		let val = @variable ? Instantiation.new(CALL(@value,params or [])) : (@name ? CALL(@value,params or []) : @value)
+
+		let parts = AST.blk([])
+
+		for item in @chain
+			item.context = ref
+			parts.push(item)
+
+
+		if @default
+			parts.add LIT("{ref.c}.default = {@default.c}")
+		if @literal
+			parts.add LIT("{ref.c}.default.literal = {@literal.c}")
+
+		if @callback
+			parts.add LIT("{ref.c}.callback = {@callback.c}")
+
+		parts.add(ref)
+		
+		if STACK.tsc
+			return "((self,{ref.c}={val.c(mark: yes)})=>({parts.c}))(this)"
+
+		else
+			parts.unshift(OP('=',ref,val))
+		
+		return '(' + parts.c(expression: yes) + ')'
+
 
 # Ambiguous - We need to be consistent about Const vs ConstAccess
 # Becomes more important when we implement typeinference and code-analysis
@@ -7551,7 +7757,7 @@ export class ForOf < For
 		var v
 
 		# possibly proxy the index-variable?
-
+		
 		if o:own
 			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
 			o:value = o:index
@@ -9633,7 +9839,7 @@ export class Tag < TagLike
 		if option(:reference)
 			if oscope
 				let name = String(option(:reference)).slice(1)
-				@classNames.push("ref--{name}")
+				@classNames.push("${name}") # just add the actual ref right?
 		
 		if option(:key)
 			set(detached: yes)
@@ -9644,8 +9850,8 @@ export class Tag < TagLike
 			for cls,i in @classNames
 				if cls isa TagFlag
 					if cls.name isa MixinIdentifier
-						names.push(cls.name.c(as:'substr'))
-						dynamic = yes
+						names.push(cls.name.toRaw)
+						# dynamic = yes
 					else
 						names.push(cls.rawClassName)
 				elif cls isa Node
@@ -10441,8 +10647,8 @@ export class ImportDeclaration < ESMDeclaration
 			# let raw = src.slice(1,-1)
 			let [raw,q] = @source.raw.split('?')
 			src = M("'{raw}'",@source)
-			
-			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/))
+
+			if raw.match(/\.(html|svg|png|jpe?g|gif)$/) or (q and q.match(/^\w/) and q != 'external')
 				if @specifiers and @source
 					let out = "{M(keyword.c,keyword)} {src};\nimport {AST.cary(@specifiers).join(',')} from 'data:text/asset;';"
 					return out
@@ -10511,6 +10717,30 @@ export class ExportDeclaration < ESMDeclaration
 
 export class ExportAllDeclaration < ExportDeclaration
 export class ExportNamedDeclaration < ExportDeclaration
+
+export class MixinReference
+	prop name
+	prop scope
+
+	prop options
+	prop rule
+
+	def initialize name, scope
+		@name = name
+		@scope = scope
+		@options = {}
+
+
+export class MixinExports < Node
+
+	def add name, val
+		@mixins ||= {}
+		@mixins[name] = val
+		self
+
+	def c
+		"export const mixins$ = {AST.compileRaw(@mixins or {})}"
+
 
 export class Export < ValueNode
 		
@@ -10641,6 +10871,16 @@ export class StyleRuleSet < StyleNode
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
 
+		let keywordName = String(option(:name) || '')
+		if keywordName[0] == '%'
+			# need to be safely converted to a reference? Can do that later
+			@mixin = scope__.mixin(keywordName.slice(1))
+			@mixin.rule = self
+			@mixin.options:id = cssid
+		
+		if option(:export)
+			STACK.root.mixinExports.add(@mixin.name,@mixin.options)
+
 		let sel = String(@selectors).trim
 
 		if stack.parent isa ClassBody
@@ -10755,7 +10995,8 @@ export class StyleRuleSet < StyleNode
 		
 	def c
 		if option(:toplevel) and option(:export)
-			return M('export',option(:export)) + " const {@identifier.c} = '{@name}'"
+			# console.log "EXPORT??!",@identifier,@mixin,@name
+			return ""
 
 		if @tvar
 			let out = ["{@tvar} = '{@name}'"]
@@ -10932,24 +11173,30 @@ export class StyleProperty < StyleNode
 	prop name
 	prop number
 	prop unit
+	prop kind
 	# modifiers
 	# values
 	def initialize token
 		@token = token
+		let raw = String(@token)
+
+		if raw[0] == '#'
+			# console.log 'color property!!',raw
+			# raw = raw.slice(1)
+			@kind = 'color'
 		# also split 
-		@parts = String(@token).replace(/(^|\b)\$/g,'--').split(/\b(?=[\.\@])/g) # .split(/[\.\@]/g)
+		@parts = raw.replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
 		
 		for part,i in @parts
-			@parts[i] = part.replace(/^\./,'@.')
-			
-		# @parts = String(@token).replace(/(^|\b)\$/g,'--').split(/[\.\@]/g)
+			@parts[i] = part.replace(/^\.(?=[^\.])/,'@.')
+
 		@name  = String(@parts[0])
 		
 		if let m = @name.match(/^(\d+)([a-zA-Z]+)$/)
 			@number = parseInt(m[1])
 			@unit = m[2]
 			
-		if !@name.match(/^[\w\-]/)
+		if !@name.match(/^[\#\w\-]/)
 			@parts.unshift(@name = null)
 
 		self
@@ -10975,6 +11222,9 @@ export class StyleProperty < StyleNode
 	def isUnit
 		@unit
 
+	def isColor
+		@kind == 'color'
+
 	def modifiers
 		@parts.slice(1)
 
@@ -10985,7 +11235,7 @@ export class StyleProperty < StyleNode
 		name + modifiers.join("§")
 		
 	def toKey
-		let name = isUnit ? "--u_{@unit}" : self.name
+		let name = isUnit ? "--u_{@unit}" : (isColor ? "--c_{@name.slice(1)}" : self.name)
 		[name].concat(modifiers).join('§')
 		# @parts.join('.')
 
@@ -11083,7 +11333,6 @@ export class StyleExpression < ListNode
 	def visit stack, o
 		if o and o:property
 			let name = o:property.@name
-
 			if name == 'gt' or name == 'grid-template'
 				reclaimParams
 		super
@@ -11171,6 +11420,9 @@ export class StyleInterpolationExpression < StyleTerm
 	def runtimeValue
 		@runtimeValue
 
+	get unit
+		@options and String(@options:unit) or ''
+
 	def c
 		"var(--{@id})"
 
@@ -11184,6 +11436,8 @@ export class StyleFunction < Node
 		@params = params
 	
 	def visit stack, o
+		@property = o:property
+		@propname = o:property and o:property.@name
 		@params.traverse if @params and @params:traverse
 		self
 		
@@ -11191,11 +11445,15 @@ export class StyleFunction < Node
 		c
 		
 	def c o
-		# console.log "style function {@name}"
+
 		let name = String(@name)
 		let pars = @params.c
-
 		let out = "{name}({pars})"
+
+		if (@property and @property.isColor)
+			if let res = Color.from(out)
+				return res.toVar
+
 		out = helpers.singlequote(out) if o and o:as == 'js'
 		return out
 
@@ -11220,9 +11478,8 @@ export class StyleIdentifier < StyleTerm
 	def c o
 		if color
 			let val = color.toString
-			# if option(:parameterize)
-			#	val = val.replace('/*#*/','/*##*/')
-			let pre = option(:parameterize) ? '/*##*/' : '/*#*/'
+			let asvar = option(:parameterize) or (@property and @property.isColor)
+			let pre = asvar ? '/*##*/' : '/*#*/'
 			return pre + val
 
 
@@ -11237,6 +11494,17 @@ export class StyleIdentifier < StyleTerm
 export class StyleString < StyleTerm
 
 export class StyleColor < StyleTerm
+	def c o
+		let raw = toRaw
+		let name = raw.slice(1)
+		let rich = Color.from(raw)
+		let a = self:param ? self:param.toAlpha : 1
+
+		if @property and @property.isColor
+			return rich.toVar
+
+		return "hsla({rich.toVar},{a})"
+
 
 export class StyleVar < StyleTerm
 
@@ -11637,6 +11905,7 @@ export class Scope
 		@varmap  = {}
 		@counters = {}
 		@varpool = []
+		@mixins = {}
 		@refcounter = 0
 		@declListeners = []
 		@level = (parent ? parent.@level : -1) + 1
@@ -11664,6 +11933,9 @@ export class Scope
 			# temporary(null,{reuse: yes},"{name}")
 			
 		return item
+
+	def mixin name
+		@mixins[name] ||= MixinReference.new(name,self)
 	
 	# def cssMixinFlag name
 	def captureVariableDeclarations blk
@@ -12017,6 +12289,12 @@ export class RootScope < Scope
 
 	def globalRef
 		@globalRef ||= LIT('globalThis')
+
+	def mixinExports
+		unless @mixinExports
+			@head.push(@mixinExports = MixinExports.new())
+		return @mixinExports
+
 
 	def registerAsset path, kind, context, pathToken
 		let key = path + kind
@@ -12904,6 +13182,7 @@ export var NULL = 'null'
 
 export var RESERVED = ['default','native','enum','with']
 export var RESERVED_REGEX = /^(default|native|enum|with|new|char)$/
+
 
 
 

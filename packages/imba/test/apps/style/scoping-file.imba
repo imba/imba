@@ -17,14 +17,14 @@ def extrule fw
 
 tag app-root
 	css fw:400
-	css
+	css self
 		.scope fw:301
 
 	<self>
 		<div.rule.file> '401'
 		<div.rule.global> '501'
 		<div.rule.scope> '301'
-		extrule '401'
+		<extrule('401')>
 		<div innerHTML='<div class="rule global">501</div>'>
 		<div innerHTML='<div class="rule file">400</div>'>
 		<div innerHTML='<div class="rule scole">400</div>'>

@@ -243,6 +243,8 @@ var grammar =
 	# them somewhat circular.
 	Expression: [
 		o 'Await'
+		# o 'FieldDescriptor'
+		# o 'FieldDescriptor = Expression' do A1.set(default: A3)
 		o 'Value'
 		o 'Code'
 		o 'Operation'
@@ -298,8 +300,8 @@ var grammar =
 	
 	Decorator: [
 		o 'DecoratorIdentifier' do Decorator.new A1 # kinda hacky, should be defined as something else
-		o 'DecoratorIdentifier ( )' do Decorator.new(A1)
-		o 'DecoratorIdentifier ( ArgList )' do Decorator.new(A1).set(params: A3)
+		o 'DecoratorIdentifier Arguments' do Decorator.new(A1).set(params: A2)
+		# o 'DecoratorIdentifier ( ArgList )' do Decorator.new(A1).set(params: A3)
 		o 'Decorator . Identifier' do A1.add(A3)
 	]
 
@@ -378,7 +380,7 @@ var grammar =
 	]
 	
 	StyleBlockDeclaration: [
-		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3)
+		o 'CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A2,A3).set(name: A1)
 	]
 	
 	CSSDeclaration: [
@@ -414,6 +416,7 @@ var grammar =
 	
 	StyleDeclaration: [
 		o 'StyleProperty : StyleExpressions' do StyleDeclaration.new(A1,A3.set(parens: no))
+		o 'StyleProperty = StyleExpressions' do StyleDeclaration.new(A1,A3.set(parens: no))
 	]
 	
 	StyleProperty: [
@@ -494,14 +497,13 @@ var grammar =
 		o 'TagOptions SYMBOL_ID' do A1.addPart(IdentifierExpression.new(A2.cloneSlice(1)),AST.TagId)
 		o 'TagOptions TAG_FLAG' do A1.addPart(A2,AST.TagFlag)
 		o 'TagOptions TAG_ATTR' do A1.addPart(A2,AST.TagAttr)
-		o 'TagOptions TAG_ON' do A1.addPart(A2,AST.TagHandler)
 		o 'TagOptions STYLE_START STYLE_END' do A1 
 		o 'TagOptions STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A3),AST.TagFlag)
 		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
 		o 'TagOptions MIXIN' do A1.addPart(MixinIdentifier.new(A2),AST.TagFlag)
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
-		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag)
+		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag) # not supported anymore
 		o 'TagOptions T. UNARY TAG_LITERAL' do A1.addPart(A4.prepend('!'),AST.TagFlag)
 		o 'TagOptions T. TagIdentifier' do A1.addPart(A3,AST.TagFlag)
 		
@@ -558,17 +560,9 @@ var grammar =
 		o 'Splat'
 		o 'LOGIC'
 		o 'Comment'
-		o 'TagHandler'
 		o 'StyleBlockDeclaration' do A1.set(inTagTree: yes)
 	]
 
-	TagHandler: [
-		o 'DECORATOR' do TagHandler.new(IdentifierExpression.new(A1.cloneSlice(1,'TAG_LITERAL')))
-		o 'TagHandler . IDENTIFIER' do A1.add(A3)
-		o 'TagHandler CALL_START ArgList CALL_END' do
-			A1.add(A3,A2:generated ? AST.TagHandlerCallback : AST.TagArgList,A2,A4)
-	]
-	
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
 	TagDeclaration: [
@@ -857,6 +851,8 @@ var grammar =
 		# o 'Value Type' do A1.set(datatype: A2)
 	]
 
+
+
 	# TypedValue: [
 	#	o 'Value'
 	#	o 'Value Type' do A1.set(datatype: A2)
@@ -919,6 +915,7 @@ var grammar =
 		# o 'Self' # not sure if self should be assignable really
 		# o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
 		# o 'SymbolIdentifier' do Access.new('.',null,A1) # LocalIdentifier.new(A1)
+		o 'DecoratorIdentifier'
 		o 'Identifier' do VarOrAccess.new(A1) # do ClassName.new(A1)
 		o 'SymbolIdentifier' do Access.new('.',null,A1) # IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
 		o 'ClassName . Identifier' do AST.OP(A2,A1,A3)
@@ -953,6 +950,8 @@ var grammar =
 		o 'DECLARE STATIC ClassFieldDeclaration' do A3.set(static: A2,declareOnly: A1)
 		o 'DECLARE ClassFieldDeclaration' do A2.set(declareOnly: A1)
 		o 'STATIC MethodDeclaration' do A2.set(static: A1)
+		o 'DECLARE MethodDeclaration' do A2.set(declareOnly: A1)
+		o 'DECLARE STATIC MethodDeclaration' do A2.set(static: A2,declareOnly: A1)
 		o 'MethodDeclaration'
 		o 'ClassFieldDeclaration'
 	]
@@ -960,9 +959,35 @@ var grammar =
 	ClassFieldDeclaration: [
 		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
-		o 'ClassFieldDeclaration @ Expression' do A1.set(wrapper: A3)
-		o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
+		# o 'ClassFieldDeclaration @ Expression' do A1.set(wrapper: A3)
+		o 'ClassFieldDeclaration AS AccessorBody' do A1.set(wrapper: A3)
+		o 'ClassFieldDeclaration FieldDescriptorFull' do A1.set(wrapper: A2)
+		# Legacy support for the @set - should remove and replace
+		# o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
 
+	]
+
+	FieldDescriptor: [
+		o 'DECORATOR' do Descriptor.new A1 # kinda hacky, should be defined as something else
+		o '@ CALL_START Expression CALL_END' do Descriptor.new A3
+		# o 'FieldDescriptor ( )' do A1.add(ArgList.new([]))
+		# o 'FieldDescriptor ( ArgList )' do A1.add(A3,'!')
+		o 'FieldDescriptor Arguments' do A1.add(A2,'!')
+		o 'FieldDescriptor INDEX_START ArgList INDEX_END' do A1.add(A3,'=')
+		o 'FieldDescriptor . Identifier' do A1.add(A3)
+		# o 'FieldDescriptor = Value' do A1.add(A3,'value')
+		# o 'FieldDescriptor = DescriptorValue' do A1.add(A3,'value')
+	]
+
+	FieldDescriptorFull: [
+		o 'FieldDescriptor'
+		o 'FieldDescriptor = Expression' do A1.set(default: A3)
+		o 'FieldDescriptor Do' do A1.set(callback: A2)
+	]
+
+	AccessorBody: [
+		'FieldDescriptorFull'
+		'Value'
 	]
 
 	ClassFieldDecoration: [

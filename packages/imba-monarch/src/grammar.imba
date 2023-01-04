@@ -441,7 +441,7 @@ export const states = {
 		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
 		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
 
-		[/(class)(\s)(@id)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
+		[/(class)(\s)(@classid)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
 		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
 
@@ -638,12 +638,39 @@ export const states = {
 	]
 
 	decorator_: [
-		[/(@decid)(\()/,['decorator','$2','@_decorator_params']]
-		[/(@decid)/,'decorator']
+		# [/(@decid)(\()/,['decorator','$2','@_decorator_params']]
+		# [/(@decid)/,'decorator']
+		[/(?=@decid)/,'','@_decorator&-_decorator']
+	]
+
+	_decorator: [
+		[/(@decid)/,'decorator.name']
+		[/(\.)(\!?@optid)/,['decorator.modifier.start','decorator.modifier.name']]
+		[/\(/,token: 'decorator.parens.open', next: '@_decorator_parens/0']
+		[/\[/,token: 'decorator.brackets.open', next: '@_decorator_brackets/0']
+		[/\{/,token: 'decorator.braces.open', next: '@_decorator_braces/0']
+		[/(\s*\=\s*)/,'operator.equals.decorator/', '@_tag_value&handler']
+		[/\s+/,'@rematch','@pop']
+	]
+
+	_decorator_parens: [
+		[/\)/,'decorator.$/.parens.close', '@pop']
+		'arglist_'
+		[/\]|\}/,'invalid']
 	]
 
 	_decorator_params: [
 		[/\)/,')','@pop']
+		'expr_'
+		[/\s*\,\s*/,'delimiter.comma']
+	]
+	_decorator_brackets: [
+		[/\]/,']','@pop']
+		'expr_'
+		[/\s*\,\s*/,'delimiter.comma']
+	]
+	_decorator_braces: [
+		[/\}/,'}','@pop']
 		'expr_'
 		[/\s*\,\s*/,'delimiter.comma']
 	]
@@ -661,7 +688,9 @@ export const states = {
 		'type_'
 		[/(\s*=)(?!\=)/,['operator.assign','@_field_value&field']]
 		[/(\s*(?:\@)set\s*)/,['keyword.spy','@>_def&spy']]
-		[/(\s*\@)(?=\s)/,['keyword.accessor','@>_def&field']]
+		[/(\s*as)(?=\s)/,['keyword.accessor','@>_def&field']]
+		[/(?=\s\@|$)/,'','@>_def&field']
+		# [/(\s*\@)(?=\s)/,['keyword.accessor','@>_def&field']]
 	]
 
 	_field_value: [
@@ -880,10 +909,14 @@ export const states = {
 	css_: [
 		[/global(?=\s+css@B)/,'keyword.$#']
 		[/css(?=\s+|$)/, 'keyword.css','@>css_selector&rule-_sel']
+		# [/(\%\w+)/,'@rematch','@>css_selector&rule-_sel']
+		# [/(\%)(?=\w+)/,'keyword.css','@>css_selector&rule-_sel']
+		[/(\%)([\w\-]+)/,['style.selector.mixin.prefix','style.selector.mixin.name','@>css_selector&rule-_sel']]
+
 	]
 
 	sel_: [
-		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin']]
+		[/(\%)((?:@id)?)/,['style.selector.mixin.prefix','style.selector.mixin.name']]
 		[/(\@)(\.{0,2}[\w\-\<\>\!]*\+?)/,'style.selector.modifier']
 		[/(\@)(\.{0,2}[\w\-\<\>\!]*)/,'style.selector.modifier']
 		[/\.([\w\-]+)?/,'style.selector.class-name']
@@ -902,7 +935,7 @@ export const states = {
 
 	css_props: [
 		denter(null,-1,0)
-		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
+		[/(?=@cssPropertyKey)/,'','@css_property&-_styleprop-_stylepropkey']
 		[/#(\s.*)?\n?$/, 'comment']
 		[/(?=[\%\*\w\&\$\>\.\[\@\!]|\#[\w\-])/,'','@>css_selector&rule-_sel']
 		[/\s+/, 'white']
@@ -911,14 +944,14 @@ export const states = {
 	css_selector: [
 		denter({switchTo: '@css_props&_props'},-1,{token:'@rematch',switchTo:'@css_props&_props'})
 		[/(\}|\)|\])/,'@rematch', '@pop']
-		[/(?=\s*@cssPropertyKey2)/,'',switchTo:'@css_props&_props']
+		[/(?=\s*@cssPropertyKey)/,'',switchTo:'@css_props&_props']
 		[/\s*#\s/,'@rematch',switchTo:'@css_props&_props']
 		'sel_'
 	]
 
 	css_inline: [
 		[/\]/,'style.close','@pop']
-		[/(?=@cssPropertyKey2)/,'','@css_property&-_styleprop-_stylepropkey']
+		[/(?=@cssPropertyKey)/,'','@css_property&-_styleprop-_stylepropkey']
 		[/(?=@cssPropertyPath\])/,'','@css_property&-_styleprop-_stylepropkey']
 	]
 
@@ -939,12 +972,14 @@ export const states = {
 		[/((--|\$)@id)/, 'style.property.var']
 		[/(-*@id)/, 'style.property.name']
 		# [/(\@+)([\>\<\!]?[\w\-]+)/, ['style.property.modifier.start','style.property.modifier']]
+		# [/[\^]+/,'style.property.modifier']
+		[/(\^+)(@cssModifier)/,['style.property.modifier.up','style.property.modifier']]
 		[/@cssModifier/,'style.property.modifier']
-		[/(\@+|\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
+		[/(\.+)(@id\-?)/, ['style.property.modifier.start','style.property.modifier']]
 		[/\+(@id)/, 'style.property.scope']
-		[/\s*([\:]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
-		[/\s*([\:]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
-	]
+		[/\s*([\:\=]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
+		[/\s*([\:\=]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
+	] 
 
 	css_value_: [
 		[/(x?xs|sm\-?|md\-?|lg\-?|xx*l|\dxl|hg|x+h)\b/, 'style.value.size'],
@@ -970,7 +1005,7 @@ export const states = {
 	css_value: [
 		denter({switchTo: '@>css_multiline_value'},-1,-1)
 		# [/@cssModifier/, '@rematch', '@pop']
-		[/@cssPropertyKey2/, '@rematch', '@pop']
+		[/@cssPropertyKey/, '@rematch', '@pop']
 		[/;/, 'style.delimiter', '@pop']
 		[/(\}|\)|\])/, '@rematch', '@pop']
 		'css_value_'
@@ -978,7 +1013,7 @@ export const states = {
 
 	css_multiline_value: [
 		denter(null,-1,0)
-		[/@cssPropertyKey2/, 'invalid']
+		[/@cssPropertyKey/, 'invalid']
 		'css_value_'
 	]
 
@@ -1034,7 +1069,7 @@ export const states = {
 		# '@>css_selector&rule-_sel'
 		[/>/,'tag.close','@pop']
 		[/(\-?\d+)/,'tag.$S3']
-		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin']]
+		[/(\%)(@id)/,['tag.mixin.prefix','tag.mixin.name']]
 		[/\#@id/,'tag.id']
 
 		[/\./,{ cases: {
@@ -1352,6 +1387,7 @@ export const grammar = {
 	# anyIdentifier: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*/
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
 	id:  /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
+	classid: /\@?[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	fieldid: /[\@\#]*@plainid/ 
 	propid: /[\@\#]*@plainid/
@@ -1372,12 +1408,11 @@ export const grammar = {
 	implicitCall: /(?!\s(?:and|or|is|isa)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
 	cssModifier: /(?:\@+[\<\>\!]?[\w\-]+\+?|\.+@id\-?)/
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
-	cssPropertyKey: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*(?:\s*\:)/
 	
 	cssVariable: /(?:--|\$)[\w\-\$]+/
 	cssPropertyName: /[\w\-\$]+/
 	# cssModifier: /\@[\w\-\$]+/
-	cssPropertyKey2: /(?:@cssPropertyName(?:@cssModifier)*|@cssModifier+)(?:\s*\:)/
+	cssPropertyKey: /(?:@cssPropertyName(?:@cssModifier)*|\^*@cssModifier+)(?:\s*[\:\=])/
 	cssUpModifier: /\.\.[\w\-\$]+/
 	cssIsModifier: /\.[\w\-\$]+/
 	

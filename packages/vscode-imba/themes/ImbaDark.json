@@ -314,6 +314,20 @@
       }
     },
     {
+      "name": "entity.other.tag-ref.imba",
+      "scope": "entity.other.tag-ref.imba",
+      "settings": {
+        "foreground": "#ffc799"
+      }
+    },
+    {
+      "name": "entity.other.tag-mixin.imba",
+      "scope": "entity.other.tag-mixin.imba",
+      "settings": {
+        "foreground": "#ffc799"
+      }
+    },
+    {
       "name": "support.class",
       "scope": "support.class",
       "settings": {
@@ -525,6 +539,13 @@
       }
     },
     {
+      "name": "meta.style entity.other.attribute-name.mixin",
+      "scope": "meta.style entity.other.attribute-name.mixin",
+      "settings": {
+        "foreground": "#ffc799"
+      }
+    },
+    {
       "name": "constant.other.color",
       "scope": "constant.other.color",
       "settings": {
@@ -536,6 +557,27 @@
       "scope": "meta.style.imba support.constant.color",
       "settings": {
         "foreground": "#a49feb"
+      }
+    },
+    {
+      "name": "meta.style.imba support.constant.color",
+      "scope": "meta.style.imba support.constant.color",
+      "settings": {
+        "foreground": "#a49feb"
+      }
+    },
+    {
+      "name": "meta.style.imba style.property.operator",
+      "scope": "meta.style.imba style.property.operator",
+      "settings": {
+        "foreground": "#b37bb6"
+      }
+    },
+    {
+      "name": "source.imba punctuation.separator.key-value.css",
+      "scope": "source.imba punctuation.separator.key-value.css",
+      "settings": {
+        "foreground": "#b37bb6"
       }
     },
     {

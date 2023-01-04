@@ -742,9 +742,13 @@ class Action
 
 	def run ctx = context, args = []
 		CTX.push(self)
-		let res = cb.apply(ctx,args)
-		CTX.pop(self)
-		return res
+		try
+			let res = cb.apply(ctx,args)
+			CTX.pop(self)
+			return res
+		catch e
+			CTX.pop(self)
+			throw e
 
 export def autorun cb, options = {}
 	let reaction = new Reaction(cb,global,options)

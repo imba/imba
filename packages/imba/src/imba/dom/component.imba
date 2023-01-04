@@ -204,7 +204,7 @@ export class Component < HTMLElement
 		return self
 
 	def suspend cb = null
-		let val = flags.incr('_suspended_')
+		let val = flags.incr('@suspended')
 		__F |= $EL_SUSPENDED$
 		if cb isa Function
 			await cb()
@@ -212,7 +212,7 @@ export class Component < HTMLElement
 		self
 
 	def unsuspend
-		let val = flags.decr('_suspended_')
+		let val = flags.decr('@suspended')
 		if val == 0
 			__F &= ~$EL_SUSPENDED$
 			commit! if $EL_UNRENDERED$

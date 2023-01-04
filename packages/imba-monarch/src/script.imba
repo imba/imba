@@ -112,6 +112,9 @@ export default class ImbaScriptInfo
 		let tokens = tokens.filter do $1.match('push._imports')
 		return tokens.map do $1.scope
 
+	def getStylePropLists
+		tokens.filter(do $1.match('push._sel_props')).map do $1.scope
+
 	def getRootClasses
 		getNodesInScope(root).filter do $1 isa Scope and $1.class?
 		
@@ -347,8 +350,13 @@ export default class ImbaScriptInfo
 					meta.eventModifierName = 'options'
 				meta.parens = parens
 		
-		if tok.match('decorator')
+		if tok.match('decorator.name')
 			flags = CompletionTypes.Decorator
+
+		if tok.match('decorator.modifier')
+			flags |= CompletionTypes.DecoratorModifier
+			suggest.decorator = group.closest('decorator')
+			target = suggest.decorator
 
 		if tok.match('tag.event.name tag.event-modifier.name')
 			target = tok.prev
@@ -859,7 +867,7 @@ export default class ImbaScriptInfo
 
 				if idx >= 0
 					scopetype = scopetype.slice(idx + 1)
-					ctor = ScopeTypeMap[scopetype] || Group
+					ctor = ScopeTypeMap[subtyp] || ScopeTypeMap[scopetype] || Group
 				elif ScopeTypeMap[scopetype]
 					ctor = ScopeTypeMap[scopetype]
 
@@ -1023,6 +1031,16 @@ export default class ImbaScriptInfo
 				if sym.body and sym.body.path == path
 					return sym.node
 		return
+
+	def migrateStyleOperators
+		let edits = []
+		for tok in tokens
+			let val = (tok.value or '')
+			if tok.match('style.property.operator') and val.indexOf(':') >= 0
+				val = val.replace(':','=')
+				edits.push([tok.offset,val.length,val])
+
+		return edits
 	
 	def createImportEdit path, name, alias = name, asType = no
 		

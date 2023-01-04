@@ -24,50 +24,50 @@ export const layouts =
 	hl: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'start'
+		o.jc = 'flex-start'
 		o.ai = 'center'
 
 	hr: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'end'
+		o.jc = 'flex-end'
 		o.ai = 'center'
 
 	ht: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'center'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hb: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'center'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	htl: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'start'
-		o.ai = 'start'
+		o.jc = 'flex-start'
+		o.ai = 'flex-start'
 
 	htr: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'end'
-		o.ai = 'start'
+		o.jc = 'flex-end'
+		o.ai = 'flex-start'
 
 	hbl: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'start'
-		o.ai = 'end'
+		o.jc = 'flex-start'
+		o.ai = 'flex-end'
 
 	hbr: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'end'
-		o.ai = 'end'
+		o.jc = 'flex-end'
+		o.ai = 'flex-end'
 
 	hsb: do(o)
 		o.display = 'flex'
@@ -79,13 +79,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-between'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hbsb: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-between'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	hsa: do(o)
 		o.display = 'flex'
@@ -97,13 +97,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-around'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hbsa: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-around'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	hse: do(o)
 		o.display = 'flex'
@@ -115,13 +115,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-evenly'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hbse: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-evenly'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	v: do(o)
 		o.display = 'flex'
@@ -133,49 +133,49 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'center'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vr: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'center'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vt: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'start'
+		o.jc = 'flex-start'
 		o.ai = 'center'
 
 	vb: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'end'
+		o.jc = 'flex-end'
 		o.ai = 'center'
 
 	vtl: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'start'
-		o.ai = 'start'
+		o.jc = 'flex-start'
+		o.ai = 'flex-start'
 
 	vtr: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'start'
-		o.ai = 'end'
+		o.jc = 'flex-start'
+		o.ai = 'flex-end'
 
 	vbl: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'end'
-		o.ai = 'start'
+		o.jc = 'flex-end'
+		o.ai = 'flex-start'
 
 	vbr: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'end'
-		o.ai = 'end'
+		o.jc = 'flex-end'
+		o.ai = 'flex-end'
 
 	vsb: do(o)
 		o.display = 'flex'
@@ -187,13 +187,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-between'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vrsb: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-between'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vsa: do(o)
 		o.display = 'flex'
@@ -205,13 +205,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-around'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vrsa: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-around'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vse: do(o)
 		o.display = 'flex'
@@ -223,13 +223,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-evenly'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vrse: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-evenly'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vflex: do(o)
 		o.display = 'flex'
@@ -390,6 +390,7 @@ export const aliases =
 	tds: 'text-decoration-style'
 	tdt: 'text-decoration-thickness'
 	tdsi: 'text-decoration-skip-ink'
+	tuo: 'text-underline-offset'
 	
 	# text-emphasis
 	te: 'text-emphasis'
@@ -495,6 +496,7 @@ export const aliases =
 	'ofx':'overflow-x'
 	'ofy':'overflow-y'
 	'ofa':'overflow-anchor'
+	'tof': 'text-overflow'
 	
 	# content
 	prefix: 'content@before'
@@ -565,7 +567,43 @@ def isNumber val
 		return true
 	return false
 
+export def parseColorString str
+	if named_colors[str]
+		str = named_colors[str]
+
+	if str[0] == '#'
+		let hex = conv.hex.rgb(str)
+		return conv.rgb.hsl(hex)
+
+	if let m = str.match(/^(hsla?|rgba?)\((.+)\)$/)
+		let [a,b,c,d = ''] = m[2].replace(/[\,\/]g/,' ').split(/\s+/g)
+
+		let hsl
+
+		if m[1] == 'rgb' or m[1] == 'rgba'
+			hsl = conv.rgb.hsl([parseFloat(a),parseFloat(b),parseFloat(c)])
+
+		if m[1] == 'hsl' or m[1] == 'hsla'
+			hsl = [parseFloat(a),parseFloat(b),parseFloat(c)]
+
+		return hsl
+
+	return null
+
+
 export class Color
+
+	static def from raw
+		if typeof raw == 'string'
+			if raw[0] == '#' and !raw.match(/^\#([A-Fa-f0-9]{6})([A-Fa-f0-9]{2})?$/)
+				return new NamedColor(raw.slice(1))
+
+			raw = parseColorString(raw)
+
+		if raw isa Array
+			return new self('',raw[0],raw[1],raw[2])
+		
+		return null
 	
 	def constructor name,h,s,l,a = 1
 		name = name
@@ -600,6 +638,11 @@ export class Color
 	def c
 		toString!
 
+export class NamedColor < Color
+
+	def toVar
+		"var(--c_{name})"
+		
 
 export class Tint < Color
 
@@ -693,18 +736,7 @@ let defaultPalette = {
 	white: new Color('white',0,0,100,'100%')
 }
 
-def parseColorString str
-	if named_colors[str]
-		str = named_colors[str]
 
-	if let m = str.match(/hsl\((\d+), *(\d+\%), *(\d+\%?)/)
-		let h = parseInt(m[1])
-		let s = parseInt(m[2])
-		let l = parseInt(m[3])
-		return [h,s,l]
-	elif str[0] == '#'
-		return conv.rgb.hsl(conv.hex.rgb(str))
-	
 		
 
 
@@ -800,17 +832,17 @@ export class StyleTheme
 		pars = pars.slice(0)
 
 		let o = {__ease__: k}
-		let durRegex = /^[\-\+]?(\d*\.)?(\d+)(\w+)?$/
-		if String(pars[0]).match(durRegex)
+
+		if pars[0]..unit
 			o["--e_{k}d"] = pars[0]
 			pars.shift!
 	
-		if pars[0] and !String(pars[0]).match(durRegex)
+		if pars[0] and !pars[0].unit
 			let ev = $varFallback('ease',[pars[0]])
 			o["--e_{k}f"] = ev
 			pars.shift!
 	
-		if String(pars[0]).match(durRegex)
+		if pars[0] and pars[0].unit
 			o["--e_{k}w"] = pars[0]
 			pars.shift!
 			
@@ -1164,17 +1196,18 @@ export class StyleTheme
 	def border_y_color [t,b=t]
 		{bct: t, bcb: b}
 
-	def border_top_radius [l,r=l]
-		{'border-top-left-radius': l, 'border-top-right-radius': r}
+	# it should rather send the same to both
+	def border_top_radius pars
+		{'border-top-left-radius': [pars], 'border-top-right-radius': [pars]}
 
-	def border_left_radius [t,b=t]
-		{'border-top-left-radius': t, 'border-bottom-left-radius': b}
+	def border_left_radius pars
+		{'border-top-left-radius': [pars], 'border-bottom-left-radius': [pars]}
 
-	def border_bottom_radius [t,b=t]
-		{'border-bottom-left-radius': l, 'border-bottom-right-radius': r}
+	def border_bottom_radius pars
+		{'border-bottom-left-radius': [pars], 'border-bottom-right-radius': [pars]}
 
-	def border_right_radius [t,b=t]
-		{'border-top-right-radius': t, 'border-bottom-right-radius': b}
+	def border_right_radius pars
+		{'border-top-right-radius': [pars], 'border-bottom-right-radius': [pars]}
 
 	def justify_align [justify,align = justify]
 		let o = {}
@@ -1238,7 +1271,7 @@ export class StyleTheme
 	#	{}
 
 	def $color name
-		let m = name.match(/^(\w+)(\d)(?:\-(\d+))?$/)
+		let m = name.match(/^([A-Za-z\-]+)(\d)(\d*)$/)
 		let ns = m and m[1]
 		
 		# aliased colors
@@ -1251,13 +1284,18 @@ export class StyleTheme
 		if palette[name]
 			return palette[name]
 
-
-
 		if m
 			let nr = parseInt(m[2])
-			let fraction = parseInt(m[3]) or 0
+			let fraction = m[3] ? parseFloat("0.{m[3]}") : 0
 			let from = null
 			let to = null
+
+			# what if it is fractional?
+
+			# if nr > 9
+			#	fraction = (nr % 100) / 10
+			#	nr = Math.floor(nr / 100)
+
 			let n0 = nr + 1
 			let n1 = nr
 			
@@ -1271,18 +1309,21 @@ export class StyleTheme
 			while n1 < 9 and !to
 				to = palette[ns + (++n1)]
 
-			let weight = ((nr - n0) + (fraction / 10)) / (n1 - n0)
+			# only when we could not find colors?
+			let weight = ((nr - n0) + (fraction)) / (n1 - n0)
 			let hw = weight
 			let sw = weight
 			let lw = weight
 
 			if !to
-				to = palette.blue9
+				to = palette.black
 				hw = 0
+				sw = lw = fraction
 			
 			if !from
 				from = palette.blue1
 				hw = 1
+				sw = lw = 1 - fraction
 
 			if from and to
 				return palette[name] = from.mix(to,hw,sw,lw)
@@ -1301,6 +1342,7 @@ export class StyleTheme
 		return true if $parseColor(val)
 		return false
 
+	# too many methods doing the same thing
 	def $parseColor identifier
 		let key = String(identifier)
 		if let color = $color(key)
@@ -1399,7 +1441,6 @@ export class StyleTheme
 		
 	def transformColors text
 		text = text.replace(/\/\*(#+)\*\/(\#?\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
-
 			if let color = $color(c)
 				if typ == '#'
 					return color.toString(a,typ)
@@ -1441,7 +1482,7 @@ export const StyleExtenders = {
 			opacity var(--e_od) var(--e_of) var(--e_ow),
 			transform var(--e_td) var(--e_tf) var(--e_tw),
 			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c),
-			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),
+			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),min-width var(--e_b),min-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),
 			var(--e_rest);
 	'''
 }
@@ -1502,11 +1543,11 @@ export class StyleSheet
 			for item in v
 				for rule in (item.#rules or [])
 					# console.log rule
-					let ns = rule.#media
+					let ns = rule.#media or ''
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
 
 					if easing or k == 'ease'
-						sel = sel.replace(/\._(off|out|in|on)_\b/g,'')
+						sel = sel.replace(/\.\\@(off|out|in|on)\b/g,'')
 					sel = sel.replace(/((\:+)[\w\-]+)(?!\()/g) do(m,k) k.length > 1 ? m : ''
 					sel = sel.replace(/^\:root /g,'')
 
@@ -1548,7 +1589,7 @@ export class StyleSheet
 			
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
-				prepend('._enter_:not(#_),._leave_:not(#_) {--e_ad:300ms;}')
+				prepend('.\\@enter:not(#_),.\\@leave:not(#_) {--e_ad:300ms;}')
 				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') # 
 			if easing
 				#register[k] = selectors
@@ -1612,11 +1653,21 @@ export class StyleRule
 			elif options.ns and !options.global
 				subrules.push new StyleRule(null,".{options.ns}",subprops,{})
 
+		let selpri = typeof selector == 'string' and selector.indexOf('@important') >= 0 ? 1 : 0
+
 		for own key,value of self.content
 			continue if value == undefined
 			
 			let subsel = null
-			
+			let important = selpri ? ' !important' : ''
+			let rawkey = key
+
+			# let [m,imp,name,mods] = (key.match(/^(\?*\!*)?([\w\-]+)(\§.+)?/) or [])
+
+			# if imp
+			#	important = imp[0] == '!' ? ' !important' : ''
+			#	key = key.slice(imp.length)
+		
 			if key.indexOf('&') >= 0
 				if isKeyFrames
 					let keyframe = key.replace(/&/g,'')
@@ -1631,8 +1682,14 @@ export class StyleRule
 			elif key.indexOf('§') >= 0
 				# let keys = key.replace(/[\.\~\@\+]/g,'\\$&').split('§')
 				
-				let keys = key.split('§')
-				let subsel = selparser.unwrap(selector,keys.slice(1).join(' '))
+				let keys = rawkey.split('§')
+				# keys.slice(1).join(' ')
+				# using :is it should be much, much easier with the nested selectors?
+				# can even just take the whole outer selector as a simple :is on this element
+				let substr = keys.slice(1).join('')
+				# console.log "SUBSTR",substr
+				# do we unwrap, or can we just use :where etc and trust it?
+				let subsel = selparser.unwrap(selector,substr)
 				let obj = {}
 				obj[keys[0]] = value
 				if subrule = subrules[subsel]
@@ -1648,7 +1705,7 @@ export class StyleRule
 			elif key[0] == '['
 				# better to just check if key contains '.'
 				# this is only for a single property
-				console.warn "DEPRECATED",key,self
+				# console.warn "DEPRECATED",key,self
 				let o = JSON.parse(key)
 				subrules.push new StyleRule(self,selector,value,options)
 				continue
@@ -1674,28 +1731,25 @@ export class StyleRule
 				if selector.match(/@in\b/)
 					yes
 					# TODO warn about easings not making sense inside here
-					# let subsel = selector.replace(/@in\b/g,'@enter')
-					# let obj = {[key]: value}
-					# subrules.push new StyleRule(self,subsel,obj,options)
-					# continue
 				parts.push "{key}: {value} !important;"
-
 
 			elif key.match(/^__ease__$/)
 				yes
 			else
 				if key.match(/^(width|height)$/)
+					# what about min/max sizes?
 					meta.size = yes
 
-				parts.push "{key}: {value};"
+				parts.push "{key}: {value}{important};"
 
 				if AutoPrefixes[key]
 					for prefixed in AutoPrefixes[key]
-						parts.push "{prefixed}: {value};"
+						parts.push "{prefixed}: {value}{important};"
 
 		
-		let content = parts.join('\n')
 		let out = ""
+
+		let content = parts.join('\n')
 		if o.indent or isKeyFrames
 			content = '\n' + content + '\n'
 

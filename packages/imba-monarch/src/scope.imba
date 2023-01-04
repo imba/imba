@@ -207,6 +207,7 @@ export class StyleNode < Group
 	get properties
 		findChildren('styleprop')
 
+
 export class StyleRuleNode < Group
 
 export class Scope < Node
@@ -325,7 +326,7 @@ export class Scope < Node
 		# namespaced? ? keyword.next.next : null
 
 	get namespaced?
-		class? and (ident.value.indexOf('.') > 0)
+		class? and (ident..value..indexOf('.') > 0)
 
 	get extends?
 		class? and keyword and keyword.prev.prev..match('keyword.extend')
@@ -440,7 +441,8 @@ export class FieldScope < Scope
 		self
 
 	# get selfPath
-		
+
+export class StyleRule < Scope
 
 export class SelectorNode < Group
 
@@ -458,6 +460,11 @@ export class StylePropKey < Group
 
 	get styleValue
 		yes
+
+export class StyleProps < Group
+	
+	get properties
+		findChildren('styleprop')
 
 export class StylePropValue < Group
 
@@ -527,7 +534,7 @@ export class TagNode < Group
 		"<{name}>"
 	
 	get outlineText
-		let inner = findChildren(/tag\.(reference|name|id|white|flag|event(?!\-))/).join('').trim()
+		let inner = findChildren(/tag\.(reference|name|id|white|flag|mixin|event(?!\-))/).join('').trim()
 		inner = inner.replace(/\.\s+/g,'')
 		"<{inner}>"
 		
@@ -578,6 +585,22 @@ export class Listener < Group
 
 	get name
 		findChildren('tag.event.name').join('').replace('@','')
+
+export class Decorator < Group
+
+	get name
+		findChildren('decorator.name').join('')
+
+	get nameToken
+		findChildren('decorator.name',yes)[0]
+
+	get valueSpan
+		let starts = start.startOffset
+		let [dot] = findChildren('decorator.modifier.start',yes)
+		if dot
+			{start: starts, length: (dot.offset - starts)}
+		else
+			span
 
 export class ParensNode < Group
 
@@ -649,6 +672,7 @@ export class ImportsNode < Group
 export class Assignable < Group
 
 export const ScopeTypeMap = {
+	rule: StyleRule
 	style: StyleNode
 	array: BracketsNode
 	stylerule: StyleRuleNode
@@ -671,10 +695,12 @@ export const ScopeTypeMap = {
 	tagattrvalue: TagAttrValueNode
 	tagcontent: TagContent
 	listener: Listener
+	decorator: Decorator # call descriptors?
 	styleinterpolation: StyleInterpolation
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
+	_sel_props: StyleProps
 	args: ParensNode
 	assignable: Assignable
 }

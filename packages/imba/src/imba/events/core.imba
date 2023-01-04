@@ -142,11 +142,8 @@ extend class Event
 
 	def @busy sel
 		# TODO REMOVE
+		# Add via 
 		self['αflag']('busy',sel)
-
-	def @mod name
-		# TODO REMOVE
-		self['αflag']("mod-{name}",global.document.documentElement)
 
 	def @outside
 		# TODO Support selector here?

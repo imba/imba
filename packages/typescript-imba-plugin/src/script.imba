@@ -327,7 +327,7 @@ export default class ImbaScript
 		
 	def getInfoAt pos, ls
 		let ctx = doc.getContextAtOffset(pos)
-		let out = {}
+		let out = {}		
 
 		if ctx.after.token == '' and !ctx.before.character.match(/\w/)
 			if ctx.after.character.match(/[\w\$\@\#\-]/)
@@ -338,7 +338,7 @@ export default class ImbaScript
 		let tok = ctx.token or {match: (do no)}
 		let checker = getTypeChecker!
 
-		# console.log('context for quick info',ctx)
+		util.log('getInfoAt',ctx)
 		
 		out.textSpan = tok.span
 		
@@ -375,8 +375,11 @@ export default class ImbaScript
 			if post.match(/^\d+$/)
 				util.log("this is a numeric thing(!!!)",tok)
 		
-		if tok.match('style.value.unit')
+		if tok.match('style.value.unit style.property.unit')
 			hit(checker.getTokenMetaSymbol(tok) or tok,'unit')
+
+		# if tok.match('style.value.unit style.property.unit')
+		#	hit(checker.getTokenMetaSymbol(tok) or tok,'unit')
 				
 		elif g = grp.closest('stylevalue')
 			let idx = (ctx..before..group or '').split(' ').length - 1
@@ -393,7 +396,15 @@ export default class ImbaScript
 			if m[0]
 				hit(m[0],'stylevalue')
 
-		
+		if tok.match('tag.mixin.name')
+			# let m = doc.getMatchingTokens('style.selector.mixin.name').filter do $1.value == tok.value
+			# hit(m[0],'mixin') if m[0]
+			hit(tok,'mixin')
+			# util.log("matching mixin??!",m)
+			# script.doc.getMatchingTokens(type)
+
+		if tok.match('style.selector.mixin.name')
+			hit(tok,'mixin') # we should drop the prefix as a concept now
 
 		if tok.match('style.property.var')
 			# util.log("matching!!",tok,checker.getSymbolInfo(tok),tok isa ImbaToken)

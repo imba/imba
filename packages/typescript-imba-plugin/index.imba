@@ -22,10 +22,11 @@ def patch ts
 def init modules = {}
 	let ts = global.ts = global.TS = modules.typescript
 	# don't patch if there are no imba files here?
+	# console.log('init plugin',Object.keys(modules))
 	if ts.#patched =? yes
 		patch(ts)
 		ts.ils = global.ils ||= new Service
-		util.log('init plugin',modules,arguments)
+		util.log('init plugin')
 	
 	return ts.ils
 

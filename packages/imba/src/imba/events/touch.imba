@@ -150,13 +150,13 @@ class Touch
 		if val > th and val >= o.x and val >= o.y
 			o.active = yes
 			let pinned = state.pinTarget
-			element.flags.incr('_move_')
-			pinned.flags.incr('_move_') if pinned
+			element.flags.incr('@move')
+			pinned.flags.incr('@move') if pinned
 			preventDefault!
 
 			once(self,'end') do
-				pinned.flags.decr('_move_') if pinned
-				element.flags.decr('_move_')
+				pinned.flags.decr('@move') if pinned
+				element.flags.decr('@move')
 			return true
 			
 		elif o.x > th or o.y > th
@@ -195,13 +195,13 @@ class Touch
 			o.timeout = setTimeout(&,time) do
 				o.active = yes
 				preventDefault!
-				el.flags.incr("_hold_")
+				el.flags.incr("@hold")
 				resolve(yes) if resolve
 				resolve = null
 			
 			once(self,'end') do
 				if o.active
-					el.flags.decr("_hold_")
+					el.flags.decr("@hold")
 				clearTimeout(o.timeout)
 				resolve(no) if resolve
 				resolve = null

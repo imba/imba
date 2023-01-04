@@ -710,7 +710,8 @@ export class ShadowRoot < DocumentFragment
 export class HTMLElement < Element
 
 export class HTMLHtmlElement < HTMLElement
-	
+	prop hmr
+
 	get scripts
 		#scripts ||= []
 
@@ -727,7 +728,7 @@ export class HTMLHtmlElement < HTMLElement
 		let jsassets = []
 		let inject = []
 
-		if global.IMBA_HMR
+		if global.IMBA_HMR_PATH and hmr !== false
 			inject.push("<script src='/__hmr__.js'></script>")
 		
 		# if we havent included any styles in the html at all

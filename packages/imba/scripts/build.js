@@ -103,6 +103,12 @@ function plugin(build) {
 			contents: body.js
 		}
 	})
+
+	build.onLoad({ filter: /\.js/ }, async (args) => {
+		// console.log('loading js',args);
+		if (watcher) watcher.add(args.path);
+		return;
+	})
 }
 async function universalise(result, o) {
 	for (let file of result.outputFiles) {

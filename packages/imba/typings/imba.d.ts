@@ -661,15 +661,15 @@ declare namespace imba {
     function autorun(callback: any): Reaction;
 
     // TODO check if T responds to accessor method - if so, return the result of that type
-    function accessor<T>(accessor: T): T;
+    function accessor<T>(accessor: T,...rest:any[]): T extends {$accessor: (...args: any[]) => infer X} ? X : T;
 
     interface AccessorGenerator {
-        accessor(target: any, key: symbol, name: string | symbol, slot: symbol, context: any);
+        $accessor(target: any, key: symbol, name: string | symbol, slot: symbol, context: any);
     }
 
     interface Accessor {
-        get(target: any, key: string | symbol, name: string | symbol): any;
-        set(value: any, target: any, key: string | symbol, name: string | symbol): void;
+        $get(target: any, key: string | symbol, name: string | symbol): any;
+        $set(value: any, target: any, key: string | symbol, name: string | symbol): void;
     }
 
 

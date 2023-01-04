@@ -91,31 +91,31 @@ declare namespace imbacss {
      * @custom
      * @summary Matches when a `@touch` handler is active for element
      */
-    interface αtouch { flag: '_touch_' }
+    interface αtouch { flag: '@touch' }
 
     /**
      * @custom
      * @summary Matches when a `@touch.moved` modifier is active for element
      */
-    interface αmove { flag: '_move_' }
+    interface αmove { flag: '@move' }
     
     /**
      * @custom
      * @summary Matches when a `@touch.hold` modifier is active for element
      */
-    interface αhold { flag: '_hold_' }
+    interface αhold { flag: '@hold' }
     
     /**
      * @custom
      * @summary Matches components rendered from server that are not hydrated
      */
-    interface αssr { flag: '_ssr_' }
+    interface αssr { flag: '@ssr' }
 
     /**
      * @custom
      * @summary Matches when the element has been suspended (see imba.Component.suspend)
      */
-     interface αsuspended { flag: '_suspended_' }
+     interface αsuspended { flag: '@suspended' }
 
     /** 
      * The viewport is in a landscape orientation, i.e., the width is greater than the height.

@@ -89,6 +89,8 @@ class VirtualFragment < Fragment
 	def #appendChild child
 		if parentNode
 			child.#insertInto(parentNode,#end)
+		else
+			child.##up ??= (##up or self)
 		childNodes.push(child)
 	
 	def insertBefore node,refnode
@@ -108,6 +110,16 @@ class VirtualFragment < Fragment
 		if idx >= 0
 			childNodes.splice(idx,1)
 		return
+
+	def #replaceChild newnode, oldnode
+		if parentNode
+			parentNode.#replaceChild(newnode,oldnode)
+		let idx = childNodes.indexOf(oldnode) # what if text?
+		childNodes[idx] = newnode
+		# let res = #insertChild(newnode,oldnode)
+		# #removeChild(oldnode)
+		return newnode
+		
 			
 	def #insertInto parent, before
 		# console.log 'frag #insertInto',parent,before,#children

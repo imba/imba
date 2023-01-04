@@ -221,13 +221,13 @@ export class Completion
 		if let ei = exportInfo
 			let asType = ei.exportedSymbolIsTypeOnly or #options.kind == 'type'
 			let path = ii.moduleSpecifier or ei.packageName or util.normalizeImportPath(script.fileName,ei.modulePath or ei.moduleSpecifier)
-			let alias = ei.importName or ei.exportName or ei.symbolName
-			let name = (ei.exportKind == 1 or ei.exportKind == 2) ? 'default' : (ei.symbolTableKey or ei.exportName or ei.symbolName)
+			let alias = ei.importName or ei.exportName or ei.symbolName or importName or ei.symbol..escapedName
+			let name = (ei.exportKind == 1 or ei.exportKind == 2) ? 'default' : (ei.symbolTableKey or ei.exportName or ei.symbolName or importName or ei.symbol..escapedName)
 			if ei.exportKind == 3
 				name = '*'
 
 			let edits = script.doc.createImportEdit(path,util.toImbaIdentifier(name),util.toImbaIdentifier(alias),asType)
-			
+
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
 		
@@ -237,6 +237,7 @@ export class Completion
 			let edits = script.doc.createImportEdit(path,util.toImbaIdentifier(name),util.toImbaIdentifier(name),false)
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
+
 
 		self
 
@@ -279,7 +280,7 @@ export class SymbolCompletion < Completion
 				item.insertText = ns = tags.alias
 			elif tags.proxy
 				ns = tags.proxy
-			triggers ':@.'
+			triggers ':@.=^'
 			kind = 9
 
 		elif cat == 'styleval'
@@ -310,7 +311,7 @@ export class SymbolCompletion < Completion
 			ns = tags.detail
 			# name = name.slice(1)
 			kind = 'event'
-			triggers ': '
+			triggers ':= '
 
 		elif cat == 'stylesel'
 			triggers ' [.(@'
@@ -447,7 +448,7 @@ export class AutoImportCompletion < SymbolCompletion
 			let named = importInfo.importClauseOrBindingPattern..namedBindings..elements
 			for entry in (named or [])
 				if entry.propertyName..escapedText == importName
-					item.insertText = entry.name.escapedText	
+					item.insertText = entry.name.escapedText
 		return self
 		
 	def resolve
@@ -461,7 +462,7 @@ export class AutoImportCompletion < SymbolCompletion
 		exportInfo..packagName or exportInfo..modulePath
 
 	get importName
-		importData.exportName
+		importData..exportName
 		
 	get uniqueName
 		symName + importPath
@@ -482,6 +483,9 @@ export class ImbaTokenCompletion < Completion
 	def setup
 		let o = #options
 		name = sym.value
+
+		if cat == 'mixin'
+			name = ('%' + name).replace(/\%/g,'')
 
 		if o.prefixCompletion
 			name = o.prefixCompletion + name
@@ -584,6 +588,15 @@ export default class Completions
 			let num = tok.prev.value
 			add('numberunits',kind: 'numberunit', prefixCompletion: num)
 
+		elif tok.match('.mixin') or ctx.before.line.match(/^\t*\<?\%\w*$/) or ctx.before.line.match(/^\<\%\w*$/)
+			# util.log "match mixin!"
+			let mixins = checker.getMixinReferences()
+			# util.log('add custom units',mixins)
+			# util.log('add default units??',checker.getMetaSymbols('style.value.unit '))
+			add(mixins,kind: 'mixin')
+			return self
+			# add(checker.getMetaSymbols('style.value.unit '),o)
+
 			# only if in styles
 		elif tok.match('number')
 			let num = tok.value
@@ -613,6 +626,13 @@ export default class Completions
 			
 		if flags & CT.Decorator
 			add 'decorators', kind: 'decorator'
+
+		if flags & CT.DecoratorModifier
+			try
+				let typ = checker.inferType(ctx.target,script.doc)
+				if typ
+					let props = checker.valueprops(typ).filter do !$1.isWebComponent
+					add props, kind: 'access', matchRegex: /^[^\#\$\@\_]/
 			
 		if flags & CT.TagEvent
 			add checker.props("ImbaEvents"), kind: 'tagevent'
@@ -694,6 +714,14 @@ export default class Completions
 
 		let vars = script.doc.varsAtOffset(pos).filter do $1.name[0] == '@'
 		add(vars,o)
+
+		try
+			let selfpath = ctx.selfPath
+			let selfprops = checker.props(selfpath)
+			add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: /^\@[^\@]/)
+			
+
+		# get decorators from the class body
 
 		# add the defaults from imba
 		let builtins = checker.props('imba').filter do $1.isDecorator
@@ -843,6 +871,7 @@ export default class Completions
 	
 		for item in vars
 			# hide decorators
+			# not if we are in the right context?
 			continue if item.name[0] == '@'
 
 			let found = checker.findExactSymbolForToken(item.node)

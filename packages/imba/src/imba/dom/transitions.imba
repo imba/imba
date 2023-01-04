@@ -84,14 +84,14 @@ export class Easer < Emitter
 		let prev = #phase
 		
 		if #phase =? val
-			unflag("_{prev}_") if prev
-			flag("_{val}_")  if val
+			unflag("@{prev}") if prev
+			flag("@{val}")  if val
 		
 			# clearing all the node animations
 			unless val
-				unflag('_out_')
-				unflag('_in_')
-				unflag('_off_')
+				unflag('@out')
+				unflag('@in')
+				unflag('@off')
 				#nodes = null
 				
 			if val == 'enter' and prev == 'leave'
@@ -190,8 +190,8 @@ export class Easer < Emitter
 		if leaving?
 			let anims = track do
 				phase = 'enter'
-				unflag('_off_')
-				unflag('_out_')
+				unflag('@off')
+				unflag('@out')
 				
 			# what if there are no animations?
 			anims.finished.then(finish) do log('error cancel leave',$1)
@@ -206,15 +206,15 @@ export class Easer < Emitter
 		# Could it be better to set the flags before adding it to the dom?
 
 		flag('_instant_')
-		unflag('_out_')
+		unflag('@out')
 		commit!
 		# must be certain that they don't have a size set directly?
 		sizes = #nodes.sized = getNodeSizes('in')
 
 		dom..transition-in-init(self)
-		flag('_off_')
-		flag('_in_')
-		flag('_enter_')
+		flag('@off')
+		flag('@in')
+		flag('@enter')
 		
 		commit!
 		unflag('_instant_')
@@ -222,8 +222,8 @@ export class Easer < Emitter
 		let anims = #anims = track do
 			phase = 'enter'
 			applyNodeSizes(sizes)
-			unflag('_off_')
-			unflag('_in_')
+			unflag('@off')
+			unflag('@in')
 
 		anims.finished.then(finish) do
 			clearNodeSizes(sizes)
@@ -243,9 +243,9 @@ export class Easer < Emitter
 
 		if entering? and #mode != 'forward'
 			let anims = track do
-				flag('_off_')
-				flag('_in_')
-				unflag('_out_')
+				flag('@off')
+				flag('@in')
+				unflag('@out')
 				phase = 'leave'
 				clearNodeSizes(#nodes.sized)
 			log "cancel enter anims own",anims.own,anims
@@ -255,11 +255,11 @@ export class Easer < Emitter
 		#nodes = getAnimatedNodes!
 		sizes = getNodeSizes('out')
 		applyNodeSizes(sizes)
-		flag('_leave_')
+		flag('@leave')
 		let anims = #anims = track do
 			phase = 'leave'
-			flag('_off_')
-			flag('_out_')
+			flag('@off')
+			flag('@out')
 			clearNodeSizes(sizes)
 		
 		# do it in the same tick if we find no running animations(!)

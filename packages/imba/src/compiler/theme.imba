@@ -15,7 +15,7 @@ export const modifiers =
 
 	'first-child': {}
 	'last-child': {}
-	
+	autofill: {}
 	active: {}
 	checked: {}
 	default: {}
@@ -41,11 +41,16 @@ export const modifiers =
 	link: {}
 	not: {type: 'selector'}
 	'nth-child': {}
+	modal: {}
+	'picture-in-picture': {}
+
 	'nth-last-child': {}
 	'nth-last-of-type': {}
 	'nth-of-type': {}
 	'only-child': {}
 	'only-of-type': {}
+	playing: {}
+	paused: {}
 	optional: {}
 	'out-of-range': {}
 	'placeholder-shown': {}
@@ -95,6 +100,7 @@ export const modifiers =
 	md: {media: '(min-width: 768px)', medianeg: '(max-width: 767px)' }
 	lg: {media: '(min-width: 1024px)', medianeg: '(max-width: 1023px)' }
 	xl: {media: '(min-width: 1280px)', medianeg: '(max-width: 1279px)' }
+
 	'2xl': {media: '(min-width: 1536px)' }
 	'lt-xs': {media: '(max-width: 479px)' }
 	'lt-sm': {media: '(max-width: 639px)' }
@@ -105,32 +111,34 @@ export const modifiers =
 
 	landscape: {media: '(orientation: landscape)', medianeg: '(orientation: portrait)'}
 	portrait: {media: '(orientation: portrait)', medianeg: '(orientation: landscape)'}
-	
 	dark: {media: '(prefers-color-scheme: dark)', medianeg: '(prefers-color-scheme: light)'}
 	light: {media: '(prefers-color-scheme: light)', medianeg: '(prefers-color-scheme: dark)'}
 	
-	mac: {ua: 'mac'}
-	ios: {ua: 'ios'}
-	win: {ua: 'win'}
-	android: {ua: 'android'}
-	linux: {ua: 'linux'}
+	# mac: {ua: 'mac'}
+	# ios: {ua: 'ios'}
+	# win: {ua: 'win'}
+	# android: {ua: 'android'}
+	# linux: {ua: 'linux'}
 	
-	ie: {ua: 'ie'}
-	chrome: {ua: 'chrome'}
-	safari: {ua: 'safari'}
-	firefox: {ua: 'firefox'}
-	opera: {ua: 'opera'}
-	blink: {ua: 'blink'}
-	webkit: {ua: 'webkit'}
+	# no need for anything specific for these
+	# ie: {ua: 'ie'}
+	# chrome: {ua: 'chrome'}
+	# safari: {ua: 'safari'}
+	# firefox: {ua: 'firefox'}
+	# opera: {ua: 'opera'}
+	# blink: {ua: 'blink'}
+	# webkit: {ua: 'webkit'}
 
-	enter: {flag:'_enter_'}
-	leave: {flag:'_leave_'}
-	
-	touch: {flag: '_touch_'}
-	suspended: {flag: '_suspended_'}
-	move: {flag: '_move_'}
-	hold: {flag: '_hold_'}
-	ssr: {flag: '_ssr_'}
+	enter: {flag:'@enter'}
+	leave: {flag:'@leave'}
+
+	# For whole module or single element?
+	touch: {flag: '@touch'}
+	suspended: {flag: '@suspended'}
+	'user-invalid': {}
+	move: {flag: '@move'}
+	hold: {flag: '@hold'}
+	ssr: {flag: '@ssr'}
 
 # some things should definitely move out of theme
 export const variants =

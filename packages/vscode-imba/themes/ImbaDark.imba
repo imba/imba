@@ -368,6 +368,10 @@ export let scopes = [
 	['entity.name.tag.special',`#ffc799`]
 
 	['entity.other.event-name.imba',colors.tag,'italic']
+	# ['entity.other.event-name.imba',colors.tag,'italic']
+
+	['entity.other.tag-ref.imba',`#ffc799`]
+	['entity.other.tag-mixin.imba',`#ffc799`]
 	# ['entity.other.tag.class-name',colors.yellow200]
 	# 
 	# ['entity.other.tag.event-modifier',colors.event-modifier]
@@ -410,9 +414,14 @@ export let scopes = [
 	['punctuation.separator.combinator.css','#eec487'] # 6d829b
 	['meta.selector entity.other.attribute-name','#eec487'] # 6d829b
 	['meta.selector entity.other.attribute-name.class','#e9e19b'] # 6d829b
+	['meta.style entity.other.attribute-name.mixin','#ffc799'] # 6d829b
+
 	['constant.other.color','#a49feb'] # 6d829b
 	
 	['meta.style.imba support.constant.color','#a49feb'] # 6d829b
+	['meta.style.imba support.constant.color','#a49feb'] # 6d829b
+	['meta.style.imba style.property.operator','#b37bb6']
+	['source.imba punctuation.separator.key-value.css','#b37bb6']
 	
 	# markdown
 	# ['entity.name.section.markdown','#ffffff']

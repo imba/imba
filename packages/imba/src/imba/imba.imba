@@ -4,6 +4,7 @@ export * from './scheduler'
 export * from './hooks'
 export * from './decorators'
 export * from './serve'
+export * from './env'
 
 export * from './dom/core'
 export * from './dom/fragment'

@@ -5,43 +5,45 @@ let instances = 0
 let inits = 0
 
 class Accessor
-	static def accessor target, key, name, slot, context
+	static def $accessor target, key, name, slot, context
 		instances++
 		new self
 
-	def accessor target, key, name, slot, context
+	def $accessor target, key, name, slot, context
 		instances++
 		return target[slot] = self
 
-	def get target, key, name
+	def $get target, key, name
 		return target[key]
 
-	def set value, target, key, name
+	def $set value, target, key, name
 		target[key] = value
 
-	def init value, target, key, name
+	def $init value, target, key, name
 		inits++
 		target[key] = value
 
+class @any < Accessor
+
 const Upcase = {
-	def get\string target, key
+	def $get\string target, key
 		target[key]
 
-	def set value, target, key, name
+	def $set value, target, key, name
 		if typeof value == 'string'
 			value = value.toUpperCase!
 		target[key] = value
 
-	def init value, target, key, name
+	def $init value, target, key, name
 		if value
-			set(value,target,key,name)
+			$set(value,target,key,name)
 		return
 }
 
 
 class Main
-	prop title @ new Accessor
-	prop initials @ Upcase
+	title @(new Accessor)
+	initials @(Upcase)
 
 class Sub < Main
 
@@ -56,14 +58,15 @@ test "basics" do
 
 	obj.initials = "saa"
 	eq obj.initials, "SAA"
-	eq obj.@@initials.set,Upcase.set
+	eq obj.@@initials.$set,Upcase.$set
 	
 test "defaults" do
 	class Item
-		prop title = "hello" @ Upcase
+		prop title = "hello" @(Upcase)
 
 		get stuff
-			Upcase.get(10)
+			Upcase.$get(10)
+			
 	let item = new Item
 	eq item.title, "HELLO"
 

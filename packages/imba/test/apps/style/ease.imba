@@ -43,7 +43,7 @@ def track cb
 	return c
 
 global css @root.noanim
-	* tween@force:all 0ms
+	* tween@important:all 0ms
 
 def instant cb
 	document.flags.incr('noanim')

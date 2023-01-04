@@ -366,6 +366,26 @@ export default class Bundle < Component
 		defines["globalThis.IMBA_DEV"] ||= String(hmr?)
 		defines["globalThis.IMBA_RUN"] ||= String(run?)
 
+		if nodeish? and main? and esm?
+			# backwards compatibility with other things?
+			# only if there is no other require already imported this is a bit risky
+			esoptions.banner.js += '\nimport { createRequire as $require$ } from "module"; let require = $require$(import.meta.url);'
+
+		if program.dotvars
+			# In this initial implementation we are all vars from env file directly into the build script
+			if webish? or true
+				for own name,value of program.dotvars
+					defines["process.env.{name}"] = JSON.stringify(value)
+
+			elif main? and esm?
+				esoptions.banner.js += '\nimport * as $dotenv from "dotenv";$dotenv.config();'
+			elif main?
+				esoptions.banner.js += '\nrequire("dotenv").config();'
+
+			if webish?
+				# process.env should return an empty object when compiled to web
+				defines["process.env"] = '{}'
+
 		if o.bundle == false
 			esoptions.bundle = false
 			delete esoptions.external
@@ -602,8 +622,8 @@ export default class Bundle < Component
 			let rel? = path[0] == '.'
 			let pkg? = !abs? and !rel?
 			let pkg = pkg? and path.match(/^(@[\w\.\-]+\/)?\w[\w\.\-]*/)[0] or null
-			let external? = (externs.indexOf(path) >= 0) or (pkg? and externs.indexOf(pkg) >= 0)
 			let q = (path.split('?')[1] or '')
+			let external? = (externs.indexOf(path) >= 0) or (pkg? and externs.indexOf(pkg) >= 0) or q == 'external'
 			let pathname = q ? path.split('?')[0] : path
 
 			if q == 'style'
@@ -627,15 +647,12 @@ export default class Bundle < Component
 				let res = await esb.resolve(pathname,opts)
 				return {path: res.path}
 
-			if q == 'external'
+			if q == 'external' and (!nodeish? or !run?)
 				return {path: pathname, external: true}
 
-			
-				
 			# should this be the default for all external modules?
-			if pkg? and nodeish? and run? and !standalone? and !program.tmpdir
-				if externs.indexOf("!{path}") >= 0
-					# console.log "don't externalize",path
+			if pkg? and nodeish? and run? and !standalone? # and !program.tmpdir
+				if externs.indexOf("!{path}") >= 0 and q != 'external'
 					return null
 
 				let reachable? = no
@@ -647,6 +664,7 @@ export default class Bundle < Component
 					kind: esm? ? 'import-statement' : 'require-call'
 					pluginData: 'skip'
 				}
+
 				let res = await esb.resolve(args.path,opts)
 					
 				if res.path
@@ -655,7 +673,7 @@ export default class Bundle < Component
 					reachable? = yes if inpath.indexOf('../') != 0
 
 				if external? and reachable?
-					return {external: true}
+					return {external: true, path: pathname}
 
 				if external?
 					return {external: true, path: res.path}
@@ -666,15 +684,19 @@ export default class Bundle < Component
 
 				return {external: true}
 
+			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
+
 			# if this is an absolute path let esbuild resolve
 			if abs?
+				# or rather let do not resolve it?
+				if args.kind == 'url-token'
+					return {external: true}
 				return null
 
 			if q == 'img'
 				let resolved = await esresolve(args)
 				return {path: resolved.path}
 
-			let img? = /(\.(svg|png|jpe?g|gif|tiff|webp))$/.test(path)
 			
 			if isImba(args.importer) and img? and args.kind != 'url-token'
 				let resolved = await esresolve(args)
@@ -685,10 +707,12 @@ export default class Bundle < Component
 
 			# FIXME Formalize this behaviour
 			if path.match(/\.json(\?copy)?$/)
+				
 				let res = await esresolve(args)
 				if args.importer..match(/\.html$/)
 					return {path: res.path, suffix: "?url"}
-				if web? and esoptions.splitting
+
+				if web? and esoptions.splitting and isImba(args.importer)
 					# should still be treated as a watching dependency?
 					return {path: res.path + '.js', suffix: "?external"}
 
@@ -1373,7 +1397,8 @@ export default class Bundle < Component
 
 				smap.file = name
 
-				body += "\n/*# sourceMappingURL=./{name}.map */"
+				if esoptions.sourcemap
+					body += "\n/*# sourceMappingURL=./{name}.map */"
 
 				let asset = {
 					#type: 'output'
@@ -1452,8 +1477,8 @@ export default class Bundle < Component
 					asset.hash ||= createHash(body)
 				
 				if !asset.public
-					# only if it is the main entrypoint?
-					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}"]
+					# should probably use process.env for this instead
+					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}","globalThis.IMBA_ASSETS_PATH='{assetsDir}'"]
 					if staticFilesPath and program.tmpdir
 						parts.push("globalThis.IMBA_STATICDIR='{staticFilesPath}'")
 					head = parts.join(';')
