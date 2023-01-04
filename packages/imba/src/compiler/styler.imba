@@ -15,11 +15,13 @@ const ThemeCache = new WeakMap
 
 export const layouts =
 
-	h: do(o)
+	hcs: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'center'
 		o.ai = 'center'
+		o.ac = 'center'
+		o.jc = 'space-between'
+		
 
 	hl: do(o)
 		o.display = 'flex'
