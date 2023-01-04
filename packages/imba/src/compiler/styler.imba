@@ -199,7 +199,7 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-around'
-		o.ai = 'flex-center'
+		o.ai = 'center'
 
 	vlsa: do(o)
 		o.display = 'flex'
@@ -217,7 +217,7 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-evenly'
-		o.ai = 'flex-center'
+		o.ai = 'center'
 
 	vlse: do(o)
 		o.display = 'flex'
