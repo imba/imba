@@ -98,6 +98,102 @@ declare namespace imbacss {
 		/** The element generates a principal flex container box and establishes a flex formatting context. */
 		flex: ''
 
+		/** Vertical top left. */
+		vtl: ''
+
+		/** Vertical top center. */
+		vtc: ''
+
+		/** Vertical top right. */
+		vtr: ''
+
+		/** Vertical top stretch. */
+		vts: ''
+
+		/** Vertical center left. */
+		vcl: ''
+
+		/** Vertical center center. */
+		vcc: ''
+
+		/** Vertical center right. */
+		vcr: ''
+
+		/** Vertical center stretch. */
+		vcs: ''
+
+		/** Vertical bottom left. */
+		vbl: ''
+
+		/** Vertical bottom center. */
+		vbc: ''
+
+		/** Vertical bottom right. */
+		vbr: ''
+
+		/** Vertical bottom stretch. */
+		vbs: ''
+
+		/** Vertical space-between left. */
+		vsl: ''
+
+		/** Vertical space-between center. */
+		vsc: ''
+
+		/** Vertical space-between right. */
+		vsr: ''
+
+		/** Vertical space-between stretch. */
+		vss: ''
+
+		/** Horizontal top left. */
+		htl: ''
+
+		/** Horizontal top center. */
+		htc: ''
+
+		/** Horizontal top right. */
+		htr: ''
+
+		/** Horizontal top space-between. */
+		hts: ''
+
+		/** Horizontal center left. */
+		hcl: ''
+
+		/** Horizontal center center. */
+		hcc: ''
+
+		/** Horizontal center right. */
+		hcr: ''
+
+		/** Horizontal center space-between. */
+		hcs: ''
+
+		/** Horizontal bottom left. */
+		hbl: ''
+
+		/** Horizontal bottom center. */
+		hbc: ''
+
+		/** Horizontal bottom right. */
+		hbr: ''
+
+		/** Horizontal bottom space-between. */
+		hbs: ''
+
+		/** Horizontal stretch left. */
+		hsl: ''
+
+		/** Horizontal stretch center. */
+		hsc: ''
+
+		/** Horizontal stretch right. */
+		hsr: ''
+
+		/** Horizontal stretch space-between. */
+		hss: ''
+
 		/**
 		 * Flex with flex-direction set to row
 		 * @custom
