@@ -15,224 +15,6 @@ const ThemeCache = new WeakMap
 
 export const layouts =
 
-	hcs: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.ai = 'center'
-		o.ac = 'center'
-		o.jc = 'space-between'
-		
-
-	hl: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'flex-start'
-		o.ai = 'center'
-
-	hr: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'flex-end'
-		o.ai = 'center'
-
-	ht: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'center'
-		o.ai = 'flex-start'
-
-	hb: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'center'
-		o.ai = 'flex-end'
-
-	htl: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'flex-start'
-		o.ai = 'flex-start'
-
-	htr: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'flex-end'
-		o.ai = 'flex-start'
-
-	hbl: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'flex-start'
-		o.ai = 'flex-end'
-
-	hbr: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'flex-end'
-		o.ai = 'flex-end'
-
-	hsb: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-between'
-		o.ai = 'center'
-
-	htsb: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-between'
-		o.ai = 'flex-start'
-
-	hbsb: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-between'
-		o.ai = 'flex-end'
-
-	hsa: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-around'
-		o.ai = 'center'
-
-	htsa: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-around'
-		o.ai = 'flex-start'
-
-	hbsa: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-around'
-		o.ai = 'flex-end'
-
-	hse: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-evenly'
-		o.ai = 'center'
-
-	htse: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-evenly'
-		o.ai = 'flex-start'
-
-	hbse: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.jc = 'space-evenly'
-		o.ai = 'flex-end'
-
-	v: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'center'
-		o.ai = 'center'
-
-	vl: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'center'
-		o.ai = 'flex-start'
-
-	vr: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'center'
-		o.ai = 'flex-end'
-
-	vt: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'flex-start'
-		o.ai = 'center'
-
-	vb: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'flex-end'
-		o.ai = 'center'
-
-	vtl: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'flex-start'
-		o.ai = 'flex-start'
-
-	vtr: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'flex-start'
-		o.ai = 'flex-end'
-
-	vbl: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'flex-end'
-		o.ai = 'flex-start'
-
-	vbr: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'flex-end'
-		o.ai = 'flex-end'
-
-	vsb: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-between'
-		o.ai = 'center'
-
-	vlsb: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-between'
-		o.ai = 'flex-start'
-
-	vrsb: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-between'
-		o.ai = 'flex-end'
-
-	vsa: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-around'
-		o.ai = 'center'
-
-	vlsa: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-around'
-		o.ai = 'flex-start'
-
-	vrsa: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-around'
-		o.ai = 'flex-end'
-
-	vse: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-evenly'
-		o.ai = 'center'
-
-	vlse: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-evenly'
-		o.ai = 'flex-start'
-
-	vrse: do(o)
-		o.display = 'flex'
-		o.fld = 'column'
-		o.jc = 'space-evenly'
-		o.ai = 'flex-end'
-
 	vflex: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
@@ -290,13 +72,43 @@ export const layouts =
 	vgrid: do(o)
 		o.display = 'grid'
 		o.gaf = 'row'
-	
-	cluster: do(o)
-		o.display = 'flex'
-		o.fld = 'row'
-		o.flw = 'wrap'
-		o.ai = 'center'
-		o['place-content'] = 'center'
+
+
+
+for dir,row of 'vh'
+	for va of 'tcbs'
+		for ha of 'lcrs'
+
+			let vm = {
+				t: 'flex-start'
+				b: 'flex-end'
+				c: 'center'
+				s: row ? 'stretch' : 'space-between'
+			}
+
+			let hm = {
+				l: 'flex-start'
+				r: 'flex-end'
+				c: 'center'
+				s: row ? 'space-between' : 'stretch'
+			}
+
+			let name = "{dir}{va}{ha}"
+			let combo = {
+				display: 'flex'
+				fld: row ? 'row' : 'column'
+				jc: row ? hm[ha] : vm[va]
+				ai: row ? vm[va] : hm[ha]
+				ac: row ? vm[va] : hm[ha]
+			}
+
+			layouts[name] = do(o)
+				Object.assign(o,combo)
+				return o
+
+			# console.log "add layout function",name,combo
+
+			# if dir == 'v'
 
 export const validTypes = {
 	ease: 'linear|ease|ease-in|ease-out|ease-in-out|step-start|step-end|stepsƒ|cubic-bezierƒ'
