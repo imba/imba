@@ -86,7 +86,7 @@ def run
 
 	def completion file, filter = null, pos = "~\n# eof", o = {}
 		let res = completions(file, pos,{all: yes},filter)
-		
+		console.log 'res',res,res.items,pos,filter
 		# debugger
 		res.items[0].resolve!
 		console.log res.items[0].importData

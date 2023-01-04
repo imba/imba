@@ -7,6 +7,6 @@
     "typescript-imba-plugin": "file:../typescript-imba-plugin"
   },
   "devDependencies": {
-    "typescript": "^4.8.4"
+    "typescript": "4.9"
   }
 }
