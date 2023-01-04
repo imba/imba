@@ -1,5 +1,11 @@
 import { Local } from './local'
 
+global css .test
+	d:block flex-direction:row
+	w:100px h:10px bg:green
+	@hover d:none
+	s:20px
+
 class Model
 	prop one = op.test
 	prop name @ op.tester

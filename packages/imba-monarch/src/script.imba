@@ -112,6 +112,9 @@ export default class ImbaScriptInfo
 		let tokens = tokens.filter do $1.match('push._imports')
 		return tokens.map do $1.scope
 
+	def getStylePropLists
+		tokens.filter(do $1.match('push._sel_props')).map do $1.scope
+
 	def getRootClasses
 		getNodesInScope(root).filter do $1 isa Scope and $1.class?
 		
@@ -864,7 +867,7 @@ export default class ImbaScriptInfo
 
 				if idx >= 0
 					scopetype = scopetype.slice(idx + 1)
-					ctor = ScopeTypeMap[scopetype] || Group
+					ctor = ScopeTypeMap[subtyp] || ScopeTypeMap[scopetype] || Group
 				elif ScopeTypeMap[scopetype]
 					ctor = ScopeTypeMap[scopetype]
 

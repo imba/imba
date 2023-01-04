@@ -207,6 +207,7 @@ export class StyleNode < Group
 	get properties
 		findChildren('styleprop')
 
+
 export class StyleRuleNode < Group
 
 export class Scope < Node
@@ -440,7 +441,8 @@ export class FieldScope < Scope
 		self
 
 	# get selfPath
-		
+
+export class StyleRule < Scope
 
 export class SelectorNode < Group
 
@@ -458,6 +460,11 @@ export class StylePropKey < Group
 
 	get styleValue
 		yes
+
+export class StyleProps < Group
+	
+	get properties
+		findChildren('styleprop')
 
 export class StylePropValue < Group
 
@@ -665,6 +672,7 @@ export class ImportsNode < Group
 export class Assignable < Group
 
 export const ScopeTypeMap = {
+	rule: StyleRule
 	style: StyleNode
 	array: BracketsNode
 	stylerule: StyleRuleNode
@@ -692,6 +700,7 @@ export const ScopeTypeMap = {
 	styleprop: StylePropNode
 	stylepropkey: StylePropKey
 	stylevalue: StylePropValue
+	_sel_props: StyleProps
 	args: ParensNode
 	assignable: Assignable
 }
