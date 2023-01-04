@@ -24,50 +24,50 @@ export const layouts =
 	hl: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'start'
+		o.jc = 'flex-start'
 		o.ai = 'center'
 
 	hr: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'end'
+		o.jc = 'flex-end'
 		o.ai = 'center'
 
 	ht: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'center'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hb: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'center'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	htl: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'start'
-		o.ai = 'start'
+		o.jc = 'flex-start'
+		o.ai = 'flex-start'
 
 	htr: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'end'
-		o.ai = 'start'
+		o.jc = 'flex-end'
+		o.ai = 'flex-start'
 
 	hbl: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'start'
-		o.ai = 'end'
+		o.jc = 'flex-start'
+		o.ai = 'flex-end'
 
 	hbr: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-		o.jc = 'end'
-		o.ai = 'end'
+		o.jc = 'flex-end'
+		o.ai = 'flex-end'
 
 	hsb: do(o)
 		o.display = 'flex'
@@ -79,13 +79,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-between'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hbsb: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-between'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	hsa: do(o)
 		o.display = 'flex'
@@ -97,13 +97,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-around'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hbsa: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-around'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	hse: do(o)
 		o.display = 'flex'
@@ -115,13 +115,13 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-evenly'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	hbse: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
 		o.jc = 'space-evenly'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	v: do(o)
 		o.display = 'flex'
@@ -133,49 +133,49 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'center'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vr: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'center'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vt: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'start'
+		o.jc = 'flex-start'
 		o.ai = 'center'
 
 	vb: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'end'
+		o.jc = 'flex-end'
 		o.ai = 'center'
 
 	vtl: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'start'
-		o.ai = 'start'
+		o.jc = 'flex-start'
+		o.ai = 'flex-start'
 
 	vtr: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'start'
-		o.ai = 'end'
+		o.jc = 'flex-start'
+		o.ai = 'flex-end'
 
 	vbl: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'end'
-		o.ai = 'start'
+		o.jc = 'flex-end'
+		o.ai = 'flex-start'
 
 	vbr: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-		o.jc = 'end'
-		o.ai = 'end'
+		o.jc = 'flex-end'
+		o.ai = 'flex-end'
 
 	vsb: do(o)
 		o.display = 'flex'
@@ -187,49 +187,49 @@ export const layouts =
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-between'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vrsb: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-between'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vsa: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-around'
-		o.ai = 'center'
+		o.ai = 'flex-center'
 
 	vlsa: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-around'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vrsa: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-around'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vse: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-evenly'
-		o.ai = 'center'
+		o.ai = 'flex-center'
 
 	vlse: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-evenly'
-		o.ai = 'start'
+		o.ai = 'flex-start'
 
 	vrse: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
 		o.jc = 'space-evenly'
-		o.ai = 'end'
+		o.ai = 'flex-end'
 
 	vflex: do(o)
 		o.display = 'flex'
