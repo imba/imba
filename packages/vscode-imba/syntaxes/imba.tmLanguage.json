@@ -226,11 +226,11 @@
         },
         {
           "name": "keyword.control.imba",
-          "match": "(?<=export\\s+)(default)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
+          "match": "(?<=export)\\s+(default)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
         },
         {
           "name": "keyword.control.imba",
-          "match": "(?<=import\\s+)(type)(?=\\s+[\\w\\{\\$\\_])"
+          "match": "(?<=import)\\s+(type)(?=\\s+[\\w\\{\\$\\_])"
         },
         {
           "name": "keyword.control.imba",
@@ -238,7 +238,7 @@
         },
         {
           "name": "keyword.control.imba",
-          "match": "(?<=[\\*\\}\\w\\$]\\s+)(from)(?=\\s+[\\\"\\'])"
+          "match": "(?<=[\\*\\}\\w\\$])\\s+(from)(?=\\s+[\\\"\\'])"
         },
         {
           "name": "storage.type.function.imba",
@@ -542,12 +542,14 @@
         }
       ]
     },
-    "css-size-keywords": [
-      {
-        "name": "support.constant.size.property-value.css",
-        "match": "(x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\\w-])"
-      }
-    ],
+    "css-size-keywords": {
+      "patterns": [
+        {
+          "name": "support.constant.size.property-value.css",
+          "match": "(x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\\w-])"
+        }
+      ]
+    },
     "css-color-keywords": {
       "patterns": [
         {

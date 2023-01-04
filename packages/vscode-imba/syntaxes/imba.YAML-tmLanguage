@@ -175,17 +175,17 @@ repository:
       match: '(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|throw|as|continue|break|extend|augment){{endOfIdentifier}}'
 
     - name: keyword.control.imba
-      match: '(?<=export\s+)(default){{endOfIdentifier}}'
+      match: '(?<=export)\s+(default){{endOfIdentifier}}'
     
     - name: keyword.control.imba
-      match: '(?<=import\s+)(type)(?=\s+[\w\{\$\_])'
+      match: '(?<=import)\s+(type)(?=\s+[\w\{\$\_])'
 
     - name: keyword.control.imba
       match: '(extend|global)\s+(?=class|tag)'
       
 
     - name: keyword.control.imba
-      match: (?<=[\*\}\w\$]\s+)(from)(?=\s+[\"\'])
+      match: (?<=[\*\}\w\$])\s+(from)(?=\s+[\"\'])
 
     - name: storage.type.function.imba
       match: '(def|get|set){{endOfIdentifier}}'
@@ -350,6 +350,7 @@ repository:
     - include: '#inline-styles'
   
   css-size-keywords:
+    patterns:
     - name: support.constant.size.property-value.css
       match: (x+s|sm-|md-|lg-|sm|md|lg|x+l|hg|x+h)(?![\w-])
 

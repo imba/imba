@@ -47,7 +47,7 @@
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
     "build-parser": "node scripts/build-parser.js",
     "build": "npm run build-parser && node scripts/build.js",
-    "prepare": "npm run build"
+    "prepack": "npm run build"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.225",
