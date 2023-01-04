@@ -2,6 +2,8 @@
 
 ## 2.0.0-alpha.226
 
+We've reworked a core part of how style selectors are compiled in terms of specificity++. If your existing styles break in any way, please let us know on discord!
+
 * Fixed reference to missing index.css.map when building projects.
 
 * Fixed issue with reactivity when error was thrown inside reactive function.
@@ -49,6 +51,8 @@
 * When errors are thrown inside event handlers - a subsequent `@error` event will be triggered from the element of the throwing handler.
 
 * All new `imba create` command (by @familyfriendlymikey)
+
+* Remove support for old `prop name @set ...` syntax for watching when property is changed. Implement using descriptors instead.
 
 
 ## 2.0.0-alpha.224
