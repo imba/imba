@@ -1133,6 +1133,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-width)
 	 * 
+	 * @alias maw
 	*/
 	interface maxΞwidth extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -1151,6 +1152,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy maxΞwidth */
+	interface maw extends maxΞwidth { }
 	/**
 	 * Specifies how far an absolutely positioned box's bottom margin edge is offset above the bottom edge of the box's 'containing block'.
 	 * 
@@ -1295,6 +1298,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-height)
 	 * 
+	 * @alias mih
 	*/
 	interface minΞheight extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -1312,6 +1316,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy minΞheight */
+	interface mih extends minΞheight { }
 	/**
 	 * A two-dimensional transformation is applied to an element through the 'transform' property. This property contains a list of transform functions similar to those allowed by SVG.
 	 * 
@@ -1446,6 +1452,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-width)
 	 * 
+	 * @alias miw
 	*/
 	interface minΞwidth extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -1463,6 +1470,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy minΞwidth */
+	interface miw extends minΞwidth { }
 	/**
 	 * Shorthand property for 'outline-style', 'outline-width', and 'outline-color'.
 	 * 
@@ -1588,6 +1597,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-height)
 	 * 
+	 * @alias mah
 	*/
 	interface maxΞheight extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -1606,6 +1616,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy maxΞheight */
+	interface mah extends maxΞheight { }
 	/**
 	 * Shorthand for setting 'list-style-type', 'list-style-position' and 'list-style-image'
 	 * 
@@ -1809,6 +1821,7 @@ declare namespace imbacss {
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-overflow)
 	 * 
+	 * @alias tof
 	*/
 	interface textΞoverflow extends _ {
 		set(val: this | Ψstring, arg1: any): void;
@@ -1821,6 +1834,8 @@ declare namespace imbacss {
 
 	}
 
+	/** @proxy textΞoverflow */
+	interface tof extends textΞoverflow { }
 	/**
 	 * Shorthand that sets the four 'border-*-width' properties. If it has four values, they set top, right, bottom and left in that order. If left is missing, it is the same as right; if bottom is missing, it is the same as top; if right is missing, it is the same as top.
 	 * 
@@ -8611,12 +8626,15 @@ Specifying any precise animations or physics used to enforce those snap points i
 	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-underline-offset)
 	 * 
+	 * @alias tuo
 	*/
 	interface textΞunderlineΞoffset extends _ {
 		set(val: any): void;
 
 	}
 
+	/** @proxy textΞunderlineΞoffset */
+	interface tuo extends textΞunderlineΞoffset { }
 	/**
 	 * The speak-as descriptor specifies how a counter symbol constructed with a given @counter-style will be represented in the spoken form. For example, an author can specify a counter symbol to be either spoken as its numerical value or just represented with an audio cue.
 	 * 
