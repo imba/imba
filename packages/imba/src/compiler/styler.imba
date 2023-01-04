@@ -339,6 +339,10 @@ export const aliases =
 	l: 'left'
 	r: 'right'
 	s: 'size'
+	mih: 'min-height'
+	mah: 'max-height'
+	miw: 'min-width'
+	maw: 'max-width'
 	# size: ['width','height']
 	
 	# justify
