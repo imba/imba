@@ -111,6 +111,134 @@
 					"description": "The element generates a principal flex container box and establishes a flex formatting context."
 				},
 				{
+					"name": "vtl",
+					"description": "Vertical top left."
+				},
+				{
+					"name": "vtc",
+					"description": "Vertical top center."
+				},
+				{
+					"name": "vtr",
+					"description": "Vertical top right."
+				},
+				{
+					"name": "vts",
+					"description": "Vertical top stretch."
+				},
+				{
+					"name": "vcl",
+					"description": "Vertical center left."
+				},
+				{
+					"name": "vcc",
+					"description": "Vertical center center."
+				},
+				{
+					"name": "vcr",
+					"description": "Vertical center right."
+				},
+				{
+					"name": "vcs",
+					"description": "Vertical center stretch."
+				},
+				{
+					"name": "vbl",
+					"description": "Vertical bottom left."
+				},
+				{
+					"name": "vbc",
+					"description": "Vertical bottom center."
+				},
+				{
+					"name": "vbr",
+					"description": "Vertical bottom right."
+				},
+				{
+					"name": "vbs",
+					"description": "Vertical bottom stretch."
+				},
+				{
+					"name": "vsl",
+					"description": "Vertical space-between left."
+				},
+				{
+					"name": "vsc",
+					"description": "Vertical space-between center."
+				},
+				{
+					"name": "vsr",
+					"description": "Vertical space-between right."
+				},
+				{
+					"name": "vss",
+					"description": "Vertical space-between stretch."
+				},
+				{
+					"name": "htl",
+					"description": "Horizontal top left."
+				},
+				{
+					"name": "htc",
+					"description": "Horizontal top center."
+				},
+				{
+					"name": "htr",
+					"description": "Horizontal top right."
+				},
+				{
+					"name": "hts",
+					"description": "Horizontal top space-between."
+				},
+				{
+					"name": "hcl",
+					"description": "Horizontal center left."
+				},
+				{
+					"name": "hcc",
+					"description": "Horizontal center center."
+				},
+				{
+					"name": "hcr",
+					"description": "Horizontal center right."
+				},
+				{
+					"name": "hcs",
+					"description": "Horizontal center space-between."
+				},
+				{
+					"name": "hbl",
+					"description": "Horizontal bottom left."
+				},
+				{
+					"name": "hbc",
+					"description": "Horizontal bottom center."
+				},
+				{
+					"name": "hbr",
+					"description": "Horizontal bottom right."
+				},
+				{
+					"name": "hbs",
+					"description": "Horizontal bottom space-between."
+				},
+				{
+					"name": "hsl",
+					"description": "Horizontal stretch left."
+				},
+				{
+					"name": "hsc",
+					"description": "Horizontal stretch center."
+				},
+				{
+					"name": "hsr",
+					"description": "Horizontal stretch right."
+				},
+				{
+					"name": "hss",
+					"description": "Horizontal stretch space-between."
+				},
+				{
 					"name": "hflex",
 					"custom": true,
 					"description": "Flex with flex-direction set to row"
