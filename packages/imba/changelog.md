@@ -22,7 +22,11 @@ We've reworked a core part of how style selectors are compiled in terms of speci
 
     ```
     tof: text-overflow
-    tuf: text-underline-offset`
+    tuf: text-underline-offset
+    mih: min-height
+    mah: max-height
+    miw: min-width
+    maw: max-width
     ```
 
 * Add experimental support for `.env` files (docs coming)
