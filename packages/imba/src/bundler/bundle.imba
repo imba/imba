@@ -673,7 +673,7 @@ export default class Bundle < Component
 					reachable? = yes if inpath.indexOf('../') != 0
 
 				if external? and reachable?
-					return {external: true}
+					return {external: true, path: pathname}
 
 				if external?
 					return {external: true, path: res.path}
