@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.0.0-alpha.226
+
+* Fixed reference to missing index.css.map when building projects.
+
+* Fixed issue with reactivity when error was thrown inside reactive function.
+
+* Fixed issue with routed elements inside slots.
+
+* Fixed tooling to make it work with latest vscode.
+
+* Add numerous 3-letter display values for all common flex layouts.
+
+* Include `min-width` and `min-height` in list of easing properties.
+
+* Add field descriptor syntax for declaring advanced get/set wrappers for properties on classes and tags.
+
+* Add new css aliases:
+
+    ```
+    tof: text-overflow
+    tuf: text-underline-offset`
+    ```
+
+* Add experimental support for `.env` files (docs coming)
+
+* Changed how `..@hover` and `..outer-class` selectors work.
+
+    They now rely on browser-support for `:matches` and `:is` which is still at ~95% support globally.
+
+* Use literaly `@` in html classes for modifiers.
+
+    If you previously relied on the fact that `d@custom-modifier:block` compiled to `.mod-custom-modifier { display: block }` you need to follow new conventions.
+
+* Add support for `^` in style modifiers for advanced targeting.
+
+    ```imba
+    # color of span is blue when button is hovered
+    <button> <span[c^@hover:blue]>
+    # opacity of nested i is 1 only when button is foxused 
+    <button> <span> <i[o:0 o^^@focus:1]>
+    ```
+
 ## 2.0.0-alpha.225
 
 * Automatically prefix certaib css properties for better browser compatibility.
