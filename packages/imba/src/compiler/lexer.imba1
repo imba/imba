@@ -759,7 +759,7 @@ export class Lexer
 		let styleprop = STYLE_PROPERTY.exec(@chunk)
 		let ltyp = @lastTyp
 			
-		if !styleprop and @chunk.match(/^([\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
+		if !styleprop and @chunk.match(/^([\^\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) and (ltyp == 'TERMINATOR' or ltyp == 'INDENT')
 			let sel = findBalancedSelector(@chunk)
 			return lexStyleRule(0) if sel
 				
