@@ -40,7 +40,7 @@ const METASYM = do(name)
 const REFSYM = do(name)
 	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.REF) : Symbol.for("~{name}")
 
-const OBSERVED = do(item,res)
+export const OBSERVED = do(item,res)
 	CTX.add(item[OWNREF]) if TRACKING
 	return res
 
@@ -339,7 +339,7 @@ export def createAtom name
 ###
 Array
 ###
-class ObservableArray < Array
+export class ObservableArray < Array
 
 	def push do CHANGED(this,super)
 	def pop do CHANGED(this,super)
@@ -774,11 +774,18 @@ export def reportChanged item
 		item[OWNREF].invalidated(0)
 	return item
 
+export def reportInvalidated item
+	if item and item[OWNREF]
+		item[OWNREF].invalidated(0)
+	return item
+
 export def reportObserved item
 	if item and item[OWNREF]
 		item[OWNREF].reportObserved()
 	return item
 
+export def createRef params = F.OBJECT
+	return new Ref(F.OBJECT)
 
 export def @computed target, name, desc
 	let sym = METASYM(name)
