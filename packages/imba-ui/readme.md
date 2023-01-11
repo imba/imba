@@ -12,16 +12,6 @@ Community contributions are very welcome, but since these components should
 also serve as illustrative examples to the community, the code should be made
 simple and clean.
 
-## Installation
-
-```sh
-npm i imba-ui
-```
-
-```imba
-import 'imba-ui'
-```
-
 ## Component Documentation
 
 To see the documentation for how to use and customize a specific
