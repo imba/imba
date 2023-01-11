@@ -29,7 +29,7 @@ if styles.d is 'flex' and styles.fld is 'row'
 
 let ordering = '''
 
-e us
+e us ws ol pointer-events
 
 pos d fld ja jc ai fl
 
