@@ -1,6 +1,6 @@
 # imba-ui
 
-This repository is a work in progress. As such, for the time being `imba-ui` is
+This package is a work in progress. As such, for the time being `imba-ui` is
 intended to serve as a source of inspiration for users to see how succinct it
 is to create components in Imba. So feel free to either install and use these
 components, or jump in to a specific component and look at the code for it.
