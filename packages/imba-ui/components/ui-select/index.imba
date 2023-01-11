@@ -40,28 +40,19 @@ tag ui-select
 	opts = { searchable:yes }
 	selection-index = 0
 
-	def setup
-		#promise = new Promise do
-			#resolver = $1
-
-	def resolve value
-		#resolver(value)
-		imba.unmount self
-
-	get promise
-		unless opened
-			opened = yes
-			imba.mount self
-		#promise
-
-	def then ...params
-		promise.then(...params)
-
 	@observable query = ''
 
 	@computed get hits
 		selection-index = 0
 		fzi.search(query,items,opts.cb)
+
+	promise = new Promise do(res)
+		resolve = do
+			imba.unmount self
+			res $1
+
+	def then ...params
+		promise.then(...params)
 
 	def mount
 		$search-bar..focus!
@@ -79,16 +70,10 @@ tag ui-select
 		imba.commit!
 
 	def selection-down
-		if selection-index >= hits.length - 1
-			selection-index = 0
-		else
-			selection-index++
+		selection-index = (selection-index + 1) % hits.length
 
 	def selection-up
-		if selection-index <= 0
-			selection-index = hits.length - 1
-		else
-			selection-index--
+		selection-index = (selection-index - 1 + hits.length) % hits.length
 
 	<self
 		@hotkey('return').force.if(hits.length)=resolve(hits[selection-index])
