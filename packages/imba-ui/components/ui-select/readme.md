@@ -32,3 +32,10 @@ Available `opts`:
 - `pos`: corresponds to https://floating-ui.com/docs/tutorial#placements
 - `offset`: corresponds to https://floating-ui.com/docs/offset#__next
 - `searchable`: a boolean describing whether the menu is searchable or not. Defaults to yes.
+
+## Notes
+
+If you are using `bind` to set a variable to the result of the select,
+binding buttons in imba already has custom toggling behavior and will
+show "true" or "false" until the promise returns. In this case,
+you should use a custom element instead of an actual button.
