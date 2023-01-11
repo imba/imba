@@ -1,7 +1,7 @@
 import * as fui from '@floating-ui/dom'
 import fzi from 'fzi'
 
-let existing-menu = null
+let existing-target = null
 
 extend class Event
 
@@ -10,27 +10,27 @@ extend class Event
 		stopPropagation!
 
 		# if there is an existing menu, close it
-		existing-menu..select-menu.resolve(no)
-		delete existing-menu..select-menu
+		existing-target..ui-select.resolve(no)
+		delete existing-target..ui-select
 
 		# if the same button was clicked
 		# we don't want to mount a new menu, just exit
-		unless existing-menu =? target
-			return existing-menu = null
+		unless existing-target =? target
+			return existing-target = null
 
-		target.select-menu = new <ui-select anchor=target items=items value=target.data opts=opts>
-		imba.mount target.select-menu
+		target.ui-select = new <ui-select anchor=target items=items value=target.data opts=opts>
+		imba.mount target.ui-select
 
-		if let res = await target.select-menu
+		if let res = await target.ui-select
 			target.data = res
 
 		# if two instances of this code are running at the same time
 		# (because of the await), we only want to close the select menu
 		# if it's the one that just resolved
-		if target is existing-menu
-			existing-menu = null
+		if target is existing-target
+			existing-target = null
 
-		delete target.select-menu
+		delete target.ui-select
 
 tag ui-select
 
