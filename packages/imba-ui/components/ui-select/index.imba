@@ -15,11 +15,8 @@ extend class Event
 
 		# if the same button was clicked
 		# we don't want to mount a new menu, just exit
-		if existing-menu is target
-			existing-menu = null
-			return
-
-		existing-menu = target
+		unless existing-menu =? target
+			return existing-menu = null
 
 		target.select-menu = new <ui-select anchor=target items=items value=target.data opts=opts>
 		imba.mount target.select-menu
@@ -39,6 +36,7 @@ tag ui-select
 
 	opts = { searchable:yes }
 	selection-index = 0
+	placeholder = 'Search for item...'
 
 	@observable query = ''
 
