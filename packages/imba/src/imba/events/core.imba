@@ -167,6 +167,13 @@ export class EventHandler
 		return null unless el
 		el[name] ? el : self.getHandlerForMethod(el.parentNode,name)
 
+	def abortCurrentHandlers
+		if currentEvents
+				for ev of currentEvents
+					ev.aborted = yes
+					ev..resolver(yes)
+		self
+
 	# okay to auto-import these?
 	def emit name, ...params do emit(self,name,params)
 	def on name, ...params do listen(self,name,...params)
@@ -206,6 +213,7 @@ export class EventHandler
 			state: self.state
 			commit: null
 			current: null
+			aborted: no
 		}
 		
 		# console.log 'handling event',event.target,event.currentTarget
@@ -224,9 +232,11 @@ export class EventHandler
 		# let object = state.proxy or event 
 		
 		self.currentEvents ||= new Set
-		self.currentEvents.add(event)	
+		self.currentEvents.add(state)	
 
 		for own handler,val of mods
+			break if state.aborted
+
 			state.step++
 
 			if handler[0] == '_'
@@ -246,10 +256,9 @@ export class EventHandler
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
 				# handlers should commit by default
 				handler = val[0]
-				state.commit = yes unless handler.passive
+				state.commit = yes unless handler.passive # 
 				args = [event,state].concat(val.slice(1))
 				context = element
-				
 
 			# parse the arguments
 			elif val isa Array
@@ -356,7 +365,7 @@ export class EventHandler
 
 		scheduler.commit! if state.commit and !silence
 
-		self.currentEvents.delete(event)
+		self.currentEvents.delete(state)
 		if self.currentEvents.size == 0
 			self.emit('idle')
 		# what if the result is a promise
