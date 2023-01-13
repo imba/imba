@@ -1,0 +1,13 @@
+{
+  "name": "imba-ui",
+  "version": "1.0.0",
+  "description": "The official Imba UI library.",
+  "main": "index.js",
+  "author": "Mikey Oz",
+  "license": "MIT",
+  "dependencies": {
+    "@floating-ui/dom": "^1.0.7",
+    "fzi": "^1.5.0",
+    "imba-material-icons": "^0.2.3"
+  }
+}
