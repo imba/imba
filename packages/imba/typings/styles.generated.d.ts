@@ -206,48 +206,6 @@ declare namespace imbacss {
 		*/
 		vflex: ''
 
-		/**
-		 * Column centered across & along
-		 * @custom
-		 * @experimental
-		*/
-		vbox: ''
-
-		/**
-		 * Row centered across & along
-		 * @custom
-		 * @experimental
-		*/
-		hbox: ''
-
-		/**
-		 * Left-justified flex row
-		 * @custom
-		 * @experimental
-		*/
-		lbox: ''
-
-		/**
-		 * Right-justified flex row
-		 * @custom
-		 * @experimental
-		*/
-		rbox: ''
-
-		/**
-		 * Column centered across - justified to start
-		 * @custom
-		 * @experimental
-		*/
-		tbox: ''
-
-		/**
-		 * Column centered across - justified to bottom
-		 * @custom
-		 * @experimental
-		*/
-		bbox: ''
-
 		/** The element generates a block container box, and lays out its contents using flow layout. */
 		flowΞroot: ''
 
