@@ -29,9 +29,9 @@ if styles.d is 'flex' and styles.fld is 'row'
 
 let ordering = '''
 
-e us ws ol pe cursor
+e us ws ol pe cursor zi pos
 
-pos d fld ja jc ai fl
+d fld ja jc ai fl
 
 g
 p px py pt pb pl pr
