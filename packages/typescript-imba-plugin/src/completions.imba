@@ -880,7 +880,7 @@ export default class Completions
 		add(symbols,kind: 'var', weight: 200)
 
 		if ctx.group.closest('tagcontent') and !ctx.group.closest('tag') and !ctx.before.token.match(/\s*-$/)
-			add('tagnames',kind: 'tag',weight: 300)
+			add('tagnames',kind: 'tag',weight: 310)
 
 		try
 			let selfpath = ctx.selfPath
