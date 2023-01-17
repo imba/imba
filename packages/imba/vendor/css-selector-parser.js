@@ -418,7 +418,6 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         chr = str.charAt(++pos);
         rule = rule || currentRule;
         part.not = true;
-        // console.log('chr is now!!',chr);
       }
 
       // Legacy support for the @.flag stuff
@@ -485,6 +484,10 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       } else if (chr === '.') {
         pos++;
         let flag = str.charAt(pos++);
+        if(flag == '!'){
+          part.not = true
+          flag = ''
+        }
         flag += getIdent({});
         part.flag = flag;
         (rule = rule || []).push(part);
@@ -559,9 +562,16 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         pos++;
         part.name = chr;
         var pseudo = part;
+          
+        let pseudoName = str.charAt(pos++);
 
-        var pseudoName = getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
+        if(pseudoName == '!'){
+          part.not = true;
+          pseudoName = '';
+        }
 
+        pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
+        
         if(pseudoName == 'unimportant'){
           unimportant = true;
           part.type = 'unimportant';
@@ -571,7 +581,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
           // (rule.pseudos = rule.pseudos || []).push(pseudo);
           continue;
         }
-
+        
         part.name += pseudoName;
         part.pseudo = pseudoName;
 
@@ -795,7 +805,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           // Check if it is a well known type
           let post = "";
           let value = pseudo.value || pseudo.name;
-          let neg = pseudo.not;
+          // let neg = pseudo.not;
           let pre = ":" + escaped;
           // Hack doesnt work with @[] as selectors
 
@@ -813,18 +823,17 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
             }
           } else if(pseudo.type == 'el') {
             out = ':' + pre;
-          } else if(!desc || desc.flag) {
-            // Must change to a flag?
+          } else if(!desc) {
+            out = `.\\@${escaped}`
+          } else if(desc.shim) {
+            let pre = neg ? ':not' : ':is';
+            out = `.\\@${escaped}`
+            out = `${pre}(:${typeof desc.native == 'string' ? desc.native : escaped},${out})`;
+            neg = false; 
+          } else if(desc.flag) {
             out = `.\\@${escaped}`
           } else {
             out = pre + post;
-          }
-          // console.log('checking pseudo',value);
-
-          if(out.match(/^\:(hover|focus|checked|disabled)$/) && false) {
-            let pre = pseudo.not ? ':not' : ':is';
-            value = `${pre}(:${escaped},.\\@${escaped})`;
-            neg = false;
           }
         }
 
@@ -840,8 +849,8 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           // console.log("rendered",all);
           // find better way?
           out = `:${neg ? 'not' : 'is'}(${all} *)`
-          
           neg = false;
+
         } else if (part.up) {
           let rest = part.up > 5 ? ' *' : ' > *'.repeat(part.up);
           out = `:${neg ? 'not' : 'is'}(${out}${rest})`

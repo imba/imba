@@ -16,13 +16,13 @@ export const modifiers =
 	'first-child': {}
 	'last-child': {}
 	autofill: {}
-	active: {}
-	checked: {}
+	active: {shim: yes}
+	checked: {shim: yes}
 	default: {}
 	defined: {}
-	disabled: {}
+	disabled: {shim: yes}
 	empty: {}
-	enabled: {}
+	enabled: {shim: yes}
 	'first-of-type': {}
 	'first-page': {name: 'first'}
 	fullscreen: {}
@@ -30,10 +30,10 @@ export const modifiers =
 	focin: {name: 'focus-within'}
 	'focus-within': {}
 	'focus-visible': {}
-	hover: {}
-	indeterminate: {}
+	hover: {shim: yes}
+	indeterminate: {shim: yes}
 	'in-range': {}
-	invalid: {}
+	invalid: {shim: yes}
 	is: {type: 'selector'}
 	lang: {}
 	'last-of-type': {}
@@ -51,19 +51,19 @@ export const modifiers =
 	'only-of-type': {}
 	playing: {}
 	paused: {}
-	optional: {}
+	optional: {shim: yes}
 	'out-of-range': {}
 	'placeholder-shown': {}
 	'read-only': {}
 	'read-write': {}
-	required: {}
+	required: {shim: yes}
 	right: {}
 	scope: {}
 	root: {}
 	# state: {}
 	target: {}
 	'target-within': {}
-	valid: {}
+	valid: {shim: yes}
 	visited: {}
 	where: {}
 	
