@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-alpha.227
+
+* Fix regression which caused `.!classname` and `@!hover` negated modifiers to break.
+
+* Fix issue where css selector could not start with `^` parent reference.
+
 ## 2.0.0-alpha.226
 
 We've reworked a core part of how style selectors are compiled in terms of specificity++. If your existing styles break in any way, please let us know on discord!
