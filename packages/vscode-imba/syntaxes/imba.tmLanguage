@@ -406,7 +406,7 @@
             <key>name</key>
             <string>keyword.operator.imba</string>
             <key>match</key>
-            <string>(of|delete|\!?isa|typeof|in|new)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(of|delete|\!?isa|typeof|in|new|is|isnt)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
         </array>
       </dict>
@@ -476,6 +476,12 @@
           <dict>
             <key>name</key>
             <string>keyword.operator.bitwise.imba</string>
+            <key>match</key>
+            <string>\?(?=\s|$)</string>
+          </dict>
+          <dict>
+            <key>name</key>
+            <string>keyword.operator.ternary.imba</string>
             <key>match</key>
             <string>\&amp;|~|\^|\|</string>
           </dict>

@@ -214,7 +214,7 @@ repository:
       match: (\>\=?|\<\=?)
   
     - name: keyword.operator.imba
-      match: '(of|delete|\!?isa|typeof|in|new){{endOfIdentifier}}'
+      match: '(of|delete|\!?isa|typeof|in|new|is|isnt){{endOfIdentifier}}'
 
   ops:
     patterns:
@@ -237,6 +237,8 @@ repository:
     - name: keyword.operator.logical.imba
       match: \!|&&|\|\||\?\?|or\b(?=\s|$)|and\b(?=\s|$)|\@\b(?=\s|$)
     - name: keyword.operator.bitwise.imba
+      match: \?(?=\s|$)
+    - name: keyword.operator.ternary.imba
       match: \&|~|\^|\|
     - name: keyword.operator.assignment.imba
       match: \=

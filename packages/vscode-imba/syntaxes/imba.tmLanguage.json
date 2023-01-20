@@ -277,7 +277,7 @@
         },
         {
           "name": "keyword.operator.imba",
-          "match": "(of|delete|\\!?isa|typeof|in|new)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
+          "match": "(of|delete|\\!?isa|typeof|in|new|is|isnt)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
         }
       ]
     },
@@ -324,6 +324,10 @@
         },
         {
           "name": "keyword.operator.bitwise.imba",
+          "match": "\\?(?=\\s|$)"
+        },
+        {
+          "name": "keyword.operator.ternary.imba",
           "match": "\\&|~|\\^|\\|"
         },
         {
