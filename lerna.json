@@ -5,6 +5,6 @@
     "packages/vscode-imba",
     "packages/imba-monarch"
   ],
-  "allowBranch": ["master", "beta"],
+  "allowBranch": ["master"],
   "version": "independent"
 }
