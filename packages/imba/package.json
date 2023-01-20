@@ -59,7 +59,7 @@
     "prepack": "npm run build"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.226",
+  "version": "2.0.0-alpha.227",
   "licenses": [
     {
       "type": "MIT",
