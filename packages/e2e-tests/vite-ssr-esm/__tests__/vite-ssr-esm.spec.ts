@@ -10,11 +10,7 @@ import {
   page,
   untilMatches,
 } from "~utils";
-describe.todo("low level server bundling tests", () => {
-  // Running tests fail because of a missing dependency (vite-plugin-imba) in
-  // the default vite.config.server.js in imba/bin folder
-  // This is expected to work again when we bake the vite plugin into imba
-  
+describe("low level server bundling tests", () => {
   test("SSR and hydration works", async () => {
     // after hydration
     const html = await fetchPageText();
