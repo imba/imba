@@ -5,11 +5,12 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import np from 'node:path'
 
 const extensions = ['.node.imba','.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+
 export default defineConfig(({ command, mode }) => {
 	return ({
 		appType: "custom",
 		envPrefix: ['IMBA','VITE'],
-		plugins: [imbaPlugin({ ssr: true }), tsconfigPaths({loose: true,extensions, projects: [np.resolve(".")]}),],
+		plugins: [imbaPlugin({ ssr: true }), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
 		resolve: { extensions },
 		esbuild: {
 			target: "node16",

@@ -9,7 +9,7 @@ export default defineConfig(({ command, mode }) => {
 	return ({
 		type: "",
 		envPrefix: ['IMBA','VITE'],
-		plugins: [imbaPlugin(),  tsconfigPaths({loose: true,extensions, projects: [np.resolve(".")]})],
+		plugins: [imbaPlugin(),  tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]})],
 		resolve: { extensions },
 		build: {
 			outDir: "dist/public",
