@@ -266,7 +266,7 @@ let bundles = [
 		],
 		outExtension: { ".js": ".mjs" },
 		minify: true,
-		external: ["vite", "imba", "debug", "deepmerge", "diff", "kleur", "magic-string", "picomatch"],
+		external: ["vite", "imba", "debug", "deepmerge", "diff", "kleur", "magic-string", "picomatch", "get-port"],
 		outdir: "dist",
 		format: "esm",
 		platform: "node",

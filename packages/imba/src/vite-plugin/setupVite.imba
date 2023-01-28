@@ -1,10 +1,9 @@
-# imba$stdlib=1
 import np from 'path'
-import * as Vite from "vite"
+import * as Vite from 'vite'
 import url from 'node:url'
 import nfs from 'node:fs'
 import getport from 'get-port'
-import { __served__ } from './utils'
+import { __served__ } from '../imba/utils'
 import {resolveWithFallbacks, viteClientConfigFile} from '../utils/vite'
 let vite
 

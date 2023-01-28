@@ -22,6 +22,7 @@ import { ensureWatchedFile, setupWatchers } from "./utils/watch";
 import { handleImbaHotUpdate } from './handle-imba-hot-update';
 import url from 'node:url'
 import np from 'node:path'
+export { setupVite } from './setupVite'
 
 const allCssModuleId = 'virtual:imba/*?css'
 const resolvedAllCssModuleId = "\0{allCssModuleId}"

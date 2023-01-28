@@ -1,4 +1,5 @@
 import path from "path"
+import {setupVite} from 'imba/plugin'
 import express from "express"
 import compression from "compression"
 import serveStatic from "serve-static"
@@ -26,7 +27,7 @@ def createServer(root = process.cwd())
 		# 		watch: 
 		# 			usePolling: yes
 		# 			interval: 100
-	await imba.setupVite app, options, do(dist)
+	await setupVite app, options, do(dist)
 		app.use compression()
 		app.use serveStatic(dist, index: false)
 	app.use "/home", do(req, res)
