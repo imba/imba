@@ -156,7 +156,7 @@ def parseOptions options, extras = []
 
 def eject(o)
 	o = parseOptions(o)
-	const configPath = "vite.config.server.js"
+	const configPath = "vite.config.server.mjs"
 	if nfs.existsSync(configPath) and !o.force
 		return console.log "You already have a vite.config.server in your project. Delete it or use `imba eject --force` to overwrite"
 	const configContent = nfs.readFileSync(viteServerConfigFile, 'utf-8')

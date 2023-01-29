@@ -213,7 +213,7 @@ export default class Runner < Component
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")
-		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.ts", "vite.config.server.js"])
+		const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.server.mts", "vite.config.server.ts", "vite.config.server.mjs", "vite.config.server.js"])
 		let {default: config} = await import(String pathToFileURL configFile)
 		if typeof config == "function"
 			config = config({command: "serve", mode: "development"})
