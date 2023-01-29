@@ -2,6 +2,7 @@ import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
 import {transformWithEsbuild, normalizePath} from 'vite'
+import * as esbuild from 'esbuild'
 import { buildIdParser,  normalize, injectQuery } from "./utils/id";
 import type { IdParser, ImbaRequest } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
@@ -89,8 +90,15 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 
 		log.debug "transform returns compiled js for {imbaRequest.filename}"
 		if imbaRequest.query.iife
-			compiledData.compiled.js = await transformWithEsbuild compiledData.compiled.js.code, imbaRequest.normalizedFilename.replace(".imba", ".js"), {format:"iife"}
-			compiledData.compiled.js.code = "const body = {JSON.stringify compiledData.compiled.js.code}; export default \{body: body\}; export \{body\}"
+			const code = compiledData.compiled.js.code
+			const res = await esbuild.build
+				bundle: yes
+				platform: 'browser'
+				format: "iife"
+				stdin: {contents: code, resolveDir: process.cwd!}
+				write: no				
+			const newCode =  res.outputFiles[0].text
+			compiledData.compiled.js = code: "const body = {JSON.stringify newCode}; export default \{body: body\}; export \{body\}"
 
 		return {
 			...compiledData.compiled.js,
