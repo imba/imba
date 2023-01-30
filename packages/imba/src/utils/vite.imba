@@ -9,24 +9,39 @@ export const viteServerConfigFile = np.join(_dirname, "..", "bin", "./vite.confi
 export const viteClientConfigFile = np.join(_dirname, "..", "bin", "./vite.config.mjs")
 export const vitestSetupPath = np.join(_dirname, "..", "bin", "./test-setup.js")
 
-export def resolveWithFallbacks(ours, fallbacks, opts = {})
-	const {ext, resolve} = opts
-	let pkg = ours
-	pkg += ".{ext}" if ext..length
-	fallbacks = [fallbacks] unless Array.isArray fallbacks
-	for fallback in fallbacks
-		fallback = "{ours}.{fallback}" if ext
-		# const userPkg = np.resolve(fallback)
-		if nfs.existsSync fallback
-			pkg = fallback
-	if resolve
-		if ((ext and pkg == "{ours}.{ext}") or pkg == ours)
-			pkg = np.resolve np.join _dirname, pkg
-		else
-			pkg = np.resolve np.join process.cwd(), pkg
-		pkg = "{url.pathToFileURL pkg}"
-	pkg
+export def getConfigFilePath(type)
+	const typeMap = 
+		client: 'vite.config'
+		server: 'vite.config.server'
+		test: 'vitest.config'
+		testSetup: 'test-setup'
+		imba: 'imba.config'
+	
+	const fileName = typeMap[type]
 
+	unless fileName
+		throw new Error("Unrecognized config type {type}. Should be one of {Object.keys typeMap}")
+
+	# search in current working dir
+	let extensions = ['ts', 'mts', 'js', 'mjs', 'cjs']
+	extensions.unshift 'imba' if type == 'testSetup'
+	
+	for ext in extensions
+		const name = "{fileName}.{ext}"
+		const path = np.join process.cwd!, name
+		if nfs.existsSync path
+			return path
+
+	# not found, use default config
+	if type == 'test' or type == 'server'
+		return viteServerConfigFile
+	elif type == 'client'
+		return viteClientConfigFile
+	elif type == 'testSetup'
+		return vitestSetupPath
+
+	throw new Error("config file {type} not found. This is probably a bug. Please open an issue in https://github.com/imba/imba/issues/new")
+	
 export def ensurePackagesInstalled(dependencies, root)
 	const to-install = []
 	const {isPackageExists} = require('local-pkg')

@@ -10,7 +10,7 @@ import Cache from '../src/bundler/cache'
 import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
-import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
+import { viteServerConfigFile, getConfigFilePath, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
 import create from './create.imba'
 import * as dotenv from 'dotenv'
 
@@ -176,12 +176,12 @@ def eject(o)
 def test o
 	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
-	let configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+	let configFile = getConfigFilePath("test")
 	if configFile == viteServerConfigFile
 		const original-setup-file = np.join(__dirname, "./test-setup.js")
 		# pick test setup file path
-		let setupFile = resolveWithFallbacks("test-setup", ["imba", "ts", "js", "mjs", "cjs"], {ext:"js"})
-		if setupFile == "test-setup.js"
+		let setupFile = getConfigFilePath("testSetup")
+		if setupFile == vitestSetupPath
 			setupFile = np.resolve original-setup-file
 		# create a temporary vite config file
 		const tmp-config = np.join __dirname, "temp-config.vite.js"
@@ -248,9 +248,9 @@ def run entry, o, extras
 		if o.vite
 			let Vite = await import("vite")
 			# build client
-			let clientConfigFile = resolveWithFallbacks("vite.config", ["ts", "js", "mjs", "cjs"], {ext:"mjs", resolve:yes})
-			let serverConfigFile = resolveWithFallbacks("vite.config.server", ["ts", "js", "mjs", "cjs"], {ext:"mjs", resolve: yes})
-			# const clientConfigFile = resolveWithFallbacks("vite.config", ["vite.config.ts", "vite.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
+			let clientConfigFile = getConfigFilePath("client")
+			let serverConfigFile = getConfigFilePath("server")
+
 			let {default: clientConfig} = await import(clientConfigFile)
 			let {default: serverConfig} = await import(serverConfigFile)
 			if typeof clientConfig == "function"
