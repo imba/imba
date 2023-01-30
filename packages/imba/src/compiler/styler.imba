@@ -739,6 +739,15 @@ export class StyleTheme
 				layout.call(this,out,par,params)
 		return out
 
+	def text_transform params
+		let out = {'text-transform': params}
+		let str = String(params[0])
+		if str is 'cap'
+			out['text-transform'] = 'capitalize'
+		elif str is 'up'
+			out['text-transform'] = 'uppercase'
+		out
+
 	def position params
 		let out = {position: params}
 		let str = String(params[0])
