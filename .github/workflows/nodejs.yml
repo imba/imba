@@ -27,6 +27,7 @@ jobs:
       run: |
         cd packages/imba
         npm install
+        npm run build
         npm run test
         npm run test-cli
       env:
