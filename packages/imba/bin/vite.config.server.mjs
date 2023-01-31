@@ -1,7 +1,7 @@
 import { builtinModules } from 'module'
 import imbaPlugin from 'imba/plugin'
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
+import tsconfigPaths from 'vite-tsconfig-paths-silent'
 import np from 'node:path'
 
 const extensions = ['.node.imba','.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']

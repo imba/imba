@@ -210,7 +210,7 @@ def run entry, o, extras
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 	if o.vite
-		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-tsconfig-paths'], process.cwd()) 
+		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-tsconfig-paths-silent'], process.cwd()) 
 
 	# TODO support multiple entrypoints - especially for html
 	
