@@ -157,6 +157,7 @@
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
     "picocolors": "^1.0.0",
+    "postcss": "^8.4.21",
     "prompts": "^2.4.2"
   }
 }
