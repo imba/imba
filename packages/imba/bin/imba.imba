@@ -1,4 +1,5 @@
 import np from 'path'
+import url from 'url'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
@@ -251,8 +252,8 @@ def run entry, o, extras
 			let clientConfigFile = getConfigFilePath("client")
 			let serverConfigFile = getConfigFilePath("server")
 
-			let {default: clientConfig} = await import(clientConfigFile)
-			let {default: serverConfig} = await import(serverConfigFile)
+			let {default: clientConfig} = await import(url.pathToFileURL clientConfigFile)
+			let {default: serverConfig} = await import(url.pathToFileURL serverConfigFile)
 			if typeof clientConfig == "function"
 				clientConfig = clientConfig({command: "build", mode: "production"})
 			if typeof serverConfig == "function"
