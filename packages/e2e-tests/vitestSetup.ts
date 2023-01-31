@@ -1,5 +1,6 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import {pathToFileURL} from 'url'
 import { chromium } from 'playwright-core';
 import type { Browser, Page } from 'playwright-core';
 import type { File } from 'vitest';
@@ -142,7 +143,7 @@ beforeAll(
 				const defaultServerScript = path.resolve(e2eTestsRoot, 'e2e-server.js');
 				const hasCustomServer = fs.existsSync(customServerScript);
 				const serverScript = hasCustomServer ? customServerScript : defaultServerScript;
-				const { serve } = await import(serverScript);
+				const { serve } = await import(String(pathToFileURL(serverScript)));
 				const port = await getUniqueTestPort(e2eTestsRoot, testName, isBuild);
 				server = await serve(tempDir, isBuild, port);
 				e2eServer = server;

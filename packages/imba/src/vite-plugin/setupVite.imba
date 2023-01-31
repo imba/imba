@@ -18,7 +18,7 @@ export def setupVite(srv, options, cb)
 		const port = await getport(port: getport.makeRange(24000, 26000))
 
 		const serverConfigFile = getConfigFilePath("server")
-		let {default: serverConfig} = await import(serverConfigFile)
+		let {default: serverConfig} = await import(String url.pathToFileURL serverConfigFile)
 		if typeof serverConfig == "function"
 			serverConfig = serverConfig({command: "build", mode: "production"})
 
