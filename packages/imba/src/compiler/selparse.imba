@@ -1,7 +1,5 @@
-import { atRule } from 'postcss'
 import * as selparser from '../../vendor/css-selector-parser'
 import {modifiers} from './theme.imba'
-
 
 def addClass rule, name
 	# TODO check for negs as well?
