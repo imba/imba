@@ -12,7 +12,7 @@ const Globals = {"esc": yes}
 class HotkeyEvent < CustomEvent
 	
 	def @focus expr
-		let el = this.target
+		let el = #context.element
 		let doc = el.ownerDocument
 		
 		if expr
