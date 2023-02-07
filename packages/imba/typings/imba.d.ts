@@ -9,6 +9,10 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
+import type { UserConfig } from 'vite'
+import type { UserConfig as TestConfig } from 'vitest'
+
+
 
 interface Node {
     /**
@@ -695,7 +699,6 @@ declare namespace imba {
      * sessionStorage as a rich object
      */
     let session: Storage;
-
 }
 
 declare module "data:text/asset;*" {
@@ -713,4 +716,47 @@ declare module "imba/compiler" {
 
 declare module "imba" {
 
+	interface ThemeColors {
+		[key: string]: {
+			[key: string]: string;
+		};
+	}
+	
+	interface Theme {
+		colors?: ThemeColors;
+	}
+
+	interface ImbaConfig {
+		/**
+		* create aliases for color keywords, make your own keywords,
+		* or redefine the default keywords to new color values
+		* 
+		* @example <caption>create an alias for the `indigo` color called `primary`</caption> 
+		*  { theme: {colors: {primary: 'indigo'}}}
+		* // now use it like this <h1[c:primary4]> "hey"  
+		* 
+		* @example <caption>Override default colors. Make `gray` an alias for `warmer` instead of the default gray color</caption> 
+		*  { theme: {colors: {gray: 'warmer'}}}
+		* 
+		* @example <caption>create your own color keywords with specified tint values. Any unspecified tint values will be interpolated</caption> 
+		*  { theme: {colors: { coral: {
+		*						"0": "hsl(40,33%,98%)",
+		*						"4": "hsl(6,56%,65%)",
+		*						"9": "hsl(6,52%,15%)"
+		*		}}}}
+		**/
+		theme?: Theme
+	}
+
+	interface ViteConfig extends UserConfig { }
+	interface VitestConfig extends TestConfig { }
+
+	interface Config {
+		imba?: ImbaConfig;
+		test?: TestConfig;
+		client?: UserConfig;
+		server?: UserConfig;
+	}
+
+	export function defineConfig(config: Config): Config;
 }
