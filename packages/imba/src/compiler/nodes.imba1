@@ -4198,6 +4198,15 @@ export class MethodDeclaration < Func
 
 		var o = @options
 		scope.visit
+
+		if isSetter and @params.len > 1
+			if @params.len > 2
+				console.warn "setter with more than two params not allowed",name
+
+			let prev = @params.pop()
+			# console.warn "setter with more than one param!!",name
+			let op = OP('=',VarReference.new(prev.@value,'const'),OP('.',SELF,name))
+			@body.add(op,0)
 			
 		if option(:inObject)
 			@params.traverse
