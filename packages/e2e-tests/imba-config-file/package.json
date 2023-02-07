@@ -1,0 +1,31 @@
+{
+  "name": "imba-config-file",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "imba server.imba --vite --",
+    "build": "run-s build:client build:server",
+    "build:client": "vite build -c vite.config.mjs",
+    "build:server": "imba build --vite server.imba",
+    "preview": "cross-env NODE_ENV=production node dist/server.mjs",
+    "debug": "node --inspect-brk dist/server/server",
+    "test": "imba test run src --"
+  },
+  "dependencies": {
+	"@testing-library/dom": "^8.19.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "compression": "^1.7.4",
+    "cross-env": "^7.0.3",
+    "decamelize": "^6.0.0",
+    "express": "^4.18.1",
+    "jsdom": "^20.0.1",
+    "npm-run-all": "^4.1.5",
+    "serve-static": "^1.15.0",
+    "vite-node": "^0.24.3",
+    "vite-tsconfig-paths-silent": "^4.0.5",
+    "vitest": "^0.24.3",
+    "imba": "../../imba",
+    "vite": "^4.0.4"
+  }
+}

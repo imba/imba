@@ -9,7 +9,20 @@ import { PartialMessage } from 'esbuild';
  * @returns {RollupError} the converted error
  */
 export function toRollupError(error: Warning & Error, options: ResolvedOptions): RollupError {
-	const actualError = error.errors[0]
+	if(!error?.errors?.length){
+		return {
+			name: "Compilation error",
+			id: error._sourcePath,
+			message: buildExtendedLogMessage({message: `Compildation error: ${error.message}`}),
+
+		} as RollupError;
+	}
+	const actualError = error?.errors?.length ? error.errors[0] : {
+		diagnostics: [{source: "Compilation Error"}],
+		options: {filename: error._sourcePath},
+		range: {start: {line: 1, column: 1} },
+		message: error?.toString!,
+	}
 	const name = `${error.diagnostics[0].source} error`
 	const id = error.options.filename
 	const {line, character: column} = actualError.range.start

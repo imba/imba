@@ -1,4 +1,4 @@
-import { build, defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import imbaPlugin from 'imba/plugin';
 import { resolve } from 'path'
 import {builtinModules} from 'module'
@@ -7,9 +7,9 @@ import url from 'node:url'
 // ENTRY
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const entry = resolve(__dirname, "src/main.js")
-
+console.log("::vitest config")
 export default defineConfig(({ command, mode }) => {
-	return {
+	return {server:{
 		plugins: [
 			imbaPlugin()
 		],
@@ -40,5 +40,6 @@ export default defineConfig(({ command, mode }) => {
 				interval: 100
 			}
 		}
-	}
+	}}
 });
+

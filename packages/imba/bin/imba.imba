@@ -11,7 +11,7 @@ import Cache from '../src/bundler/cache'
 import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
-import { viteServerConfigFile, getConfigFilePath, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
+import { getConfigFilePath, ensurePackagesInstalled, imbaConfigPath } from '../src/utils/vite'
 import create from './create.imba'
 import * as dotenv from 'dotenv'
 
@@ -155,41 +155,21 @@ def parseOptions options, extras = []
 	options.#parsed = yes
 	return options
 
-def eject(o)
-	o = parseOptions(o)
-	const configPath = "vite.config.server.mjs"
-	if nfs.existsSync(configPath) and !o.force
-		return console.log "You already have a vite.config.server in your project. Delete it or use `imba eject --force` to overwrite"
-	const configContent = nfs.readFileSync(viteServerConfigFile, 'utf-8')
-	nfs.writeFileSync(configPath, configContent.replace(/\/\/eject\s/g, ''))
-	console.log "✅ vite.config.server.mjs has been successfully {o.force ? 'overwritten': 'created'}"
-	const setupPath = "test-setup.js"
-	if nfs.existsSync(setupPath) and !o.force
-		return console.log "You already have a test-setup.js in your project. Delete it or use `imba eject --force` to overwrite"
-	const setupContent = nfs.readFileSync(vitestSetupPath, 'utf-8')
-	nfs.writeFileSync(setupPath, setupContent)
-	console.log "✅ test-setup.js has been successfully {o.force ? 'overwritten': 'created'}"
-	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
-	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
-	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
-	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply have a question"
 
 def test o
-	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom', 'vite-tsconfig-paths-silent'], process.cwd())
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
-	let configFile = getConfigFilePath("test")
-	if configFile == viteServerConfigFile
-		const original-setup-file = np.join(__dirname, "./test-setup.js")
-		# pick test setup file path
-		let setupFile = getConfigFilePath("testSetup")
-		if setupFile == vitestSetupPath
-			setupFile = np.resolve original-setup-file
-		# create a temporary vite config file
-		const tmp-config = np.join __dirname, "temp-config.vite.js"
-		const body = nfs.readFileSync(viteServerConfigFile, "utf-8")
-		# inject the user's test setup file or the default one we provide
-		nfs.writeFileSync tmp-config, body.replace(/\/\*pholder\*\//g, "'{np.resolve(setupFile)}'")
-		configFile = tmp-config
+
+	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
+	
+	let configFile = testConfigPath
+
+	if testConfigPath == imbaConfigPath	
+		# create a temporary file and put the config there
+		configFile = np.join process.cwd(), "node_modules", "imba.vitest.config.mjs"
+		const content = nfs.readFileSync(testConfigPath, 'utf-8')
+		nfs.writeFileSync(configFile, content)
+
 	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
 	const options =
 		cwd: process.cwd()
@@ -249,17 +229,10 @@ def run entry, o, extras
 		if o.vite
 			let Vite = await import("vite")
 			# build client
-			let clientConfigFile = getConfigFilePath("client")
-			let serverConfigFile = getConfigFilePath("server")
+			const options = {command: "build", mode: "production"}
+			let clientConfig = await getConfigFilePath("client", options)
+			let serverConfig = await getConfigFilePath("server", options)
 
-			let {default: clientConfig} = await import(url.pathToFileURL clientConfigFile)
-			let {default: serverConfig} = await import(url.pathToFileURL serverConfigFile)
-			if typeof clientConfig == "function"
-				clientConfig = clientConfig({command: "build", mode: "production"})
-			if typeof serverConfig == "function"
-				serverConfig = serverConfig({command: "build", mode: "production"})
-			# const client = await Vite.build config
-			
 			const serverBuild = await Vite.build({
 				...serverConfig,
 				configFile: no,
@@ -342,10 +315,10 @@ common(cli.command('serve <script>').description('Spawn a webserver for an imba/
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.action(run)
 
-cli
-	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
-	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
-	.action(eject)
+# cli
+# 	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
+# 	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
+# 	.action(eject)
 
 cli
 	.command('test').description('Run tests: This is a wrapper on top of vitest')

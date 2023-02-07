@@ -5,42 +5,82 @@ import c from 'picocolors'
 const _dirname = if typeof __dirname !== 'undefined' then __dirname else np.dirname(url.fileURLToPath(import.meta.url))
 
 const EXIT_CODE_RESTART = 43
-export const viteServerConfigFile = np.join(_dirname, "..", "bin", "./vite.config.server.mjs")
-export const viteClientConfigFile = np.join(_dirname, "..", "bin", "./vite.config.mjs")
-export const vitestSetupPath = np.join(_dirname, "..", "bin", "./test-setup.js")
+export const imbaConfigPath = np.join(_dirname, "..", "bin", "./imba.config.mjs")
 
-export def getConfigFilePath(type)
-	const typeMap = 
-		client: 'vite.config'
-		server: 'vite.config.server'
-		test: 'vitest.config'
-		testSetup: 'test-setup'
-		imba: 'imba.config'
+
+let extensions = ['imba', 'ts', 'mts', 'js', 'mjs', 'cjs']
+
+export def getConfigFilePath(type, opts)
+	opts ||= {command: "serve", mode: "development"}
+
+	const types = ["client", "server", "test", "testSetup", "imba"] 
 	
-	const fileName = typeMap[type]
+	unless types.includes type
+		throw new Error("Unrecognized config type {type}. Should be one of {types}")
 
-	unless fileName
-		throw new Error("Unrecognized config type {type}. Should be one of {Object.keys typeMap}")
+	if type == 'test'
+		# priority for tests is vitest config file
+		# we can't pass a merged object to vitest cli :/
+		for ext in extensions when ext != 'imba'
+			const name = "vitest.config.{ext}"
+			const path = np.join process.cwd!, name
+			if nfs.existsSync path
+				return path
 
+		# next up, see if the user has a test prop in imba config file
+		# and plugins in the root
+		for ext in extensions
+			const name = "imba.config.{ext}"
+			const path = np.join process.cwd!, name
+			if nfs.existsSync path
+				let {default: imbaConfig} = await import(String url.pathToFileURL path)
+				if typeof imbaConfig == "function"
+					imbaConfig = imbaConfig({command, mode})
+
+				if imbaConfig[type]
+					if imbaConfig.plugins
+						return path
+					else
+						console.warn("You need to configure the plugins manually at the top level config or create a vitest.config.js file")
+		# otherwise use the default test config
+		return imbaConfigPath
+
+	# load default imba config
+	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
+	if typeof defaultImbaConfig == "function"
+		defaultImbaConfig = imbaConfig({command, mode})
+	const defaultConfig = defaultImbaConfig[type]
+
+	# client, server, imba or test
+
+	# we only support imba.config.js
+	# to use a regular vite.config.js
+	# add a configFile property to client: { configFile: } im imba.config.js
+	
 	# search in current working dir
-	let extensions = ['ts', 'mts', 'js', 'mjs', 'cjs']
-	extensions.unshift 'imba' if type == 'testSetup'
 	
+	let configPath
 	for ext in extensions
-		const name = "{fileName}.{ext}"
+		const name = "imba.config.{ext}"
 		const path = np.join process.cwd!, name
 		if nfs.existsSync path
-			return path
+			configPath = path
 
-	# not found, use default config
-	if type == 'test' or type == 'server'
-		return viteServerConfigFile
-	elif type == 'client'
-		return viteClientConfigFile
-	elif type == 'testSetup'
-		return vitestSetupPath
+	configPath ||= imbaConfigPath
 
-	throw new Error("config file {type} not found. This is probably a bug. Please open an issue in https://github.com/imba/imba/issues/new")
+	if configPath.endsWith('imba')
+		throw new Error("should support this")
+
+	let {default: imbaConfig} = await import(String url.pathToFileURL configPath)
+	if typeof imbaConfig == "function"
+		imbaConfig = imbaConfig({command, mode})
+
+	const configObj = imbaConfig[type]
+
+	return defaultConfig if !configObj
+	
+	return { ...defaultConfig, ...configObj}
+
 	
 export def ensurePackagesInstalled(dependencies, root)
 	const to-install = []

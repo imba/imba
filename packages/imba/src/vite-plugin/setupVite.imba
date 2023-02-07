@@ -14,21 +14,21 @@ export def setupVite(srv, options, cb)
 	elif typeof options == 'function'
 		options = {mode: "development"}
 	const prod? = options.mode == "production" or options.prod == yes
+	const mode = prod? ? "production" : "development"
+
 	unless vite
 		const port = await getport(port: getport.makeRange(24000, 26000))
 
-		const serverConfigFile = getConfigFilePath("server")
-		let {default: serverConfig} = await import(String url.pathToFileURL serverConfigFile)
-		if typeof serverConfig == "function"
-			serverConfig = serverConfig({command: "build", mode: "production"})
+		const serverConfig = await getConfigFilePath("server", {command: "server", mode})
 
 		let serverOptions = options.serverOptions or { server: { hmr: {port} } }
 
-		let clientConfigFile = getConfigFilePath "client"
+		let clientConfig = await getConfigFilePath "client", {mode}
+
 		const vite-options = {
-			appType: "custom"
-			configFile: clientConfigFile
+			...clientConfig
 			...serverOptions,
+			appType: "custom"
 			server: {
 				...serverConfig.server,
 				...serverOptions.server,

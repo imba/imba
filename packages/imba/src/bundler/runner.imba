@@ -213,13 +213,9 @@ export default class Runner < Component
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")
-		const configFile = getConfigFilePath("server")
-		let {default: config} = await import(String pathToFileURL configFile)
-		if typeof config == "function"
-			config = config({command: "serve", mode: "development"})
+		const config = await getConfigFilePath("server", {command: "serve", mode: "development"})
 		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
 		config.configFile = no
-
 		viteServer = await Vite.createServer config
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
 			transformMode:
