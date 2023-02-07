@@ -24,6 +24,7 @@ const _createCompileImba = (makeHot?: Function) =>
 			filename,
 			generate: ssr ? 'ssr' : 'dom',
 			format: 'esm',
+			raiseErrors: true,
 			resolveColors: true,
 			sourcePath: filename,
 			sourcemap: options.compilerOptions.sourcemap ?? "inline"

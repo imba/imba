@@ -18,11 +18,11 @@ export const layouts =
 	vflex: do(o)
 		o.display = 'flex'
 		o.fld = 'column'
-	
+
 	hflex: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
-	
+
 	box: do(o)
 		o.display = 'flex'
 		o.ai = 'center'
@@ -33,7 +33,7 @@ export const layouts =
 		o.fld = 'column'
 		o.ai = 'center'
 		o.jc = 'center'
-	
+
 	hbox: do(o)
 		o.display = 'flex'
 		o.fld = 'row'
@@ -68,12 +68,10 @@ export const layouts =
 		o.display = 'grid'
 		o.gaf = 'column'
 		o.gac = '1fr'
-	
+
 	vgrid: do(o)
 		o.display = 'grid'
 		o.gaf = 'row'
-
-
 
 for dir,row of 'vh'
 	for va of 'tcbs'
@@ -121,7 +119,7 @@ for own k,v of validTypes
 	validTypes[k] = o
 
 export const aliases =
-	
+
 	c: 'color'
 	d: 'display'
 	pos: 'position'
@@ -134,7 +132,7 @@ export const aliases =
 	pb: 'padding-bottom'
 	px: 'padding-x'
 	py: 'padding-y'
-	
+
 	# margins
 	m: 'margin'
 	ml: 'margin-left'
@@ -143,9 +141,9 @@ export const aliases =
 	mb: 'margin-bottom'
 	mx: 'margin-x'
 	my: 'margin-y'
-	
+
 	# add scroll snap shorthands?
-	
+
 	w: 'width'
 	h: 'height'
 	t: 'top'
@@ -158,13 +156,13 @@ export const aliases =
 	miw: 'min-width'
 	maw: 'max-width'
 	# size: ['width','height']
-	
+
 	# justify
 	ji: 'justify-items'
 	jc: 'justify-content'
 	js: 'justify-self'
 	j: ['justify-content','justify-items'] # Deprecate?
-	
+
 	# align
 	ai: 'align-items'
 	ac: 'align-content'
@@ -193,14 +191,14 @@ export const aliases =
 	flg: 'flex-grow'
 	fls: 'flex-shrink'
 	flw: 'flex-wrap'
-	
+
 	# fonts
 	ff: 'font-family'
 	fs: 'font-size'
 	fw: 'font-weight'
 	ts: 'text-shadow' # DEPCRATED - use for font-style instead?
 	txs: 'text-shadow'
-	
+
 	# text-decoration
 	td: 'text-decoration'
 	tdl: 'text-decoration-line'
@@ -209,14 +207,14 @@ export const aliases =
 	tdt: 'text-decoration-thickness'
 	tdsi: 'text-decoration-skip-ink'
 	tuo: 'text-underline-offset'
-	
+
 	# text-emphasis
 	te: 'text-emphasis'
 	tec: 'text-emphasis-color'
 	tes: 'text-emphasis-style'
 	tep: 'text-emphasis-position'
 	tet: 'text-emphasis-thickness'
-		
+
 	# text
 	tt: 'text-transform'
 	ta: 'text-align'
@@ -283,7 +281,7 @@ export const aliases =
 	bgs: 'background-size'
 	bgo: 'background-origin'
 	bgclip: 'background-clip'
-	
+
 	# grid
 	g: 'gap'
 	rg: 'row-gap'
@@ -304,7 +302,7 @@ export const aliases =
 	gcs: 'grid-column-start'
 	gre: 'grid-row-end'
 	gce: 'grid-column-end'
-	
+
 	# shadow
 	shadow: 'box-shadow' # DEPRECATED
 	bxs: 'box-shadow'
@@ -315,11 +313,11 @@ export const aliases =
 	'ofy':'overflow-y'
 	'ofa':'overflow-anchor'
 	'tof': 'text-overflow'
-	
+
 	# content
 	prefix: 'content@before'
 	suffix: 'content@after'
-	
+
 	# transforms
 	x: 'x'
 	y: 'y'
@@ -331,7 +329,7 @@ export const aliases =
 	'skew-x': 'skew-x'
 	'skew-y': 'skew-y'
 	origin: 'transform-origin'
-	
+
 	# others
 	ws: 'white-space'
 	zi: 'z-index'
@@ -339,7 +337,7 @@ export const aliases =
 	us: 'user-select'
 	o: 'opacity'
 	tween: 'transition'
-	
+
 	# easing
 	e: 'ease' # Deprecate
 
@@ -408,7 +406,6 @@ export def parseColorString str
 
 	return null
 
-
 export class Color
 
 	static def from raw
@@ -420,16 +417,16 @@ export class Color
 
 		if raw isa Array
 			return new self('',raw[0],raw[1],raw[2])
-		
+
 		return null
-	
+
 	def constructor name,h,s,l,a = 1
 		name = name
 		h = h
 		s = s
 		l = l
 		a = a
-		
+
 	def alpha a = 1
 		new Color(name,h,s,l,a)
 
@@ -441,7 +438,7 @@ export class Color
 		let	s1 = s + (other.s - s) * sw
 		let	l1 = l + (other.l - l) * lw
 		return new Color(name + other.name,h1,s1,l1)
-	
+
 	def toString a = a
 		# if typeof a == 'string' and a.match(/%$/)
 		#	a = parseFloat(a.slice(0,-1)) / 100
@@ -460,7 +457,6 @@ export class NamedColor < Color
 
 	def toVar
 		"var(--c_{name})"
-		
 
 export class Tint < Color
 
@@ -480,51 +476,51 @@ export class Tint < Color
 		"var(--{name})"
 
 export class Length
-	
+
 	static def parse value
 		let m = String(value).match(/^(\-?[\d\.]+)(\w+|%)?$/)
 		return null unless m
 		return new self(parseFloat(m[1]),m[2])
-	
+
 	def constructor number, unit
 		number = number
 		unit = unit
-	
+
 	def valueOf
 		number
-		
+
 	def toString
 		number + (unit or '')
-		
+
 	def clone num = number, u = unit
 		new Length(num,u)
-		
+
 	def rounded
 		clone(Math.round(number))
-		
+
 	def c
 		toString!
-	
+
 	get _unit
 		unit
-	
+
 	get _number
 		number
 
 export class Var
-	
+
 	def constructor name, fallback
 		name = name
 		fallback = fallback
-		
+
 	def c
 		fallback ? "var(--{name},{fallback.c ? fallback.c! : String(fallback)})" : "var(--{name})"
 
 export class Calc
-	
+
 	def constructor expr
 		expr = expr
-		
+
 	def cpart parts
 		let out = '('
 		for part in parts
@@ -536,13 +532,12 @@ export class Calc
 				out += part.c!
 			elif part isa Array
 				out += cpart(part)
-			
+
 		out += ')'
 		return out
-	
+
 	def c
 		'calc' + cpart(expr)
-		
 
 # This has to move into StyleTheme class
 let defaultPalette = {
@@ -553,10 +548,6 @@ let defaultPalette = {
 	black: new Color('black',0,0,0,'100%')
 	white: new Color('white',0,0,100,'100%')
 }
-
-
-		
-
 
 def parseColors palette, colors
 	for own name,variations of colors
@@ -579,10 +570,10 @@ parseColors(defaultPalette,colors)
 const VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
 
 export class StyleTheme
-	
+
 	static def instance
 		ThemeInstance ||= new self
-		
+
 	static def propAbbr name
 		abbreviations[name] or name
 
@@ -592,11 +583,11 @@ export class StyleTheme
 		let theme = ThemeCache.get(config)
 		ThemeCache.set(config,theme = new self(config)) unless theme
 		return theme
-		
+
 	def constructor ext = {}
 		options = theme
 		palette = Object.assign({},defaultPalette)
-		
+
 		ext = ext.theme if ext.theme
 
 		if ext and ext.colors
@@ -604,9 +595,9 @@ export class StyleTheme
 
 	def expandProperty name
 		return aliases[name] or undefined
-		
+
 	def expandValue value, config
-	
+
 		if value == undefined
 			value = config.default
 
@@ -618,34 +609,34 @@ export class StyleTheme
 			return value * parseFloat(num) + unit
 
 		return value
-	
+
 	def padding_x [l,r=l]
 		{'padding-left': l, 'padding-right': r}
-	
+
 	def padding_y [t,b=t]
 		{'padding-top': t, 'padding-bottom': b}
-		
+
 	def margin_x [l,r=l]
 		{'margin-left': l, 'margin-right': r}
-	
+
 	def margin_y [t,b=t]
 		{'margin-top': t, 'margin-bottom': b}
-		
+
 	def ease pars
 		$ease(pars,'a')
-		
+
 	def ease_opacity pars
 		$ease(pars,'o')
 
 	def ease_box pars
 		$ease(pars,'b')
-		
+
 	def ease_transform pars
 		$ease(pars,'t')
-		
+
 	def ease_colors pars
 		$ease(pars,'c')
-	
+
 	def $ease pars, k = '',slot = null
 		pars = pars.slice(0)
 
@@ -654,32 +645,31 @@ export class StyleTheme
 		if pars[0]..unit
 			o["--e_{k}d"] = pars[0]
 			pars.shift!
-	
+
 		if pars[0] and !pars[0].unit
 			let ev = $varFallback('ease',[pars[0]])
 			o["--e_{k}f"] = ev
 			pars.shift!
-	
+
 		if pars[0] and pars[0].unit
 			o["--e_{k}w"] = pars[0]
 			pars.shift!
-			
+
 		return o
 
-		
 	def inset [t,r=t,b=t,l=r]
 		{position: 'absolute', top: t, right: r, bottom: b, left: l}
-		
+
 	def size [w,h=w]
 		{width: w, height: h}
-		
+
 	def grid params
 		if let m = $varFallback('grid',params)
 			return m
 		return
 
 	def animation ...params
-		
+
 		let valids = {
 			normal:1,reverse:1,alternate:1,'alternate-reverse':1
 			infinite:2
@@ -731,13 +721,22 @@ export class StyleTheme
 		if let m = $varFallback('animation',params)
 			return m
 		return
-		
+
 	def display params
 		let out = {display: params}
 		for par in params
 			if let layout = layouts[String(par)]
 				layout.call(this,out,par,params)
 		return out
+
+	def text_transform params
+		let out = {'text-transform': params}
+		let str = String(params[0])
+		if str is 'cap'
+			out['text-transform'] = 'capitalize'
+		elif str is 'up'
+			out['text-transform'] = 'uppercase'
+		out
 
 	def position params
 		let out = {position: params}
@@ -747,8 +746,7 @@ export class StyleTheme
 		elif str == 'rel'
 			out.position = 'relative'
 		return out
-		
-		
+
 	def width [...params]
 		let o = {}
 		for param in params
@@ -763,7 +761,7 @@ export class StyleTheme
 			else
 				o.width = param
 		return o
-		
+
 	def height [...params]
 		let o = {}
 		for param in params
@@ -789,28 +787,28 @@ export class StyleTheme
 			'name | duration | ease'
 			'name | duration | ease | delay'
 		]
-		
+
 		let groups = {
 			styles: ['background-color','border-color','color','fill','stroke','opacity','box-shadow','transform']
 			sizes: ['width','height','left','top','right','bottom','margin','padding']
 			colors: ['background-color','border-color','color','fill','stroke']
 		}
-		
+
 		let i = 0
 		while i < parts.length
 			let part = parts[i]
 			let name = String(part[0])
 			if name.match(/^[\-\+]?\d?(\.?\d+)(s|ms)?$/)
 				part.unshift(name = 'styles')
-				
+
 			let ease = part[2]
 			let group = groups[name]
-			
+
 			if group and parts.length == 0
 				part[0] = 'none'
 				Object.assign(add,{'transition-property': group.join(',')})
 			elif group and parts.length > 1
-				# TODO we could do a more advanced version where we 
+				# TODO we could do a more advanced version where we
 				# create repeating transition-property and duration etc and seam
 				# the pairs together
 				let subparts = group.map do [$1].concat(part.slice(1))
@@ -821,17 +819,17 @@ export class StyleTheme
 		# this is a hack
 		Object.assign(out,{'--e_rest': parts},add)
 		return out
-		
+
 	def font params,...rest
 		for param,i in params
 			yes
 		return
-		
+
 	def font_family params
 		if let m = $varFallback('font',params)
 			return m
 		return
-		
+
 	def text_shadow ...params
 		for par,i in params
 			if let m = $varFallback('text-shadow',par)
@@ -889,17 +887,17 @@ export class StyleTheme
 		let size = v
 		let lh
 		let out = {}
-		
+
 		if sizes[raw]
 			[size,lh] = sizes[raw]
 			size = Length.parse(size)
 			lh = Length.parse(lh or '')
-		
+
 		if v.param and v.param
 			lh = v.param
-			
+
 		out['font-size'] = size
-		
+
 		if lh
 			let lhu = lh._unit
 			let lhn = lh._number
@@ -916,20 +914,20 @@ export class StyleTheme
 				if rounded % 2 == 1
 					rounded++
 				out.lh = new Length(rounded,'px')
-		
+
 		return out
-		
+
 	def line_height [v]
 		let uvar = v
 		# TODO what if it has u unit?
 		if v._number and !v._unit
 			uvar = v.clone(v._number,'em')
-			
+
 		return {
 			'line-height': v
 			'--u_lh': uvar
 		}
-		
+
 	def text_decoration params
 		for param,i in params
 			let str = String(param)
@@ -937,14 +935,13 @@ export class StyleTheme
 				param._resolvedValue = 'underline'
 			elif str == 's'
 				param._resolvedValue = 'line-through'
-			
+
 		return [params]
 
 	# TODO allow setting border style and color w/o width?
 	# TODO allow size hidden etc?
 	def border [...params]
 		$border(params,'')
-		
 
 	def $border params,side = ''
 		let o = {__border__: yes}
@@ -980,37 +977,37 @@ export class StyleTheme
 
 	def border_left params
 		return $border(params,'-left')
-		
+
 	def border_right params
 		return $border(params,'-right')
-	
+
 	def border_top params
 		return $border(params,'-top')
-		
+
 	def border_bottom params
 		return $border(params,'-bottom')
-		
+
 	def border_x [l,r=l]
 		Object.assign({},border_left([l]),border_right([r]))
-		
+
 	def border_y [t,b=t]
 		Object.assign({},border_top([t]),border_bottom([b]))
-		
+
 	def border_x_width [l,r=l]
 		{bwl: l, bwr: r}
-		
+
 	def border_y_width [t,b=t]
 		{bwt: t, bwb: b}
-		
+
 	def border_x_style [l,r=l]
 		{bsl: l, bsr: r}
-		
+
 	def border_y_style [t,b=t]
 		{bst: t, bsb: b}
-	
+
 	def border_x_color [l,r=l]
 		{bcl: l, bcr: r}
-		
+
 	def border_y_color [t,b=t]
 		{bct: t, bcb: b}
 
@@ -1049,7 +1046,7 @@ export class StyleTheme
 		if !o.olw
 			o['--ol_w'] = '1px'
 		return o
-	
+
 	def gap [rg,cg = rg]
 		let o = {}
 		if cg != rg
@@ -1059,7 +1056,7 @@ export class StyleTheme
 			o['--u_rg'] = rg unless rg._unit == 'rg'
 			o['--u_cg'] = rg unless rg._unit == 'cg'
 		return o
-			
+
 	def row_gap [v]
 		let o = {'row-gap': v}
 		o['--u_rg'] = v unless v._unit == 'rg'
@@ -1071,13 +1068,13 @@ export class StyleTheme
 		return o
 
 	def tint [v]
-		
+
 		let o = {'--hue': v}
 		for i in [0 ... 10]
 			o["--hue{i}"] = "/*##*/{v}{i}"
 			# new Tint("v{i}")
 		return o
-		
+
 	def hue [v]
 		let o = {'--hue': v}
 		for i in [0 ... 10]
@@ -1091,11 +1088,11 @@ export class StyleTheme
 	def $color name
 		let m = name.match(/^([A-Za-z\-]+)(\d)(\d*)$/)
 		let ns = m and m[1]
-		
+
 		# aliased colors
 		if ns and typeof palette[ns] == 'string'
 			return $color(palette[ns] + name.slice(ns.length))
-			
+
 		if ns == 'hue'
 			return new Tint(name)
 
@@ -1116,7 +1113,7 @@ export class StyleTheme
 
 			let n0 = nr + 1
 			let n1 = nr
-			
+
 			if typeof palette[ns] == 'string'
 				# proxy to a different color
 				return $color(palette[ns] + name.slice(ns.length))
@@ -1137,7 +1134,7 @@ export class StyleTheme
 				to = palette.black
 				hw = 0
 				sw = lw = fraction
-			
+
 			if !from
 				from = palette.blue1
 				hw = 1
@@ -1145,7 +1142,7 @@ export class StyleTheme
 
 			if from and to
 				return palette[name] = from.mix(to,hw,sw,lw)
-		
+
 		if let parsed = parseColorString(name)
 				return new Color('',...parsed)
 		null
@@ -1168,15 +1165,15 @@ export class StyleTheme
 
 		if key.match(/^#[a-fA-F0-9]{3,8}/)
 			return identifier
-			
+
 		elif key.match(/^(rgb|hsl)/)
 			return identifier
-		
+
 		elif key == 'currentColor'
 			return identifier
 
 		return null
-		
+
 	def $varFallback name, params, exclude = []
 		if params.length == 1
 			let str = String(params[0])
@@ -1187,13 +1184,12 @@ export class StyleTheme
 					fallback = fonts[str]
 				if name == 'ease' and options.variants.easings[str]
 					fallback = options.variants.easings[str]
-				# elif name == 'box-shadow' and 
+				# elif name == 'box-shadow' and
 				return [new Var("{name}-{str}",fallback)]
 		return
-	
 
 	def $value value, index, config
-		
+
 		let key = config
 		let orig = value
 		let raw = value && value.toRaw ? value.toRaw! : String(value)
@@ -1207,7 +1203,7 @@ export class StyleTheme
 		if typeof config == 'string'
 			if aliases[config]
 				config = aliases[config]
-				
+
 				if config isa Array
 					config = config[0]
 
@@ -1233,30 +1229,30 @@ export class StyleTheme
 				return options.variants.easings[raw]
 
 			config = options.variants[config] or {}
-		
+
 		if value == undefined
 			value = config.default
-		
+
 		if config.hasOwnProperty(raw)
 			# should we convert it or rather just link it up?
 			value = config[value]
-			
+
 		if typeof raw == 'number' and config.NUMBER
 			let [step,num,unit] = config.NUMBER.match(/^(\-?[\d\.]+)(\w+|%)?$/)
 			return value * parseFloat(num) + unit
-		
+
 		elif typeof raw == 'string'
 			if let color = $parseColor(raw)
 				return color
-		
+
 		if fallback and !unit
 			let okstr = str.match(/^[a-zA-Z\-][\w\-]*$/) and !str.match(/^(none|inherit|unset|initial)$/)
 			let oknum = unit and VALID_CSS_UNITS.indexOf(unit) == -1
 			if (okstr or oknum) and value.alone
 				return new Var("{fallback}-{str}",orig != value ? value : raw)
-			
+
 		return value
-		
+
 	def transformColors text
 		text = text.replace(/\/\*(#+)\*\/(\#?\w+)(?:\/(\d+%?|\$[\w\-]+))?/g) do(m,typ,c,a)
 			if let color = $color(c)
@@ -1266,7 +1262,7 @@ export class StyleTheme
 					return color.toVar(a)
 			return m
 		return text
-		
+
 # should not happen at root - but create a theme instance
 
 export const StyleExtenders = {
@@ -1276,7 +1272,7 @@ export const StyleExtenders = {
 		--t_skew-x:0;--t_skew-y:0;
 		transform: translate3d(var(--t_x),var(--t_y),var(--t_z))
 		           rotate(var(--t_rotate))
-		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y)) 
+		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y))
 		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
 	'''
 
@@ -1322,24 +1318,24 @@ export class StyleSheet
 
 	get transitions
 		#register.transition
-		
+
 	def add part, meta = {}
 		#parts.push(part)
-		
+
 		if meta.apply
 			for own k,v of meta.apply
 				let arr = #apply[k] ||= []
 				for item in v
 					arr.push(item) unless arr.indexOf(item) >= 0
 		return
-		
+
 	def js root, stack
 		let js = []
 
 		for own k,v of #register
 			js.push root.runtime!.transitions + ".addSelectors({JSON.stringify(v)},'{k}')"
 		return js.join('\n')
-	
+
 	def parse
 		return #string if #string
 
@@ -1349,10 +1345,10 @@ export class StyleSheet
 		let prepend = do(val)
 			unless parts.indexOf(val) >= 0
 			parts.unshift(val)
-		
+
 		for own k,v of #apply
 			let helper = StyleExtenders[k]
-			
+
 			let base = {}
 			let all = {}
 			let groups = {"": base}
@@ -1369,21 +1365,20 @@ export class StyleSheet
 					sel = sel.replace(/((\:+)[\w\-]+)(?!\()/g) do(m,k) k.length > 1 ? m : ''
 					sel = sel.replace(/^\:root /g,'')
 
-					
 					# simplify the selectors as much as possible
 
 					let group = groups[ns] ||= {}
 					group[sel] = rule
 					all[sel] = yes
-			
+
 			# console.log 'groups',groups
 			if helper
-				
+
 				for own ns,group of groups
 					let sel = Object.keys(group)
 					if ns != ''
 						sel = sel.filter do !base[$1]
-					
+
 					continue if sel.length == 0
 					# sel.unshift('._ease_') if k == 'transition' or k == 'ease'
 
@@ -1397,33 +1392,33 @@ export class StyleSheet
 						if !some or s.match(/[\s\>\,]|:(not|before|after|marker)|::/)
 							corr.push(s)
 					sel = corr
-					
+
 					let str = sel.join(', ') + ' {\n' + helper + '\n}'
 
 					if ns
 						str = ns + ' {\n' + str + '\n}'
 
 					parts.unshift(str)
-			
+
 			let selectors = Object.keys(all)
 			if k == 'transition' and selectors.length
 				prepend('.\\@enter:not(#_),.\\@leave:not(#_) {--e_ad:300ms;}')
-				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') # 
+				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }') #
 			if easing
 				#register[k] = selectors
-		
+
 		#string = parts.join('\n\n')
 
 		if #stack.resolveColors!
 			#string = #stack.theme!.transformColors(#string, prefix: false)
-		
+
 		return #string
-		
+
 	def toString
 		parse!
 
 export class StyleRule
-	
+
 	def constructor parent,selector,content,options = {}
 		parent = parent
 		selector = selector
@@ -1432,10 +1427,10 @@ export class StyleRule
 		isKeyFrames = !!selector.match(/\@keyframes \w/)
 		isKeyFrame = parent and parent.isKeyFrames
 		meta = {}
-		
+
 	def root
 		parent ? parent.root : self
-		
+
 	def apply kind,sel
 		let arr = options.apply[kind] ||= []
 		arr.push(sel)
@@ -1443,7 +1438,7 @@ export class StyleRule
 	def register kind,sel
 		let arr = options.register[kind] ||= []
 		arr.push(sel)
-		
+
 	def toString o = {}
 		let parts = []
 		let subrules = []
@@ -1475,7 +1470,7 @@ export class StyleRule
 
 		for own key,value of self.content
 			continue if value == undefined
-			
+
 			let subsel = null
 			let important = selpri ? ' !important' : ''
 			let rawkey = key
@@ -1485,7 +1480,7 @@ export class StyleRule
 			# if imp
 			#	important = imp[0] == '!' ? ' !important' : ''
 			#	key = key.slice(imp.length)
-		
+
 			if key.indexOf('&') >= 0
 				if isKeyFrames
 					let keyframe = key.replace(/&/g,'')
@@ -1496,10 +1491,10 @@ export class StyleRule
 				let subsel = selparser.unwrap(selector,key)
 				subrules.push new StyleRule(self,subsel,value,options)
 				continue
-			
+
 			elif key.indexOf('§') >= 0
 				# let keys = key.replace(/[\.\~\@\+]/g,'\\$&').split('§')
-				
+
 				let keys = rawkey.split('§')
 				# keys.slice(1).join(' ')
 				# using :is it should be much, much easier with the nested selectors?
@@ -1519,7 +1514,7 @@ export class StyleRule
 
 			elif key.match(/^__(\w+)__$/)
 				meta[key.slice(2,-2)] = yes
-			
+
 			elif key[0] == '['
 				# better to just check if key contains '.'
 				# this is only for a single property
@@ -1538,7 +1533,7 @@ export class StyleRule
 				parts.push "--t_{key}: {value} !important;"
 			elif key.match(/^(ease-.*)$/)
 				meta.ease = yes
-				let ref = key.replace('delay','wait').split('-').map(do $1[0]).join('') 
+				let ref = key.replace('delay','wait').split('-').map(do $1[0]).join('')
 				parts.push "--e_{ref.slice(1)}: {value} !important;"
 
 				unless abbreviations[key]
@@ -1564,7 +1559,6 @@ export class StyleRule
 					for prefixed in AutoPrefixes[key]
 						parts.push "{prefixed}: {value}{important};"
 
-		
 		let out = ""
 
 		let content = parts.join('\n')
@@ -1590,12 +1584,12 @@ export class StyleRule
 			if sel and sel.hasTransitionStyles
 				apply('transition',sel)
 				apply('ease',sel) if !meta.ease
-			
+
 			if meta.size
 				for typ in ['_off_','_out_','_in_']
 					if sel[typ]
 						apply("{typ}sized",sel)
-			
+
 			out = (content.match(/[^\n\s]/)) ? selparser.render(sel,content,options) : ""
 
 		for own subrule in subrules
