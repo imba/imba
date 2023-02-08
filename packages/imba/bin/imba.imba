@@ -162,12 +162,12 @@ def eject(o)
 	const configContent = nfs.readFileSync(viteServerConfigFile, 'utf-8')
 	nfs.writeFileSync(configPath, configContent.replace(/\/\/eject\s/g, ''))
 	console.log "✅ vite.config.server.mjs has been successfully {o.force ? 'overwritten': 'created'}"
-	const setupPath = "test-setup.js"
+	const setupPath = "test-setup.mjs"
 	if nfs.existsSync(setupPath) and !o.force
-		return console.log "You already have a test-setup.js in your project. Delete it or use `imba eject --force` to overwrite"
+		return console.log "You already have a test-setup.mjs in your project. Delete it or use `imba eject --force` to overwrite"
 	const setupContent = nfs.readFileSync(vitestSetupPath, 'utf-8')
 	nfs.writeFileSync(setupPath, setupContent)
-	console.log "✅ test-setup.js has been successfully {o.force ? 'overwritten': 'created'}"
+	console.log "✅ test-setup.mjs has been successfully {o.force ? 'overwritten': 'created'}"
 	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
 	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
 	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
@@ -178,10 +178,10 @@ def test o
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 	let configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
 	if configFile == viteServerConfigFile
-		const original-setup-file = np.join(__dirname, "./test-setup.js")
+		const original-setup-file = np.join(__dirname, "./test-setup.mjs")
 		# pick test setup file path
-		let setupFile = resolveWithFallbacks("test-setup", ["imba", "ts", "js", "mjs", "cjs"], {ext:"js"})
-		if setupFile == "test-setup.js"
+		let setupFile = resolveWithFallbacks("test-setup", ["imba", "ts", "js", "mjs", "cjs"], {ext:"mjs"})
+		if setupFile == "test-setup.mjs"
 			setupFile = np.resolve original-setup-file
 		# create a temporary vite config file
 		const tmp-config = np.join __dirname, "temp-config.vite.js"

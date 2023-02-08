@@ -117,6 +117,7 @@ export def imba(inlineOptions\Partial<Options> = {})
 			return resolvedImbaSSR
 
 		if test?
+			let id = importee
 			const req = parseRequest(id, ssr)
 			if req..external !== undefined
 				let keys = []
