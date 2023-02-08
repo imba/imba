@@ -3,13 +3,15 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "imba serve --vite index.html",
+    "build": "imba build",
     "preview": "vite preview"
   },
   "devDependencies": {
-	"imba": "../../imba",
-    "vite": "^3.0.9"
+    "imba": "../../imba",
+    "vite": "^3.0.9",
+    "vite-node": "^0.28.4",
+    "vite-tsconfig-paths-silent": "^4.0.5"
   },
   "type": "module"
 }

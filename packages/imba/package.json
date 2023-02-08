@@ -59,7 +59,7 @@
     "prepack": "npm run build"
   },
   "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.227",
+  "version": "2.0.0-alpha.227.vite.3",
   "licenses": [
     {
       "type": "MIT",
@@ -138,6 +138,26 @@
     "vite-tsconfig-paths-silent": "*",
     "vitest": "*"
   },
+  "peerDependenciesMeta": {
+    "@testing-library/dom": {
+      "optional": true
+    },
+    "@testing-library/jest-dom": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    },
+    "vite-node": {
+      "optional": true
+    },
+    "vite-tsconfig-paths-silent": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
@@ -149,7 +169,6 @@
     "flatted": "^3.1.0",
     "get-port": "^5.1.1",
     "image-size": "^0.9.3",
-    "kleur": "^4.1.5",
     "magic-string": "^0.26.7",
     "micromatch": "^4.0.5",
     "node-fetch": "^2.6.1",

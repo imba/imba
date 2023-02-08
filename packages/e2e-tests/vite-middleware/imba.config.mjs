@@ -7,7 +7,7 @@ import url from 'node:url'
 // ENTRY
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const entry = resolve(__dirname, "src/main.js")
-console.log("::vitest config")
+
 export default defineConfig(({ command, mode }) => {
 	return {server:{
 		plugins: [
