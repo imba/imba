@@ -1,7 +1,7 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
-import { buildIdParser, IdParser, ImbaRequest, normalize } from "./utils/id";
+import { parseRequest, buildIdParser, IdParser, ImbaRequest, normalize } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
 import { CompileData, createCompileImba } from "./utils/compile";
 import {
@@ -115,6 +115,21 @@ export def imba(inlineOptions\Partial<Options> = {})
 					log.debug "resolved imba to imba/server"
 					return imbaSSR
 			return resolvedImbaSSR
+
+		if test?
+			const req = parseRequest(id, ssr)
+			if req..external !== undefined
+				let keys = []
+				for k,v in Object.keys(req)
+					keys.push "{k}={v}" unless k == 'external'
+				if keys.length
+					id = id.split("?")[0] + "?{keys.join('&')}"
+				else
+					id = id.split("?")[0]
+				return id
+
+
+
 		try
 			const resolved = resolveViaPackageJsonImba(importee, importer, cache)
 			if resolved
