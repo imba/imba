@@ -277,7 +277,7 @@ let bundles = [
 		],
 		outExtension: { ".js": ".cjs" },
 		minify: true,
-		external: ["vite", "imba", "debug", "deepmerge", "diff", "magic-string", "picomatch", "esbuild"],
+		external: ["picocolors", "vite", "imba", "debug", "deepmerge", "diff", "magic-string", "picomatch", "get-port", "esbuild"],
 		outdir: "dist",
 		format: "cjs",
 		platform: "node",

@@ -86,7 +86,7 @@ function createVirtualImportId(filename: string, root: string, type: ImbaQueryTy
 	return `${filename}?${parts.join('&')}`;
 }
 
-function parseRequestQuery(rawQuery: string): RequestQuery {
+export function parseRequestQuery(rawQuery: string): RequestQuery {
 	const query = Object.fromEntries(new URLSearchParams(rawQuery));
 	for (const key in query) {
 		if (query[key] === '') {

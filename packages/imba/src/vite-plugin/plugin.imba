@@ -3,7 +3,7 @@ import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
 import {transformWithEsbuild, normalizePath} from 'vite'
 import * as esbuild from 'esbuild'
-import { buildIdParser,  normalize, injectQuery } from "./utils/id";
+import { buildIdParser,  normalize, injectQuery, parseRequest } from "./utils/id";
 import type { IdParser, ImbaRequest } from "./utils/id";
 import { log, logCompilerWarnings } from "./utils/log";
 import { createCompileImba } from "./utils/compile";
@@ -124,6 +124,18 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 					log.debug "resolved imba to imba/server"
 					return imbaSSR
 			return resolvedImbaSSR
+		if test?
+			const req = parseRequest(id, ssr)
+			if req..external !== undefined
+				let keys = []
+				for k,v in Object.keys(req)
+					keys.push "{k}={v}" unless k == 'external'
+				if keys.length
+					id = id.split("?")[0] + "?{keys.join('&')}"
+				else
+					id = id.split("?")[0]
+				return id
+
 		try
 			const resolved = resolveViaPackageJsonImba(id, importer, cache)
 			if resolved
