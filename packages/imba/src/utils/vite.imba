@@ -90,7 +90,7 @@ export def ensurePackagesInstalled(dependencies, root)
 	return true if to-install.length == 0
 	const promptInstall = !process.env.CI and process.stdout.isTTY
 	const deps = to-install.join(', ')
-	process.stderr.write c.red("{c.inverse(c.red(' MISSING DEP '))} Can not find dependencies '{deps}'\n\n")
+	process.stderr.write c.red("{c.inverse(c.red(' MISSING DEP '))} Cannot find dependencies '{deps}'\n\n")
 	if !promptInstall
 		return false
 	const prompts = await import("prompts")
@@ -99,8 +99,7 @@ export def ensurePackagesInstalled(dependencies, root)
 		name: "install"
 		message: c.reset("Do you want to install {c.green(deps)}?"))
 	if install
-		for dependency in to-install
-			await (await import("@antfu/install-pkg")).installPackage(dependency, dev: true)
+		await (await import("@antfu/install-pkg")).installPackage(to-install, dev: true)
 		process.stderr.write c.yellow("\nPackages {deps} installed, re-run the command to start.\n")
 		process.exit EXIT_CODE_RESTART
 		return true

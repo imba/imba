@@ -68,13 +68,13 @@ export default defineConfig({
 	},
 	// we duplicate the plugins and resolve config here for the tests
 	plugins: [imbaPlugin(), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
-	resolve: { extensions },
+	resolve: { extensions: ['.node.imba', ...extensions] },
 	test: {
 		globals: true,
 		include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 		includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 		environment: "jsdom",
-		setupFiles: ['node_modules/imba/bin/test-setup.js'],
+		setupFiles: ['node_modules/imba/bin/test-setup.mjs'],
 		define: {
 			'import.meta.vitest': undefined,
 		},

@@ -9,7 +9,7 @@ import {builtinModules} from 'module'
 import {createHash, slash} from './utils'
 import mm from 'micromatch'
 import {__served__} from '../imba/utils'
-import { getConfigFilePath } from '../utils/vite'
+import { ensurePackagesInstalled, getConfigFilePath } from '../utils/vite'
 
 class WorkerInstance
 	runner = null
@@ -210,6 +210,7 @@ export default class Runner < Component
 			reload!
 
 	def initVite
+		await ensurePackagesInstalled(['vite', 'vite-node'], process.cwd())
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")

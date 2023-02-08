@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars,no-console */
-import { cyan, yellow, red } from 'kleur/colors';
+import pc from 'picocolors'
 import debug from 'debug';
 import { ResolvedOptions, Warning } from './options';
 import { ImbaRequest } from './id';
@@ -13,17 +13,17 @@ const loggers: { [key: string]: any } = {
 		isDebug: true
 	},
 	info: {
-		color: cyan,
+		color: pc.cyan,
 		log: console.log,
 		enabled: true
 	},
 	warn: {
-		color: yellow,
+		color: pc.yellow,
 		log: console.warn,
 		enabled: true
 	},
 	error: {
-		color: red,
+		color: pc.red,
 		log: console.error,
 		enabled: true
 	},

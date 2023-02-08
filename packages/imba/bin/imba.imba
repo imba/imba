@@ -315,11 +315,6 @@ common(cli.command('serve <script>').description('Spawn a webserver for an imba/
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.action(run)
 
-# cli
-# 	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
-# 	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
-# 	.action(eject)
-
 cli
 	.command('test').description('Run tests: This is a wrapper on top of vitest')
 	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
