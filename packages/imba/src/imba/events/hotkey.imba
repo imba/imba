@@ -12,7 +12,7 @@ const Globals = {"esc": yes}
 class HotkeyEvent < CustomEvent
 	
 	def @focus expr
-		let el = this.target
+		let el = #context.element
 		let doc = el.ownerDocument
 		
 		if expr
@@ -115,6 +115,11 @@ export const hotkeys = new class HotKeyManager
 					return no
 				par = par.parentNode
 			return yes
+
+		# if there are multiple targets - and some of them have offset parent - 
+		if targets.length > 1
+			let visible = targets.filter do $1.offsetParent
+			targets = visible if visible.length > 0
 			
 		return unless targets.length
 	
