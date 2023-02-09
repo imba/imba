@@ -288,8 +288,8 @@ declare namespace imbacss {
         set(val: Ψnumber): void;
     }
 
-    /** 
-     * Shorthand for setting transform skeq-y() 
+    /** Shorthand for ease-all-duration, function, and delay.
+     * Applies to all properties that support transitions
      * @custom
      * @alias ea
     */
@@ -332,7 +332,9 @@ declare namespace imbacss {
     /** @proxy easeΞallΞfunction */ interface eaf extends easeΞallΞfunction {}
     /** @proxy easeΞallΞdelay */ interface eaw extends easeΞallΞdelay {}
     
-    /** Easing colors (color,background-color,border-color,outline-color,fill,stroke,box-shadow) 
+    /** Shorthand for ease-colors-duration, function, and delay.
+     * Applies to color properties (color,background-color,
+     * border-color,outline-color,fill,stroke,box-shadow) 
      * @alias ec
     */
     interface easeΞcolors extends ease {
@@ -346,8 +348,8 @@ declare namespace imbacss {
     /** @proxy easeΞcolorsΞfunction */ interface ecf extends easeΞcolorsΞfunction {}
     /** @proxy easeΞcolorsΞdelay */ interface ecw extends easeΞcolorsΞdelay {}
 
-    /**
-     * Easing opacity
+    /** Shorthand for ease-opacity-duration, function, and delay
+     * Applies to opacity
      * @alias eo
     */
     interface easeΞopacity extends ease {
@@ -362,9 +364,10 @@ declare namespace imbacss {
     /** @proxy easeΞopacityΞdelay */ interface eow extends easeΞopacityΞdelay {}
 
 
-    /** Easing dimensions
-     * top,left,right,bottom,width,height,max-width,max-height
-     * padding,margin,border-width,stroke-width,transform 
+    /** Shorthand for ease-box-duration, function, and delay.
+     * Applies to dimensions (top,left,right,bottom,width,
+     * height,max-width,max-height,padding,margin,border-width,
+     * stroke-width,transform)
      * @alias eb
      * */
     interface easeΞbox extends ease {
@@ -380,7 +383,11 @@ declare namespace imbacss {
 
 
 
-    /** Shorthand for setting transform easings 
+    /** Shorthand for ease-transform-duration, function, and delay.
+     * Applies to transforms (matrix,matrix3d,perspective,rotate,
+     * rotate3d,rotateX,rotateY,rotateZ,translate,translate3d,
+     * translateX,translateY,translateZ,scale,scale3d,scaleX,
+     * scaleY,scaleZ,skew,skewX,skewY)
      * @alias et
     */
     interface easeΞtransform extends ease {
