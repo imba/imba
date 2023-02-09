@@ -11,7 +11,7 @@ export default defineConfig({
 		type: "",
 		envPrefix: ['IMBA','VITE'],
 		plugins: [imbaPlugin(),  tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]})],
-		resolve: { extensions: ['.web.imba', ...extensions] },
+		resolve: { extensions: ['.web.imba', ...extensions], dedupe: ['imba']  },
 		build: {
 			outDir: "dist/public",
 			manifest: true,
@@ -32,7 +32,7 @@ export default defineConfig({
 		appType: "custom",
 		envPrefix: ['IMBA','VITE'],
 		plugins: [imbaPlugin({ ssr: true }), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
-		resolve: { extensions: ['.node.imba', ...extensions] },
+		resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba']  },
 		esbuild: {
 			target: "node16",
 			platform: "node"
@@ -67,8 +67,8 @@ export default defineConfig({
 		},
 	},
 	// we duplicate the plugins and resolve config here for the tests
-	plugins: [imbaPlugin(), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
-	resolve: { extensions: ['.node.imba', ...extensions] },
+	plugins: [imbaPlugin({ssr: true}), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
+	resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] },
 	test: {
 		globals: true,
 		include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
