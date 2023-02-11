@@ -193,6 +193,9 @@ export def rewrite rule,ctx,o = {}
 			if mod.media
 				rule.media.push(mod.media)
 
+			if name is 'odd' or name is 'even'
+				Object.assign(mod,meta)
+
 	# Now inject scope class names etc
 	# console.log "got here!!!",parts
 	let last = parts[parts.length - 1]
