@@ -5,7 +5,7 @@ def addClass rule, name
 	# TODO check for negs as well?
 	rule.push({flag: name})
 	# rule.classNames ||= []
-	# 
+	#
 	# if rule.classNames.indexOf(name) == -1
 	# 	rule.classNames.push(name)
 	return rule
@@ -15,7 +15,6 @@ def addScopeClass rule,name
 	rule.metas ||= []
 	rule.metas.push(name)
 	return rule
-
 
 def addPseudo rule, pseudo
 	rule.pseudos ||= []
@@ -39,7 +38,7 @@ def getRootRule ruleset, force
 		rule = ruleset.rule = Object.assign([],{type: 'rule',rule: rule,isRoot:yes})
 
 	return rule
-	
+
 def addRootClass ruleset, name
 	addClass(getRootRule(ruleset),name)
 	return ruleset
@@ -50,13 +49,13 @@ def cloneRule rule
 export def rewrite rule,ctx,o = {}
 
 	if rule.type == 'selectors'
-		
+
 		for sel in rule.selectors
 			rewrite(sel,rule,o)
-	
+
 	unless rule.type == 'ruleSet'
 		return rule
-	
+
 	let root = rule
 	let pri = 0
 
@@ -83,7 +82,7 @@ export def rewrite rule,ctx,o = {}
 				item.up -= 1
 				next.push(item)
 				part[pi] = {}
-	
+
 	let container = parts[0]
 	let localpart = null
 	let deeppart = null
@@ -104,7 +103,7 @@ export def rewrite rule,ctx,o = {}
 		let next = parts[i + 1]
 		let name = part.tagName
 		let items = part.slice(0)
-		
+
 		let op = part.op = part.nestingOperator
 
 		if name == '*'
@@ -129,14 +128,14 @@ export def rewrite rule,ctx,o = {}
 
 		if !seenDeepOperator
 			part.isScoped = yes
-		
+
 		if name == 'html'
 			part.isRoot = yes
-		
+
 		# TODO fix this
 		if items.some(do $1.pseudo == 'root')
 			part.isRoot = yes
-			
+
 		if name == 'self' or part.isScope
 			for prev in parts.slice(0,i)
 				prev.isScoped = no
@@ -147,7 +146,7 @@ export def rewrite rule,ctx,o = {}
 
 		if name == 'body' or name == 'html'
 			part.isScoped = no
-		
+
 		# or non-local?
 		if o.ns and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
 			if part.isScope or true
@@ -182,7 +181,7 @@ export def rewrite rule,ctx,o = {}
 				mod.remove = yes
 				o.hasScopedStyles = yes
 				addClass(part,o.ns) if o.ns
-				
+
 			elif name == 'off' or name == 'out' or name == 'in'
 				hasOffStates = yes
 				(ctx or rule).hasTransitionStyles = yes
@@ -190,7 +189,7 @@ export def rewrite rule,ctx,o = {}
 
 			elif mod.name == 'enter' or mod.name == 'leave'
 				(ctx or rule)["_{name}_"] = yes
-				
+
 			if mod.media
 				rule.media.push(mod.media)
 
@@ -217,7 +216,7 @@ export def rewrite rule,ctx,o = {}
 				# let id = o.scope.cssid!
 				# console.log 'add scope class!!',ns,id
 				addScopeClass(part,ns)
-	
+
 	if scope and o.scope
 		# console.log 'checking the scope?!',scope
 		if !scope.length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
@@ -227,7 +226,7 @@ export def rewrite rule,ctx,o = {}
 			addScopeClass(scope,id)
 
 	# Calculate what specificity to add
-	# Because we need to work around 
+	# Because we need to work around
 
 	let s4 = 0
 
@@ -257,7 +256,7 @@ export def rewrite rule,ctx,o = {}
 
 	s1 += importance
 
-	if true and o.respecify !== false 
+	if true and o.respecify !== false
 		last.s1 = Math.max(s0,s1)
 		last.s2 = s2
 
@@ -270,7 +269,7 @@ export def render root, content, options = {}
 	let group = ['']
 	let groups = [group]
 	let rules = root.selectors or [root]
-	
+
 	root.#rules = []
 
 	for rule in rules
@@ -285,18 +284,18 @@ export def render root, content, options = {}
 
 		if media != group[0]
 			groups.push(group = [media])
-		
+
 		group.push(base)
 		root.#rules.push(rule)
-		
+
 	let out = []
-	
+
 	for group in groups when group[1]
 		let sel = group.slice(1).join(',') + ' {$CONTENT$}'
 		if group[0]
 			sel = group[0] + '{\n' + sel + '\n}'
 		out.push(sel)
-	
+
 	return out.join('\n').replace(/\$CONTENT\$/g,content)
 
 	# console.log selparser.render(out)
@@ -304,7 +303,7 @@ export def render root, content, options = {}
 export def unwrap parent, subsel
 	let pars = parent.split(',')
 	let subs = subsel.split(',')
-	
+
 	let sels = []
 
 	for sub in subs
@@ -318,7 +317,7 @@ export def unwrap parent, subsel
 			sels.push(sel)
 
 	return sels.join(',')
-	
+
 export def parse str, options
 	let sel = selparser.parse(str)
 	let out = sel and rewrite(sel,null,options)
