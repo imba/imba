@@ -277,6 +277,7 @@ def common cmd
 	cmd
 		.option("-o, --outdir <dir>", "Directory to output files")
 		.option("-w, --watch", "Continously build and watch project")
+		.option("--loglevel <level>", "Log level: debug|info|success|warning|error|silent")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-m, --minify", "Minify generated files")
