@@ -53,7 +53,7 @@ for item,i in argv
 		while path[1]
 			cfg = cfg[path[0]] ||= {}
 			path.shift!
-		
+
 		let aliased = overrideAliases[path[0]]
 		if aliased
 			Object.assign(cfg,aliased)
@@ -62,7 +62,7 @@ for item,i in argv
 				val = val.split(/\,\s*|\s+/g)
 
 			val = valueMap[val] or val
-			
+
 			cfg[path[0]] = val
 			argv[i] = null
 			argv[i+1] = null
@@ -81,7 +81,7 @@ def parseOptions options, extras = []
 	options.imbaPath ||= np.resolve(__dirname,'..')
 	options.command = command
 	options.extras = extras
-	
+
 	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
 	options.dotenv = resolveFile('.env',cwd)
@@ -135,7 +135,7 @@ def parseOptions options, extras = []
 		options.loglevel ||= 'info'
 		if options.mode == 'development'
 			options.hmr = yes
-	
+
 	if options.force
 		options.mtime = Date.now!
 	else
@@ -202,11 +202,11 @@ def test o
 def run entry, o, extras
 	return cli.help! unless o.args.length > 0
 	let [path,q] = entry.split('?')
-	
+
 	path = np.resolve(path)
 
 	let prog = o = parseOptions(o,extras)
-	
+
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 
@@ -214,7 +214,7 @@ def run entry, o, extras
 		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba'], process.cwd())
 
 	# TODO support multiple entrypoints - especially for html
-	
+
 	extendConfig(prog.config.options,overrides)
 
 	if !o.outdir
@@ -294,7 +294,6 @@ def common cmd
 		.option("--assets-dir <url>", "Base dir for assets","assets")
 		.option("--web","Build entrypoints for the browser")
 		.option("--esm","Output module files")
-
 
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
