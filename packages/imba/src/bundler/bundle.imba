@@ -629,6 +629,11 @@ export default class Bundle < Component
 			if q == 'style'
 				return null
 
+			# import from css
+			if args.kind == 'import-rule'
+				return {external: true}
+
+
 			# console.log 'on resolve still',args
 			if path.indexOf('node:') == 0
 				return {external: true}
