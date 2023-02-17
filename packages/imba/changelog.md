@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.0.0-alpha.228
+
+* Fixed issue with certain scoped selectors compiling incorrectly
+
+* Fixed `@odd`, `@even`, `@not-first` and `@not-last` selectors
+
+* Changed behaviour of `@hotkey` with multiple handlers
+
+    If multiple elements bind to the same `@hotkey` combo Imba would
+    previously always trigger them in reverse order (ie, last dom element first). If some but not all of the handlers are bound to visible elements (ie has offsetParent) it will only trigger on those.
+
+    This is useful if you have multiple pages / sections that bind to the same
+    hotkeys, and you show / hide the elements using css instead of adding and removing them from the dom.
+
 ## 2.0.0-alpha.227
 
 * Fix regression which caused `.!classname` and `@!hover` negated modifiers to break.
