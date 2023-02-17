@@ -96,7 +96,15 @@ export def rewrite rule,ctx,o = {}
 	# only if we are scoped in somewhere
 	if parts[0]..tagName == '*' # and o.scope
 		parts[0].nestingOperator = '>>>'
-		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: parts[0],isScope:yes, nestingOperator: '>>>'}))
+		let base = parts[0]
+
+		if parts[0].length == 0 and parts[1]
+			base = parts[1]
+			base.nestingOperator = '>>>'
+
+		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: base,isScope:yes, nestingOperator: '>>>'}))
+	
+	# for part
 
 	for part,i in parts
 		let prev = parts[i - 1]
@@ -107,9 +115,15 @@ export def rewrite rule,ctx,o = {}
 		let op = part.op = part.nestingOperator
 
 		if name == '*'
+			# Should only happen if we are scoped inside 
+			if items.length == 0 and next and prev and !seenDeepOperator
+				prev.rule = next
+				next.op = next.nestingOperator = '>>>'
+
 			localpart ||= prev
 			escaped ||= part
 			seenDeepOperator = yes
+			part.op = '>>>'
 
 		if i == 0 and !name and !op and (part[0]..pseudo or part[0]..implicitScope)
 			# console.log 'implicit scope?',part
@@ -120,6 +134,7 @@ export def rewrite rule,ctx,o = {}
 			escaped = part
 			part.nestingOperator = '>'
 			seenDeepOperator = yes
+
 		elif op == '>>>'
 			localpart = prev
 			escaped = part
@@ -211,14 +226,10 @@ export def rewrite rule,ctx,o = {}
 		scope = parts[0]
 		scope.isScoped = no
 
-	# console.log "PARTS",parts,!!o.scope
-	if true
-		for part in parts
-			if part.isScoped and o.scope
-				let ns = o.scope.cssns!
-				# let id = o.scope.cssid!
-				# console.log 'add scope class!!',ns,id
-				addScopeClass(part,ns)
+	for part in parts
+		if part.isScoped and o.scope
+			let ns = o.scope.cssns!
+			addScopeClass(part,ns)
 
 	if scope and o.scope
 		# console.log 'checking the scope?!',scope

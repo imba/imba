@@ -364,9 +364,6 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         rule.nestingOperator = op;
       } else {
         rule = this.parseRule(currentRule);
-        if (rule) {
-          rule.nestingOperator = null;
-        }
       }
     }
     return selector;
@@ -801,6 +798,10 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           // check if it is a native one
           let name = (desc && desc.name) ?? pseudo.pseudo;
           let escaped = this.escapeIdentifier(name);
+          
+          if(desc && desc.valueType) {
+            pseudo = desc;
+          }
 
           // Check if it is a well known type
           let post = "";
