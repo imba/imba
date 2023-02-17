@@ -11147,7 +11147,7 @@ export class StyleParens < ValueNode
 		if o and o:as == 'js'
 			return plain
 		elif option(:calc)
-			let unit = @options and String(@options:unit)
+			let unit = @options and String(@options:unit or '')
 			if unit
 				return "calc({plain} * 1{unit})"
 			else

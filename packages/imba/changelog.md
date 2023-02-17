@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-alpha.229
+
+* Fixed regression with style values inside parenthesis
+
+* Made `bdx` and `bdy` aliases work as intended
+
 ## 2.0.0-alpha.228
 
 * Fixed issue with certain scoped selectors compiling incorrectly
