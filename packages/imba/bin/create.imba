@@ -72,6 +72,11 @@ def assertCleanGit
 
 def main name, opts
 
+	try
+		throw '' unless parseInt(process.version.slice(1).split('.',1)[0]) >= 16
+	catch
+		p "Detected Node {process.version}, v16 or higher is recommended.".yellow
+
 	const promptOpts = onCancel: do quit!
 
 	let projectName
