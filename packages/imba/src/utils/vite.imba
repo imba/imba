@@ -48,7 +48,7 @@ export def getConfigFilePath(type, opts)
 	# load default imba config
 	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
 	if typeof defaultImbaConfig == "function"
-		defaultImbaConfig = imbaConfig({command, mode})
+		defaultImbaConfig = defaultImbaConfig({command, mode})
 	const defaultConfig = defaultImbaConfig[type]
 
 	# client, server, imba or test
