@@ -98,7 +98,7 @@ class WorkerInstance
 			# now we can kill the reloaded process?
 
 		worker.on 'error' do
-			log.info "%red","errorerd"
+			log.info "%red","errored"
 
 		# worker.on 'online' do log.info "%green","online"
 		# worker.on 'message' do(message, handle)
