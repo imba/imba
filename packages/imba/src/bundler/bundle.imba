@@ -1535,7 +1535,8 @@ export default class Bundle < Component
 				try
 					nfs.symlinkSync(program.nodeModulesPath,np.resolve(program.tmpdir,'node_modules'),'dir')
 				catch e
-					console.log 'error here',e
+					log.error "Unable to create symlink for node_modules. If you're on Windows, try enabling \"Developer Mode\" in Windows settings or creating a Vite project instead."
+					process.exit!
 
 			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
