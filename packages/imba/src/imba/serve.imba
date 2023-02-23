@@ -3,6 +3,7 @@ import cluster from 'cluster'
 import nfs from 'fs'
 import np from 'path'
 import {EventEmitter} from 'events'
+import {env} from './env'
 
 import http from 'http'
 import https from 'https'
@@ -210,7 +211,7 @@ class Server
 	def localPathForUrl url
 		let src = url.replace(/\?.*$/,'')
 		return urlToLocalPathMap[src] ??= if true
-			let path = np.resolve(publicPath,'.' + src)
+			let path = np.resolve(env.publicPath,'.' + src)
 			let res = nfs.existsSync(path) and path
 			if !res and staticDir
 				path = np.resolve(staticDir,'.' + src)
@@ -240,9 +241,7 @@ class Server
 		assetResponders = {}
 		urlToLocalPathMap = {}
 		publicExistsMap = {}
-		# temporary hack for pm2
-		rootDir = try proc.env.IMBA_OUTDIR or np.dirname(proc.env.pm_exec_path or proc.argv[1])
-		publicPath = try np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or 'public')
+
 		staticDir = global.IMBA_STATICDIR or ''
 		
 		if proc.env.IMBA_PATH
