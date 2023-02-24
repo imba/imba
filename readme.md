@@ -10,23 +10,29 @@
 		<img src="https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square">
 	</a>
 	<a href="https://packagephobia.now.sh/result?p=imba">
-		<img src="https://packagephobia.now.sh/badge?p=imba">
+		<img src="https://packagephobia.now.sh/badge?p=imba&style=flat-square">
 	</a>
 	<a href="https://npmcharts.com/compare/imba?minimal=true">
-		<img src="https://img.shields.io/npm/dm/imba.svg">
+		<img src="https://img.shields.io/npm/dm/imba.svg?style=flat-square">
 	</a>
 	<a href="http://makeapullrequest.com">
 		<img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square">
 	</a>
 	<a href="https://www.npmjs.com/package/imba">
-		<img src="https://img.shields.io/npm/l/imba.svg">
+		<img src="https://img.shields.io/npm/l/imba.svg?style=flat-square">
 	</a>
 </p>
 
-Imba is a friendly full-stack programming language for the web that compiles to performant JavaScript.
-It has language-level support for defining, extending, subclassing, instantiating and rendering DOM nodes.
+Imba is a friendly full-stack programming language for the web that
+compiles to performant JavaScript. It has language-level support for
+defining, extending, subclassing, instantiating and rendering DOM
+nodes.
 
 ## Get started
+
+Try Imba instantly in your browser with our
+[playground](https://imba.io/try/examples/apps/playground/app.imba),
+or create a new project with:
 
 ```sh
 npx imba create
