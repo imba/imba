@@ -1,13 +1,30 @@
-# <img width="50" style="margin-bottom:-6.5px" src="https://raw.githubusercontent.com/imba/branding-imba/master/yellow-wing-logo/imba.svg"> Imba
+<p align="center">
+  <a href="https://imba.io">
+    <img height=128 src="https://raw.githubusercontent.com/imba/branding-imba/master/yellow-wing-logo/imba.svg">
+    <h1 align="center">Imba</h1>
+  </a>
+</p>
 
-[![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
-[![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
-[![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba)
+<p align="center">
+	<a href="https://discord.gg/mkcbkRw">
+		<img src="https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square">
+	</a>
+	<a href="https://packagephobia.now.sh/result?p=imba">
+		<img src="https://packagephobia.now.sh/badge?p=imba">
+	</a>
+	<a href="https://npmcharts.com/compare/imba?minimal=true">
+		<img src="https://img.shields.io/npm/dm/imba.svg">
+	</a>
+	<a href="http://makeapullrequest.com">
+		<img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square">
+	</a>
+	<a href="https://www.npmjs.com/package/imba">
+		<img src="https://img.shields.io/npm/l/imba.svg">
+	</a>
+</p>
 
 Imba is a friendly full-stack programming language for the web that compiles to performant JavaScript.
 It has language-level support for defining, extending, subclassing, instantiating and rendering DOM nodes.
-
----
 
 ## Get started
 
