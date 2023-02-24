@@ -1,11 +1,4 @@
-
-
-
-<a href="https://imba.io" target="_blank">
-  <img width="200" src="https://github.com/imba/branding-imba/blob/555b21940fa796fbf0eed44df48160d450ca894b/mascot/mascot-full-yellow.png">
-</a>
-
-# Imba
+# <img width="50" style="margin-bottom:-6.5px" src="https://raw.githubusercontent.com/imba/branding-imba/master/yellow-wing-logo/imba.svg"> Imba
 
 [![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
 [![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
