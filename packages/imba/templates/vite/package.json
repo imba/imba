@@ -1,9 +1,7 @@
 {
-  "name": "imba-vite-project",
-  "version": "0.0.0",
+  "name": "imba-project",
   "type": "module",
   "scripts": {
-    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
