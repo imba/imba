@@ -9,9 +9,6 @@
 	<a href="https://discord.gg/mkcbkRw">
 		<img src="https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square">
 	</a>
-	<a href="https://packagephobia.now.sh/result?p=imba">
-		<img src="https://packagephobia.now.sh/badge?p=imba&style=flat-square">
-	</a>
 	<a href="https://npmcharts.com/compare/imba?minimal=true">
 		<img src="https://img.shields.io/npm/dm/imba.svg?style=flat-square">
 	</a>
