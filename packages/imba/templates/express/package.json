@@ -4,7 +4,7 @@
     "dev": "imba -w server.imba",
     "build": "imba build server.imba",
     "preview": "node dist/server.js",
-    "prod": "npx pm2 start 'node dist/server.js'"
+    "prod": "npx pm2 start dist/server.js"
   },
   "dependencies": {
     "express": "*"
