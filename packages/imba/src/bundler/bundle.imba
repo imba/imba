@@ -6,6 +6,8 @@ import {
 	relativePath,ImageRegex,FontRegex,resolvePackage
 } from './utils'
 
+import info from '../utils/info'
+
 import {StyleTheme} from '../compiler/styler'
 
 import os from 'os'
@@ -392,12 +394,7 @@ export default class Bundle < Component
 			log.error "code-splitting not allowed when format is not esm"
 
 		if main?
-			try log.debug "node version: {process.version.slice(1)}"
-			try log.debug "node path: {process.argv[0]}"
-			try log.debug "node realpath: {nfs.realpathSync(process.argv[0])}"
-			try log.debug "imba version: {(resolvePackage(np.resolve(__dirname,'..')) or {}).version}"
-			try log.debug "imba path: {process.argv[1]}"
-			try log.debug "imba realpath: {nfs.realpathSync(process.argv[1])}"
+			try info log.debug.bind(log)
 			log.ts "created main bundle"
 			manifest = {}
 

@@ -151,6 +151,7 @@ export class Logger
 		#prefix
 
 	def write kind,...parts
+
 		if logLevels.indexOf(kind) < logLevels.indexOf(self.loglevel)
 			return self
 

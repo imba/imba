@@ -2,6 +2,7 @@ import np from 'path'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
+import info from '../src/utils/info'
 import {program as cli} from 'commander'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
@@ -326,6 +327,10 @@ cli
 	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
 	.option('-y, --yes', 'Say yes to any confirmation prompts')
 	.action(do create($1, $2.opts!))
+
+cli
+	.command('info').description('Print helpful information')
+	.action(do info!)
 
 log.ts 'parse options'
 
