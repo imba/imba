@@ -151,9 +151,10 @@ export class Logger
 		#prefix
 
 	def write kind,...parts
-
 		if logLevels.indexOf(kind) < logLevels.indexOf(self.loglevel)
 			return self
+
+		return console.log! unless parts.length
 
 		let sym = logSymbols[kind] or kind
 		let [str,...rest] = format(...parts)
