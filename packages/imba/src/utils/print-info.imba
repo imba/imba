@@ -3,7 +3,7 @@ import path from 'path'
 import log from './logger'
 import {resolvePackage} from '../bundler/utils'
 
-export default def info fn=log.info
+export default def print-info fn=log.info
 
 	fn!
 	fn "node version: {process.version.slice(1)}"

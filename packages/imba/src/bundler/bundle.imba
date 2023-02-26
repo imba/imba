@@ -6,7 +6,7 @@ import {
 	relativePath,ImageRegex,FontRegex,resolvePackage
 } from './utils'
 
-import info from '../utils/info'
+import print-info from '../utils/print-info'
 
 import {StyleTheme} from '../compiler/styler'
 
@@ -394,7 +394,7 @@ export default class Bundle < Component
 			log.error "code-splitting not allowed when format is not esm"
 
 		if main?
-			try info log.debug.bind(log)
+			try print-info log.debug.bind(log)
 			log.ts "created main bundle"
 			manifest = {}
 

@@ -2,7 +2,7 @@ import np from 'path'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
-import info from '../src/utils/info'
+import print-info from '../src/utils/print-info'
 import {program as cli} from 'commander'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
@@ -330,7 +330,7 @@ cli
 
 cli
 	.command('info').description('Print helpful information')
-	.action(do info!)
+	.action(do print-info!)
 
 log.ts 'parse options'
 
