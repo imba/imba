@@ -5578,7 +5578,6 @@ function mergeSlashes(str) {
   return str.replace(/\/\//g, "/");
 }
 function normalizeRequestId(id, base) {
-	console.log("::", id, base)
   if (base && id.startsWith(base))
     id = `/${id.slice(base.length)}`;
   return id.replace(/^\/@id\/__x00__/, "\0").replace(/^\/@id\//, "").replace(/^__vite-browser-external:/, "").replace(/^(node|file):/, "").replace(/^\/+/, "/").replace(/\?v=\w+/, "?").replace(/&v=\w+/, "").replace(/\?t=\w+/, "?").replace(/&t=\w+/, "").replace(/\?import/, "?").replace(/&import/, "").replace(/\?&/, "?").replace(/\?+$/, "");

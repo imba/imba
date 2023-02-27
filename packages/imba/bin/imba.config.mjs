@@ -6,10 +6,9 @@ import np from 'node:path'
 import nfs from 'node:fs'
 
 // uppercase letters + _
-let envPrefix = [...Array(26).keys()]
-	.map((n) => String.fromCharCode(65 + n))
-	.concat(['_'])
-console.log("env", envPrefix)
+let envPrefix = ['_']
+    .concat([...Array(26).keys()].map(n=> String.fromCharCode(65 + n)))
+    .concat([...Array(26).keys()].map(n=> String.fromCharCode(97 + n)))
 
 const extensions = ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 const setupFiles = ['node_modules/imba/bin/test-setup.mjs']
@@ -69,7 +68,7 @@ export default defineConfig(()=>{
 				target: 'node16',
 				minify: false,
 				rollupOptions: {
-					external: ['imba', 'imba/plugin', new RegExp("/[^\.]^{entry}.*/"), "imba", "imba/plugin"],
+					external: ['imba', 'imba/plugin', new RegExp("/[^\.]^{entry}.*/")],
 					output: {
 						format: 'esm',
 						dir: "dist",

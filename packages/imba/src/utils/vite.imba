@@ -2,6 +2,8 @@ import np from 'node:path'
 import nfs from 'node:fs'
 import url from 'node:url'
 import c from 'picocolors'
+import merge from 'lodash.merge'
+
 const _dirname = if typeof __dirname !== 'undefined' then __dirname else np.dirname(url.fileURLToPath(import.meta.url))
 
 const EXIT_CODE_RESTART = 43
@@ -79,7 +81,7 @@ export def getConfigFilePath(type, opts)
 
 	return defaultConfig if !configObj
 	
-	return { ...defaultConfig, ...configObj}
+	merge(defaultConfig, configObj)
 
 	
 export def ensurePackagesInstalled(dependencies, root)

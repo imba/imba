@@ -160,6 +160,8 @@
   },
   "devDependencies": {
     "@rollup/pluginutils": "^5.0.2",
+    "@testing-library/dom": "^9.0.0",
+    "@testing-library/jest-dom": "^5.16.5",
     "commander": "^6.2.1",
     "deepmerge": "^4.2.2",
     "diff": "^5.1.0",
@@ -178,7 +180,10 @@
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
+    "vite": "^4.1.4",
+    "vite-node": "^0.29.1",
     "vite-tsconfig-paths-silent": "^4.0.5",
+    "vitest": "^0.29.1",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
@@ -189,6 +194,7 @@
     "dotenv": "^16.0.3",
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
+    "lodash.merge": "^4.6.2",
     "picocolors": "^1.0.0",
     "prompts": "^2.4.2"
   }

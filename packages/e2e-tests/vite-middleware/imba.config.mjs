@@ -9,22 +9,14 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const entry = resolve(__dirname, "src/main.js")
 
 export default defineConfig(({ command, mode }) => {
-	return {server:{
-		plugins: [
-			imbaPlugin()
-		],
-		resolve:{
-			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-		},
-		define: {
-			"import.meta.vitest": undefined
-		},
+	return {
+      server:{
 		build: {
 			manifest: true,
 			minify: true,
 			rollupOptions: {
 				output: {
-					dir: "./dist_client",
+					dir: "./dist_server",
 					name: "main",
 				},
 				input:{
