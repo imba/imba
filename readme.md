@@ -6,16 +6,16 @@
 </p>
 
 <p align="center">
-	<a href="https://discord.gg/mkcbkRw">
+	<a target="_blank" href="https://discord.gg/mkcbkRw">
 		<img src="https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square">
 	</a>
-	<a href="https://npmcharts.com/compare/imba?minimal=true">
+	<a target="_blank" href="https://www.npmjs.com/package/imba">
 		<img src="https://img.shields.io/npm/dm/imba.svg?style=flat-square">
 	</a>
-	<a href="http://makeapullrequest.com">
+	<a target="_blank" href="http://makeapullrequest.com">
 		<img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square">
 	</a>
-	<a href="https://www.npmjs.com/package/imba">
+	<a target="_blank" href="https://www.npmjs.com/package/imba">
 		<img src="https://img.shields.io/npm/l/imba.svg?style=flat-square">
 	</a>
 </p>
