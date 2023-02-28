@@ -56,7 +56,8 @@
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
     "build-parser": "node scripts/build-parser.js",
     "build": "npm run build-parser && node scripts/build.js",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "link": "npm install && npm run build && npm link"
   },
   "bugs": "https://github.com/imba/imba/issues",
   "version": "2.0.0-alpha.227.vite.3",
