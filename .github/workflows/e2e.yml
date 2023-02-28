@@ -46,7 +46,7 @@ jobs:
       - name: run tests
         run: |
           cd packages/e2e-tests
-          npm ci --force
+          npm install
           npm run test:serve
           npm run test:build
       - name: archive tests temp directory
