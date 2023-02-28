@@ -70,6 +70,16 @@ function parseToImbaRequest(
 	};
 }
 
+export const requestQuerySplitRE = /\?(?!.*[\/|\}])/;
+export function parseRequest(id: string): Record<string, string> | null {
+	const [_, search] = id.split(requestQuerySplitRE, 2);
+	if (!search) {
+		return null;
+	}
+	return Object.fromEntries(new URLSearchParams(search));
+}
+
+
 function createVirtualImportId(filename: string, root: string, type: ImbaQueryTypes) {
 	const parts = ['imba', `type=${type}`];
 	if (type === 'style') {

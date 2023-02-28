@@ -5,7 +5,7 @@ def addClass rule, name
 	# TODO check for negs as well?
 	rule.push({flag: name})
 	# rule.classNames ||= []
-	# 
+	#
 	# if rule.classNames.indexOf(name) == -1
 	# 	rule.classNames.push(name)
 	return rule
@@ -15,7 +15,6 @@ def addScopeClass rule,name
 	rule.metas ||= []
 	rule.metas.push(name)
 	return rule
-
 
 def addPseudo rule, pseudo
 	rule.pseudos ||= []
@@ -39,7 +38,7 @@ def getRootRule ruleset, force
 		rule = ruleset.rule = Object.assign([],{type: 'rule',rule: rule,isRoot:yes})
 
 	return rule
-	
+
 def addRootClass ruleset, name
 	addClass(getRootRule(ruleset),name)
 	return ruleset
@@ -50,13 +49,13 @@ def cloneRule rule
 export def rewrite rule,ctx,o = {}
 
 	if rule.type == 'selectors'
-		
+
 		for sel in rule.selectors
 			rewrite(sel,rule,o)
-	
+
 	unless rule.type == 'ruleSet'
 		return rule
-	
+
 	let root = rule
 	let pri = 0
 
@@ -83,7 +82,7 @@ export def rewrite rule,ctx,o = {}
 				item.up -= 1
 				next.push(item)
 				part[pi] = {}
-	
+
 	let container = parts[0]
 	let localpart = null
 	let deeppart = null
@@ -97,20 +96,34 @@ export def rewrite rule,ctx,o = {}
 	# only if we are scoped in somewhere
 	if parts[0]..tagName == '*' # and o.scope
 		parts[0].nestingOperator = '>>>'
-		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: parts[0],isScope:yes, nestingOperator: '>>>'}))
+		let base = parts[0]
+
+		if parts[0].length == 0 and parts[1]
+			base = parts[1]
+			base.nestingOperator = '>>>'
+
+		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: base,isScope:yes, nestingOperator: '>>>'}))
+	
+	# for part
 
 	for part,i in parts
 		let prev = parts[i - 1]
 		let next = parts[i + 1]
 		let name = part.tagName
 		let items = part.slice(0)
-		
+
 		let op = part.op = part.nestingOperator
 
 		if name == '*'
+			# Should only happen if we are scoped inside 
+			if items.length == 0 and next and prev and !seenDeepOperator
+				prev.rule = next
+				next.op = next.nestingOperator = '>>>'
+
 			localpart ||= prev
 			escaped ||= part
 			seenDeepOperator = yes
+			part.op = '>>>'
 
 		if i == 0 and !name and !op and (part[0]..pseudo or part[0]..implicitScope)
 			# console.log 'implicit scope?',part
@@ -121,6 +134,7 @@ export def rewrite rule,ctx,o = {}
 			escaped = part
 			part.nestingOperator = '>'
 			seenDeepOperator = yes
+
 		elif op == '>>>'
 			localpart = prev
 			escaped = part
@@ -129,14 +143,14 @@ export def rewrite rule,ctx,o = {}
 
 		if !seenDeepOperator
 			part.isScoped = yes
-		
+
 		if name == 'html'
 			part.isRoot = yes
-		
+
 		# TODO fix this
 		if items.some(do $1.pseudo == 'root')
 			part.isRoot = yes
-			
+
 		if name == 'self' or part.isScope
 			for prev in parts.slice(0,i)
 				prev.isScoped = no
@@ -147,7 +161,7 @@ export def rewrite rule,ctx,o = {}
 
 		if name == 'body' or name == 'html'
 			part.isScoped = no
-		
+
 		# or non-local?
 		if o.ns and (!next or next.nestingOperator == '>>>') and !localpart and !deeppart
 			if part.isScope or true
@@ -182,7 +196,7 @@ export def rewrite rule,ctx,o = {}
 				mod.remove = yes
 				o.hasScopedStyles = yes
 				addClass(part,o.ns) if o.ns
-				
+
 			elif name == 'off' or name == 'out' or name == 'in'
 				hasOffStates = yes
 				(ctx or rule).hasTransitionStyles = yes
@@ -190,9 +204,12 @@ export def rewrite rule,ctx,o = {}
 
 			elif mod.name == 'enter' or mod.name == 'leave'
 				(ctx or rule)["_{name}_"] = yes
-				
+
 			if mod.media
 				rule.media.push(mod.media)
+
+			if name is 'odd' or name is 'even'
+				Object.assign(mod,meta)
 
 	# Now inject scope class names etc
 	# console.log "got here!!!",parts
@@ -209,15 +226,11 @@ export def rewrite rule,ctx,o = {}
 		scope = parts[0]
 		scope.isScoped = no
 
-	# console.log "PARTS",parts,!!o.scope
-	if true
-		for part in parts
-			if part.isScoped and o.scope
-				let ns = o.scope.cssns!
-				# let id = o.scope.cssid!
-				# console.log 'add scope class!!',ns,id
-				addScopeClass(part,ns)
-	
+	for part in parts
+		if part.isScoped and o.scope
+			let ns = o.scope.cssns!
+			addScopeClass(part,ns)
+
 	if scope and o.scope
 		# console.log 'checking the scope?!',scope
 		if !scope.length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
@@ -227,7 +240,7 @@ export def rewrite rule,ctx,o = {}
 			addScopeClass(scope,id)
 
 	# Calculate what specificity to add
-	# Because we need to work around 
+	# Because we need to work around
 
 	let s4 = 0
 
@@ -257,7 +270,7 @@ export def rewrite rule,ctx,o = {}
 
 	s1 += importance
 
-	if true and o.respecify !== false 
+	if true and o.respecify !== false
 		last.s1 = Math.max(s0,s1)
 		last.s2 = s2
 
@@ -270,7 +283,7 @@ export def render root, content, options = {}
 	let group = ['']
 	let groups = [group]
 	let rules = root.selectors or [root]
-	
+
 	root.#rules = []
 
 	for rule in rules
@@ -285,18 +298,18 @@ export def render root, content, options = {}
 
 		if media != group[0]
 			groups.push(group = [media])
-		
+
 		group.push(base)
 		root.#rules.push(rule)
-		
+
 	let out = []
-	
+
 	for group in groups when group[1]
 		let sel = group.slice(1).join(',') + ' {$CONTENT$}'
 		if group[0]
 			sel = group[0] + '{\n' + sel + '\n}'
 		out.push(sel)
-	
+
 	return out.join('\n').replace(/\$CONTENT\$/g,content)
 
 	# console.log selparser.render(out)
@@ -304,7 +317,7 @@ export def render root, content, options = {}
 export def unwrap parent, subsel
 	let pars = parent.split(',')
 	let subs = subsel.split(',')
-	
+
 	let sels = []
 
 	for sub in subs
@@ -318,7 +331,7 @@ export def unwrap parent, subsel
 			sels.push(sel)
 
 	return sels.join(',')
-	
+
 export def parse str, options
 	let sel = selparser.parse(str)
 	let out = sel and rewrite(sel,null,options)

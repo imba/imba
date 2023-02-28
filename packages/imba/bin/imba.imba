@@ -3,6 +3,7 @@ import url from 'url'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
+import print-info from '../src/utils/print-info'
 import {program as cli} from 'commander'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
@@ -54,7 +55,7 @@ for item,i in argv
 		while path[1]
 			cfg = cfg[path[0]] ||= {}
 			path.shift!
-		
+
 		let aliased = overrideAliases[path[0]]
 		if aliased
 			Object.assign(cfg,aliased)
@@ -63,7 +64,7 @@ for item,i in argv
 				val = val.split(/\,\s*|\s+/g)
 
 			val = valueMap[val] or val
-			
+
 			cfg[path[0]] = val
 			argv[i] = null
 			argv[i+1] = null
@@ -82,7 +83,6 @@ def parseOptions options, extras = []
 	options.imbaPath ||= np.resolve(__dirname,'..')
 	options.command = command
 	options.extras = extras
-	
 	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
 	options.dotenv = resolveFile('.env',cwd)
@@ -136,7 +136,7 @@ def parseOptions options, extras = []
 		options.loglevel ||= 'info'
 		if options.mode == 'development'
 			options.hmr = yes
-	
+
 	if options.force
 		options.mtime = Date.now!
 	else
@@ -183,7 +183,7 @@ def test o
 def run entry, o, extras
 	return cli.help! unless o.args.length > 0
 	let [path,q] = entry.split('?')
-	
+
 	path = np.resolve(path)
 
 	let prog = o = await parseOptions(o,extras)
@@ -194,7 +194,7 @@ def run entry, o, extras
 		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-tsconfig-paths-silent'], process.cwd()) 
 
 	# TODO support multiple entrypoints - especially for html
-	
+
 	extendConfig(prog.config.options,overrides)
 
 	if !o.outdir
@@ -282,6 +282,7 @@ def common cmd
 	cmd
 		.option("-o, --outdir <dir>", "Directory to output files")
 		.option("-w, --watch", "Continously build and watch project")
+		.option("--loglevel <level>", "Log level: debug|info|success|warning|error|silent")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-m, --minify", "Minify generated files")
@@ -298,7 +299,6 @@ def common cmd
 		.option("--assets-dir <url>", "Base dir for assets","assets")
 		.option("--web","Build entrypoints for the browser")
 		.option("--esm","Output module files")
-
 
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
@@ -326,6 +326,10 @@ cli
 	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
 	.option('-y, --yes', 'Say yes to any confirmation prompts')
 	.action(do create($1, $2.opts!))
+
+cli
+	.command('info').description('Print helpful information')
+	.action(do print-info!)
 
 log.ts 'parse options'
 

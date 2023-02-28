@@ -9,7 +9,6 @@ const _dirname = if typeof __dirname !== 'undefined' then __dirname else np.dirn
 const EXIT_CODE_RESTART = 43
 export const imbaConfigPath = np.join(_dirname, "..", "bin", "./imba.config.mjs")
 
-
 let extensions = ['imba', 'ts', 'mts', 'js', 'mjs', 'cjs']
 
 export def getConfigFilePath(type, opts)

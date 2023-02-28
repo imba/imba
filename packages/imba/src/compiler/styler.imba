@@ -987,11 +987,12 @@ export class StyleTheme
 	def border_bottom params
 		return $border(params,'-bottom')
 
-	def border_x [l,r=l]
-		Object.assign({},border_left([l]),border_right([r]))
+	def border_x params
+		return $border(params,'-inline')
 
-	def border_y [t,b=t]
-		Object.assign({},border_top([t]),border_bottom([b]))
+	def border_y params
+		return $border(params,'-block')
+	
 
 	def border_x_width [l,r=l]
 		{bwl: l, bwr: r}

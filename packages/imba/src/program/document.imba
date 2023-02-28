@@ -16,13 +16,13 @@ extend class Token
 		if pops
 			return pops
 		return self
-		
+
 	get nextNode
 		next..node
-		
+
 	get prevNode
 		prev..node
-		
+
 ###
 line and character are both zero based
 ###
@@ -30,7 +30,7 @@ export class ImbaDocument
 
 	static def tmp content
 		new self('file://temporary.imba','imba',0,content)
-	
+
 	static def from uri, languageId, version, content
 		new self(uri,languageId,version,content)
 
@@ -52,7 +52,6 @@ export class ImbaDocument
 		versionToHistoryMap[version] = -1
 		if content and content.match(/^\#[^\n]+imba1/m)
 			isLegacy = yes
-		
 
 	def log ...params
 		console.log(...params)
@@ -62,7 +61,7 @@ export class ImbaDocument
 
 	get lineOffsets
 		_lineOffsets ||= computeLineOffsets(content,yes)
-	
+
 	def getText range = null
 		if range
 			let start = offsetAt(range.start)
@@ -74,7 +73,7 @@ export class ImbaDocument
 		let start = lineOffsets[line]
 		let end = lineOffsets[line + 1]
 		return content.substring(start, end).replace(/[\r\n]/g,'')
-	
+
 	def positionAt offset
 		if offset isa Position
 			return offset
@@ -123,7 +122,7 @@ export class ImbaDocument
 		content = body
 		_lineOffsets = null
 		invalidateFromLine(0)
-		
+
 		return self
 
 	def update changes, version
@@ -135,10 +134,10 @@ export class ImbaDocument
 
 		let edits = []
 		let isSignificant = no
-		
+
 		edits.#ins = ''
 		edits.#del = ''
-		
+
 		for change,i in changes
 			if editIsFull(change)
 				overwrite(change.text,version)
@@ -162,14 +161,13 @@ export class ImbaDocument
 
 			let remLength = endOffset - startOffset
 			let prevText = remLength ? content.slice(startOffset,endOffset) : ''
-			
+
 			edits.#del += prevText
 			edits.#ins += change.text or ''
 
 			applyEdit(change,version,changes)
 
 			edits.push([startOffset,endOffset - startOffset,change.text or '',prevText])
-			
 
 			let startLine = Math.max(range.start.line, 0)
 			let endLine = Math.max(range.end.line, 0)
@@ -193,24 +191,24 @@ export class ImbaDocument
 				while k < lineOffsets.length
 					lineOffsets[k] = lineOffsets[k] + diff
 					k++
-		
+
 		history.push(edits)
 		edits.#version = version
 
 		let prevEdits = history[history.length - 2]
 		let changeStr = edits.#ins + edits.#del
-		
+
 		if changeStr.indexOf('\n') >= 0
 			edits.#multiline = yes
 			if prevEdits and !prevEdits.#multiline
 				edits.#significant = yes
 				edits.#body = content
-		
+
 		# see if it is significant
 		# console.log 'updated',edits,history.length - 1,version # startOffset,endOffset,change.text,JSON.stringify(content)
 		versionToHistoryMap[version] = history.length - 1
 		updated(changes,version)
-		
+
 	get lastSignificantVersion
 		let i = history.length
 		while i > 0
@@ -218,7 +216,7 @@ export class ImbaDocument
 			if edits and edits.#significant
 				return edits.#version
 		return null
-		
+
 	def editsSinceVersion version
 		let from = versionToHistoryMap[version]
 		let edits = []
@@ -239,7 +237,7 @@ export class ImbaDocument
 		let to = versionToHistoryMap[toVersion]
 		let offset = fromOffset
 		let modified = no
-		
+
 		if from < to
 			while from < to
 				let edits = history[++from]
@@ -248,7 +246,7 @@ export class ImbaDocument
 					start -= 1 if stickyStart
 					if offset > start and offset > (start + len)
 						offset += (text.length - len)
-						
+
 		elif to < from
 			while to < from
 				let edits = history[from--]
@@ -258,7 +256,7 @@ export class ImbaDocument
 						offset -= (text.length - len)
 
 		return offset
-		
+
 	def historicalOffset offset, oldVersion
 		offsetAtVersion(offset,version,oldVersion,yes)
 
@@ -269,7 +267,7 @@ export class ImbaDocument
 		let line = change.range.start.line
 		invalidateFromLine(line)
 		return
-	
+
 	def updated changes,version
 		version = version
 		self
@@ -295,13 +293,13 @@ export class ImbaDocument
 		elif typeof match == 'string'
 			return token.type == match
 		return false
-	
+
 	def before token, match, offset = 0
 		let idx = tokens.indexOf(token) + offset
 		if match
 			while idx > 0
 				let tok = tokens[--idx]
-				
+
 				if matchToken(tok,match)
 					return tok
 			return null
@@ -323,22 +321,22 @@ export class ImbaDocument
 			else
 				parts.push(tok)
 		return parts
-		
+
 	def getSymbols
 		astify!
 		#lexed.symbols ||= tokens.map(do $1.symbol).filter(do $1).filter(do(sym,i,arr) arr.indexOf(sym) == i)
-		
+
 	def getImportedSymbols
 		getSymbols!.filter do $1.imported?
-			
+
 	def getImportNodes
 		let tokens = tokens.filter do $1.match('push._imports')
 		return tokens.map do $1.scope
-		
+
 	def getNodesInScope scope,includeEnds = no
 		let tok = scope.start
 		let end = scope.end # ? tokens.indexOf(scope.end) : tokens.length
-		
+
 		if includeEnds
 			end = end.next
 		else
@@ -387,7 +385,6 @@ export class ImbaDocument
 
 		return items
 
-
 	def getEncodedSemanticTokens
 		let tokens = getSemanticTokens!
 		let out = []
@@ -401,15 +398,15 @@ export class ImbaDocument
 			l = pos.line
 			c = pos.character
 		return out
-		
+
 	def getDestructuredPath tok, stack = [], root = null
 		if tok.context.type == 'array'
 			getDestructuredPath(tok.context.start,stack,root)
 			stack.push(tok.context.indexOfNode(tok))
 			return stack
-		
+
 		let key = tok.value
-		
+
 		if tok.prev.match("operator.assign.key-value")
 			key = tok.prev.prev.value
 		if tok.context.type == 'object'
@@ -423,8 +420,8 @@ export class ImbaDocument
 		while tok
 			let next = tok.next
 			if tok.offset >= offset
-				return tok.prev 
-			
+				return tok.prev
+
 			# jump through scopes
 			if tok.end and tok.end.offset < offset
 				# console.log 'jumping',tok.offset,tok.end.offset
@@ -467,7 +464,7 @@ export class ImbaDocument
 		let linePos = lineOffsets[pos.line]
 		# console.log 'get token at offset',offset,tok,linePos,pos
 		let tokPos = offset - tok.offset
-		
+
 		let ctx = tok.context
 
 		const before = {
@@ -481,19 +478,17 @@ export class ImbaDocument
 			token: tok.value.slice(tokPos)
 			line: content.slice(offset,lineOffsets[pos.line + 1]).replace(/[\r\n]+/,'')
 		}
-		
-
 
 		# if the token pushes a new scope and we are at the end of the token
 		if tok.scope and !after.token
 			ctx = tok.scope
 			# are we are the beginning of a scope?
-			
+
 		if tok.next
 			if tok.next.value == null and tok.next.scope and !after.token and tok.match('operator.assign')
 				ctx = tok.next.scope
 				# console.log 'changed scope!!!',ctx,ctx.scope
-	
+
 		let tabs = util.prevToken(tok,"white.tabs")
 		let indent = tabs ? tabs.value.length : 0
 		let group = ctx
@@ -502,8 +497,6 @@ export class ImbaDocument
 		let target = tok
 		let mstate = tok.stack.state or ''
 		let t = CompletionTypes
-
-		
 
 		if group
 			if group.start
@@ -518,7 +511,7 @@ export class ImbaDocument
 
 		if tok == tabs
 			indent = tokPos
-		
+
 		if tok.match('br white.tabs')
 			while scope.indent > indent
 				scope = scope.parent
@@ -530,7 +523,7 @@ export class ImbaDocument
 
 		if tok.match('entity string regexp comment style.')
 			flags = 0
-		
+
 		# if we are in an accessor
 
 		if tok.match('tag.event.name tag.event-modifier.name')
@@ -547,7 +540,7 @@ export class ImbaDocument
 		if tok.match('operator.access')
 			flags |= CompletionTypes.Access
 			target = tok
-			
+
 		if tok.match('accessor')
 			flags |= CompletionTypes.Access
 			target = tok.prev
@@ -558,14 +551,14 @@ export class ImbaDocument
 			flags |= CompletionTypes.TagName
 		elif tok.match('tag.attr tag.white')
 			flags |= CompletionTypes.TagProp
-			
+
 		elif tok.match('tag.flag')
 			flags |= CompletionTypes.TagFlag
 		elif tok.match('tag.event.modifier')
 			flags |= CompletionTypes.TagEventModifier
 		elif tok.match('tag.event')
 			flags |= CompletionTypes.TagEvent
-		
+
 		elif tok.match('operator.equals.tagop')
 			flags |= CompletionTypes.Value
 
@@ -582,34 +575,34 @@ export class ImbaDocument
 
 		if tok.match('style.selector.element') and after.line.match(/^\s*$/)
 			flags |= t.StyleProp
-			
+
 		if scope.closest('rule')
 			flags |= t.StyleProp
 			flags ~= t.Value
-			
+
 		if tok.match('style.property.operator')
 			flags ~= t.StyleProp
-			
+
 		if group.match('stylevalue') && before.group.indexOf(' ') == -1
 			flags = t.StyleValue
-			
+
 		if tok.match('style.selector.modifier style.property.modifier')
 			flags = t.StyleModifier
-			
+
 		if tok.match('style.selector.element')
 			flags |= t.StyleSelector
-		
+
 		if scope.closest('rule') and before.line.match(/^\s*$/)
 			flags |= t.StyleSelector
 			flags ~= t.StyleValue
-			
+
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
-			
+
 		if group.closest('imports')
 			flags ~= t.Value
 			flags |= t.ImportName
-			
+
 		if mstate.match(/\.decl-(let|var|const|param|for)/) or tok.match(/\.decl-(for|let|var|const|param)/)
 			flags ~= t.Value
 			flags |= t.VarName
@@ -619,7 +612,7 @@ export class ImbaDocument
 			key
 
 		suggest.flags = flags
-		
+
 		for own k,v of t
 			if flags & v
 				suggest[k] ||= yes
@@ -641,7 +634,7 @@ export class ImbaDocument
 		}
 
 		return out
-	
+
 	def textBefore offset
 		let before = content.slice(0,offset)
 		let ln = before.lastIndexOf('\n')
@@ -729,13 +722,13 @@ export class ImbaDocument
 				pre += " callback"
 				add({kind:SymbolKind.Function,name:pre},token.prev)
 				awaitScope = token
-			
+
 			elif scope and scope.type == 'tag'
 				add({kind:SymbolKind.Field,name:scope.outline},token)
 
 			if token == awaitScope
 				push(token.end)
-			
+
 			if token == curr.end
 				pop!
 
@@ -763,7 +756,7 @@ export class ImbaDocument
 	def reparse
 		invalidateFromLine(0)
 		parse!
-		
+
 	def profileReparse
 		let t = Date.now!
 		let res = reparse!
@@ -773,12 +766,12 @@ export class ImbaDocument
 	def tokenize force = no
 		# return tokenize! unless #lexed
 		let from = #lexed or {lines:[], version: -1}
-		
+
 		if from.version == version and !force
 			return from
 
 		let raw = content
-		
+
 		if isLegacy
 			raw = raw.replace(/\@\w/g) do(m) '¶' + m.slice(1)
 			raw = raw.replace(/\w\:(?=\w)/g) do(m) m[0] + '.'
@@ -787,35 +780,33 @@ export class ImbaDocument
 
 		let lineOffsets = self.lineOffsets
 		let tokens = []
-		
+
 		let head = seed
 		let prev = head
 		let t0 = Date.now!
 		let nextState = initialState
-		
-		
 
 		#lexed = {
 			version: version
 			lines: []
 			tokens: tokens
 		}
-		
+
 		let lineCache = {}
-		
+
 		#lexed.cache = lineCache
-		
+
 		for line in from.lines
 			let item = (lineCache[line.text] ||= [])
 			item.push(line)
 			line
-		
+
 		for lineOffset,i in lineOffsets
 			let next = lineOffsets[i+1]
 			let toOffset = next or raw.length
 			let str = raw.slice(lineOffset,toOffset)
 			let startState = nextState
-			
+
 			let cached = lineCache[str]
 			let matches = cached and cached.filter do(item) item.startState == startState
 			let match = matches and (matches.find(do $1.offset == lineOffset) or matches[0])
@@ -840,16 +831,16 @@ export class ImbaDocument
 
 			for tok,ti in lexed.tokens
 				tokens.push(tok)
-			
+
 			#lexed.lines.push(lexed)
 			nextState = lexed.endState
 
 		return #lexed
-	
+
 	get tokens
 		astify!
 		return #lexed.tokens
-		
+
 	# This is essentially the tokenizer
 	def getTokens range = null
 		return self.tokens
@@ -858,7 +849,7 @@ export class ImbaDocument
 		# now walk the whole token-stream
 		let lexed = tokenize!
 		return self if lexed.root
-		
+
 		const pairings = {']': '[', ')': '(', '}': '{', '>': '<'}
 		const openers = {'[': ']','(': ')','{': '}','<': '>'}
 		const callAfter = /[\w\$\)\]\?]/
@@ -873,7 +864,7 @@ export class ImbaDocument
 		let lastVarAssign = null
 		let prev = null
 		let entityFlags = 0
-		
+
 		for tok,ti in lexed.tokens
 			let types = tok.type.split('.')
 			let value = tok.value
@@ -881,7 +872,7 @@ export class ImbaDocument
 			let [typ,subtyp,sub2] = types
 			let ltyp = types[types.length - 1]
 			let styp = types[types.length - 2]
-			
+
 			let scopeType = null
 			let decl = 0
 
@@ -890,10 +881,10 @@ export class ImbaDocument
 
 			if prev
 				prev.next = tok
-				
+
 			tok.prev = prev
 			tok.context = scope
-			
+
 			# tag content interpolation
 			# if sub2 == 'braces' and value == '{'
 			#	scope = tok.scope = ScopeTypeMap.interpolation.build(self,tok,scope,'interpolation',types)
@@ -912,7 +903,7 @@ export class ImbaDocument
 				if value == 'let' or value == 'const'
 					lastVarKeyword = tok
 					lastVarAssign = null
-			
+
 			if typ == 'entity'
 				tok.mods |= entityFlags
 				entityFlags = 0
@@ -920,7 +911,7 @@ export class ImbaDocument
 			if typ == 'push'
 				let scopetype = subtyp
 				let idx = subtyp.lastIndexOf('_')
-				
+
 				let ctor = idx >= 0 ? Group : Scope
 
 				if idx >= 0
@@ -941,17 +932,17 @@ export class ImbaDocument
 			elif typ == 'pop'
 				if subtyp == 'value'
 					lastVarAssign = null
-				
+
 				scope = scope.pop(tok)
-			
+
 			elif (subtyp == 'open' or openers[subtyp]) and ScopeTypeMap[typ]
-				
+
 				scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
 				# if subtyp == '('
 				#	console.log 'paren!!!',typ,subtyp,ScopeTypeMap[typ],tok
 			elif ltyp == 'open' and (scopeType = ScopeTypeMap[styp])
 				scope = tok.scope = scopeType.build(self,tok,scope,styp,types)
-			
+
 			elif ltyp == 'close' and scope.type == styp
 				scope = scope.pop(tok)
 
@@ -994,7 +985,7 @@ export class ImbaDocument
 
 		# console.log 'astified',Date.now! - t0
 		self
-		
+
 	def parse
 		return tokens
 
@@ -1022,9 +1013,9 @@ export class ImbaDocument
 				out = "@watch({opts.watch}) {out}"
 			elif opts.watch
 				out = "@watch {out}"
-			
+
 			delete opts.watch
-			
+
 			if opts.default
 				out = "{out} = {opts.default}"
 				delete opts.default
@@ -1054,10 +1045,10 @@ export class ImbaDocument
 					value = value.replace(':','-')
 			if type == 'identifier.def.propname' and value == 'initialize'
 				value = 'constructor'
-			
+
 			if type == 'decorator' and !source.slice(end).match(/^\s(prop|def|get|set)/)
 				value = ivarPrefix + value.slice(1)
-			
+
 			if type == 'property'
 				if value[0] == '@'
 					value = value.replace(/^\@/,ivarPrefix)
@@ -1075,36 +1066,36 @@ export class ImbaDocument
 			token.value = value
 
 		return tokens.map(do $1.value).join('')
-	
+
 	def createImportEdit path, name, alias = name
 		path = path.replace(/\.imba$/,'')
 		let nodes = getImportNodes!.filter do $1.sourcePath == path
-		
+
 		let out = ''
 		let offset = 0
-		
+
 		let changes = []
 		let result = {
 			changes: changes
-				
+
 		}
-		
+
 		if true
 			let symbols = getImportedSymbols!.map do $1.importInfo
 			let match = symbols.find do
 				$1.path == path and $1.name == alias and $1.exportName == name
 			if match
 				return result
-		
+
 		if (name != 'default' and name != '*')
 			nodes = nodes.filter do $1.specifiers or !$1.ns
-		
+
 		for node in nodes
-			
+
 			let defaults = node.default
 			let members = node.specifiers
 			let ns = node.namespace
-		
+
 			if name == 'default'
 				offset = node.start.offset + 1
 
@@ -1119,7 +1110,7 @@ export class ImbaDocument
 					out = alias
 					if ns or members
 						out += ', '						
-				
+
 			elif name == '*'
 				continue if members
 				if defaults
@@ -1135,7 +1126,7 @@ export class ImbaDocument
 			else
 				let key = name
 				key += " as {alias}" if alias != name
-				
+
 				if members
 					offset = members.start.offset + 1
 					out = " {key},"
@@ -1145,9 +1136,9 @@ export class ImbaDocument
 				else
 					out = "\{ {key} \}"
 					offset = node.start.offset + 1
-					
+
 			break if out
-		
+
 		if !out
 			if name == 'default'
 				out = "import {alias} from '{path}'"
@@ -1157,10 +1148,9 @@ export class ImbaDocument
 				out = "import \{ {name} as {alias} \} from '{path}'"
 			else
 				out = "import \{ {name} \} from '{path}'"
-				
+
 			out += '\n'
-			
-			
+
 		changes.push({newText: out, range: rangeAt(offset,offset)})
 		return result
-		
+

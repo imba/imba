@@ -4,7 +4,7 @@ export const fonts =
 	mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
 
 export const modifiers =
-	
+
 	odd: {name: 'nth-child', valueType: 'string',value: 'odd'}
 	even: {name: 'nth-child', valueType: 'string',value: 'even'}
 	first: {name: 'first-child'}
@@ -66,7 +66,7 @@ export const modifiers =
 	valid: {shim: yes}
 	visited: {}
 	where: {}
-	
+
 	after: {type:'el'}
 	'-webkit-scrollbar': {type:'el'}
 	'-webkit-scrollbar-button': {type:'el'}
@@ -88,13 +88,13 @@ export const modifiers =
 	inline: {pri: 3}
 	important: {pri: 4}
 	force: {pri: 6}
-	
+
 	media: {type: 'media'}
 	print: {media: 'print'}
 	screen: {media: 'screen'}
 	speech: {media: 'speech'}
 	all: {media: 'all'}
-	
+
 	xs: {media: '(min-width: 480px)', medianeg: '(max-width: 479px)' }
 	sm: {media: '(min-width: 640px)', medianeg: '(max-width: 639px)' }
 	md: {media: '(min-width: 768px)', medianeg: '(max-width: 767px)' }
@@ -113,13 +113,13 @@ export const modifiers =
 	portrait: {media: '(orientation: portrait)', medianeg: '(orientation: landscape)'}
 	dark: {media: '(prefers-color-scheme: dark)', medianeg: '(prefers-color-scheme: light)'}
 	light: {media: '(prefers-color-scheme: light)', medianeg: '(prefers-color-scheme: dark)'}
-	
+
 	# mac: {ua: 'mac'}
 	# ios: {ua: 'ios'}
 	# win: {ua: 'win'}
 	# android: {ua: 'android'}
 	# linux: {ua: 'linux'}
-	
+
 	# no need for anything specific for these
 	# ie: {ua: 'ie'}
 	# chrome: {ua: 'chrome'}
@@ -151,10 +151,10 @@ export const variants =
 		lg: '6px',
 		xl: '8px',
 		NUMBER: '2px'
-	
+
 	sizing:
 		NUMBER: '0.25rem'
-		
+
 	'letter-spacing':
 		NUMBER: '0.05em'
 

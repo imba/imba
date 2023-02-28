@@ -9,7 +9,6 @@ const http = require('http')
 const esbuild = require 'esbuild'
 const PORT = 8089
 
-
 const args = [
 	'--disable-web-security',
 	'--allow-file-access-from-file',
@@ -33,7 +32,7 @@ def getFiles(dir, o = [])
 		elif src.isDirectory()
 			getFiles(fullpath,o)
 	return o
-	
+
 let options = helpers.parseArgs(process.argv.slice(2),{
 	alias: {g: 'grep',c: 'concurrent',d: 'debug'}
 })
@@ -52,7 +51,7 @@ let parseRemoteObject = do(obj)
 		result = {}
 		if obj.preview
 			for item in obj.preview.properties
-				result[item.name] = parseRemoteObject(item) 
+				result[item.name] = parseRemoteObject(item)
 
 	elif obj.type == 'number'
 		result = parseFloat(obj.value)
@@ -60,17 +59,15 @@ let parseRemoteObject = do(obj)
 		result = (obj.value == 'true' or obj.value === true)
 	return result
 
-
 let tests = []
 let runners = []
 let queued = []
 let pages = []
-let counter = 0 
+let counter = 0
 
 let doneResolve
 let donePromise = new Promise do(resolve,reject)
 	doneResolve = resolve
-
 
 def startNextTest
 	let next = pages.find(do !$1.state && !$1.skip)
@@ -82,10 +79,10 @@ def startNextTest
 	elif pages.every(do $1.state == 'done' or $1.skip )
 		doneResolve(pages) if doneResolve
 		doneResolve = null
-	
+
 def releaseRunner runner, page, close
 	page.state = 'done'
-	
+
 	if runner.page != page
 		console.log 'trying to release wrong runner?!'
 		return
@@ -99,7 +96,6 @@ def releaseRunner runner, page, close
 		runners.push(runner)
 	startNextTest!
 
-	
 def spawnRunner
 	if runners[0]
 		return runners.shift!
@@ -116,7 +112,7 @@ def spawnRunner
 		let receiver = runner
 		let path = str.split('.')
 		let meth = path.pop()
-		
+
 		unless rpc
 			return
 
@@ -134,7 +130,6 @@ def spawnRunner
 		# await runner.waitForSelector('test-runner')
 		return receiver[meth].apply(receiver,params)
 
-			
 	runner.on 'console' do(msg)
 		# console.log("page on console",msg._type)
 		let params = msg.args().filter(Boolean).map do |x|
@@ -144,7 +139,7 @@ def spawnRunner
 		# console.log 'page on console',str
 		if runner.HANDLERS and runner.HANDLERS[str]
 			runner.HANDLERS[str](*params.slice(1))
-			
+
 		if msg._type == 'debug'
 			console.debug.apply(console, params)
 
@@ -155,7 +150,7 @@ def spawnRunner
 	return runner
 
 def run page
-	
+
 	new Promise do(resolve,reject)
 
 		let test = page.result = {
@@ -164,7 +159,7 @@ def run page
 			tests: []
 			failed: []
 		}
-		
+
 		let runner = await spawnRunner!
 		runner.page = page
 		page.runner = runner
@@ -210,7 +205,7 @@ def run page
 			'spec:start': do(e)
 				yes
 				# console.log "starting tests!"
-			
+
 			'spec:done': do(e)
 				# console.log 'spec done'
 				test.results = e
@@ -223,7 +218,6 @@ def run page
 				page.error = e
 				setTimeout(&,0) do releaseRunner(runner,page)
 				resolve(test)
-				
 
 		let first = !runner.HANDLERS
 		let errored = runner.ERRORED
@@ -292,36 +286,33 @@ def serve
 			res.write(html)
 			return res.end!
 
-		
 		let opts = Object.assign({},copts,{sourcePath: src})
 
 		if entry
-			
+
 			let body = entry.body
 			# console.log 'found page'			
-			
-			
+
 			# look for expected crashes
 			let expect = []
 			body.replace(/\# @(error|warn) ([^\s]+)(:? ([^\n]+))?/g) do(m,typ,locs,message)
 				expect.push([typ,locs,message])
 			let js = ''
-			
+
 			res.writeHead(200, { 'Content-Type': 'application/javascript' })
-			
+
 			let inlineTest = do(name,bool,msg)
 				let pars = JSON.stringify(message: msg)
 				'globalThis.test("'+name+'",function(){globalThis.ok(' + (bool ? 'true' : 'false') + "," + pars + ')});\n'
 			try
 				body = body.replace("import 'imba/test/spec'","")
 				let output = compiler.compile(body,opts)
-		
+
 				js = output.js
-				
+
 				if output.errors.length
 					js = ''
-		
-					
+
 				for [typ,locs,message],i in expect
 					let diags = typ == 'warn' ? output.warnings : output.errors
 					let hit = null
@@ -334,15 +325,15 @@ def serve
 					# let pars = JSON.stringify(message: msg)
 					js += inlineTest(message or "{typ}{i}",hit,msg)
 					# js += 'globalThis.test(function(){globalThis.ok(' + (hit ? 'true' : 'false') + "," + pars + ')});'
-				
+
 				if output.errors.some(do !$1.#expected)
 					js += inlineTest("compile",false,"file did not compile")
 					# js += ';\nglobalThis.test(function(){globalThis.ok(' + (hit ? 'true' : 'false') + "," + pars + ')})'
-				
+
 			catch e
 				js += inlineTest("compile",false,"file did not compile")
 				# console.log "compiler failed!!",expect,e,src
-			
+
 			res.write js
 		else
 			if fs.existsSync(src) and ext == 'imba'
@@ -368,7 +359,7 @@ def main
 		options.main ? (item.indexOf(options.main) >= 0) : !item.match(/(examples|tmp)\//)
 
 	# let files = entries.map(|v| )
-	
+
 	pages = entries.map do(src,i)
 		{
 			path: src.replace(testFolder,"apps"),
@@ -382,7 +373,6 @@ def main
 			body: fs.readFileSync(src,'utf8')
 		}
 
-	
 	for page in pages
 		pages[page.sourcePath] = page
 		let bundle = page.body.match(/^(import|export) /gm)
@@ -390,19 +380,17 @@ def main
 
 	let entrypoints = pages.filter do !$1.skip
 
-
 	console.log "running {entrypoints.length} tests"
-	
-		
+
 	# fetch the actual items to compile first
 	options.verbose = true if entrypoints.length < 3
 
 	let concurrency = Math.min(options.concurrent ? 3 : 1,entrypoints.length)
 	while --concurrency >= 0
 		startNextTest!
-	
+
 	await donePromise
-	
+
 	if options.concurrent and options.verbose
 		console.log('')
 		for page in entrypoints
@@ -431,7 +419,7 @@ def main
 				for message in test.messages
 					console.log "      " + message
 				# (failed.map do "x {$1.file}").join('\n')
-	
+
 	if crashed.length
 		console.log "The following file(s) crashed:"
 		console.log (crashed.map do " - {$1.path}").join('\n')
