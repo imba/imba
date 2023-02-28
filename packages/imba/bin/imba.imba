@@ -83,7 +83,7 @@ def parseOptions options, extras = []
 	options.command = command
 	options.extras = extras
 	
-	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
+	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.package = resolvePackage(cwd) or {}
 	options.dotenv = resolveFile('.env',cwd)
 	options.nodeModulesPath = resolvePath('node_modules',cwd)
@@ -186,7 +186,7 @@ def run entry, o, extras
 	
 	path = np.resolve(path)
 
-	let prog = o = parseOptions(o,extras)
+	let prog = o = await parseOptions(o,extras)
 	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)

@@ -71,7 +71,7 @@ export def getConfigFilePath(type, opts)
 	configPath ||= imbaConfigPath
 
 	if configPath.endsWith('imba')
-		throw new Error("should support this")
+		throw new Error(".imba config file not yet supported")
 
 	let {default: imbaConfig} = await import(String url.pathToFileURL configPath)
 	if typeof imbaConfig == "function"

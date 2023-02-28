@@ -12,6 +12,6 @@ export default tag App
 	
 	def render
 		<self>
-			<button[c:green bg:yellow4] @click.log("st")=(count++)> "Hello {count} times hello. Version: {import.meta.env.MY_NAME}"
+			<button[c:liloc6 bg:yellow4] @click.log("st")=(count++)> "Hello {count} times hello. Version: {import.meta.env.MY_NAME}"
 
 imba.mount <App>, document.getElementById "root"

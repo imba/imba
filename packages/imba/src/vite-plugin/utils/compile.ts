@@ -1,5 +1,6 @@
 import { CompileOptions, ResolvedOptions } from './options';
 import {compile} from 'imba/compiler'
+import {getConfigFilePath} from '../../utils/vite.imba'
 
 // @ts-ignore
 import { createMakeHot } from 'imba-hmr';
@@ -19,6 +20,7 @@ const _createCompileImba = (makeHot?: Function) =>
 		const { emitCss = true } = options;
 		const dependencies = [];
 		// todo maybe: generate unique short references for all unique paths, cache them between runs, and send those in via sourceId
+		const configFromFile = await getConfigFilePath("imba")
 		const compileOptions: CompileOptions = {
 			...options.compilerOptions,
 			filename,
@@ -26,8 +28,10 @@ const _createCompileImba = (makeHot?: Function) =>
 			format: 'esm',
 			resolveColors: true,
 			sourcePath: filename,
-			sourcemap: options.compilerOptions.sourcemap ?? "extern"
+			sourcemap: options.compilerOptions.sourcemap ?? "extern",
+			...configFromFile
 		};
+
 		if (options.hot && options.emitCss) {
 			const hash = `s-${safeBase64Hash(normalizedFilename)}`;
 			log.debug(`setting cssHash ${hash} for ${normalizedFilename}`);
@@ -41,7 +45,7 @@ const _createCompileImba = (makeHot?: Function) =>
 			}
 		}
 
-		let preprocessed;
+		// let preprocessed;
 
 		// if (options.preprocess) {
 		// 	try {
@@ -53,10 +57,11 @@ const _createCompileImba = (makeHot?: Function) =>
 
 		// 	if (preprocessed.dependencies) dependencies.push(...preprocessed.dependencies);
 		// }
-		const finalCode = preprocessed ? preprocessed.code : code;
+		// const finalCode = preprocessed ? preprocessed.code : code;
+		// const finalCode = code
 		const dynamicCompileOptions = await options.experimental?.dynamicCompileOptions?.({
 			filename,
-			code: finalCode,
+			code,
 			compileOptions
 		});
 		if (dynamicCompileOptions && log.debug.enabled) {
@@ -76,15 +81,18 @@ const _createCompileImba = (makeHot?: Function) =>
 		finalCompileOptions.vite = true
 		const q = imbaRequest.query
 		finalCompileOptions.platform = ssr ? "node": "browser"
+
 		if(q.worker){
 			finalCompileOptions.platform = "worker"
 		}else if(q.web){
 			finalCompileOptions.platform = "browser"
 		}
-		const compiled = compile(finalCode, finalCompileOptions);
+
+		const compiled = compile(code, finalCompileOptions);
 		if (compiled["erroredΦ"]){
 			throw compiled
 		}
+
 		const map = compiled.sourcemap
 		compiled.js = {code: compiled.js, map}
 		compiled.css = {code: compiled.css}
