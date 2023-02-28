@@ -155,15 +155,6 @@ export function buildIdParser(options: ResolvedOptions): IdParser {
 	};
 }
 
-export const requestQuerySplitRE = /\?(?!.*[\/|\}])/;
-export function parseRequest(id: string): Record<string, string> | null {
-	const [_, search] = id.split(requestQuerySplitRE, 2);
-	if (!search) {
-		return null;
-	}
-	return Object.fromEntries(new URLSearchParams(search));
-}
-
 export function slash(p: string): string {
 	return p.replace(/\\/g, '/')
 }
