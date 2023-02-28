@@ -20,7 +20,7 @@ const _createCompileImba = (makeHot?: Function) =>
 		const { emitCss = true } = options;
 		const dependencies = [];
 		// todo maybe: generate unique short references for all unique paths, cache them between runs, and send those in via sourceId
-		const configFromFile = await getConfigFilePath("imba")
+		const configFromFile = (await getConfigFilePath("imba")) || {}
 		const compileOptions: CompileOptions = {
 			...options.compilerOptions,
 			filename,
