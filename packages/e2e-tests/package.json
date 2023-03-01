@@ -7,7 +7,8 @@
     "test:serve": "vitest run -c vitest.config.e2e.ts --watch false",
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
     "test": "rm -rf ../../temp && npm run test:serve && npm run test:build",
-    "clean": "npm --prefix ../imba install && npm --prefix ../imba run build && npm install"
+    "sync": "git pull && npm --prefix ../imba install && npm --prefix ../imba run build && npm install",
+    "synctest": "npm run sync && npm run test"
   },
   "type": "module",
   "dependencies": {
