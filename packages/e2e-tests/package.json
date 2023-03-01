@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "info": "imba info",
     "test:serve": "vitest run -c vitest.config.e2e.ts --watch false",
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
-    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build"
+    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build",
+    "clean": "npm --prefix ../imba install && npm --prefix ../imba run build && npm install"
   },
   "type": "module",
   "dependencies": {
