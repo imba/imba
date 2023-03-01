@@ -14,12 +14,12 @@
   "dependencies": {
     "cross-env": "^7.0.3",
     "css-color-names": "^1.0.1",
+    "execa": "^6.1.0",
     "fs-extra": "^10.1.0",
     "imba": "../imba",
+    "node-fetch": "^3.2.10",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
-    "vitest": "^0.22.1",
-    "execa": "^6.1.0",
-    "node-fetch": "^3.2.10"
+    "vitest": "^0.29.2"
   }
 }
