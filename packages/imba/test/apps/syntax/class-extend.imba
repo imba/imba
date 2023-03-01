@@ -1,8 +1,8 @@
 class Item
-	
+
 	static def ping
 		1
-	
+
 	def ping
 		2
 
@@ -10,7 +10,7 @@ extend class Item
 
 	static def pong
 		1
-		
+
 	def pong
 		2
 

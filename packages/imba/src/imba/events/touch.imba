@@ -7,7 +7,7 @@ import * as helpers from './helpers'
 
 export def use_events_touch
 	yes
-	
+
 let iosMoveIframeFix = null
 
 class Touch
@@ -18,7 +18,7 @@ class Touch
 		handler = handler
 		target = currentTarget = el
 		#mods = {}
-	
+
 	set event value
 		events.push(value)
 
@@ -28,19 +28,19 @@ class Touch
 	get metaKey do originalEvent.metaKey
 	get isPrimary do originalEvent.isPrimary
 	get pointerType do originalEvent.pointerType
-	
+
 	get start
 		originalEvent
 
 	get originalTarget
 		originalEvent.target
-		
+
 	get event
 		events[events.length - 1]
-	
+
 	get elapsed
 		event.timeStamp - events[0].timeStamp
-	
+
 	get type do event.type
 	get pointerId do originalEvent.pointerId
 	get pressure do event.pressure
@@ -50,10 +50,10 @@ class Touch
 	get offsetY do event.offsetY
 	get active? do phase != 'ended'
 	get ended? do phase == 'ended'
-		
+
 	get dx
 		#dx == undefined ? event.x - start.x : #dx
-	
+
 	get dy
 		#dy == undefined ? event.y - start.y : #dy
 
@@ -70,12 +70,12 @@ class Touch
 	def preventDefault
 		defaultPrevented = yes
 		event.preventDefault!
-		
+
 	def emit name, ...params do emit(self,name,params)
 	def on name, ...params do listen(self,name,...params)
 	def once name, ...params do once(self,name,...params)
 	def un name, ...params do unlisten(self,name,...params)
-		
+
 	def @flag name, sel
 		const {element} = #context
 		const ts = Date.now!
@@ -88,7 +88,6 @@ class Touch
 
 		return yes
 
-	
 	def @lock
 		#capture!
 		yes
@@ -96,13 +95,13 @@ class Touch
 	def #capture
 		if #locked =? yes
 			#context.element.setPointerCapture(pointerId)
-		
+
 	get #step
 		#mods[#context.step] ||= {}
 
 	def #cancel
 		#teardown!
-		
+
 	def @moved a,b
 		let o = #step
 		const {element,state,event} = #context
@@ -112,7 +111,7 @@ class Touch
 			if typeof a == 'string' and a.match(/^(up|down|left|right|x|y)$/)
 				o.dir = a
 				th = b or 4
-				
+
 			if typeof b == 'string' and b.match(/^(up|down|left|right|x|y)$/)
 				o.dir = b
 
@@ -129,14 +128,14 @@ class Touch
 
 		if o.active
 			return yes
-			
+
 		if o.cancelled
 			return no
-		
+
 		let th = o.threshold
 		let dx = x - o.x0
 		let dy = y - o.y0
-		
+
 		o.x = Math.max(o.x,Math.abs(dx))
 		o.y = Math.max(o.y,Math.abs(dy))
 		o.left = Math.max(o.left,-dx)
@@ -144,7 +143,7 @@ class Touch
 		o.up = Math.max(o.up,-dy)
 		o.down = Math.max(o.down,dy)
 		o.dist = Math.max(o.dist,Math.sqrt(dx*dx + dy*dy))
-		
+
 		let val = o[o.dir]
 
 		if val > th and val >= o.x and val >= o.y
@@ -158,24 +157,24 @@ class Touch
 				pinned.flags.decr('@move') if pinned
 				element.flags.decr('@move')
 			return true
-			
+
 		elif o.x > th or o.y > th
 			o.cancelled = yes
 			# #cancel!
 			return no
-			
+
 		return no
-	
+
 	def @hold time = 250
 		let o = #step
 		let el = #context.element
-		
+
 		return no if o.cancelled
-		
+
 		if o.setup and !o.active
 			let x = clientX
 			let y = clientY
-			
+
 			let dx = x - o.x
 			let dy = y - o.y
 			let dr = Math.sqrt(dx*dx + dy*dy)
@@ -184,7 +183,7 @@ class Touch
 				clearTimeout(o.timeout)
 				o.cancelled = yes
 				# #cancel!
-			
+
 		if o.setup =? yes
 			o.active = no
 			o.x = clientX
@@ -198,18 +197,18 @@ class Touch
 				el.flags.incr("@hold")
 				resolve(yes) if resolve
 				resolve = null
-			
+
 			once(self,'end') do
 				if o.active
 					el.flags.decr("@hold")
 				clearTimeout(o.timeout)
 				resolve(no) if resolve
 				resolve = null
-			
+
 			return new Promise do resolve = $1
 
 		return o.active
-		
+
 	def @sync item,xalias='x',yalias='y'
 		let o = #step
 
@@ -221,18 +220,18 @@ class Touch
 		else
 			item[xalias] = o.x + (x - o.tx) if xalias
 			item[yalias] = o.y + (y - o.ty) if yalias
-			
+
 		#context.commit = yes
 		return yes
-		
+
 	def @apply item,xalias='x',yalias='y'
 		item[xalias] = x if xalias
 		item[yalias] = y if yalias
 		#context.commit = yes
 		return yes
-		
+
 	def @css xalias='x',yalias='y'
-		
+
 		let o = #step
 		if o.setup =? yes
 			o.el = #context.element
@@ -247,10 +246,10 @@ class Touch
 			o.el.style.setProperty("--x",x + 'px') if xalias
 			o.el.style.setProperty("--y",y + 'px') if yalias			
 		return yes
-			
+
 	def @end
 		return phase == 'ended'
-		
+
 	def @shift
 		return !!shiftKey
 
@@ -262,40 +261,40 @@ class Touch
 
 	def @meta
 		return !!metaKey
-		
+
 	def @primary
 		return !!isPrimary
-	
+
 	def @mouse
 		return pointerType == 'mouse'
-	
+
 	def @pen
 		return pointerType == 'pen'
-	
+
 	def @touch
 		return pointerType == 'touch'
-	
+
 	def @pressure threshold = 0.5
 		return pressure >= threshold
-		
+
 	def @log ...params
 		console.info(...params)
 		return true
-		
+
 	def @left do originalEvent.button == 0
 
 	def @middle do originalEvent.button == 1
 
 	def @right do originalEvent.button == 2
-		
-	def @round sx=1,sy=sx 
+
+	def @round sx=1,sy=sx
 		x = helpers.round(x,sx)
 		y = helpers.round(y,sy)
 		return yes
-		
+
 	def #reframe ...params
 		let o = #step
-		
+
 		if o.setup =? yes
 			let el = target
 			let len = params.length
@@ -304,7 +303,7 @@ class Touch
 			let max = 100%
 			let snap = 0
 			let typ = typeof box
-			
+
 			if typ == 'number' or (typ == 'string' and (/^([-+]?\d[\d\.]*)(%|\w+)$/).test(box)) or box isa Array
 				box = null
 
@@ -321,7 +320,7 @@ class Touch
 			if box == null
 				len++
 				params.unshift(box = el)
-			
+
 			if len == 2
 				snap = params[1]
 			elif len > 2
@@ -344,14 +343,14 @@ class Touch
 			#dy = y - y0
 
 		return yes
-	
+
 	def @fit ...params
 		#step.clamp = yes
 		#reframe(...params)
-	
+
 	def @reframe ...params
 		#reframe(...params)
-	
+
 	###
 	Allow pinning the touch to a certain point in an element, so that
 	all future x,y values are relative to this pinned point.
@@ -364,7 +363,7 @@ class Touch
 	###
 	def @pin ...params
 		let o = #step
-		
+
 		# TODO warn if pin comes after reframe
 
 		if o.setup =? yes
@@ -372,11 +371,11 @@ class Touch
 
 			unless box isa Element
 				params.unshift(box = target)
-			
+
 			let ax = params[1] or 0
 			let ay = params[2] ??= ax
 			let rect = box.getBoundingClientRect!
-			
+
 			o.x = clientX - (rect.left + rect.width * ax)
 			o.y = clientY - (rect.top + rect.height * ay)
 
@@ -385,7 +384,7 @@ class Touch
 				box.flags.incr('_touch_')
 				once(self,'end') do box.flags.decr('_touch_')
 			# console.log 'pinning',o,box
-		
+
 		x -= o.x
 		y -= o.y
 		return yes
@@ -399,14 +398,14 @@ extend class Element
 				global.parent.postMessage('setupTouchFix')
 
 		return handler
-		
+
 if $web$ and global.parent == global and helpers.navigator.ios?
 	let fix = do(e)
 		if e.data == 'setupTouchFix'
 			global.addEventListener('touchmove',&,{passive: false}) do false
 			global.removeEventListener('message',fix)
 	global.addEventListener('message',fix)
-		
+
 def Event.touch$handle
 	let e = event
 	let el = element
@@ -419,8 +418,7 @@ def Event.touch$handle
 
 	if id != undefined
 		return id == e.pointerId
-		
-	
+
 	# reject the touch before creation for certain modifiers
 	# TODO should allow specifying pen OR mouse etc
 	# FIXME these will not work with negated modifiers
@@ -435,7 +433,7 @@ def Event.touch$handle
 	return if m.mouse and e.pointerType != 'mouse'
 	return if m.touch and e.pointerType != 'touch'
 	return if m.sel and !e.target.matches(String(m.sel[0]))
-	
+
 	let t = state = handler.state = current = new Touch(e,handler,el)
 	id = t.pointerId
 
@@ -445,7 +443,7 @@ def Event.touch$handle
 
 	let teardown = null
 	let sym = Symbol!
-	
+
 	let onclick = do(e)
 		# console.debug "ONCLICK!",e,e.pointerId,t.clientX,t.clientY,e.clientX,e.clientY
 		let tx = t.clientX
@@ -456,58 +454,57 @@ def Event.touch$handle
 		if (t.#locked or t.defaultPrevented) and ((e.pointerId == t.pointerId) or (tx == ex and ty == ey))
 			e.preventDefault!
 			e.stopPropagation!
-			
+
 		if onclick
 			global.removeEventListener('click',onclick,capture:true)
 			onclick = null
 		return
-		
+
 	let ontouch = do(e)
 		if t.type == 'touchmove' and e.changedTouches[0].identifier != id
 			return 	
 		# console.debug 'ontouch',e.type,t.defaultPrevented,e.changedTouches
 		if t.defaultPrevented or t.#locked
 			e.preventDefault!
-		
+
 	let listener = do(e)
 		let typ = e.type
 		let ph = t.phase
 		# console.debug "listen",e.type,e.pointerId
 		return if e.pointerId and t.pointerId != e.pointerId
-		
+
 		if e[sym]
 			return
 
 		e[sym] = yes
-		
-		
+
 		let end = typ == 'pointerup' or typ == 'pointercancel'
-		
+
 		# if the pressure is suddenly 0 it indicates there has been a
 		# pointerup event not captured by the browser
 		if e.pressure == 0 and e.pointerType == 'mouse' and typ == 'pointermove' and t.originalEvent.pressure > 0
 			return teardown(e)
-		
+
 		if typ == 'pointercancel'
 			t.x = t.clientX
 			t.y = t.clientY
 		else
 			t.x = e.clientX
 			t.y = e.clientY
-			
+
 		t.event = e
 
 		if end
 			t.phase = 'ended'
-			
+
 		try handler.handleEvent(t)
-		
+
 		if ph == 'init' and !end
 			t.phase = 'active'
-			
+
 		if end and teardown
 			teardown(e)
-	
+
 	let disposed = no
 
 	teardown = do(e)
@@ -522,7 +519,7 @@ def Event.touch$handle
 			handler.handleEvent(t)
 
 		t.emit('end')
-		
+
 		unless m.passive
 			if (--handler.prevents) == 0
 				el.style.removeProperty('touch-action')
@@ -537,7 +534,7 @@ def Event.touch$handle
 			if onclick
 				global.removeEventListener('click',onclick,capture:true)
 				onclick = null
-				
+
 			if ios and ontouch
 				global.removeEventListener('touchend',ontouch)
 				global.removeEventListener('touchmove',ontouch,{passive: false})
@@ -545,9 +542,9 @@ def Event.touch$handle
 
 		if !m.passive
 			global.document.removeEventListener('selectstart',canceller,capture:true)
-		
+
 	t.#teardown = teardown
-	
+
 	if !m.passive
 		handler.prevents ||= 0
 		handler.prevents++

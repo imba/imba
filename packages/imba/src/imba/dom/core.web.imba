@@ -4,7 +4,6 @@ import {Flags} from './flags'
 import {getDeepPropertyDescriptor} from '../utils'
 import {RenderContext,createRenderContext} from './context'
 
-
 export const {
 	Event,
 	UIEvent,
@@ -32,7 +31,6 @@ export const {
 	customElements
 } = global.window
 
-
 const descriptorCache = {}
 def getDescriptor item,key,cache
 	if !item
@@ -40,7 +38,7 @@ def getDescriptor item,key,cache
 
 	if cache[key] !== undefined
 		return cache[key]
-	
+
 	let desc = Object.getOwnPropertyDescriptor(item,key)
 
 	if desc !== undefined or item == SVGElement
@@ -58,8 +56,6 @@ export def get_document
 
 export def use_window
 	yes
-
-
 
 # Basic node extensions
 
@@ -80,14 +76,13 @@ const contextHandler =
 			if desc
 				ctx[name] = value
 				return yes
-			else 
+			else
 				ctx = ctx.#parent
 		return yes
 
 extend class Document
 	get flags
 		self.documentElement.flags
-
 
 extend class Node
 	get #parent
@@ -113,18 +108,18 @@ extend class Node
 
 	def #getDynamicContext sym,key
 		#getRenderContext(sym).#getRenderContext(key)
-	
+
 	def #insertChild newnode, refnode
 		newnode.#insertInto(self,refnode)
-	
+
 	def #appendChild newnode
 		newnode.#insertInto(self,null)
-		
+
 	def #replaceChild newnode, oldnode
 		let res = #insertChild(newnode,oldnode)
 		#removeChild(oldnode)
 		return res
-		
+
 	def #removeChild node
 		node.#removeFrom(self)
 
@@ -135,7 +130,7 @@ extend class Node
 		else
 			parent.appendChild(self)
 		return self
-		
+
 	def #insertIntoDeopt parent, before
 		# log '#insertIntoDeopt',parent,before
 		if before
@@ -146,13 +141,13 @@ extend class Node
 
 	def #removeFrom parent
 		parent.removeChild(self)
-		
+
 	def #removeFromDeopt parent
 		parent.removeChild(#domNode or self)
-		
+
 	def #replaceWith other, parent
 		parent.#replaceChild(other,self)
-		
+
 	def #replaceWithDeopt other, parent
 		parent.#replaceChild(other,#domNode or self)
 
@@ -189,9 +184,9 @@ extend class Node
 		#domNode = ph
 		# self.#replaceWith(ph,parentNode)
 		self
-		
+
 	def #placeChild item, f, prev
-		
+
 		let type = typeof item
 		# console.log '#inserting!',item,f,prev,type
 
@@ -211,7 +206,7 @@ extend class Node
 		elif type !== 'object'
 			let res
 			let txt = item
-			
+
 			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$) and false
 				# FIXME what if the previous one was not text? Possibly dangerous
 				# when we set this on a fragment - it essentially replaces the whole
@@ -243,7 +238,7 @@ extend class Node
 
 # Basic element extensions
 extend class Element
-	
+
 	def log ...params
 		console.log(...params)
 
@@ -257,13 +252,13 @@ extend class Element
 	def text$ item
 		self.textContent = item
 		self
-	
+
 	def #beforeReconcile
 		self
-		
+
 	def #afterReconcile
 		self
-		
+
 	def #afterVisit
 		self.render! if self.render
 		##visitContext = null if ##visitContext
@@ -286,12 +281,12 @@ extend class Element
 		let ns = flags$ns
 		self.className = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
 		return
-		
+
 	def flagDeopt$
 		self.flag$ = self.flagExt$ # do(str) self.flagSync$(flags$ext = str)
 		self.flagSelf$ = do(str) self.flagSync$(flags$own = str)
 		return
-		
+
 	def flagExt$ str
 		self.flagSync$(flags$ext = str)
 
@@ -303,7 +298,7 @@ extend class Element
 
 	def flagSync$
 		self.className = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
-		
+
 	def set$ key,value
 		# FIXME relatively slow
 		let desc = getDeepPropertyDescriptor(this,key,Element)
@@ -312,7 +307,7 @@ extend class Element
 		else
 			self[key] = value
 		return
-		
+
 	get richValue
 		value
 
@@ -325,7 +320,7 @@ Element.prototype.#isRichElement = yes
 
 export def createElement name, parent, flags, text
 	let el = document.createElement(name)
-		
+
 	el.className = flags if flags
 
 	if text !== null
@@ -336,9 +331,6 @@ export def createElement name, parent, flags, text
 		# el.#insertInto(parent)
 
 	return el
-
-
-
 
 extend class SVGElement
 
@@ -366,7 +358,6 @@ extend class SVGElement
 
 	def flagSync$
 		self.setAttribute('class',(flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
-
 
 extend class SVGSVGElement
 
@@ -400,10 +391,9 @@ export def createComment text
 
 export def createTextNode text
 	document.createTextNode(text)
-	
+
 export def createFragment
 	document.createDocumentFragment!
-
 
 const navigator = global.navigator
 const vendor = navigator and navigator.vendor or ''
@@ -448,7 +438,7 @@ def getCustomDescriptors el, klass
 export def createComponent name, parent, flags, text, ctx
 	# the component could have a different web-components name?
 	let el
-	
+
 	if typeof name != 'string'
 		if name and name.nodeName
 			name = name.nodeName
@@ -479,12 +469,12 @@ export def createComponent name, parent, flags, text, ctx
 	el.##parent = parent
 	el.#__init__!
 	el.##inited! # .inited(el) if el.#__hooks__
-		
-	# potentially 
+
+	# potentially
 
 	if text !== null
 		el.#getSlot('__').text$(text)
-		
+
 	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
 	return el
@@ -501,8 +491,6 @@ export def createDynamic value, parent, flags, text
 	elif typeof value == 'string' or (value and value.prototype isa Node)
 		return createComponent(value,parent,flags,text)
 
-
-
 export def getTagType name, klass
 	# TODO follow same structure as ssr TYPES
 	if TYPES[name]
@@ -517,7 +505,7 @@ export def getTagType name, klass
 export def getSuperTagType name, klass, cmp
 	let typ = getTagType(name,klass)
 	let custom = typ == cmp or typ.prototype isa cmp or typ.prototype.#htmlNodeName
-	
+
 	if !custom
 		let cls = typ.prototype.#ImbaElement
 
@@ -560,7 +548,6 @@ export def defineTag name, klass, options = {}
 		proto.#cssid = options.cssid
 		proto.flags$ns = ids.trim! + ' '
 
-
 	if proto.#htmlNodeName and !options.extends
 		options.extends = proto.#htmlNodeName
 
@@ -574,6 +561,6 @@ export def defineTag name, klass, options = {}
 		window.customElements.define(componentName,klass)
 
 	return klass
-	
+
 let instance = global.imba ||= {}
 instance.document = global.document

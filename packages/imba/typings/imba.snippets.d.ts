@@ -19,7 +19,7 @@ declare namespace imba_snippets {
     }
 
     interface tags {
-        /** 
+        /**
          * @snippet input type='checkbox'
          */
         'input-checkbox': void

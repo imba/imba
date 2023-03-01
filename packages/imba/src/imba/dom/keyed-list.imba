@@ -3,7 +3,7 @@ import {Fragment} from './fragment'
 import {RenderContext} from './context'
 
 class KeyedTagFragment < Fragment
-	
+
 	def constructor f, parent
 		super
 		#domFlags = f
@@ -15,23 +15,22 @@ class KeyedTagFragment < Fragment
 
 		if !(f & $TAG_LAST_CHILD$)
 			#end = createComment('map')
-			
+
 		if parent
 			parent.#appendChild(self)
-
 
 	def #appendChild item
 		if parentNode
 			parentNode.#insertChild(item,#end)
-	
+
 	def hasChildNodes
 		return false if childNodes.length == 0
 		return true
-		
+
 	def push item, idx
 		# on first iteration we can merely run through
 		unless #domFlags & $TAG_INITED$
-			
+
 			self.array.push(item)
 			self.#appendChild(item)
 			return
@@ -68,7 +67,7 @@ class KeyedTagFragment < Fragment
 	def insertChild item, index, prevIndex
 		let par = parentNode
 		return unless par
-		
+
 		# console.log 'insertChild',item,index
 		# log 'insertBefore',index,item,parentNode
 		if index > 0
@@ -78,7 +77,7 @@ class KeyedTagFragment < Fragment
 		else
 			par.#insertChild(item,childNodes[index + 1] or #end)
 		return
-		
+
 	def moveChild item, index, prevIndex
 		insertChild(item,index, prevIndex)
 
@@ -89,10 +88,10 @@ class KeyedTagFragment < Fragment
 			# log 'removeChild',item,item.parentNode
 			item.#removeFrom(item.parentNode)
 		return
-		
+
 	def #insertChild node,relnode
 		return
-		
+
 	# def #appendChild
 	#	return
 
@@ -101,7 +100,7 @@ class KeyedTagFragment < Fragment
 		let res = rel.#insertInto(parent,#end)
 		#removeFrom(parent)
 		return res
-		
+
 	def #insertInto parent, before
 		# log 'insertInto',parent,before
 		##parent = parent
@@ -111,12 +110,12 @@ class KeyedTagFragment < Fragment
 			# #start.#insertInto(parent,before) if #start
 			for item,i in self.array
 				item.#insertInto(parent,before)
-			
+
 			if #end
 				#end.#insertInto(parent,before)
 			# attachNodes!
 		self
-	
+
 	def #removeFrom parent
 		# log '#removeFrom!',parent
 
@@ -143,7 +142,7 @@ class KeyedTagFragment < Fragment
 
 		# there are some items we should remove now
 		if self.array.length > index
-			
+
 			# remove the children below
 			while self.array.length > index
 				let item = self.array.pop()
@@ -152,4 +151,3 @@ class KeyedTagFragment < Fragment
 
 export def createKeyedList bitflags, parent
 	return new KeyedTagFragment(bitflags,parent)
-	

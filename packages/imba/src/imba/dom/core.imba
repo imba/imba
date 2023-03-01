@@ -128,10 +128,10 @@ const escapeAttributeValue = do(val)
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	return str
-	
+
 const escapeTextContent = do(val, nodeName)
 	let str = typeof val == 'string' ? val : String(val)
-	
+
 	if nodeName == 'script'
 		return str
 
@@ -143,8 +143,7 @@ const escapeTextContent = do(val, nodeName)
 		str = str.replace(/\>/g,"&gt;")
 	return str
 
-
-# could create a fake document 
+# could create a fake document
 export class Document
 
 	static def create ctx, cb
@@ -190,7 +189,7 @@ export class Document
 
 	def createTextNode value
 		return new Text(value)
-		
+
 	def createComment value
 		return new Comment(value)
 
@@ -236,7 +235,7 @@ class DOMTokenList
 
 	def clone dom
 		new DOMTokenList(dom,self.classes.slice(0))
-		
+
 	def toString
 		# beware of perf
 		self.classes.join(" ").trim()
@@ -245,13 +244,13 @@ export class StyleDeclaration
 
 	def constructor
 		self
-		
+
 	def removeProperty key
 		delete self[key]
-	
+
 	def setProperty name, value
 		self[name] = value
-		
+
 	def toString
 		let items = []
 		for own k,v of self
@@ -262,14 +261,13 @@ export class StyleDeclaration
 class DataSet
 	static def wrap node
 		new Proxy(node.attributes,new DataSet)
-	
+
 	def set target, key, value
 		target["data-" + key] = value
 		return true
 
 	def get target, key
 		target["data-" + key]
-
 
 const contextHandler =
 	def get target, name
@@ -323,10 +321,10 @@ export class Node
 		let res = #insertChild(newnode,oldnode)
 		#removeChild(oldnode)
 		return res
-		
+
 	def #appendChild newnode
 		newnode.#insertInto(self,null)
-		
+
 	def #removeChild node
 		node.#removeFrom(self)
 
@@ -336,16 +334,16 @@ export class Node
 
 	def #insertChild newnode, refnode
 		newnode.#insertInto(self,refnode)
-		
+
 	def #removeFrom parent
 		parent.removeChild(self)
 
 	def #removeFromDeopt parent
 		parent.removeChild(#domNode or self)
-		
+
 	def #replaceWith other, parent
 		parent.#replaceChild(other,self)
-		
+
 	def #replaceWithDeopt other, parent
 		parent.#replaceChild(other,#domNode or self)
 
@@ -381,9 +379,9 @@ export class Node
 		#domNode = ph
 		# self.#replaceWith(ph,parentNode)
 		self
-		
+
 	def #placeChild item, f, prev
-		
+
 		let type = typeof item
 		# console.log '#inserting!',item,f,prev,type
 
@@ -403,7 +401,7 @@ export class Node
 		elif type !== 'object'
 			let res
 			let txt = item
-			
+
 			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$) and false
 				# FIXME what if the previous one was not text? Possibly dangerous
 				# when we set this on a fragment - it essentially replaces the whole
@@ -439,14 +437,14 @@ export class Text < Node
 		self.textContent
 
 export class Comment < Node
-	
+
 	def constructor value
 		super()
 		self.value = value
-		
+
 	get outerHTML
 		"<!-- {escapeTextContent(self.value)} -->"
-		
+
 	def toString
 		if self.tag and self.tag.toNodeString
 			return self.tag.toNodeString()
@@ -482,7 +480,7 @@ export class Element < Node
 
 	set asset asset
 		#asset = asset
-	
+
 	get asset
 		#asset
 
@@ -534,15 +532,15 @@ export class Element < Node
 	def removeAttribute key
 		delete self.attributes[key]
 		true
-	
+
 	# noop
 	def addEventListener
 		self
-	
+
 	# noop
 	def removeEventListener
 		self
-		
+
 	def resolve
 		self
 
@@ -565,7 +563,7 @@ export class Element < Node
 			elif item
 				o += item.outerHTML
 		return o
-	
+
 	get outerHTML
 		let typ = self.nodeName
 		let nativeType = #htmlNodeName
@@ -581,7 +579,7 @@ export class Element < Node
 		if self.dehydrate
 			cls = (cls ? ('_ssr_ ' + cls) : '_ssr_')
 			self.dehydrate!
-		
+
 		sel += " id=\"{escapeAttributeValue(v)}\"" if v = self.id
 		sel += " class=\"{escapeAttributeValue(cls)}\"" if cls
 
@@ -627,7 +625,6 @@ export class Element < Node
 	def log ...params
 		console.log(...params)
 
-
 	# inline in files or remove all together?
 	def text$ item
 		self.textContent = item
@@ -661,12 +658,12 @@ export class Element < Node
 		let ns = flags$ns
 		self.className = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
 		return
-		
+
 	def flagDeopt$
 		self.flag$ = self.flagExt$ # do(str) self.flagSync$(flags$ext = str)
 		self.flagSelf$ = do(str) self.flagSync$(flags$own = str)
 		return
-		
+
 	def flagExt$ str
 		self.flagSync$(flags$ext = str)
 
@@ -678,7 +675,7 @@ export class Element < Node
 
 	def flagSync$
 		self.className = ((flags$ns or '') + (flags$ext or '') + ' ' + (flags$own || '') + ' ' + ($flags or ''))
-		
+
 	def set$ key, value
 		let desc = getDeepPropertyDescriptor(this,key,Element)
 		if !desc or !desc.set
@@ -694,14 +691,13 @@ export class Element < Node
 Element.prototype.setns$ = Element.prototype.setAttributeNS
 Element.prototype.#isRichElement = yes
 
-
 export class DocumentFragment < Element
 	def constructor
 		super(null)
 
 	get outerHTML
 		return self.innerHTML
-		
+
 export class ShadowRoot < DocumentFragment
 
 	get outerHTML
@@ -730,10 +726,10 @@ export class HTMLHtmlElement < HTMLElement
 
 		if global.IMBA_HMR_PATH and hmr !== false
 			inject.push("<script src='/__hmr__.js'></script>")
-		
+
 		# if we havent included any styles in the html at all
 		unless self.styles
-			# maybe only if there are no 
+			# maybe only if there are no
 			for script in self.scripts
 				let src = script.src
 				let asset = manifest[src]
@@ -741,13 +737,13 @@ export class HTMLHtmlElement < HTMLElement
 				if asset and asset.css
 					sheets.add(asset.css)
 				# add preloads?
-			
+
 			for sheet of sheets
 				inject.push("<link rel='stylesheet' href='{sheet.url}'>")
 			# now go through the stylesheets?
 
 		HtmlContext = prev
-		
+
 		if inject.length
 			let pos = html.indexOf('</head>')
 			pos = html.indexOf('<body>') if pos == -1
@@ -774,7 +770,7 @@ export class HTMLScriptElement < HTMLElement
 				setAttribute('type','module')
 			else
 				console.warn "could not find browser entrypoint for {#asset.path}"
-			
+
 		super
 
 export class HTMLLinkElement < HTMLElement
@@ -786,7 +782,7 @@ export class HTMLLinkElement < HTMLElement
 			if rel == 'stylesheet'
 				unless href = #asset.css.url
 					console.warn "could not find stylesheet for {#asset.path}"
-			
+
 			if href
 				setAttribute('href',href)
 		super
@@ -813,7 +809,7 @@ export class HTMLStyleElement < HTMLElement
 			let out = super
 			nodeName = 'style'
 			return out
-			
+
 		super
 
 ### Event ###
@@ -824,7 +820,6 @@ export class PointerEvent < MouseEvent
 export class KeyboardEvent < UIEvent
 export class CustomEvent < Event
 
-
 const descriptorCache = {}
 
 def getDescriptor item,key,cache
@@ -833,7 +828,7 @@ def getDescriptor item,key,cache
 
 	if cache[key] !== undefined
 		return cache[key]
-	
+
 	let desc = Object.getOwnPropertyDescriptor(item,key)
 
 	if desc !== undefined or item == SVGElement
@@ -893,7 +888,7 @@ export def createElement name, parent, flags, text
 
 	if text !== null
 		el.text$(text)
-	
+
 	# FIXME
 	if parent and parent.#appendChild
 		parent.#appendChild(el)
@@ -918,7 +913,7 @@ export def createComment text
 
 export def createTextNode text
 	doc.createTextNode(text)
-	
+
 export def createFragment
 	doc.createDocumentFragment!
 
@@ -941,7 +936,7 @@ export def createComponent name, parent, flags, text, ctx
 
 	if text !== null
 		el.#getSlot('__').text$(text)
-		
+
 	if flags or el.flags$ns # or nsflag
 		el.flag$(flags or '')
 	return el

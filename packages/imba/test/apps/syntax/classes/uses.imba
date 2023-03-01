@@ -13,8 +13,6 @@ test "local class is declared" do
 	eq instance.dfn, 2
 	eq instance.ext, 2
 
-	
-
 test "namespaced global classes 1" do
 	let instance = new GlobalClass.Member
 	eq GlobalClass.Member.dfn,3
@@ -22,7 +20,6 @@ test "namespaced global classes 1" do
 	eq instance.dfn, 3
 	eq instance.ext, 3
 
-	
 	eq GlobalClass.Sub.dfn ,4
 	eq GlobalClass.Sub.name, 'Sub'
 

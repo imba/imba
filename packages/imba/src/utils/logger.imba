@@ -118,7 +118,7 @@ export class Logger
 			#spinner.text = str
 		else
 			L(sym + ' ' + str,*rest)
-	
+
 	def log
 		let [str,*rest] = format(*arguments)
 		L(str,*rest)

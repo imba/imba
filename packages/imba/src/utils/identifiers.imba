@@ -3,7 +3,6 @@
 # greek characters to convert special imba identifiers
 # to valid js identifiers.
 
-
 export const InternalPrefixes = {
 	TAG: 'τ'
 	FLIP: 'ω'
@@ -40,7 +39,6 @@ const toJSreplacer = do(m) ToJSMap[m]
 
 export def toJSIdentifier raw
 	raw.replace(toJSregex,toJSreplacer)
-
 
 export const ToImbaMap = {
 	'Ξ': '-'

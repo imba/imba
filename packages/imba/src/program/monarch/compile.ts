@@ -49,7 +49,6 @@ function string(prop: any, defValue: string): string {
 	return defValue;
 }
 
-
 function arrayToHash(array: string[]): { [name: string]: true } {
 	const result: any = {};
 	for (const e of array) {
@@ -57,7 +56,6 @@ function arrayToHash(array: string[]): { [name: string]: true } {
 	}
 	return result;
 }
-
 
 function createKeywordMatcher(arr: string[], caseInsensitive: boolean = false): (str: string) => boolean {
 	if (caseInsensitive) {
@@ -74,7 +72,6 @@ function createKeywordMatcher(arr: string[], caseInsensitive: boolean = false): 
 		};
 	}
 }
-
 
 // Lexer helpers
 
@@ -435,7 +432,6 @@ export function compile(languageId: string, json: IMonarchLanguage): monarchComm
 	lexerMin.usesEmbedded = lexer.usesEmbedded;
 	lexerMin.stateNames = json.tokenizer;
 	lexerMin.defaultToken = lexer.defaultToken;
-
 
 	// Compile an array of rules into newrules where RegExp objects are created.
 	function addRules(state: string, newrules: monarchCommon.IRule[], rules: any[]) {

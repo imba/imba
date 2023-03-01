@@ -17,13 +17,13 @@ export class Request
 	def redirect path
 		location..update(path)
 		self
-		
+
 	get path
 		location..path
-		
+
 	get url
 		location..toString!
-		
+
 	set path value
 		location.path = value
 

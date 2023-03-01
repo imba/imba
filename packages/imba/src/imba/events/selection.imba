@@ -11,7 +11,7 @@ def activateSelectionHandler
 		selHandler = do(e)
 			return if e[handledSym]
 			e[handledSym] = yes
-			
+
 			let target = global.document.activeElement
 			if target and target.matches('input,textarea')
 				let custom = new CustomEvent('selection',{

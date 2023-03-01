@@ -35,7 +35,6 @@ interface RouteState {
     save(): this;
 }
 
-
 interface RouteRequest {
     params: any;
     path: string;
@@ -71,7 +70,7 @@ declare global {
          * @custom
          */
         interface Router {
-        
+
             /**
              * The currently matching path
              */
@@ -87,17 +86,17 @@ declare global {
             state: RouteState;
 
             refresh(): void;
-        
+
             alias(from: string, to: string): void;
             /**
              * See if router currently matches a pattern/path
              */
             match(pattern: string | RegExp): null | any;
-        
+
             /**
              * Go to a url
-             * @param url 
-             * @param state 
+             * @param url
+             * @param state
              */
             go(url: string, state?: object): void;
             /**
@@ -112,8 +111,7 @@ declare global {
 
             // addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLInputElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
         }
-        
-        
+
         /**
          * Reference to global router
          */
@@ -127,19 +125,19 @@ declare global {
          */
         set route(val: string);
         get route(): imba.ElementRoute;
-        
+
         /**
          * @idl
          * @summary The path/route to go to when clicking this element
          */
         routeΞto: string;
-        
+
         /**
          * @summary Reference to the imba router
          * @custom
          */
         readonly router: imba.Router;
-        
+
         // internal - not to be called
         // routed(match:RouteMatch,state:any,prev:RouteMatch): any;
     }

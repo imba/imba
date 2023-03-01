@@ -66,7 +66,7 @@ const CSS_COLORS = {
 	gray:      [[0,0,98],[240,5,96],[240,6,90],[240,5,84],[240,5,65],[240,4,46],[240,5,34],[240,5,26],[240,4,16],[240,6,10]]
 	cool:  [[210,20,98],[220,14,96],[220,13,91],[216,12,84],[218,11,65],[220,9,46],[215,14,34],[217,19,27],[215,28,17],[221,39,11]]
 	cooler:  [[210,40,98],[210,40,96],[214,32,91],[213,27,84],[215,20,65],[215,16,47],[215,19,35],[215,25,27],[217,33,17],[222,47,11]]
-	
+
 }
 
 const CSS_COLORS_REGEX = new RegExp("^({Object.keys(CSS_COLORS).join('|')})(\\d+(?:\\.\\d+)?)$")
@@ -115,7 +115,7 @@ class Styles
 			value = String(value)
 
 		let typ = typeof value
-			
+
 		if typ == 'number'
 			if !unit
 				if CSS_PX_PROPS.test(key)
@@ -136,7 +136,7 @@ class Styles
 					return "calc(var(--u_{unit},1px) * {value})"
 			else
 				yes	
-			
+
 		elif typ == 'string'
 			if key and CSS_STR_PROPS[key] and value[0] != '"' and value[0] != "'"
 				if value.indexOf('"') >= 0
@@ -161,7 +161,7 @@ class Styles
 		elif value and value.toStyleString isa Function
 			return value.toStyleString!
 		return value
-		
+
 	def parseDimension val
 		if typeof val == 'string'
 			let [m,num,unit] = val.match(/^([-+]?[\d\.]+)(%|\w+)$/)
@@ -178,9 +178,8 @@ export def use_styles
 extend class Element
 	def css$ key, value, mods
 		self.style[key] = value
-		
+
 	def css$var name, value, unit, key, param = null
 		let cssval = styles.toValue(value,unit,key,param)
 		self.style.setProperty(name,cssval)
 		return
-

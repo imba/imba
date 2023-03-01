@@ -34,7 +34,6 @@ export function request(opts, cb) {
   if (typeof opts === 'string')
     opts = parse(opts)
 
-
   // Normally, the page is loaded from http or https, so not specifying a protocol
   // will result in a (valid) protocol-relative url. However, this won't work if
   // the protocol is something else, like 'file:'

@@ -2,7 +2,6 @@ tag App
 	<self>
 		<div[fw:500 @900:700 !@300:300].btn>
 
-
 test do
 	# window starts at 800 width
 	eqcss <App>, 500, '.btn'

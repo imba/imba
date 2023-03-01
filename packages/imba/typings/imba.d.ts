@@ -9,15 +9,13 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
-
 interface Node {
     /**
      * @custom
      * @summary Proxy to reference data on elements up the tree
      */
     readonly Ψcontext: imba.Context;
-    
-    
+
     /**
      * @custom
      * @summary Reference to the parentNode even before element has been attached
@@ -26,18 +24,18 @@ interface Node {
 }
 
 interface Element {
-    
+
     /**
      * @idl
      * @summary Default property for setting the data of an element
      */
     data: any;
-    
+
     /**
      * @private
      */
     private route__: any;
-    
+
     /**
     * Gives elements a stable identity inside lists
     * @idl
@@ -52,7 +50,6 @@ interface Element {
     */
     key: any;
 
-    
     /**
     * Sets whether `@hotkey` events inside of this element
     * is enabled or not. If explicitly set to true, only
@@ -85,17 +82,17 @@ interface Element {
     // spellcheck: any;
     // translate: any;
     // is: any;
-    
+
     /**
      * @summary Allows for manipulation of element's class content attribute
      */
     readonly flags: imba.Flags;
-    
+
     /**
      * Emits event
-     * @param event 
-     * @param params 
-     * @param options 
+     * @param event
+     * @param params
+     * @param options
      * @custom
      */
     emit(event: string, params?: any, options?: any): Event;
@@ -103,10 +100,10 @@ interface Element {
     blur(): void;
 
     // [key: string]: any;
-    
+
     setAttribute(name: string, value: boolean): void;
     setAttribute(name: string, value: number): void;
-    
+
     addEventListener(event: string, listener: (event: Event) => void, options?: {
         passive?: boolean;
         once?: boolean;
@@ -147,7 +144,6 @@ interface HTMLStyleElement {
     src: ImbaAsset | string;
 }
 
-
 interface SVGSVGElement {
     /**
      * Reference to svg asset that will be inlined
@@ -160,7 +156,7 @@ declare class ΤObject {
 }
 
 declare class ImbaElement extends imba.Component {
-    
+
 }
 
 /** Portal to declare window/document event handlers from
@@ -215,7 +211,7 @@ declare namespace imba {
         setInterval(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
         /** The global setTimeout() method sets a timer which executes a function or specified piece of code once the timer expires. */
         setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
-        
+
         /**
          * Returns a Boolean value that indicates whether a value is the reserved value NaN (not a number).
          * @param number A numeric value.
@@ -274,32 +270,32 @@ declare namespace imba {
 
     interface Flags {
         /**
-         * 
+         *
          * @summary Returns true if the list contains the given token, otherwise false.
          */
         contains(flag: string): boolean;
         /**
-         * 
+         *
          * @summary Adds the specified token to the list.
          */
         add(flag: string): void;
         /**
-         * 
+         *
          * @summary Removes the specified token from the list.
          */
         remove(flag: string): void;
         /**
-         * 
+         *
          * @summary Toggles specified token in the list.
          */
         toggle(flag: string, toggler?: any): void;
         /**
-         * 
+         *
          * @summary Adds the specified token to the list
          */
         incr(flag: string): number;
         /**
-         * 
+         *
          * @summary Removes the specified token from the list if zero increments remain
          */
         decr(flag: string): number;
@@ -361,7 +357,7 @@ declare namespace imba {
      * @custom
      */
     class Component extends HTMLElement {
-        
+
         /**
          * @summary Called to update the element and their children
          * @abstract
@@ -376,20 +372,19 @@ declare namespace imba {
         */
          hydrate(): any;
 
-
          /**
          * @summary Called on server when stringifying a component
          * @abstract
          * @lifecycle
         */
           dehydrate(): any;
-        
+
         /**
          * @summary Suspend rendering of component
          * @lifecycle
          */
         suspend(): this;
-        
+
         /**
         * @summary Unsuspend rendering of component
         * @lifecycle
@@ -409,114 +404,113 @@ declare namespace imba {
          * @lifecycle
         */
         get renderΦ(): boolean;
-        
+
         /**
          * @readonly
          * @summary Tells whether the component is currently being mounted
          * @lifecycle
         */
         get mountingΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component is currently mounted in document
          * @lifecycle */
         get mountedΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component has been awakened
          * @lifecycle */
         get awakenedΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component has been rendered
          * @lifecycle */
         get renderedΦ(): boolean;
-        
+
         /**
          * @readonly
          * @summary Tells whether the component has been suspended
          * @lifecycle */
         get suspendedΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component is currently rendering
          * @lifecycle */
         get renderingΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component is scheduled to automatically render
-         * @lifecycle 
+         * @lifecycle
          * */
         get scheduledΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component has been hydrated on the client
          * @lifecycle */
         get hydratedΦ(): boolean;
-        
-        /** 
+
+        /**
          * @readonly
          * @summary Tells whether the component was originally rendered on the server */
         get ssrΦ(): boolean;
-        
+
         /**
-         * @summary Start rendering the component on every imba.commit 
+         * @summary Start rendering the component on every imba.commit
          */
         schedule(): this;
-        
+
         /**
          * @summary Stop rendering the component automatically on every imba.commit
          */
         unschedule(): this;
-        
+
         /**
          * @summary Called before any properties are set
          * @lifecycle
          * @abstract
          */
         build(): any;
-        
+
         /**
          * @summary Called before any properties are set
          * @lifecycle
          * @abstract
          */
         setup(): any;
-        
+
         /**
          * @summary Called when element is *first* attached to document
          * @lifecycle
          * @abstract
          */
         awaken(): any;
-        
+
         /**
          * @summary Called when element is attached to document
          * @lifecycle
          * @abstract
          */
         mount(): any;
-        
+
         /**
          * @summary Called when element is detached from document
          * @lifecycle
          * @abstract
          */
         unmount(): any;
-        
+
         /**
          * @summary Called after render
          * @lifecycle
          * @abstract
          */
         rendered(): any;
-        
 
         /**
         Schedule the element to update itself
@@ -526,7 +520,7 @@ declare namespace imba {
         (n)s = render every n s
         (n)ms = render every n ms
         (n)fps = render n times per second
-        
+
         @summary Specify how / when the component should re-render
         @idl
         */
@@ -537,31 +531,30 @@ declare namespace imba {
     function setTimeout(handler: TimerHandler, timeout?: number, ...arguments: any[]): number;
     function clearInterval(handle?: number): void;
     function clearTimeout(handle?: number): void;
-    
+
     /**
      * Schedule re-render
      */
     function commit(): Promise<void>;
-    
+
     /**
      * Render elements in custom context
      */
     function render(func: Function, context?: any): any;
-    
+
     /**
      * Attach an element to the dom
-     * @param element 
-     * @param into 
+     * @param element
+     * @param into
      */
     function mount<T>(element: T, into?: Element): T;
     function mount(func: Function, into?: Element): Element;
-    
+
     /**
      * Detach element from document
-     * @param element 
+     * @param element
      */
     function unmount<T>(element: T): T;
-
 
     /**
      * Mark field as observable
@@ -578,7 +571,7 @@ declare namespace imba {
      * and re-runs whenever any of the referenced observables
      * change. Methods marked with autorun in tag declarations
      * will run immediately after mount, and automatically dispose
-     * when element unmounts. 
+     * when element unmounts.
      */
       function αautorun(options?: any): void;
 
@@ -593,7 +586,7 @@ declare namespace imba {
     interface ImbaProcess {
         on(event:string,callback:Function);
     }
-    
+
     let process: ImbaProcess;
 
     namespace types {
@@ -612,7 +605,7 @@ declare namespace imba {
     }
 
     let Element: Component;
-    
+
     /**
      * Class for scheduling
      * @custom
@@ -625,7 +618,7 @@ declare namespace imba {
         /** Milliseconds since previous tick */
         dt: number;
     }
-    
+
     /**
      * Reference to global scheduler
      */
@@ -640,7 +633,7 @@ declare namespace imba {
     function once(target: any, event: string, listener: any, path?: any): void;
     function unlisten(target: any, event: string, listener: any, path?: any): void;
     function indexOf(target: any, source: any): boolean;
-    
+
     /**
      * Start an asset-aware server
      */
@@ -671,8 +664,6 @@ declare namespace imba {
         $get(target: any, key: string | symbol, name: string | symbol): any;
         $set(value: any, target: any, key: string | symbol, name: string | symbol): void;
     }
-
-
 
     interface Storage {
         [key: string]: any;

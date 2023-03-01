@@ -1944,7 +1944,6 @@ function utf16leToBytes (str, units) {
   return byteArray
 }
 
-
 function base64ToBytes (str) {
   return toByteArray(base64clean(str))
 }
@@ -1960,7 +1959,6 @@ function blitBuffer (src, dst, offset, length) {
 function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
-
 
 // the following is from is-buffer, also by Feross Aboukhadijeh and with same lisence
 // The _isBuffer check is for Safari 5-7 support, because it's missing

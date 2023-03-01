@@ -5,7 +5,6 @@ tag Button
 tag App
 	<self> <Button[fw:600].btn>
 
-
 test do eqcss <App>, 600, '.btn'
 
 let flip = no
@@ -13,7 +12,7 @@ let flip = no
 tag A1
 	css .btn fw:600
 	css div fw:300
-	
+
 	<self>
 		<div .one=flip> '300'
 		<div.btn .one=flip> '600'
@@ -27,5 +26,3 @@ test do
 	app.render!
 	eqcss app,300,'div'
 	eqcss app,600,'.btn'
-	
-	

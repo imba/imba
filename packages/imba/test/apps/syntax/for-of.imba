@@ -15,7 +15,7 @@ describe 'For ... of' do
 		let res = for value of iterable
 			value
 		eq res, [0,255]
-	
+
 	test 'iterating over a Map' do
 		const iterable = new Map([['a', 1], ['b', 2], ['c', 3]])
 
@@ -63,7 +63,7 @@ describe 'For ... of' do
 		let res = for value of iterable
 			value
 		eq res, [1,2,3]
-	
+
 	test 'iterating with index var' do
 		let res = for chr,index of 'abc'
 			chr + index

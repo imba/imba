@@ -14,7 +14,6 @@ tag app-root
 			<div> "Count is there"
 			fragment!
 
-
 imba.mount(let app = <app-root>)
 
 test "check" do

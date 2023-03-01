@@ -1,7 +1,7 @@
 const eq = global.eq
 
 describe "Class Fields" do
-	
+
 	describe "without constructor" do
 
 		class Rect
@@ -10,7 +10,7 @@ describe "Class Fields" do
 
 		test 'defaults' do
 			# by default - a class without a constructor
-			# will take a single object 
+			# will take a single object
 			let rect = new Rect
 			eq rect.width, 0
 			eq rect.height, 0
@@ -45,7 +45,7 @@ describe "Class Fields" do
 			# at the very start of your construction
 			def myConstructor params
 				# automatically call initFields
-				initFields() # hidden 
+				initFields() # hidden
 				# your code here ...
 
 			# if you refer to super in your constructor - you can change
@@ -71,7 +71,7 @@ describe "Class Fields" do
 			# by any arguments you may pass into the constructor
 			eq rect.width, 1
 			eq rect.height, 1
-		
+
 		test "super" do
 			class Rect
 				width = 1
@@ -87,7 +87,7 @@ describe "Class Fields" do
 					eq width, 1
 					eq height, 1
 					self
-			
+
 			new Rect(10,10)
 
 		test "super(params)" do
@@ -103,17 +103,15 @@ describe "Class Fields" do
 					super(width: w, height: h)
 					meta = rest
 					self
-			
+
 			let rect = new Rect(10,10)
 			eq rect.width, 10
 			eq rect.height, 10
 
-		
-
 	describe "inheritance" do
 		# the benefit of this way of initing fields is that you can control
 		# when & how the fields are initialized, and the nested order of initing
-		# 
+		#
 		class Rect
 			width = 0
 			height = 0
@@ -125,7 +123,7 @@ describe "Class Fields" do
 				eq width, checkWidth
 				eq height, checkHeight
 				yes
-			
+
 		class Square < Rect
 			size = 10
 			width = size
@@ -144,7 +142,7 @@ describe "Class Fields" do
 				def constructor params
 					# do various stuff
 					setup!
-				
+
 				def setup
 					self
 
@@ -160,7 +158,7 @@ describe "Class Fields" do
 					# since setup would be called before any fields
 					# from subclasses are initialized.
 					eq title, 'My new project'
-			
+
 			# Here we see that all classes inheriting from item will
 			# call setup in the top constructor - but you can still
 			# trust that all fields and defaults are already set.
@@ -180,7 +178,7 @@ describe "Class Fields" do
 				super(...rest)
 				self.id = id
 				yes
-			
+
 			set name value
 				#counter = (#counter or 0) + 1
 				#name = value
@@ -196,7 +194,7 @@ describe "Class Fields" do
 
 		class TodoList < List
 			name = 'Todos'
-		
+
 		test 'BaseArray' do
 			let arr = new BaseArray(1000,1,2,3,4)
 			eq arr.length, 4

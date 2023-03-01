@@ -3,14 +3,13 @@ class @set
 
 	def $get target,key
 		target[key]
-	
+
 	def $set value,target,key,name
 		let prev = target[key]
 		if prev != value
 			target[key] = value
 			callback.call(target,value,prev,self)
 		return
-
 
 ###
 A common usecase for getters and setters is to evalute something
@@ -28,7 +27,7 @@ describe "Class Field watching" do
 		# with the constructor syntax it is easy enough to create these
 		let root = new Entry name: "home"
 		let item = new Entry name: "example.md", parent: root
-		
+
 		# the initializers with defaults work as intended
 		eq item.parent, root
 
@@ -45,7 +44,7 @@ describe "Class Field watching" do
 				# need to store the value in another key
 				actualParent = value
 				# evalute some code here!
-			
+
 			# define a corresponding getter
 			get parent
 				actualParent
@@ -115,22 +114,14 @@ describe "Class Field watching" do
 	test "multiline value" do
 		let called = 0
 		class Item
-			# with complex defaults you need to 
+			# with complex defaults you need to
 			prop names = ['a','b'].map(do $1.toUpperCase!) @set do called++
-		
+
 		let item = new Item
 		eq called, 1
 		eq item.names,["A","B"]
-			
+
 	###
 	Imba allows you to include a method body after your
-	property declaration which will 
+	property declaration which will
 	###
-	
-	
-		
-
-
-
-	
-			

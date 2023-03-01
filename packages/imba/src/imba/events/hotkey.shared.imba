@@ -47,7 +47,7 @@ export def format combo, platform = 'auto'
 	let key = "{combo}:{platform}"
 	return cache[key] if cache[key]
 	let o = cfg[platform] or cfg.win
-	
+
 	let combos = combo.split(" ").map do
 		let keys  = $1.split("+")
 		let items = keys.sort(do o.order.indexOf($2) - o.order.indexOf($1) )

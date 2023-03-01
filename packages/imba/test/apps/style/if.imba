@@ -1,7 +1,6 @@
 tag App
 	base = 250
 	val = null
-	
 
 	<self>
 		css fw:300
@@ -13,19 +12,19 @@ tag App
 		if data
 			css fw:600
 				div fw:700
-				
+
 		if val
 			css fw:{val}
 				$fw:{val}
 				div fw:{val + 1}
 			if val > 600
-				css 
+				css
 					span fw:100
 					section fw:{val + 20}
-					
+
 			else
 				css section fw:{val - 20}
-				
+
 		<div>
 		<span>
 		<section>
@@ -45,7 +44,7 @@ def check data, val, a,b,c,d
 
 test do
 	check(null,null,300,500,250,300)
-	
+
 test do
 	# return
 	# with data

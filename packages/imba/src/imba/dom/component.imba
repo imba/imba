@@ -88,24 +88,24 @@ export class Component < HTMLElement
 
 	def ##inited
 		#__hooks__.inited(self) if #__hooks__
-		
+
 	def flag$ str
 
 		self.className = flags$ext = str
 		return
 
-	# called immediately after construction 
+	# called immediately after construction
 	def build
 		self
 
 	# called before the first mount
 	def awaken
 		self
-	
+
 	# called when element is attached to document
 	def mount
 		self
-	
+
 	# called when element is detached from document
 	def unmount
 		self
@@ -136,14 +136,14 @@ export class Component < HTMLElement
 		unless render?
 			__F |= $EL_UNRENDERED$
 			return self
-		__F |= $EL_RENDERING$ 
+		__F |= $EL_RENDERING$
 		render && render()
 		rendered()
 		__F = (__F | $EL_RENDERED$) & ~$EL_RENDERING$ & ~$EL_UNRENDERED$
 
 	get autoschedule
 		(__F & $EL_SCHEDULE$) != 0
-	
+
 	set autoschedule value
 		value ? (__F |= $EL_SCHEDULE$) : (__F &= ~$EL_SCHEDULE$)
 
@@ -171,10 +171,10 @@ export class Component < HTMLElement
 
 	get mounted?
 		return (__F & $EL_MOUNTED$) != 0
-	
+
 	get awakened?
 		return (__F & $EL_AWAKENED$) != 0
-	
+
 	get rendered?
 		return (__F & $EL_RENDERED$) != 0
 
@@ -183,7 +183,7 @@ export class Component < HTMLElement
 
 	get rendering?
 		return (__F & $EL_RENDERING$) != 0
-	
+
 	get scheduled?
 		return (__F & $EL_SCHEDULED$) != 0
 
@@ -218,7 +218,7 @@ export class Component < HTMLElement
 			commit! if $EL_UNRENDERED$
 
 		self
-		
+
 	def #afterVisit
 		visit()
 		##visitContext = null if ##visitContext
@@ -244,7 +244,6 @@ export class Component < HTMLElement
 			renderer.pop(self)
 		self
 
-
 	def connectedCallback
 		let flags = __F
 		let inited = flags & $EL_INITED$
@@ -257,7 +256,7 @@ export class Component < HTMLElement
 		# return if we are already in the process of mounting - or have mounted
 		if flags & ($EL_MOUNTING$ | $EL_MOUNTED$)
 			return
-		
+
 		__F |= $EL_MOUNTING$
 
 		unless inited
@@ -280,11 +279,10 @@ export class Component < HTMLElement
 			res.then(scheduler.commit)
 
 		flags = __F = (__F | $EL_MOUNTED$) & ~$EL_MOUNTING$
-		
+
 		if flags & $EL_SCHEDULE$
 			schedule()
-		
-		
+
 		scheduler.schedule(self,#autorender) if #autorender
 		return this
 

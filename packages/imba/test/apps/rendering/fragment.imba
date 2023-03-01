@@ -17,8 +17,6 @@ var footer = do |title|
 			<div> title
 			<span> "bool is false"
 
-
-
 tag app-root
 
 	def addNumber

@@ -9,8 +9,8 @@ export const vitestSetupPath = np.join(__dirname,"./test-setup.mjs")
 
 export def importWithFallback(bundled, user)
 	let pkg
-	try 
-		pkg = await import(user) 
+	try
+		pkg = await import(user)
 	catch error
 		pkg = await import(bundled)
 	pkg

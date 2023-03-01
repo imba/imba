@@ -33,9 +33,8 @@ test 'bool' do
 	await spec.click('.b2')
 	eq state.status, 'two'
 
-
 tag App2
-	
+
 	<self>
 		<button$bool bind=state.bool> "No-value {state.bool}"
 		<button$yes bind=state.bool value=yes> "yes {state.bool}"

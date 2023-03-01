@@ -1,10 +1,8 @@
 'use strict';
 
-
 var TYPED_OK =  (typeof Uint8Array !== 'undefined') &&
                 (typeof Uint16Array !== 'undefined') &&
                 (typeof Int32Array !== 'undefined');
-
 
 export function assign(obj /*from1, from2, from3, ...*/) {
   var sources = Array.prototype.slice.call(arguments, 1);
@@ -25,7 +23,6 @@ export function assign(obj /*from1, from2, from3, ...*/) {
 
   return obj;
 }
-
 
 // reduce buffer size, avoiding mem copy
 export function shrinkBuf(buf, size) {
@@ -64,7 +61,6 @@ export function flattenChunks(chunks) {
 
   return result;
 }
-
 
 export var Buf8 = Uint8Array;
 export var Buf16 = Uint16Array;

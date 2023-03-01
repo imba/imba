@@ -20,7 +20,7 @@ tag App
 
 			<div[c:blue bd:1px] eq={border: '1px solid rgb(0, 0, 255)'}>
 
-			# Ok to 
+			# Ok to
 			<div[bd:2px blue] eq={border: '2px solid rgb(0, 0, 255)'}>
 			# bw (border-width) and bc (border-color)
 			<div[bw:2px bc:blue] eq={border: '2px solid rgb(0, 0, 255)'}>
@@ -38,14 +38,12 @@ tag App
 			<div[bdx:red bdy:blue] eq={borderWidth: '1px',borderColor: 'rgb(0, 0, 255) rgb(255, 0, 0)'}>
 
 			<div[bdx:red bdy:blue] eq={borderWidth: '1px',borderColor: 'rgb(0, 0, 255) rgb(255, 0, 0)'}>
-			
 
 imba.mount(let app = <App>)
 
 for child in app.children
 	test do
 		eqcss child, child.eq or {border: child.innerText}
-
 
 ###
 Unlike regular css, imba allows supplying just a size or just a style to

@@ -10,7 +10,7 @@ describe 'For own ... of' do
 		let res = for own key,item of items
 			item.id
 		eq res, ids
-		
+
 	test 'destructuring args' do
 		let res = for own key, {id} of items
 			id

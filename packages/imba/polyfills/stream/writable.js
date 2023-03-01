@@ -2,7 +2,6 @@
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
 
-
 import {inherits, deprecate} from 'util';
 import {Buffer} from 'buffer';
 Writable.WritableState = WritableState;
