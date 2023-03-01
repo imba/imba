@@ -1,13 +1,151 @@
 {
   "name": "imba",
   "description": "Intuitive and powerful language for building webapps that fly",
-  "keywords": [
-    "javascript",
-    "language",
-    "imba",
-    "compiler"
-  ],
   "author": "Sindre Aarsaether",
+  "version": "2.0.0-alpha.229",
+  "scripts": {
+    "test": "node bin/imba scripts/test-runner.imba",
+    "test-cli": "cd test/cli && node ../../bin/imba index.imba",
+    "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
+    "watch": "node scripts/build.js -w",
+    "create-example": "node bin/imba scripts/create-example.imba",
+    "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
+    "build-parser": "node scripts/build-parser.js",
+    "build": "npm run build-parser && node scripts/build.js",
+    "prepack": "npm run build",
+    "link": "npm install && npm run build && npm link"
+  },
+  "engines": {
+    "node": ">=13.10.0"
+  },
+  "bin": {
+    "imba": "./bin/imba",
+    "imbac": "./bin/imbac"
+  },
+  "main": "./index",
+  "type": "commonjs",
+  "browser": {
+    ".": "./dist/imba.mjs",
+    "./program": "./program.imba.js",
+    "./compiler": "./dist/compiler.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "dist",
+    "build",
+    "typings",
+    "vendor",
+    "scripts/bootstrap.compiler.js",
+    "polyfills",
+    "*.imba",
+    "*.d.ts",
+    "*.js",
+    "*.css",
+    "*.md",
+    "templates"
+  ],
+  "exports": {
+    "./preflight.css": "./preflight.css",
+    "./server": "./dist/imba.node.mjs",
+    ".": {
+      "imba": "./src/imba/imba.imba",
+      "browser": "./dist/imba.mjs",
+      "default": "./index.js"
+    },
+    "./spec": {
+      "imba": "./src/utils/spec.imba"
+    },
+    "./program": {
+      "browser": "./program.browser.imba.js",
+      "require": "./program.imba.js"
+    },
+    "./workers": "./workers.imba.js",
+    "./compiler": {
+      "browser": "./dist/compiler.mjs",
+      "require": "./dist/compiler.cjs",
+      "default": "./dist/compiler.mjs"
+    },
+    "./plugin": {
+      "browser": "./dist/plugin.mjs",
+      "require": "./dist/plugin.cjs",
+      "default": "./dist/plugin.mjs"
+    }
+  },
+  "peerDependencies": {
+      "@testing-library/dom": "*",
+      "@testing-library/jest-dom": "*",
+      "vite": "*",
+      "vite-node": "*",
+      "vite-tsconfig-paths-silent": "*",
+      "vitest": "*"
+    },
+    "peerDependenciesMeta": {
+      "@testing-library/dom": {
+        "optional": true
+      },
+      "@testing-library/jest-dom": {
+        "optional": true
+      },
+      "vite": {
+        "optional": true
+      },
+      "vite-node": {
+        "optional": true
+      },
+      "vite-tsconfig-paths-silent": {
+        "optional": true
+      },
+      "vitest": {
+        "optional": true
+      }
+    },
+  "devDependencies": {
+    "@rollup/pluginutils": "^5.0.2",
+    "commander": "^6.2.1",
+    "fdir": "^4.1.0",
+    "get-port": "^5.1.1",
+    "image-size": "^0.9.3",
+    "magic-string": "^0.26.7",
+    "micromatch": "^4.0.5",
+    "ora": "^5.2.0",
+    "picomatch": "^2.2.2",
+    "puppeteer": "^16.1.0",
+    "sourcemap-codec": "^1.4.8",
+    "tmp": "^0.2.1",
+    "tree-kill": "^1.2.2",
+    "vite": "^4.1.4",
+    "vite-node": "^0.29.1",
+    "vite-tsconfig-paths-silent": "^4.0.5",
+    "vitest": "^0.29.1",
+    "workerpool": "^6.0.3"
+  },
+  "dependencies": {
+    "@antfu/install-pkg": "^0.1.1",
+    "lodash.merge": "^4.6.2",
+    "chokidar": "^3.4.3",
+    "colors": "^1.4.0",
+    "cross-spawn": "^7.0.3",
+    "dotenv": "^16.0.3",
+    "esbuild": "^0.15.2",
+    "local-pkg": "^0.4.2",
+    "picocolors": "^1.0.0",
+    "prompts": "^2.4.2"
+  },
+  "directories": {},
+  "preferGlobal": true,
+  "homepage": "https://imba.io",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/imba/imba.git"
+  },
+  "bugs": "https://github.com/imba/imba/issues",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/imba/imba/raw/master/LICENSE"
+    }
+  ],
   "license": "MIT",
   "contributors": [
     {
@@ -47,156 +185,10 @@
       "url": "https://github.com/aalemayhu/"
     }
   ],
-  "scripts": {
-    "test": "node bin/imba scripts/test-runner.imba",
-    "test-cli": "cd test/cli && node ../../bin/imba index.imba",
-    "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
-    "watch": "node scripts/build.js -w",
-    "create-example": "node bin/imba scripts/create-example.imba",
-    "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
-    "build-parser": "node scripts/build-parser.js",
-    "build": "npm run build-parser && node scripts/build.js",
-    "prepack": "npm run build",
-    "link": "npm install && npm run build && npm link"
-  },
-  "bugs": "https://github.com/imba/imba/issues",
-  "version": "2.0.0-alpha.229",
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/imba/imba/raw/master/LICENSE"
-    }
-  ],
-  "engines": {
-    "node": ">=13.10.0"
-  },
-  "directories": {},
-  "main": "./index",
-  "type": "commonjs",
-  "browser": {
-    ".": "./dist/imba.mjs",
-    "./program": "./program.browser.imba.js",
-    "./compiler": "./dist/compiler.mjs"
-  },
-  "exports": {
-    "./preflight.css": "./preflight.css",
-    "./server": "./dist/imba.node.mjs",
-    ".": {
-      "imba": "./src/imba/imba.imba",
-      "browser": "./dist/imba.mjs",
-      "default": "./index.js"
-    },
-    "./spec": {
-      "imba": "./src/utils/spec.imba"
-    },
-    "./program": {
-      "browser": "./program.browser.imba.js",
-      "require": "./program.imba.js"
-    },
-    "./workers": "./workers.imba.js",
-    "./compiler": {
-      "browser": "./dist/compiler.mjs",
-      "require": "./dist/compiler.cjs",
-      "default": "./dist/compiler.mjs"
-    },
-    "./plugin": {
-      "browser": "./dist/plugin.mjs",
-      "require": "./dist/plugin.cjs",
-      "default": "./dist/plugin.mjs"
-    }
-  },
-  "bin": {
-    "imba": "./bin/imba",
-    "imbac": "./bin/imbac"
-  },
-  "preferGlobal": true,
-  "homepage": "https://imba.io",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/imba/imba.git"
-  },
-  "files": [
-    "bin",
-    "src",
-    "dist",
-    "build",
-    "typings",
-    "vendor",
-    "scripts/bootstrap.compiler.js",
-    "polyfills",
-    "*.imba",
-    "*.d.ts",
-    "*.js",
-    "*.css",
-    "*.md",
-    "templates"
-  ],
-  "peerDependencies": {
-    "@testing-library/dom": "*",
-    "@testing-library/jest-dom": "*",
-    "vite": "*",
-    "vite-node": "*",
-    "vite-tsconfig-paths-silent": "*",
-    "vitest": "*"
-  },
-  "peerDependenciesMeta": {
-    "@testing-library/dom": {
-      "optional": true
-    },
-    "@testing-library/jest-dom": {
-      "optional": true
-    },
-    "vite": {
-      "optional": true
-    },
-    "vite-node": {
-      "optional": true
-    },
-    "vite-tsconfig-paths-silent": {
-      "optional": true
-    },
-    "vitest": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@rollup/pluginutils": "^5.0.2",
-    "@testing-library/dom": "^9.0.0",
-    "@testing-library/jest-dom": "^5.16.5",
-    "commander": "^6.2.1",
-    "deepmerge": "^4.2.2",
-    "diff": "^5.1.0",
-    "enquirer": "^2.3.6",
-    "eventemitter3": "^4.0.7",
-    "fdir": "^4.1.0",
-    "flatted": "^3.1.0",
-    "get-port": "^5.1.1",
-    "image-size": "^0.9.3",
-    "magic-string": "^0.26.7",
-    "micromatch": "^4.0.5",
-    "node-fetch": "^2.6.1",
-    "ora": "^5.2.0",
-    "picomatch": "^2.2.2",
-    "puppeteer": "^16.1.0",
-    "sourcemap-codec": "^1.4.8",
-    "tmp": "^0.2.1",
-    "tree-kill": "^1.2.2",
-    "vite": "^4.1.0",
-    "vite-node": "^0.29.1",
-    "vite-tsconfig-paths-silent": "^4.0.5",
-    "vitest": "^0.29.1",
-    "workerpool": "^6.0.3"
-  },
-  "dependencies": {
-    "@antfu/install-pkg": "^0.1.1",
-    "chokidar": "^3.4.3",
-    "colors": "^1.4.0",
-    "cross-spawn": "^7.0.3",
-    "dotenv": "^16.0.3",
-    "esbuild": "^0.15.2",
-    "local-pkg": "^0.4.2",
-    "lodash.merge": "^4.6.2",
-    "picocolors": "^1.0.0",
-    "prompts": "^2.4.2"
-  }
+  "keywords": [
+    "javascript",
+    "language",
+    "imba",
+    "compiler"
+  ]
 }

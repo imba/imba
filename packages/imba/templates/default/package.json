@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "imba -w index.html",
     "build": "imba build index.html",
-    "preview": "npx http-server dist"
+    "preview": "npx vite preview"
   },
   "devDependencies": {
     "imba": "*"
