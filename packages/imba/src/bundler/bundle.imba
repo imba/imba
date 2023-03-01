@@ -1,3 +1,10 @@
+global.L = console.log
+global.E = do
+	process.stderr.write "\x1b[31m"
+	console.error(...$0)
+	process.stderr.write "\x1b[0m"
+	process.exit(1)
+
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
 import {
@@ -918,6 +925,9 @@ export default class Bundle < Component
 			return cached
 
 	def build force = no
+
+		L("\x1bc") if program.clear
+
 		buildcache[self] ||= new Promise do(resolve)
 			if (built =? true) or force
 
