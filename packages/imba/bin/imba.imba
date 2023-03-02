@@ -84,6 +84,8 @@ def parseOptions options, extras = []
 	options.command = command
 	options.extras = extras
 	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
+	options.imbaConfig = await getConfigFilePath("root")
+	options.vite = yes if options.imbaConfig.bundler == 'vite'
 	options.package = resolvePackage(cwd) or {}
 	options.dotenv = resolveFile('.env',cwd)
 	options.nodeModulesPath = resolvePath('node_modules',cwd)

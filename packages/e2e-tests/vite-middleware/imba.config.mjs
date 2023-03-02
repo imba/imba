@@ -10,6 +10,7 @@ const entry = resolve(__dirname, "src/main.js")
 
 export default defineConfig(({ command, mode }) => {
 	return {
+      bundler: "vite",
       server:{
 		build: {
 			manifest: true,

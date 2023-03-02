@@ -15,7 +15,7 @@ let extensions = ['imba', 'ts', 'mts', 'js', 'mjs', 'cjs']
 export def getConfigFilePath(type, opts)
 	opts ||= {command: "serve", mode: "development"}
 
-	const types = ["client", "server", "test", "testSetup", "imba"] 
+	const types = ["client", "server", "test", "testSetup", "imba", "root"]
 	
 	unless types.includes type
 		throw new Error("Unrecognized config type {type}. Should be one of {types}")
@@ -51,6 +51,8 @@ export def getConfigFilePath(type, opts)
 	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
 	if typeof defaultImbaConfig == "function"
 		defaultImbaConfig = defaultImbaConfig({command, mode})
+
+
 	const defaultConfig = defaultImbaConfig[type]
 
 	# client, server, imba or test
@@ -77,6 +79,7 @@ export def getConfigFilePath(type, opts)
 	if typeof imbaConfig == "function"
 		imbaConfig = imbaConfig({command, mode})
 
+	return imbaConfig if type == "root"
 	const configObj = imbaConfig[type]
 
 	return defaultConfig if !configObj
