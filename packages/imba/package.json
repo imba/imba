@@ -92,6 +92,7 @@
     "colors": "^1.4.0",
     "cross-spawn": "^7.0.3",
     "dotenv": "^16.0.3",
+    "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
     "picocolors": "^1.0.0",
