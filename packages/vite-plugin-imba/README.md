@@ -96,10 +96,35 @@ export default defineConfig({
 Imba will take care of generating color variants from 1 to 9 based on the provided values.
 
 ## Full stack Usage
+
 In order to use the plugin both in the client and the server (with SSR and hydration), see the example in [../e2e-tests/vite-ssr-esm](../e2e-tests/vite-ssr-esm/)
 
+## Contributing
+
+In this repository, run:
+
+```sh
+npm i
+npm link
+npm run dev
+```
+
+In your test project, run:
+
+```sh
+npm link vite-plugin-imba
+```
+
+To see logs in your test repository, launch Vite with:
+
+```sh
+vite --debug --filter vite:vite-plugin-imba --clearScreen false
+```
+
 ## Credits
+
 - imba vite plugin
+
 ## License
 
 [MIT](./LICENSE)
