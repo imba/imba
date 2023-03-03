@@ -114,6 +114,11 @@ export const modifiers =
 	dark: {media: '(prefers-color-scheme: dark)', medianeg: '(prefers-color-scheme: light)'}
 	light: {media: '(prefers-color-scheme: light)', medianeg: '(prefers-color-scheme: dark)'}
 
+	standalone: {media: '(display-mode: standalone)'}
+	browser: {media: '(display-mode: browser)'}
+	# TODO support @supports in selector compiler
+	# ios: {supports: '(-webkit-touch-callout: none)'}
+
 	# mac: {ua: 'mac'}
 	# ios: {ua: 'ios'}
 	# win: {ua: 'win'}
