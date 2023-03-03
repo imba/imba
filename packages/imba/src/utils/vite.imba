@@ -1,7 +1,7 @@
 import np from 'node:path'
 import nfs from 'node:fs'
 const {isPackageExists} = require('local-pkg')
-import c from 'picocolors'
+import c from 'colors'
 
 const EXIT_CODE_RESTART = 43
 export const viteServerConfigFile = np.join(__dirname,"./vite.config.server.mjs")

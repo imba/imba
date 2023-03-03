@@ -95,7 +95,6 @@
     "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
-    "picocolors": "^1.0.0",
     "prompts": "^2.4.2"
   },
   "directories": {},
