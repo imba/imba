@@ -13,7 +13,7 @@
     "build-parser": "node scripts/build-parser.js",
     "build": "npm run build-parser && node scripts/build.js",
     "prepack": "npm run build",
-    "link": "npm install && npm run build && npm link"
+    "sync": "git pull && npm i && npm run build && npm link"
   },
   "engines": {
     "node": ">=13.10.0"
