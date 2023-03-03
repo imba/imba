@@ -26,7 +26,7 @@ export const modifiers =
 	'first-of-type': {}
 	'first-page': {name: 'first'}
 	fullscreen: {}
-	focus: {}
+	focus: {shim: yes}
 	focin: {name: 'focus-within'}
 	'focus-within': {}
 	'focus-visible': {}
