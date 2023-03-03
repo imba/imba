@@ -27,7 +27,8 @@
     "build": "cross-env rimraf dist && npm run build:esm && npm run build:cjs",
     "build:esm": "npx imba build --keep -M --node.external +devDependencies --esm src/index.imba",
     "build:cjs": "npx imba build --keep -M --node.external +devDependencies src/index.imba && npm run rename",
-    "test": "cross-env rimraf ../../temp && cd ../e2e-tests && npm run test:serve && npm run test:build"
+    "test": "cross-env rimraf ../../temp && cd ../e2e-tests && npm run test:serve && npm run test:build",
+    "sync": "git pull && npm i && npm run build && npm link"
   },
   "engines": {
     "node": "^14.18.0 || >= 16"
