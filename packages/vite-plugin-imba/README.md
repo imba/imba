@@ -101,7 +101,13 @@ In order to use the plugin both in the client and the server (with SSR and hydra
 
 ## Contributing
 
-In this repository, run:
+In the `packages/imba` dir, run:
+
+```sh
+npm run link
+```
+
+In this directory, run:
 
 ```sh
 npm i
@@ -113,6 +119,7 @@ In your test project, run:
 
 ```sh
 npm link vite-plugin-imba
+npm link imba
 ```
 
 To see logs in your test repository, launch Vite with:
