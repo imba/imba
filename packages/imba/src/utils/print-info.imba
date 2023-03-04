@@ -8,11 +8,6 @@ import log from './logger'
 export default def print-info fn=log.info
 
 	try
-		fn "Scripts:"
-		for own key, val of JSON.parse(cp.execSync 'npm pkg get scripts')
-			fn "  {key}: {val}"
-
-	try
 		(await envinfo.run
 			System: ['OS', 'CPU']
 			Binaries: ['Node']
