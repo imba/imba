@@ -33,6 +33,10 @@ const templates =
 		path: 'module'
 		name: 'Module'
 		desc: 'A module that can be used in any JavaScript project (Vite bundler)'
+	'cli':
+		path: 'cli'
+		name: 'CLI Tool'
+		desc: 'A CLI tool ready for npm publishing'
 
 const noCopy = [
 	'.git'
