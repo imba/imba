@@ -203,7 +203,8 @@ def run entry, o, extras
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 	if o.vite
-		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-tsconfig-paths-silent'], process.cwd()) 
+		await ensurePackagesInstalled(['vite', 'vite-tsconfig-paths-silent'], process.cwd())
+		await ensurePackagesInstalled(['vite-node'], process.cwd()) unless entry..endsWith '.html'
 
 	# TODO support multiple entrypoints - especially for html
 
@@ -242,7 +243,13 @@ def run entry, o, extras
 		if o.command == 'serve'
 			const config = await getConfigFilePath("client", {command: "serve", mode: "development"})
 			config.configFile = no
-			viteServer = await Vite.createServer config
+			viteServer = await Vite.createServer({
+				...config,
+				server: {
+					...config.server,
+					port: o.port
+				}
+			})
 			await viteServer.listen!
 
 			return viteServer.printUrls!
@@ -356,6 +363,7 @@ common(cli.command('build [script]').description('Build an imba/js/html entrypoi
 # watch should be implied?
 common(cli.command('serve [script]').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
+	.option("--port <port>", "Specify port")
 	.action(run)
 
 cli
