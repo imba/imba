@@ -183,18 +183,18 @@ def test o
 	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
-	return cli.help! if o.args.length == 0 and o._name != 'serve'
+	return cli.help! if o.args.length == 0 and o._name != 'serve' and o._name != 'build'
 
 	let prog = o = await parseOptions(o,extras)
 
-	if o.vite and o.command == 'serve' and !entry
+	if o.vite and (o.command == 'serve' or o.command == 'build') and !entry
 		if nfs.existsSync("index.html")
 			entry = "index.html"
 		else
-			return console.log "Imba serve without an argument expects an index.html file. But none was found in the root of the project."
+			return console.log "Imba {o.command} without an argument expects an index.html file. But none was found in the root of the project."
 
-	if o.command == 'serve' and !o.vite and !entry
-		console.log "error: missing required argument 'script'"
+	if (o.command == 'serve' or o.command == 'build') and !o.vite and !entry
+		console.log "imba {o.command} error: missing required argument 'script'"
 		process.exit 1
 	let [path,q] = entry.split('?')
 
@@ -248,25 +248,49 @@ def run entry, o, extras
 			return viteServer.printUrls!
 		if o.command == 'build'
 			# build client
+			let entry-points
+
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
-			let serverConfig = await getConfigFilePath("server", options)
 
-			const serverBuild = await Vite.build({
-				...serverConfig,
-				configFile: no,
-				build: {
-					...serverConfig.build,
-					rollupOptions: {
-						...serverConfig.build.rollupOptions,
-						input: np.join(process.cwd(), entry),
+			if entry.endsWith "html"
+				entry-points = entry
+				await Vite.build({
+					...clientConfig,
+					build: {
+						...clientConfig.build,
+						outDir: "dist",
+						ssrManifest: no,
+						entry:{
+							input: entry-points
+						},
+						rollupOptions: {
+							...clientConfig.build.rollupOptions,
+							input: entry-points
+						}
 					}
-				}
-			})
+				})
+				return
 
-			const entry-points = Object.keys(serverBuild.output[0].modules).filter(do $1.endsWith "?url&entry").map(do $1.replace("?url&entry", ""))
+			else
+				let serverConfig = await getConfigFilePath("server", options)
 
-			return unless entry-points.length
+				const serverBuild = await Vite.build({
+					...serverConfig,
+					configFile: no,
+					build: {
+						...serverConfig.build,
+						rollupOptions: {
+							...serverConfig.build.rollupOptions,
+							input: np.join(process.cwd(), entry),
+						}
+					}
+				})
+
+				entry-points = Object.keys(serverBuild.output[0].modules).filter(do $1.endsWith "?url&entry").map(do $1.replace("?url&entry", ""))
+
+				return unless entry-points.length
+
 			await Vite.build({
 				...clientConfig,
 				build: {
@@ -324,7 +348,7 @@ common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("--inspect", "Debug")
 	.action(run)
 
-common(cli.command('build <script>').description('Build an imba/js/html entrypoint and their dependencies'))
+common(cli.command('build [script]').description('Build an imba/js/html entrypoint and their dependencies'))
 	.option("--platform <platform>", "Platform for entry","browser")
 	.action(run)
 	# .option("--as <preset>", "Configuration preset","node")
