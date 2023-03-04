@@ -254,13 +254,49 @@ def run entry, o, extras
 			return previewServer.printUrls!
 
 		if o.command == 'serve'
+
 			const config = await getConfigFilePath("client", {command: "serve", mode: "development"})
+			let plugins = config.plugins
+
+			if !entry.endsWith ".html"
+				const serve-entry = entry
+				def servePlugin
+
+					def configureServer(server)
+						# (in callback) -> execute after internal vite middlewares
+						do server.middlewares.use "/" do(req, res, next)
+
+							res.end """
+									<!DOCTYPE html>
+									<html lang="en">
+										<head>
+											<meta charset="utf-8" />
+											<meta name="viewport" content="width=device-width,initial-scale=1" />
+											<title>Imba app</title>
+											<script type="module" src="./{serve-entry}"></script>
+										</head>
+										<body></body>
+									</html>
+							"""
+
+					return {
+						name: "vite-plugin-imba-serve-plugin"
+						configureServer: configureServer
+					}
+				plugins.push servePlugin()
+				entry = undefined
+
 			config.configFile = no
 			viteServer = await Vite.createServer({
 				...config,
+				plugins: plugins,
 				server: {
 					...config.server,
-					port: o.port
+					port: o.port,
+				},
+				build: {
+					...config.build,
+					rollupOptions: {...config.build.rollupOptions, input: entry}
 				}
 			})
 			await viteServer.listen!
@@ -281,9 +317,6 @@ def run entry, o, extras
 						...clientConfig.build,
 						outDir: "dist",
 						ssrManifest: no,
-						entry:{
-							input: entry-points
-						},
 						rollupOptions: {
 							...clientConfig.build.rollupOptions,
 							input: entry-points
@@ -315,22 +348,20 @@ def run entry, o, extras
 				...clientConfig,
 				build: {
 					...clientConfig.build,
-					entry:{
-						input: entry-points
-					},
 					rollupOptions: {
 						...clientConfig.build.rollupOptions,
 						input: entry-points
 					}
 				}
 			})
-		return
+			return
 	let run = do
 		o.name ||= entry	
 		let runner = new Runner(bundle,o)
 		if o.vite
 			await runner.initVite!
 		runner.start!
+
 	if o.vite
 		run()
 	elif out..main
