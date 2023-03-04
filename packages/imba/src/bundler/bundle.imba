@@ -926,8 +926,6 @@ export default class Bundle < Component
 
 	def build force = no
 
-		L("\x1bc") if program.clear
-
 		buildcache[self] ||= new Promise do(resolve)
 			if (built =? true) or force
 
@@ -970,6 +968,7 @@ export default class Bundle < Component
 			return resolve(result)
 
 	def rebuild {force = no} = {}
+
 		unless built and result and result.rebuild isa Function
 			return build(yes)
 
@@ -1562,6 +1561,8 @@ export default class Bundle < Component
 
 			# is this only really needed for hmr?
 			await mfile.write(JSON.stringify(entryManifest,null,2),manifest.hash)
+
+			L("\x1bc") if program.clear
 
 			if program.#listening
 				log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening

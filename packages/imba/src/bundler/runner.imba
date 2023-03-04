@@ -263,6 +263,7 @@ export default class Runner < Component
 		return self
 
 	def reload
+		console.log("\x1bc") if o.clear
 		log.info "reloading %path",o.name
 		for worker of workers
 			worker.reload!
