@@ -39,7 +39,7 @@ export class Build
 
 				self.stderr += stderr if stderr
 				self.stdout += stdout if stdout
-				
+
 				resolve(self)
 				resolveClosed(self)
 
@@ -86,9 +86,9 @@ export class Build
 
 			child.on('close') do
 				resolveClosed(self)
-			
+
 			console.log child.pid
-	
+
 	def stop signal = 0
 		if stopped =? yes
 			if child
@@ -112,8 +112,6 @@ export class Build
 			page.body = await page.content!
 			return resolve(page)
 
-	
-
 	@lazy get cssvars
 		new Promise do(resolve)
 			let page = await browser
@@ -131,7 +129,7 @@ export class Build
 					out[part] = val
 				return out
 			resolve(res)
-	
+
 	@lazy get richPage
 		new Promise do(resolve)
 			let page = await browser
@@ -152,7 +150,6 @@ export class Build
 				await page.goto(origin + url, waitUntil: 'domcontentloaded', timeout: 5000)
 			page.body = await page.content!
 			return resolve(page)
-	
 
 	def cssval name = '--about'
 		let page = await browser
@@ -164,14 +161,12 @@ export class Build
 export default def command cmd
 	new Build(cmd)
 
-
 export def cleanup
 	try
 		for build of builds
 			console.log 'stopping child',build.command,build.child.pid
 			await build.stop!
 	execSync("rm -rf dist", cwd: cwd)
-		
 
 export def serve cmd, cb
 	console.log "serve",cmd
@@ -192,4 +187,3 @@ export def build cmd, cb
 	await build.cleanup!
 	await build.closed
 	return build
-	

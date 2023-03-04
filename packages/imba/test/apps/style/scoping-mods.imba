@@ -17,7 +17,6 @@ tag App
 				fw:600 ..bold:700
 			<app-items eq={fontWeight:700}>
 
-		
 		<div>
 			css div fw:400 @even:2 @odd:3 @first:1 @last:4 # @odd:500 @even:300 @last:350
 			<div.test eq={fontWeight:1}>

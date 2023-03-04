@@ -82,7 +82,6 @@ describe "TaggedTemplate" do
 		eq actual.second, expectedSecond
 		eq actual.third, undefined
 
-
 	test "interpolate three variables" do
 		const expected = "What do you get if you multiply six by nine?"
 		const expectedFirst = "What do you get if you"

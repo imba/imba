@@ -6,11 +6,20 @@ import merge from 'lodash.merge'
 # import merge from 'deepmerge'
 
 const _dirname = if typeof __dirname !== 'undefined' then __dirname else np.dirname(url.fileURLToPath(import.meta.url))
+const {isPackageExists} = require('local-pkg')
+import c from 'picocolors'
 
 const EXIT_CODE_RESTART = 43
 export const imbaConfigPath = np.join(_dirname, "..", "bin", "./imba.config.mjs")
 
 let extensions = ['imba', 'ts', 'mts', 'js', 'mjs', 'cjs']
+export def importWithFallback(bundled, user)
+	let pkg
+	try 
+		pkg = await import(user) 
+	catch error
+		pkg = await import(bundled)
+	pkg
 
 export def getConfigFilePath(type, opts)
 	opts ||= {command: "serve", mode: "development"}

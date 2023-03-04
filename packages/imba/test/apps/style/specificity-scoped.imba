@@ -13,13 +13,13 @@ tag A2
 	css &.bold fw:600
 	css &.box fw:700
 
-# should 
+# should
 test do eqcss <A2.bold>, 600
 test do eqcss <A2.bold.box>, 700
-	
+
 tag A3
 	# should this apply to the self?
 	css &.bold fw:600
 
-# should 
+# should
 test do eqcss <A3.bold>, 600

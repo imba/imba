@@ -6,7 +6,6 @@ import assert from 'assert'
 import Build,{serve, cleanup} from './build'
 import configs from './checks'
 
-
 def run
 	try
 		let errors = []
@@ -25,10 +24,10 @@ def run
 					console.log err.message,err
 
 				process.exit(1)
-			
+
 			build.cleanup!
 
-		# testing 
+		# testing
 		# await serve("imba -o dist app/server/plain-text.imba") do(page,body)
 		#	assert(body.indexOf("Hello there") > 0)
 

@@ -7,7 +7,7 @@ global css
 		fs:16px lh:24px fw:400 c:white/87
 		color-scheme: light dark
 		bgc:#242424
-		
+
 tag app
 	css .logo h:6em p:1.5em
 	<self>
@@ -24,12 +24,11 @@ tag app
 				<img.logo[filter@hover:drop-shadow(0 0 4em #ff3e00aa) h:6.5em transform:rotateY(180deg)] src="./assets/imba.svg" alt="Imba Logo">
 
 		<h1[c:yellow4]> "Vite + Imba"
-		<div.card> 
+		<div.card>
 			<Counter>
 		<p> "Check out"
 			<a href="https://imba.io" target="_blank"> " Imba.io"
 			", the Imba documentation website"
 		<p[c:#888]> "Click on the Vite and Imba logos to learn more!!!"
-
 
 imba.mount <app>, document.getElementById "app"

@@ -10,11 +10,11 @@ import {humanize,htmlify} from './hotkey.shared'
 const Globals = {"esc": yes}
 
 class HotkeyEvent < CustomEvent
-	
+
 	def @focus expr
 		let el = #context.element
 		let doc = el.ownerDocument
-		
+
 		if expr
 			el = el.querySelector(expr) or el.closest(expr) or doc.querySelector(expr)
 
@@ -22,12 +22,11 @@ class HotkeyEvent < CustomEvent
 			doc.activeElement.blur! unless doc.activeElement == doc.body
 		else
 			el.focus!
-			
+
 		return yes
 
 	def @local
 		return yes
-
 
 	def @repeat
 		return yes
@@ -37,20 +36,20 @@ import Mousetrap from './mousetrap'
 const stopCallback = do |e,el,combo|	
 	if el.tagName == 'INPUT' && (combo == 'down' or combo == 'up')
 		return false
-	
+
 	if el.tagName == 'INPUT' || el.tagName == 'SELECT' || el.tagName == 'TEXTAREA'
 		if Globals[combo]
 			e.#inInput = yes
 			e.#inEditable = yes
 			return false
 		return true
-		
+
 	if el.contentEditable && (el.contentEditable == 'true' || el.contentEditable == 'plaintext-only')
 		if Globals[combo]
 			e.#inEditable = yes
 			return false
 		return true
-		
+
 	return false
 
 export const hotkeys = new class HotKeyManager
@@ -80,7 +79,7 @@ export const hotkeys = new class HotKeyManager
 		if mods.capture or mods.force
 			Globals[key] = yes
 		self
-		
+
 	def comboIdentifier combo
 		identifiers[combo] ||= combo.replace(/\+/g,'_').replace(/\ /g,'-').replace(/\*/g,'all').replace(/\|/g,' ')
 
@@ -89,7 +88,7 @@ export const hotkeys = new class HotKeyManager
 
 	def htmlify combo, platform = 'auto'
 		htmlify(combo,platform)
-	
+
 	def matchCombo str
 		yes
 
@@ -98,8 +97,8 @@ export const hotkeys = new class HotKeyManager
 		let targets\HTMLElement[] = Array.from(document.querySelectorAll('[data-hotkey]'))
 		let root = source.ownerDocument
 		let group = source
-		
-		# find the closest hotkey 
+
+		# find the closest hotkey
 		while group and group != root
 			if group.hotkeys === true
 				break
@@ -116,20 +115,20 @@ export const hotkeys = new class HotKeyManager
 				par = par.parentNode
 			return yes
 
-		# if there are multiple targets - and some of them have offset parent - 
+		# if there are multiple targets - and some of them have offset parent -
 		if targets.length > 1
 			let visible = targets.filter do $1.offsetParent
 			targets = visible if visible.length > 0
-			
+
 		return unless targets.length
-	
+
 		let detail = {combo: combo, originalEvent: e, targets: targets}
 		let event = new CustomEvent('hotkey', bubbles: true, detail: detail)
 		event.#extendType(HotkeyEvent)
-		
+
 		event.originalEvent = e
 		event.hotkey = combo
-		
+
 		source.dispatchEvent(event)
 		let handlers = []
 
@@ -154,31 +153,31 @@ export const hotkeys = new class HotKeyManager
 
 const DefaultHandler = do(e,state)
 	let el = state.element
-	
+
 	if el isa Element
 		if el.matches('input,textarea,select,option')
 			el.focus!
 		else
 			el.click!
 	return
-	
+
 DefaultHandler.passive = yes
 
 extend class Element
-		
+
 	def on$hotkey mods, scope, handler, o
 		#hotkeyHandlers ||= []
 		#hotkeyHandlers.push(handler)
 		# addEventListener('hotkey',handler,o)
-		
+
 		handler.#target = self
 		# add a default handler
 		mods.$_ ||= [DefaultHandler]
-		
+
 		mods.#visit = do #updateHotKeys!
 		#updateHotKeys!
 		return handler
-		
+
 	def #updateHotKeys
 		let all = {}
 		for handler in #hotkeyHandlers

@@ -7,13 +7,12 @@ export tag Post
 export tag Category
 	uniq = count++
 	<self @pointerup.stop=(data.type = Post)> "CATEGORY! {data.title} {uniq} {data.type.name}"
-	
+
 const items = [
 	{type: Post, title: "Welcome!", id: 1}
 	{type: Category, title: "Articles", id: 2}
 	{type: Category, title: "Articles", id: 3}
 ]
-
 
 describe "dynamic type" do
 	let nr = 0
@@ -78,7 +77,6 @@ describe "create dynamic type" do
 		let item = fn(a: 1)
 		ok item isa HTMLParagraphElement
 
-
 describe "With component" do
 	let nr = 0
 	let counters = {
@@ -95,7 +93,6 @@ describe "With component" do
 		def render
 			counters.render++
 			<self> <div> "Hello"
-
 
 	tag App
 		def template item

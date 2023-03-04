@@ -5,7 +5,6 @@ let mult = 'm1 m2'
 tag with-local-flags
 	def setup
 		flags.add('local')
-		
 
 tag nested-element
 
@@ -60,7 +59,6 @@ test 'combined outer and inner flags' do
 
 test 'static outer and inner flags' do
 	ok document.querySelector('nested-element.static-outer.inner')
-	
 
 test do
 	ok document.querySelector('with-local-flags.outer.local')

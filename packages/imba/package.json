@@ -8,12 +8,13 @@
     "test-cli": "cd test/cli && node ../../bin/imba index.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "watch": "node scripts/build.js -w",
+    "dev": "npm run watch",
     "create-example": "node bin/imba scripts/create-example.imba",
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
     "build-parser": "node scripts/build-parser.js",
     "build": "npm run build-parser && node scripts/build.js",
     "prepack": "npm run build",
-    "link": "npm install && npm run build && npm link"
+    "sync": "npm i && npm run build && npm link"
   },
   "engines": {
     "node": ">=13.10.0"
@@ -124,12 +125,12 @@
     "@antfu/install-pkg": "^0.1.1",
     "lodash.merge": "^4.6.2",
     "chokidar": "^3.4.3",
-    "colors": "^1.4.0",
+    "colors": "1.4.0",
     "cross-spawn": "^7.0.3",
     "dotenv": "^16.0.3",
+    "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
-    "picocolors": "^1.0.0",
     "prompts": "^2.4.2"
   },
   "directories": {},

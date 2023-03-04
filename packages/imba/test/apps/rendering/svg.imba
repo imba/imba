@@ -13,4 +13,3 @@ imba.mount app
 test do
 	ok app.children[0] isa SVGSVGElement
 	ok app.children[0].children[0] isa SVGCircleElement
-	

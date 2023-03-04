@@ -27,8 +27,6 @@ def getFiles(dir, o = [])
 		elif src.isDirectory()
 			getFiles(fullpath,o)
 	return o
-	
-
 
 let consoleMapping = {
 	startGroup: 'group'
@@ -44,7 +42,7 @@ let parseRemoteObject = do(obj)
 		result = {}
 		if obj.preview
 			for item in obj.preview.properties
-				result[item.name] = parseRemoteObject(item) 
+				result[item.name] = parseRemoteObject(item)
 
 	elif obj.type == 'number'
 		result = parseFloat(obj.value)
@@ -52,12 +50,11 @@ let parseRemoteObject = do(obj)
 		result = (obj.value == 'true' or obj.value === true)
 	return result
 
-
 let tests = []
 let runners = []
 let queued = []
 let pages = []
-let counter = 0 
+let counter = 0
 
 let doneResolve
 let donePromise = new Promise do(resolve,reject)
@@ -73,10 +70,10 @@ def startNextTest
 	elif pages.every(do $1.state == 'done' or $1.skip )
 		doneResolve(pages) if doneResolve
 		doneResolve = null
-	
+
 def releaseRunner runner, page, close
 	page.state = 'done'
-	
+
 	if runner.page != page
 		console.log 'trying to release wrong runner?!'
 		return
@@ -97,7 +94,6 @@ export def start
 		let browser = await puppeteer.launch(args: args, headless: true)
 		resolve(browser)
 
-	
 export default def page url
 	let pup = await start!
 	let page = await pup.newPage!
@@ -111,7 +107,7 @@ export default def page url
 		let receiver = page
 		let path = str.split('.')
 		let meth = path.pop()
-		
+
 		unless rpc
 			return
 
@@ -138,7 +134,7 @@ export default def page url
 		# console.log 'page on console',str
 		if page.HANDLERS and page.HANDLERS[str]
 			page.HANDLERS[str](*params.slice(1))
-			
+
 		if msg._type == 'debug'
 			console.debug.apply(console, params)
 

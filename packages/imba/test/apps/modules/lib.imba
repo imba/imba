@@ -12,7 +12,7 @@ export const j = 'j'
 
 export default def hello
 	'lib'
-	
+
 export class Component
 	def ping
 		1

@@ -4,15 +4,14 @@ import {Flags} from './flags'
 export def use_slots
 	yes
 
-
 export class Fragment
-	
+
 	def constructor
 		childNodes = []
-		
+
 	def log ...params
 		return
-		
+
 	def hasChildNodes
 		false
 
@@ -47,19 +46,19 @@ class VirtualFragment < Fragment
 		#domFlags = flags
 		childNodes = []
 		#end = createComment('slot' + counter++)
-		
+
 		if parent
 			parent.#appendChild(self)
 
 	get #parent
 		##parent or parentNode or ##up
-	
+
 	set textContent text
 		#textContent = text
-	
+
 	get textContent
 		#textContent
-		
+
 	def hasChildNodes
 		for item in childNodes
 			if item isa Fragment
@@ -73,26 +72,26 @@ class VirtualFragment < Fragment
 			#	return false
 		return false
 		# #children.length == 0
-		
+
 	def text$ item
 		unless #textNode
 			#textNode = #placeChild(item)
 		else
 			#textNode.textContent = item
 		return #textNode
-		
+
 	def appendChild child
 		if parentNode
 			child.#insertInto(parentNode,#end)
 		childNodes.push(child)
-	
+
 	def #appendChild child
 		if parentNode
 			child.#insertInto(parentNode,#end)
 		else
 			child.##up ??= (##up or self)
 		childNodes.push(child)
-	
+
 	def insertBefore node,refnode
 		# check if this should really happen?
 		if parentNode
@@ -101,8 +100,7 @@ class VirtualFragment < Fragment
 		if idx >= 0
 			childNodes.splice(idx,0,node)
 		return node
-	
-	
+
 	def #removeChild node
 		if parentNode
 			parentNode.#removeChild(node)
@@ -119,8 +117,7 @@ class VirtualFragment < Fragment
 		# let res = #insertChild(newnode,oldnode)
 		# #removeChild(oldnode)
 		return newnode
-		
-			
+
 	def #insertInto parent, before
 		# console.log 'frag #insertInto',parent,before,#children
 		let prev = parentNode
@@ -134,7 +131,7 @@ class VirtualFragment < Fragment
 			for item in childNodes
 				item.#insertInto(parent,before)
 		return self
-		
+
 	def #replaceWith node, parent
 		# log '#replaceWith',node,parent
 		# what if this
@@ -142,11 +139,11 @@ class VirtualFragment < Fragment
 		let res = node.#insertInto(parent,#end)
 		#removeFrom(parent)
 		res
-	
+
 	def #insertChild node,refnode
 		if parentNode
 			insertBefore(node,refnode or #end)
-		
+
 		if refnode
 			let idx = childNodes.indexOf(refnode)
 			# console.log 'vfragment #insertChild',node,refnode,refnode == #end,idx,#children
@@ -155,11 +152,10 @@ class VirtualFragment < Fragment
 		else
 			childNodes.push(node)
 		return node
-		
-		
+
 		# for item in #children
 		# 	item.#removeFrom(parent)
-	
+
 	def #removeFrom parent
 		for item in childNodes
 			# log '#removeFrom',item,parent
@@ -171,13 +167,13 @@ class VirtualFragment < Fragment
 	def #placeChild item, f, prev
 		let par = parentNode
 		let type = typeof item
-		
+
 		if type === 'undefined' or item === null
 			if prev and prev isa Comment # check perf
 				return prev
-			
+
 			let el = createComment('')
-			
+
 			if prev
 				let idx = childNodes.indexOf(prev)
 				childNodes.splice(idx,1,el)
@@ -185,8 +181,7 @@ class VirtualFragment < Fragment
 					prev.#replaceWith(el,par)
 				# parentNode.#insert(item,f,prev or #end)
 				return el
-			
-			
+
 			childNodes.push(el)
 			el.#insertInto(par,#end) if par
 			return el
@@ -194,7 +189,7 @@ class VirtualFragment < Fragment
 
 		if item === prev
 			return item
-			
+
 		if type !== 'object'
 			let res
 			let txt = item
@@ -225,11 +220,10 @@ class VirtualFragment < Fragment
 			item.#insertInto(par,#end) if par
 			return item
 
-
 export def createLiveFragment bitflags, par
 	const el = new VirtualFragment(bitflags, par)
 	return el
-	
+
 export def createSlot bitflags, par
 	const el = new VirtualFragment(bitflags, null)
 	el.##up = par
@@ -241,7 +235,7 @@ extend class Node
 	def #registerFunctionalSlot name
 		let map = #functionalSlots ||= {}
 		map[name] ||= createSlot(0,self)
-	
+
 	def #getFunctionalSlot name, context
 		let map = #functionalSlots
 		return map and map[name] or #getSlot(name,context)
@@ -249,5 +243,5 @@ extend class Node
 	def #getSlot name, context
 		if name == '__' and !self.render
 			return self
-		
+
 		return __slots[name] ||= createSlot(0,self)
