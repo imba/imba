@@ -183,11 +183,17 @@ def test o
 	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
-	return cli.help! if o.args.length == 0 and o._name != 'serve' and o._name != 'build'
+	if entry.._name == 'preview'
+		# no args
+		o = entry
+		entry = undefined
+
+	unless o._name == 'preview' or o._name == 'serve' or o._name == 'build'
+		return cli.help! if o.args.length == 0
 
 	let prog = o = await parseOptions(o,extras)
 
-	if o.vite and (o.command == 'serve' or o.command == 'build') and !entry
+	if o.vite and (o.command == 'preview' or o.command == 'serve' or o.command == 'build') and !entry
 		if nfs.existsSync("index.html")
 			entry = "index.html"
 		else
@@ -196,6 +202,7 @@ def run entry, o, extras
 	if (o.command == 'serve' or o.command == 'build') and !o.vite and !entry
 		console.log "imba {o.command} error: missing required argument 'script'"
 		process.exit 1
+
 	let [path,q] = entry.split('?')
 
 	path = np.resolve(path)
@@ -240,6 +247,12 @@ def run entry, o, extras
 
 	if o.vite
 		let Vite = await import("vite")
+		if o.command == 'preview'
+			const previewServer = await Vite.preview
+				preview:
+					port: o.port
+			return previewServer.printUrls!
+
 		if o.command == 'serve'
 			const config = await getConfigFilePath("client", {command: "serve", mode: "development"})
 			config.configFile = no
@@ -359,6 +372,10 @@ common(cli.command('build [script]').description('Build an imba/js/html entrypoi
 	.option("--platform <platform>", "Platform for entry","browser")
 	.action(run)
 	# .option("--as <preset>", "Configuration preset","node")
+
+common(cli.command('preview').description('Locally preview production build (Vite only)'))
+	.option("--port <port>", "Specify port")
+	.action(run)
 
 # watch should be implied?
 common(cli.command('serve [script]').description('Spawn a webserver for an imba/js/html entrypoint'))
