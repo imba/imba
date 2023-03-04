@@ -8,6 +8,7 @@
     "test-cli": "cd test/cli && node ../../bin/imba index.imba",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "watch": "node scripts/build.js -w",
+    "dev": "npm run watch",
     "create-example": "node bin/imba scripts/create-example.imba",
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
     "build-parser": "node scripts/build-parser.js",
