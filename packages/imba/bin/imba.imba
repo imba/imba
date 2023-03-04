@@ -183,13 +183,23 @@ def test o
 	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
-	return cli.help! unless o.args.length > 0
+	return cli.help! if o.args.length == 0 and o._name != 'serve'
+
+	let prog = o = await parseOptions(o,extras)
+
+	if o.vite and o.command == 'serve' and !entry
+		if nfs.existsSync("index.html")
+			entry = "index.html"
+		else
+			return console.log "Imba serve without an argument expects an index.html file. But none was found in the root of the project."
+
+	if o.command == 'serve' and !o.vite and !entry
+		console.log "error: missing required argument 'script'"
+		process.exit 1
 	let [path,q] = entry.split('?')
 
 	path = np.resolve(path)
 
-	let prog = o = await parseOptions(o,extras)
-	
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 	if o.vite
@@ -227,9 +237,16 @@ def run entry, o, extras
 	let out
 	out = await bundle.build! unless o.vite
 
-	if o.command == 'build'
-		if o.vite
-			let Vite = await import("vite")
+	if o.vite
+		let Vite = await import("vite")
+		if o.command == 'serve'
+			const config = await getConfigFilePath("client", {command: "serve", mode: "development"})
+			config.configFile = no
+			viteServer = await Vite.createServer config
+			await viteServer.listen!
+
+			return viteServer.printUrls!
+		if o.command == 'build'
 			# build client
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
@@ -313,7 +330,7 @@ common(cli.command('build <script>').description('Build an imba/js/html entrypoi
 	# .option("--as <preset>", "Configuration preset","node")
 
 # watch should be implied?
-common(cli.command('serve <script>').description('Spawn a webserver for an imba/js/html entrypoint'))
+common(cli.command('serve [script]').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.action(run)
 
