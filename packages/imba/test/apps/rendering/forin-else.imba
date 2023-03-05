@@ -39,7 +39,7 @@ let titles = todos.map(do $1.title).join("")
 
 test do
 	eq app.textContent, titles
-
+	
 	app.flip()
 	app.render()
 	eq app.textContent, "--"

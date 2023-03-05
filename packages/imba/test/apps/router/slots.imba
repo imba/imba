@@ -15,6 +15,7 @@ tag app-home
 		<app-body>
 			<div route='more'> "More"
 
+
 export tag App
 	def render
 		<self>
@@ -22,7 +23,7 @@ export tag App
 			<header[d:hflex]>
 				<a$a href="/home"> "Home"
 				<a$b href="/about"> "About"
-
+				
 			<section$body>
 				<app-home route="/home">
 
@@ -32,9 +33,10 @@ let body = app.$body
 def go url, text = null
 	imba.router.go(url)
 	await imba.commit!
-
+	
 	if text !== null
 		eq body.textContent, text
+	
 
 test do
 	await go('/home/more')

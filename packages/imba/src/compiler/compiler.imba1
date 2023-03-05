@@ -57,6 +57,7 @@ export def compile code, o = {}
 	let compilation = Compilation.new(code,resolveConfig(o))
 	return compilation.compile()
 
+
 export def resolve code, o = {}
 	let compilation = Compilation.new(code,resolveConfig(o))
 	return compilation.compile()

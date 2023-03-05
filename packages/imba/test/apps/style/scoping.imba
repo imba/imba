@@ -1,7 +1,7 @@
 tag nested-item
 	css d:block fw:500 c:blue5
 	<self> <div.box> <slot> 'box'
-
+	
 	get main
 		<div.box> 'main'
 
@@ -12,17 +12,17 @@ tag restyled-item < nested-item
 
 tag rerendered-item < nested-item
 	<self> <div.box> <slot> 'other box'
-
+	
 tag complicated-item < nested-item
 	css .box bg:blue2 fw:300
-
+	
 	get main2
 		<div.box> 'main2'
-
+		
 	<self>
 		<(main)>
 		<(main2)>
-
+	
 tag app-root
 	css .box fw:700
 
@@ -36,6 +36,7 @@ tag app-root
 		<rerendered-item$box5> 'rerendered 500'
 		<complicated-item$box6> 'complicated 300'
 
+
 imba.mount(let app = <app-root tabIndex=0>)
 
 test do
@@ -47,10 +48,11 @@ test do
 	eqcss app.$box6.children[1], 300
 	eqcss app.$box5.children[0], 500
 
+
 # svg
 tag A
 	css circle stroke-width:2px
-
+	
 	<self>
 		<div> "svg"
 		<svg> <circle>

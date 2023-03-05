@@ -1,20 +1,18 @@
 import fs from 'fs'
-import cp from 'child_process'
 import path from 'path'
-import envinfo from 'envinfo'
-
 import log from './logger'
+import {resolvePackage} from '../bundler/utils'
 
 export default def print-info fn=log.info
 
-	try
-		(await envinfo.run
-			System: ['OS', 'CPU']
-			Binaries: ['Node']
-			Browsers: ['Chrome', 'Firefox', 'Safari'],
-			npmPackages: '*imba*'
-			npmGlobalPackages: '*imba*'
-		).split('\n').forEach do fn($1.slice(2)) if $1
+	fn!
+	fn "node version: {process.version.slice(1)}"
+	fn "node path: {process.argv[0]}"
+	fn "node realpath: {fs.realpathSync(process.argv[0])}"
 
-	try
-		fn "imba realPath: {fs.realpathSync(process.argv[1]).cyan}"
+	fn!
+	fn "imba version: {(resolvePackage(path.resolve(__dirname,'..')) or {}).version}"
+	fn "imba path: {process.argv[1]}"
+	fn "imba realpath: {fs.realpathSync(process.argv[1]).green}"
+
+	fn!

@@ -70,7 +70,7 @@ extend class Element
 
 	def setRichValue value
 		self.value = value
-
+	
 	def bind$ key, value
 		let o = value or []
 
@@ -174,8 +174,9 @@ extend class HTMLTextAreaElement
 			self.value = val
 		##visitContext = null if ##visitContext
 
-extend class HTMLInputElement
 
+extend class HTMLInputElement
+	
 	def ##oninput e
 		let typ = self.type
 
@@ -221,6 +222,7 @@ extend class HTMLInputElement
 			num = Number(value.replace(/\,/,'.') + 0) if Number.isNaN(num)
 			num = null if Number.isNaN(num)
 			value = num
+			
 
 		elif typ == 'checkbox'
 			value = true if value == undefined or value === 'on'
@@ -240,17 +242,17 @@ extend class HTMLInputElement
 				self.richValue = self.data
 		##visitContext = null if ##visitContext
 		return
-
+		
 extend class HTMLButtonElement
 
 	get checked
 		$checked
-
+		
 	set checked val
 		if val != $checked
 			$checked = val
 			flags.toggle('checked',!!val)
-
+	
 	def setRichValue value
 		$$value = value
 		self.value = value
@@ -259,7 +261,7 @@ extend class HTMLButtonElement
 		if $$value !== undefined
 			return $$value
 		return self.value
-
+		
 	def ##onclick e
 		let data = self.data
 		let toggled = self.checked
@@ -278,7 +280,7 @@ extend class HTMLButtonElement
 		if ##bound
 			let data = self.data
 			let val = $$value == undefined ? yes : $$value
-
+			
 			if isGroup(data)
 				self.checked = bindHas(data,val)
 			else

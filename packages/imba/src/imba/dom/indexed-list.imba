@@ -11,16 +11,17 @@ class IndexedTagFragment < Fragment
 		unless f & $TAG_LAST_CHILD$
 			#end = createComment('list')
 			# #end.node = self
-
+			
 		self.$ = childNodes
 		self.length = 0
-
+			
 		if parent
 			parent.#appendChild(self)
-
+			
 	def hasChildNodes
 		return false if length == 0
 		return true
+
 
 	def #afterVisit len
 		let from = self.length
@@ -42,15 +43,15 @@ class IndexedTagFragment < Fragment
 				par.#insertChild(array[from++],end)
 		self.length = len
 		return
-
+		
 	def #insertInto parent, before
 		parentNode = parent
-
+		
 		# if parent isa Node
 		# FIXME need to work with non-dom elements as well
 		if #end
 			#end.#insertInto(parent,before)
-
+			
 		before = #end
 
 		for item,i in childNodes
@@ -59,17 +60,18 @@ class IndexedTagFragment < Fragment
 			item.#insertInto(parent,before)
 			# log 'insert child',parent,item,before,parent.innerHTML
 		return self
-
+		
 	def #appendChild item
 		# this should be a noop
 		# log 'list #appendChild',item
 		return
-
+		
+		
 	def #replaceWith rel, parent
 		let res = rel.#insertInto(parent,#end)
 		#removeFrom(parent)
 		return res
-
+	
 	def #removeFrom parent
 		# log '#removeFrom',parent
 		let i = length

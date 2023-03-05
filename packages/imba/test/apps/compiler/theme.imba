@@ -23,3 +23,5 @@ test 'custom color' do
 	ok res.css.match(/color:\s*hsla\(140/)
 	ok res.css.match(/stroke:\s*hsla\(139/)
 	ok res.css.match(/background-color:\s*hsla\(138/)
+	
+	

@@ -26,6 +26,7 @@ test 'tags' do
 	ok res.indexOf('imba.mount') == -1
 	# eq res,'test'
 
+
 test 'tags2' do
 	let res = String compile('tags', platform: 'browser', runtime: 'global')
 	ok res.indexOf('imba.mount') >= 0

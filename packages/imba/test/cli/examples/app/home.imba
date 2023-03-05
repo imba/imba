@@ -8,6 +8,7 @@ import sw from './sw.imba?serviceworker'
 # import as url?
 console.log "serviceworker url",sw
 
+
 tag home-page
 
 	<self>

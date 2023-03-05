@@ -1,6 +1,6 @@
 ###
 Script for compiling imba and imba1 files inside workers using
-workerpool.
+workerpool. 
 ###
 
 import {compile} from 'dist/compiler.cjs'
@@ -13,7 +13,7 @@ const id = Math.random!
 def compile_imba code, options
 	let out = {id: options.sourceId}
 	let res = null
-
+	
 	try
 		res = compile(code,options)
 	catch e
@@ -36,6 +36,7 @@ def compile_imba code, options
 	out.css = res.css
 	return out
 
+
 def compile_imba1 code,options
 	options.target = 'web' if options.target == 'browser'
 	let out = {id: options.sourceId, warnings: [], errors: []}
@@ -44,7 +45,7 @@ def compile_imba1 code,options
 
 	if js.indexOf('$_ =') > 0
 		js = "var $_;\n{js}"
-
+	
 	out.js = js
 
 	return out

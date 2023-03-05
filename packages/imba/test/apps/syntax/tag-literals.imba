@@ -13,7 +13,7 @@ describe "tag literals" do
 		# Tags can be created and assigned
 		let el = <div title="div">
 		eq el.title, 'div'
-
+		
 	test "nested expression" do
 		# Tags can be created and assigned
 		let el = <div title="div">
@@ -23,7 +23,7 @@ describe "tag literals" do
 
 		eq el.title, 'div'
 		eq el.children.length, 3
-
+		
 	test "nested expression with vars" do
 		# Tags can be created and assigned
 		let el = <div title="div">
@@ -34,17 +34,17 @@ describe "tag literals" do
 		eq el.title, 'div'
 		eq el.children.length, 3
 		eq el.children[0].innerHTML, "<h1></h1>"
-
+		
 	test "comment inside literal" do
 		let el = <div
 			title='div'
 			# title='dov'
 		>
 		eq el.title, 'div'
-
+	
 	test "var scoping" do
 		let num = 1
-
+		
 		let el = <h4>
 			<i> num
 			<b>

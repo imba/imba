@@ -25,11 +25,13 @@ class Folder < Item
 		super # test
 		name = 'stuff'
 
+
 test 'static fields' do
 	ok Item.test == 10
 	ok Item.PascalCased == 10
 	ok Doc.test == 20
 	ok Folder.test == 30
+	
 
 test 'instance fields' do
 	let doc = new Doc
@@ -64,11 +66,11 @@ class A
 test do
 	let item = new A
 	eq $1.log, ['v1','o1','d1','d12']
-
+	
 class B < A
 	prop number = 2
 	prop options = new Dyn('o2')
-
+	
 test do
 	let item = new B
 	eq $1.log, ['v1','o1','d1','d12','o2']
@@ -85,6 +87,7 @@ test do
 	eq $1.log, ['o1']
 	eq item.value, 3
 
+
 class D < A
 	prop desc2 = new Dyn('d4')
 
@@ -92,6 +95,7 @@ test do
 	let item = new D
 	item.desc2
 	eq $1.log, ['d4']
+
 
 class E < A
 	prop desc3 = new Dyn(desc2.ref + '3')

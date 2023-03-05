@@ -15,7 +15,7 @@ describe 'Defining classes' do
 			def constructor height, width
 				self.height = height
 				self.width = width
-
+				
 		ok new expr
 		eq expr.name, 'expr'
 
@@ -64,6 +64,7 @@ describe 'Class body and method definitions' do
 				self.x = x
 				self.y = y
 
+
 			static def distance a,b
 				const dx = a.x - b.x
 				const dy = a.y - b.y
@@ -73,6 +74,7 @@ describe 'Class body and method definitions' do
 		const p2 = new Point(10, 10)
 
 		eq Point.distance(p2,p1), Math.hypot(5,5)
+
 
 	test 'Dynamic methods' do
 		let method = 'hello'

@@ -13,12 +13,12 @@ def eqanim obj
 	for own k,v of obj
 		let anim = anims[k]
 
-		if v == false
+		if v == false 
 			return ok(!anim,message: "Did not expect {k} transition") if anim
 			continue
-
+		
 		ok(!!anim,message: "Expected animations")
-
+		
 		return unless anim
 		# console.log 'eq anim',k,v,String(v[0]),v[1],anim,[String(anim[0]),String(anim[1]),anim[1]]
 		eq String(anim[0]),String(v[0])
@@ -31,7 +31,7 @@ def track cb
 		document.addEventListener('transitionrun',$1,once: true)
 		setTimeout($1,1000)
 	cb()
-
+	
 	try
 		# let timeout = setTimeout(&,2000) do throw "Timeout!"	
 		await promise
@@ -51,6 +51,7 @@ def instant cb
 	cb()
 	document.body.offsetWidth
 	document.flags.decr('noanim')
+
 
 for typ in ['start','run','end','cancel']
 	document.addEventListener(`transition{typ}`) do(e)
@@ -80,7 +81,7 @@ for typ in ['start','run','end','cancel']
 							found.duration = found.currentTime
 							resolve([found[0],found[1],found.duration])
 							resolve = null
-
+					
 					found.onfinish = finisher
 					# hacky event from imba core just to allow testing currently
 					if found.#easer
@@ -125,7 +126,7 @@ tag App
 
 			<toggleable outanim={opacity: [1,0,300]}> <section ease [o:1 @off:0]>
 			<toggleable flaganim={opacity: [1,0,20]}> <section[o:1 .hover:0 eod:20ms]>
-
+			
 			<toggleable
 				outanim={opacity: [1,0,60],left:[0px,10px,300]}
 				flaganim={opacity: [1,0.8,60]}
@@ -173,9 +174,12 @@ for el,i in document.querySelectorAll('.variations > *')
 			let res = await track do el.toggle!
 			# console.log 'got anims',res
 			eqanim el.outanim
-
+	
 	if el.inanim
 		test "{name} enter" do
 			await imba.commit!
 			let res = await track do el.toggle!
 			eqanim el.inanim
+	
+		
+	

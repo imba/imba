@@ -139,6 +139,7 @@ test do
 	i4.name = 'jane'
 	eq $1.log,[['john','jane']]
 
+
 class CustomWatch
 	@watch('updated')
 	prop name = 'john'

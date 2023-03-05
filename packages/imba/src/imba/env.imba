@@ -10,6 +10,6 @@ export const env = new class Env
 	# will also be inherited, which may or may not be a completely different path.
 	get rootDir
 		process.env.IMBA_OUTDIR or np.dirname(process.env.pm_exec_path or process.argv[1])
-
+	
 	get publicPath
 		np.resolve(rootDir,process.env.IMBA_PUBDIR or global.IMBA_PUBDIR or 'public')

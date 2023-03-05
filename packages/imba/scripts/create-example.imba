@@ -13,6 +13,7 @@ console.log process.argv,dir
 def add name, contents
 	let src = np.resolve(dir,name)
 	fs.writeFileSync(src,contents)
+	
 
 fs.mkdirSync(dir,recursive:true)
 add('index.imba','console.log "example"')
@@ -20,3 +21,4 @@ add('readme.md','Run `imba serve index.imba` in this directory')
 add('package.json','{}')
 
 # const cmd = "npm dist-tag add imba@{version} latest"
+

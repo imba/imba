@@ -22,12 +22,13 @@ describe 'For ... in' do
 		let res = for {id} in list when id > 1
 			id
 		eq res, [2,3]
-
+	
+	
 	test 'iterating over range' do
 		let res = for item in [0 .. 2]
 			item
 		eq res, [0,1,2]
-
+		
 	test 'iterating over exclusive' do
 		let res = for item in [0 ... 2]
 			item

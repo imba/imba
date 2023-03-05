@@ -9,3 +9,5 @@ test do
 	imba.mount div
 	div.focus!
 	eq document.activeElement, div
+
+	

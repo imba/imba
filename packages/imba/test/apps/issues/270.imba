@@ -17,6 +17,7 @@ tag app-component
 		# log 'awaken'
 		super
 
+
 tag app-item < app-component
 	prop ripple
 
@@ -82,6 +83,7 @@ test "manual" do |state|
 	# eq $1.log, expect
 	# await spec.tick()
 	# console.log $1
+
 
 # test "conditional" do
 # 	let el = document.createElement('app-root-if')

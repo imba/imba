@@ -8,6 +8,7 @@ import msg from './messages';
 /* Public constants ==========================================================*/
 /* ===========================================================================*/
 
+
 /* Allowed flush values; see deflate() and inflate() below for details */
 var Z_NO_FLUSH = 0;
 var Z_PARTIAL_FLUSH = 1;
@@ -16,6 +17,7 @@ var Z_FULL_FLUSH = 3;
 var Z_FINISH = 4;
 var Z_BLOCK = 5;
 //var Z_TREES         = 6;
+
 
 /* Return codes for the compression/decompression functions. Negative values
  * are errors, positive values are used for special but normal events.
@@ -30,11 +32,13 @@ var Z_DATA_ERROR = -3;
 var Z_BUF_ERROR = -5;
 //var Z_VERSION_ERROR = -6;
 
+
 /* compression levels */
 //var Z_NO_COMPRESSION      = 0;
 //var Z_BEST_SPEED          = 1;
 //var Z_BEST_COMPRESSION    = 9;
 var Z_DEFAULT_COMPRESSION = -1;
+
 
 var Z_FILTERED = 1;
 var Z_HUFFMAN_ONLY = 2;
@@ -48,16 +52,19 @@ var Z_DEFAULT_STRATEGY = 0;
 //var Z_ASCII               = 1; // = Z_TEXT
 var Z_UNKNOWN = 2;
 
+
 /* The deflate compression method */
 var Z_DEFLATED = 8;
 
 /*============================================================================*/
+
 
 var MAX_MEM_LEVEL = 9;
 /* Maximum value for memLevel in deflateInit2 */
 var MAX_WBITS = 15;
 /* 32K LZ77 window */
 var DEF_MEM_LEVEL = 8;
+
 
 var LENGTH_CODES = 29;
 /* number of length codes, not counting the special END_BLOCK code */
@@ -111,6 +118,7 @@ function zero(buf) {
   }
 }
 
+
 /* =========================================================================
  * Flush as much pending output as possible. All deflate() output goes
  * through this function so some applications may wish to modify it
@@ -140,15 +148,18 @@ function flush_pending(strm) {
   }
 }
 
+
 function flush_block_only(s, last) {
   _tr_flush_block(s, (s.block_start >= 0 ? s.block_start : -1), s.strstart - s.block_start, last);
   s.block_start = s.strstart;
   flush_pending(s.strm);
 }
 
+
 function put_byte(s, b) {
   s.pending_buf[s.pending++] = b;
 }
+
 
 /* =========================================================================
  * Put a short in the pending buffer. The 16-bit value is put in MSB order.
@@ -161,6 +172,7 @@ function putShortMSB(s, b) {
   s.pending_buf[s.pending++] = (b >>> 8) & 0xff;
   s.pending_buf[s.pending++] = b & 0xff;
 }
+
 
 /* ===========================================================================
  * Read a new buffer from the current input stream, update the adler32
@@ -194,6 +206,7 @@ function read_buf(strm, buf, start, size) {
 
   return len;
 }
+
 
 /* ===========================================================================
  * Set match_start to the longest match starting at the given string and
@@ -308,6 +321,7 @@ function longest_match(s, cur_match) {
   return s.lookahead;
 }
 
+
 /* ===========================================================================
  * Fill the window when the lookahead becomes insufficient.
  * Updates strstart and lookahead.
@@ -340,6 +354,7 @@ function fill_window(s) {
     //        more--;
     //    }
     //}
+
 
     /* If the window is almost full and there is insufficient lookahead,
      * move the upper half to the lower one to make room in the upper half.
@@ -524,6 +539,7 @@ function deflate_stored(s, flush) {
         return BS_NEED_MORE;
       }
       /***/
+
 
     }
     /* Flush if we may have to slide, otherwise block_start may become
@@ -855,6 +871,7 @@ function deflate_slow(s, flush) {
   return BS_BLOCK_DONE;
 }
 
+
 /* ===========================================================================
  * For Z_RLE, simply look for runs of bytes, generate matches only of distance
  * one.  Do not maintain a hash table.  (It will be regenerated if this run of
@@ -1039,6 +1056,7 @@ configuration_table = [
   new Config(32, 258, 258, 4096, deflate_slow) /* 9 max compression */
 ];
 
+
 /* ===========================================================================
  * Initialize the "longest match" routines for a new zlib stream
  */
@@ -1063,6 +1081,7 @@ function lm_init(s) {
   s.match_available = 0;
   s.ins_h = 0;
 }
+
 
 function DeflateState() {
   this.strm = null; /* pointer back to this zlib stream */
@@ -1232,6 +1251,7 @@ function DeflateState() {
   this.matches = 0; /* number of string matches in current block */
   this.insert = 0; /* bytes at end of window left to insert */
 
+
   this.bi_buf = 0;
   /* Output buffer. bits are inserted starting at the bottom (least
    * significant bits).
@@ -1250,6 +1270,7 @@ function DeflateState() {
    * updated to the new high water mark.
    */
 }
+
 
 export function deflateResetKeep(strm) {
   var s;
@@ -1279,6 +1300,7 @@ export function deflateResetKeep(strm) {
   return Z_OK;
 }
 
+
 export function deflateReset(strm) {
   var ret = deflateResetKeep(strm);
   if (ret === Z_OK) {
@@ -1286,6 +1308,7 @@ export function deflateReset(strm) {
   }
   return ret;
 }
+
 
 export function deflateSetHeader(strm, head) {
   if (!strm || !strm.state) {
@@ -1297,6 +1320,7 @@ export function deflateSetHeader(strm, head) {
   strm.state.gzhead = head;
   return Z_OK;
 }
+
 
 export function deflateInit2(strm, level, method, windowBits, memLevel, strategy) {
   if (!strm) { // === Z_NULL
@@ -1316,11 +1340,13 @@ export function deflateInit2(strm, level, method, windowBits, memLevel, strategy
     windowBits -= 16;
   }
 
+
   if (memLevel < 1 || memLevel > MAX_MEM_LEVEL || method !== Z_DEFLATED ||
     windowBits < 8 || windowBits > 15 || level < 0 || level > 9 ||
     strategy < 0 || strategy > Z_FIXED) {
     return err(strm, Z_STREAM_ERROR);
   }
+
 
   if (windowBits === 8) {
     windowBits = 9;
@@ -1375,6 +1401,7 @@ export function deflateInit2(strm, level, method, windowBits, memLevel, strategy
 export function deflateInit(strm, level) {
   return deflateInit2(strm, level, Z_DEFLATED, MAX_WBITS, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 }
+
 
 export function deflate(strm, flush) {
   var old_flush, s;
@@ -1734,6 +1761,7 @@ export function deflateEnd(strm) {
   return status === BUSY_STATE ? err(strm, Z_DATA_ERROR) : Z_OK;
 }
 
+
 /* =========================================================================
  * Initializes the compression dictionary from the given byte
  * sequence without producing any compressed output.
@@ -1820,6 +1848,7 @@ export function deflateSetDictionary(strm, dictionary) {
   s.wrap = wrap;
   return Z_OK;
 }
+
 
 export var deflateInfo = 'pako deflate (from Nodeca project)';
 

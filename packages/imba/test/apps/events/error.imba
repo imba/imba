@@ -27,7 +27,7 @@ tag app-root
 		console.info "AppError",e.error,e.detail
 
 	def render
-		<self
+		<self 
 			@error(AppError).trap=handle-error
 			@error.trap=console.info('Error')
 			# @error.trap=console.info('Error',e.error,e.detail)
@@ -45,10 +45,11 @@ imba.mount <app-root>
 
 describe "@error" do
 
+
 	test('specific error type') do
 		await spec.click("button.edit")
 		eq $1.log, ['AppError']
-
+	
 	test('regular error') do
 		await spec.click("button.call")
 		eq $1.log, ['Error']

@@ -33,7 +33,7 @@ You don't need to use CSS files, because of the powerful scoping of [Imba styles
 
 ### `utils.imba`
 
-To showcase logic without any front end interactions, there's a simple example `src/utils.imba` has in-source testing and
+To showcase logic without any front end interactions, there's a simple example `src/utils.imba` has in-source testing and 
 
 ### `tests/`
 

@@ -92,7 +92,7 @@ export class Compilation
 		self
 
 	def recompile o = {}
-		# cache
+		# cache 
 		if deserialized
 			let js = deserialized.js
 			let res = {}
@@ -110,28 +110,28 @@ export class Compilation
 		let item = new Diagnostic(params,self)
 		diagnostics.push item
 		return item
-
+	
 	get errored?
 		errors.length > 0
-
+	
 	get errors
 		diagnostics.filter do $1.severity == DiagnosticSeverity.Error
-
+	
 	get warnings
 		diagnostics.filter do $1.severity == DiagnosticSeverity.Warning
 
 	get info
 		diagnostics.filter do $1.severity == DiagnosticSeverity.Information
-
+	
 	get doc
 		#doc ||= new ImbaDocument(null,'imba',0,sourceCode)
 
 	def positionAt offset
 		doc.positionAt(offset)
-
+	
 	def offsetAt position
 		doc.offsetAt(position)
-
+	
 	def rangeAt a,b
 		doc.rangeAt(a,b)
 

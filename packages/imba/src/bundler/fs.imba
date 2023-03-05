@@ -40,7 +40,7 @@ const LOG_COLORS = {
 
 const matchToRegexCache = {}
 
-def matchToRegex str
+def matchToRegex str 
 	matchToRegexCache[str] ||= if true
 		str = str.replace(/(\*\*|\*|\.)/g) do(m,t)
 			if t == '**'
@@ -50,7 +50,7 @@ def matchToRegex str
 			elif t == '.'
 				"\\."
 		new RegExp(str)
-
+		
 # console.log matchToRegex("*.imba$")
 # console.log matchToRegex("*.(imba|js|cjs)$")
 
@@ -86,7 +86,7 @@ export class FSTree < Array
 			for own key, res of #cache
 				res.remove(node)
 		return self
-
+	
 export class FSNode
 
 	static def create root, src, abs
@@ -121,7 +121,7 @@ export class FSNode
 
 	get log
 		self.root.log
-
+	
 	get program
 		self.root.program
 
@@ -141,6 +141,7 @@ export class FSNode
 		let cache = program.cache
 		cache.memo("{abs}:{key}",mtimesync,cb)
 
+
 	def watch observer
 		#watchers.add(observer)
 		if #watched =? yes
@@ -153,7 +154,7 @@ export class FSNode
 		if flags |=? FLAGS.REGISTERED
 			root.#tree.add(self)
 		self
-
+	
 	def deregister
 		if flags ~=? FLAGS.REGISTERED
 			# console.log 'now deregistering node',rel
@@ -182,7 +183,7 @@ export class FSNode
 			program.watcher.unwatch(abs)
 			# console.log 'unwatch',abs
 
-#
+# 
 export class FSProxyNode
 
 export class DirNode < FSNode
@@ -198,7 +199,7 @@ export class FileNode < FSNode
 
 	get reldir
 		rel.slice(0,rel.lastIndexOf('/') + 1)
-
+	
 	get absdir
 		abs.slice(0,abs.lastIndexOf(np.sep) + 1)
 
@@ -208,7 +209,7 @@ export class FileNode < FSNode
 	# resolve path relative to file - return rich FSNode
 	def lookup path
 		throw "Not implemented"
-
+		
 		let o = {
 			importer: abs
 			resolveDir: absdir
@@ -219,7 +220,7 @@ export class FileNode < FSNode
 		if res and res.#abs
 			return root.lookup(res.#abs)
 		return null
-
+	
 	def write body, hash
 		if !hash or (#hash =? hash)
 			await nodefs.promises.mkdir(absdir,recursive: true)
@@ -238,7 +239,7 @@ export class FileNode < FSNode
 
 	def read enc = 'utf8'
 		#body or nodefs.promises.readFile(abs,enc)
-
+	
 	def readSync enc = 'utf8'
 		#body ||= nodefs.readFileSync(abs,enc)
 
@@ -263,6 +264,7 @@ export class FileNode < FSNode
 	def extractStarPattern pat
 		let regex = new RegExp(pat.replace(/\*/g,'([^\/]+)'))
 		return (rel.match(regex) or []).slice(1)
+
 
 export class SourceMapFile < FileNode
 
@@ -328,6 +330,7 @@ export class Imba1File < FileNode
 			log.success 'compile %path in %ms',rel,Date.now! - t
 			return out
 
+
 export class SVGFile < FileNode
 
 	def compile o
@@ -369,7 +372,7 @@ export class HTMLFile < FileNode
 
 				code.push "import ref{i} from '{path}';"
 				refs.push("ref{i}")
-
+			
 			const str = JSON.stringify(parsed.contents)
 
 			code.push "export const URLS = [{refs.join(',')}];"
@@ -406,13 +409,13 @@ export class JSONFile < FileNode
 		super
 
 	def load
-		try
+		try 
 			raw = readSync!
 			data = JSON.parse(raw)
 		catch
 			data = {}
 		return self
-
+		
 	def save
 		let out = JSON.stringify(data,null,2)
 		if out != raw
@@ -446,7 +449,7 @@ export default class FileSystem < Component
 			if existsCache[src] != undefined
 				return existsCache[src]
 			return existsCache[src] = nodefs.existsSync(resolve(src))
-
+	
 	def lookup src, typ = FileNode
 		src = relative(src)
 		nodemap[src] ||= typ.create(self,src,resolve(src))
@@ -489,21 +492,21 @@ export default class FileSystem < Component
 		changelog.mark(src)
 		lookup(src).touch!
 		emit('change')
-
+		
 	def addFile src
 		changelog.mark(src)
 		lookup(src).register!
 		emit('change')
-
+		
 	def removeFile src
 		changelog.mark(src)
 		lookup(src).deregister!
 		emit('change')
-
+		
 	def prescan items = null
 		return #files if #files
 		#files = items or crawl!
-
+		
 		for item in #files
 			let li = item.lastIndexOf('.')
 			let ext = li == -1 ? '.*' : item.slice(li)
@@ -511,7 +514,7 @@ export default class FileSystem < Component
 			map.push(item)
 		# should we drop the abspart here?
 		return #files
-
+	
 	def reset
 		#files = null
 		self
@@ -525,7 +528,7 @@ export default class FileSystem < Component
 
 		if match isa RegExp and !ignore
 			return sources.filter do match.test($1.rel)
-
+		
 		elif typeof match == 'string'
 			if match.indexOf('*') >= 0
 				match = [match]
@@ -538,7 +541,7 @@ export default class FileSystem < Component
 			match = ['*']
 
 		let res = micromatch(sources.paths,match,ignore: ignore)
-
+		
 		return new FSTree(...res.map(do nodemap[$1]))
 
 	def find regex, ext = null
@@ -551,7 +554,7 @@ export default class FileSystem < Component
 		if ext isa Array
 			for item in ext
 				sources = sources.concat(#files['.' + item] or [])
-
+		
 		return sources.filter do regex.test($1)
 
 	# scanning through the files that are already loaded into the filesystem
@@ -581,6 +584,8 @@ export default class FileSystem < Component
 		yes
 
 	def crawl o = {}
+		
+			
 
 		# let sep = path.sep
 		let slice = cwd.length + 1
@@ -607,7 +612,7 @@ export default class FileSystem < Component
 				maxDepth: 8
 				filters: [filter]
 				exclude: do
-					if $3 == 7
+					if $3 == 7 
 						if o.includeRoots and !o.includeRoots[$1]
 							return yes
 						if o.excludeRoots and o.excludeRoots[$1]
@@ -625,7 +630,7 @@ export default class FileSystem < Component
 			for entry in res
 				let absdir = entry.dir
 				let reldir = absdir.slice(slice)
-
+				
 				let dir = nodemap[reldir] ||= new DirNode(self,reldir,absdir)
 
 				for f in entry.files

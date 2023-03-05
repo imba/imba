@@ -24,7 +24,7 @@ describe 'Object spread' do
 	test do
 		let o = {a:0,...a}
 		eq o.a, 1
-
+	
 	test do
 		let o = {...a,a:2}
 		eq o.a, 2

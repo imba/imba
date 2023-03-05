@@ -1,9 +1,10 @@
 
-tag App
 
+tag App
+	
 	def resized e,typ
 		log 'resized!!',typ
-
+	
 	<self>
 		"App"
 		<global @resize.throttle(250ms)=resized(e,'throttled')>

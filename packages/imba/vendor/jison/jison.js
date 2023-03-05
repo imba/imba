@@ -169,6 +169,7 @@ function processOperators (ops) {
     return operators;
 }
 
+
 generator.buildProductions = function buildProductions(bnf, productions, nonterminals, symbols, operators) {
     // Because of the switch limits in v8 this should probably be split into several methods for the different ranges
 
@@ -234,6 +235,7 @@ generator.buildProductions = function buildProductions(bnf, productions, nonterm
     actions = actions.join("\n")
                 .replace(/YYABORT/g, 'return false')
                 .replace(/YYACCEPT/g, 'return true');
+
 
     var yyvalParam = "this";
     var parameters = "self, yytext, yy, yystate /* action[1] */, $$ /* vstack */";
@@ -346,6 +348,8 @@ generator.buildProductions = function buildProductions(bnf, productions, nonterm
     }
 };
 
+
+
 generator.createParser = function createParser () {
     throw new Error('Calling abstract method.');
 };
@@ -378,6 +382,8 @@ var generatorDebug = {
         });
     }
 };
+
+
 
 /*
  * Mixin for common behaviors of lookahead parsers
@@ -555,6 +561,7 @@ lookaheadMixin.nullable = function nullable (symbol) {
         return this.nonterminals[symbol].nullable;
     }
 };
+
 
 // lookahead debug mixin
 var lookaheadDebug = {
@@ -965,6 +972,7 @@ lrGeneratorMixin.generateModule = function generateModule (opt) {
     return out;
 };
 
+
 lrGeneratorMixin.generateModuleExpr = function generateModuleExpr () {
     var out = '';
     var module = this.generateModule_();
@@ -1299,17 +1307,19 @@ parser.parse = function parse (input, script = null) {
             var tsym = lexer.yytext;
             var lastToken = tsym;
             var tok = self.terminals_[symbol] || symbol;
-
+            
             // Find closest non-generated token
             let tidx = lexer.tokens.indexOf(tsym);
             let ttok = tsym;
             while(ttok && ttok._loc == -1){
                 ttok = lexer.tokens[--tidx];
             }
-
+            
             var tloc = ttok ? ttok._loc : -1;
             var tend = tloc > -1 ? (tloc + (ttok._len || 0)) : -1;
             var tpos = tloc != -1 ? "[" + ttok._loc + ":" + ttok._len + "]" : '[0:0]';
+            
+            
 
             if (lexer.showPosition) {
                 errStr = 'Parse error at '+(tpos)+":\n"+lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + (tok)+ "'";
@@ -1319,7 +1329,7 @@ parser.parse = function parse (input, script = null) {
             }
 
             if(script){
-
+                
                 let err = script.addDiagnostic('error',{
                     message: errStr,
                     source: 'imba-parser',
@@ -1368,6 +1378,7 @@ parser.parse = function parse (input, script = null) {
         recovering = 3; // allow 3 real symbols to be shifted before reporting a new error
     }
 
+
     var __sym = this.symbols_;
     var __prod = this.productions_;
 
@@ -1390,7 +1401,7 @@ _handle_error:
                 stack.push(symbol);
                 stack.push(action[1]); // push state
                 vstack.push(lexer.yytext);
-
+                
                 symbol = null;
                 if (!preErrorSymbol) { // normal execution/no error
                     yytext = lexer.yytext;
@@ -1621,6 +1632,7 @@ var SLRGenerator = exports.SLRGenerator = lrLookaheadGenerator.construct({
         return this.nonterminals[item.production.symbol].follows;
     }
 });
+
 
 /*
  * LR(1) Parser

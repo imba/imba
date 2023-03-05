@@ -10,7 +10,7 @@ tag example-app
 			<input.bool bind=state.bool type='checkbox'>
 			<p> "Boolean is {state.bool}"
 
-			#
+			# 
 			<input.value bind=state.status value='something' type='checkbox'>
 			<p> "Status is {state.status}"
 
@@ -37,6 +37,7 @@ test 'bool' do
 	eq state.bool, true
 	await spec.click('.bool')
 	eq state.bool, false
+
 
 test 'with value' do
 	await spec.click('[value=imba]')

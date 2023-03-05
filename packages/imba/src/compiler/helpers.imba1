@@ -11,7 +11,7 @@ var ansiMap =
 	inverse: [7, 27],
 	hidden: [8, 28],
 	strikethrough: [9, 29]
-
+	
 	black: [30, 39],
 	red: [31, 39],
 	green: [32, 39],
@@ -21,7 +21,7 @@ var ansiMap =
 	cyan: [36, 39],
 	white: [37, 39],
 	gray: [90, 39],
-
+	
 	redBright: [91, 39],
 	greenBright: [92, 39],
 	yellowBright: [93, 39],
@@ -48,6 +48,7 @@ ansi:error = ansi:red
 import toImbaIdentifier,toJSIdentifier from '../utils/identifiers.imba'
 
 var GreekLetters = "αβγδεζηθικλμνξοπρστυφχψω"
+
 
 export def brace str
 	var lines = str.match(/\n/)
@@ -97,7 +98,7 @@ export def dashToCamelCase str
 export def snakeCase str
 	var str = str.replace(/([\-\s])(\w)/g,'_')
 	str.replace(/()([A-Z])/g,"_$1") do |m,v,l| l.toUpperCase
-
+		
 export def dasherize str
 	str.replace(/([a-z\d])([A-Z])/g,"$1-$2").toLowerCase
 
@@ -116,7 +117,7 @@ export def isValidIdentifier str
 export def toValidIdentifier str
 	return toJSIdentifier(str)
 	str.replace(/[-\?]/g,'$') # .replace(/\?/g,'θ')
-
+	
 export def fromValidIdentifier str
 	return toImbaIdentifier(str)
 	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
@@ -126,21 +127,22 @@ export def isSystemIdentifier str
 
 export def symbolize str, stack
 	str = String(str)
-
+	
 	return toValidIdentifier(str)
 
 	if stack and stack.tsc or true
 		return str
-
+		
 	var end = str.charAt(str:length - 1)
-
+	
 	if end == '?'
 		str = 'is' + str[0].toUpperCase + str.slice(1,-1)
 
 	if str.indexOf("-") >= 0
 		str = str.replace(/([\-\s])(\w)/g) do |m,v,l| l.toUpperCase
-
+			
 	return str
+
 
 export def indent str
 	String(str).replace(/^/g,"\t").replace(/\n/g,"\n\t").replace(/\n\t$/g,"\n")
@@ -148,7 +150,7 @@ export def indent str
 export def bracketize str, ind = yes
 	str = "\n" + indent(str) + "\n" if ind
 	'{' + str + '}'
-
+	
 export def parenthesize str
 	'(' + String(str) + ')'
 
@@ -171,6 +173,8 @@ export def unionOfLocations *locs
 			b = loc if b < loc
 
 	return [a,b]
+				
+
 
 export def locationToLineColMap code
 	# TODO support windows
@@ -268,7 +272,7 @@ export def parseArgs argv, o = {}
 				val.push(arg)
 			else
 				options[curr] = arg
-
+			
 			unless desc and desc:multi
 				curr = 'main'
 
@@ -287,7 +291,7 @@ export def parseArgs argv, o = {}
 		options["ENV_{options:env}"] = yes
 
 	return options
-
+	
 export def printExcerpt code, loc, hl: no, gutter: yes, type: 'warn', pad: 2
 	var lines  = code.split(/\n/g)
 	var locmap = locationToLineColMap(code)

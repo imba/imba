@@ -22,13 +22,14 @@ extend class Event
 
 	get #modifierState
 		#context[#context.step] ||= {}
-
+		
 	get #sharedModifierState
 		#context.handler[#context.step] ||= {}
-
+		
+		
 	def #onceHandlerEnd cb
 		once(#context,'end',cb)
-
+		
 	def @sel selector
 		return !!target.matches(String(selector))
 
@@ -50,7 +51,7 @@ extend class Event
 
 	def @self
 		return target == #context.element
-
+	
 	def @cooldown time = 250
 		let o = #sharedModifierState
 
@@ -120,18 +121,18 @@ extend class Event
 	# or at least 250ms
 	def @flag name, sel
 		const {element,step,state,id,current} = #context
-
+	
 		let el = sel isa Element ? sel : (sel ? element.closest(sel) : element)
 
 		return true unless el
 
 		#context.commit = yes
-
+	
 		state[step] = id
 		el.flags.incr(name)
 
 		let ts = Date.now!
-
+		
 		once(current,'end') do
 			let elapsed = Date.now! - ts
 			let delay = Math.max(250 - elapsed,0)
@@ -141,7 +142,7 @@ extend class Event
 
 	def @busy sel
 		# TODO REMOVE
-		# Add via
+		# Add via 
 		self['αflag']('busy',sel)
 
 	def @outside
@@ -149,6 +150,7 @@ extend class Event
 		const {handler} = #context
 		if handler and handler.#self
 			return !handler.#self.parentNode.contains(target)
+
 
 export const events = {}
 
@@ -177,16 +179,16 @@ export class EventHandler
 	def on name, ...params do listen(self,name,...params)
 	def once name, ...params do once(self,name,...params)
 	def un name, ...params do unlisten(self,name,...params)
-
+		
 	get passive?
 		params.passive
-
+		
 	get capture?
 		params.capture
-
+		
 	get silent?
 		params.silent
-
+		
 	get global?
 		params.global
 
@@ -197,7 +199,7 @@ export class EventHandler
 		# let awaited = no
 		let error = null
 		let silence = mods.silence or mods.silent
-
+		
 		self.count ||= 0
 		self.state ||= {}
 
@@ -213,7 +215,7 @@ export class EventHandler
 			current: null
 			aborted: no
 		}
-
+		
 		# console.log 'handling event',event.target,event.currentTarget
 
 		state.current = state
@@ -223,12 +225,12 @@ export class EventHandler
 				return
 
 		let guard = Event[self.type + '$handle'] or Event[event.type + '$handle'] or event.handle$mod or self.guard
-
+			
 		if guard and guard.apply(state,mods.options or []) == false
 			return
-
-		# let object = state.proxy or event
-
+		
+		# let object = state.proxy or event 
+		
 		self.currentEvents ||= new Set
 		self.currentEvents.add(state)	
 
@@ -242,7 +244,7 @@ export class EventHandler
 
 			if handler.indexOf('~') > 0
 				handler = handler.split('~')[0]
-
+			
 			let modargs = null
 			let args = [event,state]
 			let res = undefined
@@ -250,11 +252,11 @@ export class EventHandler
 			let m
 			let negated = no
 			let isstring = typeof handler == 'string'
-
+			
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
 				# handlers should commit by default
 				handler = val[0]
-				state.commit = yes unless handler.passive #
+				state.commit = yes unless handler.passive # 
 				args = [event,state].concat(val.slice(1))
 				context = element
 
@@ -321,7 +323,7 @@ export class EventHandler
 				let fn = event[path]
 				fn ||= (self.type and Event[self.type + '$' + handler + '$mod'])
 				fn ||= event[handler + '$mod'] or Event[event.type + '$' + handler] or Event[handler + '$mod']
-
+				
 				if fn isa Function
 					handler = fn
 					context = state
@@ -338,7 +340,7 @@ export class EventHandler
 				else
 					# TODO deprecate this functionality and warn about it?
 					context = self.getHandlerForMethod(element,handler)
-
+			
 			try
 				if handler isa Function
 					res = handler.apply(context or element,args)
@@ -358,7 +360,7 @@ export class EventHandler
 				break
 
 			state.value = res
-
+		
 		emit(state,'end',state)
 
 		scheduler.commit! if state.commit and !silence
@@ -367,7 +369,7 @@ export class EventHandler
 		if self.currentEvents.size == 0
 			self.emit('idle')
 		# what if the result is a promise
-
+		
 		if error != undefined
 			if self.type != 'error'
 				let detail = error isa Error ? error.message : error
@@ -383,6 +385,7 @@ export class EventHandler
 			throw error
 
 		return
+
 
 # Add methods to Element
 extend class Element

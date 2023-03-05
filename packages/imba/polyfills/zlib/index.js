@@ -52,6 +52,7 @@ binding.Z_MIN_LEVEL = -1;
 binding.Z_MAX_LEVEL = 9;
 binding.Z_DEFAULT_LEVEL = binding.Z_DEFAULT_COMPRESSION;
 
+
 // translation table for return codes.
 export var codes = {
   Z_OK: binding.Z_OK,
@@ -96,6 +97,7 @@ export function createGunzip(o) {
 export function createUnzip(o) {
   return new Unzip(o);
 }
+
 
 // Convenience methods.
 // compress/decompress a string or buffer in one step.
@@ -239,6 +241,8 @@ export function Inflate(opts) {
   Zlib.call(this, opts, binding.INFLATE);
 }
 
+
+
 // gzip - bigger header, same deflate compression
 export function Gzip(opts) {
   if (!(this instanceof Gzip)) return new Gzip(opts);
@@ -249,6 +253,8 @@ export function Gunzip(opts) {
   if (!(this instanceof Gunzip)) return new Gunzip(opts);
   Zlib.call(this, opts, binding.GUNZIP);
 }
+
+
 
 // raw - no header
 export function DeflateRaw(opts) {
@@ -261,11 +267,13 @@ export function InflateRaw(opts) {
   Zlib.call(this, opts, binding.INFLATERAW);
 }
 
+
 // auto-detect header.
 export function Unzip(opts) {
   if (!(this instanceof Unzip)) return new Unzip(opts);
   Zlib.call(this, opts, binding.UNZIP);
 }
+
 
 // the Zlib class they all inherit from
 // This thing manages the queue of requests, and returns

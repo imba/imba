@@ -45,6 +45,8 @@ export var ASSIGNMENT_OPERATORS = {
 	'~=?': yes
 }
 
+
+
 # The inverse mappings of `BALANCED_PAIRS` we're trying to fix up, so we can
 # look things up from either end.
 export var INVERSES = {}
@@ -59,6 +61,7 @@ for pair in BALANCED_PAIRS
 	INVERSES[rite] = left
 	INVERSES[left] = rite
 	BALANCED_PAIRS[left] = rite
+
 
 export var ALL_KEYWORDS = [
 	'true', 'false', 'null', 'this',
@@ -78,13 +81,13 @@ export var TOK =
 	DEF_BODY: 'DEF_BODY'
 	THEN: 'THEN'
 	CATCH: 'CATCH'
-
+	
 export var OPERATOR_ALIASES =
 	and: '&&'
 	or: '||'
 	is: '=='
 	isnt: '!='
-	isa: 'instanceof'
+	isa: 'instanceof' 
 
 export var HEREGEX_OMIT = /\s+(?:#.*)?/g
 export var HEREGEX = /// ^ /{3} ([\s\S]+?) /{3} ([a-z]{0,8}) (?!\w) ///

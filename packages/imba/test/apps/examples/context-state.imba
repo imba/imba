@@ -9,6 +9,7 @@ def functional-tag item
 	# console.log 'called functional tag',item,imba.renderContext.context
 	<div> <page-item item=item>
 
+
 tag page-item
 	def render
 		let list = #context.items
@@ -16,6 +17,7 @@ tag page-item
 			<span> "Item"
 			<span> item.title
 			<span> "item {list.indexOf(item)+1} of {list.length} in page {#context.page.title}"
+
 
 tag page-list
 
@@ -44,6 +46,8 @@ tag app-page
 				functional-tag(page.items[0])
 			<page-panel> <page-item item=page.items[0]>
 
+
+
 tag app-root
 
 	get toplevel
@@ -54,6 +58,7 @@ tag app-root
 			<div> "app"
 			for page in pages
 				<app-page page=page>
+
 
 let app = <app-root>
 imba.mount app

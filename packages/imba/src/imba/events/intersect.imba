@@ -16,17 +16,17 @@ def Event.intersect$handle
 	return modifiers._observer == obs
 
 class IntersectionEvent < CustomEvent
-
+	
 	def @in
 		return delta >= 0 and entry.isIntersecting
-
+		
 	def @out
 		return delta < 0 # and entry.isIntersecting
-
+		
 	def @css name = 'ratio'
 		target.style.setProperty("--ratio",ratio)
 		return yes
-
+	
 	def @flag name, sel
 		let {state,step} = #context
 		let el = helpers.toElement(sel or '',target)
@@ -39,10 +39,11 @@ class IntersectionEvent < CustomEvent
 			state[step] = no
 		return yes
 
+
 def callback name, key
 	return do(entries,observer)
 		let map = observer.prevRatios ||= new WeakMap
-
+		
 		for entry in entries
 			let prev = map.get(entry.target) or 0
 			let ratio = entry.intersectionRatio
@@ -71,7 +72,7 @@ extend class Element
 	def on$intersect mods,context,handler,o
 		let obs
 		if mods.options
-			let th = []
+			let th = [] 
 			let opts = {threshold:th}
 
 			for arg in mods.options
@@ -83,7 +84,7 @@ extend class Element
 					opts.rootMargin = arg
 				elif typeof arg == 'object'
 					Object.assign(opts,arg)
-
+					
 			if th.length == 1
 				let num = th[0]
 				if num > 1

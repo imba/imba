@@ -1,4 +1,5 @@
 
+
 export const renderContext = {
 	context: null
 
@@ -24,7 +25,7 @@ export class RenderContext < Map
 
 	def pop
 		renderContext.context = null
-
+	
 	def #getRenderContext sym
 		let out = self.get(sym)
 		out || self.set(sym,out = new RenderContext(self._,sym))

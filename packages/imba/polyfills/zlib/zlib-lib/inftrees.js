@@ -115,6 +115,7 @@ export default function inflate_table(type, lens, lens_index, codes, table, tabl
     //table.val[opts.table_index++] = 0;   //here.val = (var short)0;
     table[table_index++] = (1 << 24) | (64 << 16) | 0;
 
+
     //table.op[opts.table_index] = 64;
     //table.bits[opts.table_index] = 1;
     //table.val[opts.table_index++] = 0;

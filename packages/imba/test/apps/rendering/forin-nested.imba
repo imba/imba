@@ -11,6 +11,8 @@ tag App
 				for label in item.labels
 					<div.label> label
 
+
+
 test "basic nested loops" do
 	imba.mount(let app = <App>)
 	await spec.tick()
@@ -30,7 +32,7 @@ describe "Access to context immediately" do
 			if bool
 				for item in [1]
 					<Item>
-
+		
 	test "basics" do
 		imba.mount(let app = <App>)
 		await spec.tick()

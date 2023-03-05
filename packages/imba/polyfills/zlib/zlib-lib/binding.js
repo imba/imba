@@ -4,6 +4,7 @@ import {deflateInit2, deflateEnd, deflateReset, deflate} from './deflate';
 import {inflateInit2, inflate, inflateEnd, inflateReset} from './inflate';
 // import constants from './constants';
 
+
 // zlib modes
 export var NONE = 0;
 export var DEFLATE = 1;
@@ -39,6 +40,7 @@ export var Z_NO_FLUSH=         0,
   Z_BEST_SPEED=             1,
   Z_BEST_COMPRESSION=       9,
   Z_DEFAULT_COMPRESSION=   -1,
+
 
   Z_FILTERED=               1,
   Z_HUFFMAN_ONLY=           2,

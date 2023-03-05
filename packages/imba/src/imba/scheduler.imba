@@ -2,7 +2,7 @@
 let rAF = global.requestAnimationFrame || (do(blk) global.setTimeout(blk,1000 / 60))
 let FPS = 60
 let SPF = 1 / 60
-
+		
 # Scheduler
 class Scheduled
 	owner = null
@@ -72,7 +72,7 @@ export class Scheduler
 		#frames = 0
 		#scheduled = no
 		#version = 0
-
+		
 		self.listeners = {}
 		self.intervals = {}
 		self.commit = do
@@ -100,7 +100,7 @@ export class Scheduler
 
 		#schedule! unless #scheduled
 		return self
-
+	
 	get committing?
 		self.queue.indexOf('commit') >= 0
 
@@ -187,7 +187,7 @@ export class Scheduler
 			state.deactivate!
 		self
 
-export const scheduler = new Scheduler
+export const scheduler = new Scheduler 
 
 export def commit
 	scheduler.add('commit').promise

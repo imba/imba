@@ -1,6 +1,6 @@
 class Item
 	changes = 0
-
+	
 	###
 	when you supply a second argument to a setter - it defaults
 	to the value of the same getter. Useful for setters where you
@@ -20,7 +20,7 @@ class Item
 		if val != prev
 			changes++
 			#value = val
-
+	
 	get value
 		#value
 

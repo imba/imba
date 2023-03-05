@@ -16,6 +16,8 @@ declare namespace imbacss {
 
     }
 
+
+
     interface ΨlineΞwidth {
         thin: 'thin'
         medium: 'medium'
@@ -141,6 +143,7 @@ declare namespace imbacss {
         /** @detail 8px */ xl: '8px';
     }
 
+
     interface Ψspacing {
 
     }
@@ -149,7 +152,7 @@ declare namespace imbacss {
 
     }
 
-    /**
+    /** 
      * @detail justify-(items+content)
      * @custom
      * @deprecated
@@ -208,8 +211,9 @@ declare namespace imbacss {
     /** @proxy transition */
     interface tween extends transition { }
 
-    /**
-     * Shorthand for setting transform translateX()
+
+    /** 
+     * Shorthand for setting transform translateX() 
      * @detail transform: translateX(...)
      * @custom
      **/
@@ -217,7 +221,7 @@ declare namespace imbacss {
         set(val: Ψnumber): void;
     }
 
-    /**
+    /** 
      * Shorthand for setting transform translateY()
      * @detail transform: translateY(...)
      * @custom
@@ -226,7 +230,7 @@ declare namespace imbacss {
 
     }
 
-    /**
+    /** 
      * Shorthand for setting transform translateZ()
      * @detail transform: translateZ(...)
      * @custom
@@ -235,7 +239,7 @@ declare namespace imbacss {
 
     }
 
-    /**
+    /** 
      * Shorthand for setting transform skewX()
      * @detail transform: skewX(...)
      * @custom
@@ -243,15 +247,15 @@ declare namespace imbacss {
     interface skewΞx extends _ {
         set(val: Ψnumber): void;
     }
-    /**
-     * Shorthand for setting transform skewY()
+    /** 
+     * Shorthand for setting transform skewY() 
      * @detail transform: skewY(...)
      * @custom
      * */
     interface skewΞy extends _ {
         set(val: Ψnumber): void;
     }
-    /**
+    /** 
      * Shorthand for setting transform scaleX()
      * @detail transform: scaleX(...)
      * @custom
@@ -259,15 +263,15 @@ declare namespace imbacss {
     interface scaleΞx extends _ {
         set(val: Ψnumber): void;
     }
-    /**
-     * Shorthand for setting transform scaleY()
+    /** 
+     * Shorthand for setting transform scaleY() 
      * @detail transform: scaleY(...)
      * @custom
      * */
     interface scaleΞy extends _ {
         set(val: Ψnumber): void;
     }
-    /**
+    /** 
      * Shorthand for setting transform scale()
      * @detail transform: scale(...)
      * @custom
@@ -275,8 +279,8 @@ declare namespace imbacss {
     interface scale extends _ {
         set(val: Ψnumber): void;
     }
-    /**
-     * Shorthand for setting transform rotate()
+    /** 
+     * Shorthand for setting transform rotate() 
      * @detail transform: rotate(...)
      * @custom
      * */
@@ -298,7 +302,7 @@ declare namespace imbacss {
     /** @proxy ease */ interface e extends ease { }
     /** @proxy ease */ interface ea extends ease { }
 
-    /**
+    /** 
      * Transition duration for all properties
      * @custom
      * @alias ead
@@ -307,7 +311,7 @@ declare namespace imbacss {
         set(duration: Ψtime): void;
     }
 
-    /**
+    /** 
      * Transition timing function for all properties
      * @custom
      * @alias eaf
@@ -315,7 +319,7 @@ declare namespace imbacss {
     interface easeΞallΞfunction extends _ {
         set(timing: ΨtimingΞfunction): void;
     }
-    /**
+    /** 
      * Transition delay for all properties
      * @custom
      * @alias eaw
@@ -327,10 +331,10 @@ declare namespace imbacss {
     /** @proxy easeΞallΞduration */ interface ead extends easeΞallΞduration {}
     /** @proxy easeΞallΞfunction */ interface eaf extends easeΞallΞfunction {}
     /** @proxy easeΞallΞdelay */ interface eaw extends easeΞallΞdelay {}
-
+    
     /** Shorthand for ease-colors-duration, function, and delay.
      * Applies to color properties (color,background-color,
-     * border-color,outline-color,fill,stroke,box-shadow)
+     * border-color,outline-color,fill,stroke,box-shadow) 
      * @alias ec
     */
     interface easeΞcolors extends ease {
@@ -359,6 +363,7 @@ declare namespace imbacss {
     /** @proxy easeΞopacityΞfunction */ interface eof extends easeΞopacityΞfunction {}
     /** @proxy easeΞopacityΞdelay */ interface eow extends easeΞopacityΞdelay {}
 
+
     /** Shorthand for ease-box-duration, function, and delay.
      * Applies to dimensions (top,left,right,bottom,width,
      * height,max-width,max-height,padding,margin,border-width,
@@ -376,6 +381,8 @@ declare namespace imbacss {
     /** @proxy easeΞboxΞfunction */ interface ebf extends easeΞboxΞfunction {}
     /** @proxy easeΞboxΞdelay */ interface ebw extends easeΞboxΞdelay {}
 
+
+
     /** Shorthand for ease-transform-duration, function, and delay.
      * Applies to transforms (matrix,matrix3d,perspective,rotate,
      * rotate3d,rotateX,rotateY,rotateZ,translate,translate3d,
@@ -385,7 +392,7 @@ declare namespace imbacss {
     */
     interface easeΞtransform extends ease {
     }
-
+    
     /** @alias etd */ interface easeΞtransformΞduration extends easeΞallΞduration {}
     /** @alias etf */ interface easeΞtransformΞfunction extends easeΞallΞfunction {}
     /** @alias etw */ interface easeΞtransformΞdelay extends easeΞallΞdelay {}
@@ -394,7 +401,8 @@ declare namespace imbacss {
     /** @proxy easeΞtransformΞfunction */ interface etf extends easeΞtransformΞfunction {}
     /** @proxy easeΞtransformΞdelay */ interface etw extends easeΞtransformΞdelay {}
 
-    /**
+    
+    /** 
      * Set color alias
      * @custom
      * */
@@ -475,5 +483,7 @@ declare namespace imbacss {
 	/** @proxy borderΞyΞwidth */ interface bwy extends borderΞyΞwidth { }
     /** @proxy borderΞyΞcolor */ interface bcy extends borderΞyΞcolor { }
     /** @proxy borderΞyΞstyle */ interface bsy extends borderΞyΞstyle { }
+
+
 
 }

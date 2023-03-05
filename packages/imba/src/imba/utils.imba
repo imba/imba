@@ -8,13 +8,13 @@ export class LazyProxy
 
 	def constructor getter
 		getter = getter
-
+	
 	get target
 		getter!
 
 	def get _, key
 		target[key]
-
+	
 	def set _, key, value
 		target[key] = value
 		return true
@@ -36,6 +36,7 @@ export def parseTime value
 			return parseFloat(value)
 	# throw or return NaN?
 	return null
+	
 
 export def toCamelCase str
 	if str.indexOf('-') >= 0
@@ -44,7 +45,7 @@ export def toCamelCase str
 		str
 
 export def getDeepPropertyDescriptor item, key, stop
-
+	
 	if !item
 		return undefined
 
@@ -52,7 +53,7 @@ export def getDeepPropertyDescriptor item, key, stop
 
 	if desc or item == stop
 		return desc or undefined
-
+		
 	getDeepPropertyDescriptor(Reflect.getPrototypeOf(item),key,stop)
 
 # Basic events - move to separate file?

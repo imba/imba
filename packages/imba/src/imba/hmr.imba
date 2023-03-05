@@ -24,14 +24,15 @@ class DevTools
 			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
 			if match and url != match
 				sheet.ownerNode.href = match
-
+		
 		let scripts = Object.keys(global.IMBA_LOADED or {})
+
 
 		for url in scripts
 			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
 			if match and url != match and urls.indexOf(url) == -1
 				dirty.js.push([url,match])
-
+		
 		# console.log "refreshed",manifest,dirty
 		if dirty.js.length
 			global.document.location.reload!
@@ -81,7 +82,7 @@ class DevTools
 		socket.addEventListener("reload") do(e)	
 			log 'asked to reload by server'
 			global.document.location.reload!
-
+		
 		socket.onerror = do(e)
 			log 'hmr disconnected',e
 

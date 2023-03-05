@@ -22,3 +22,4 @@ describe "@event.cooldown" do
 		await spec.click(".b")
 		await spec.click(".b")
 		eq $1.log, ['b','done','b','b']
+		

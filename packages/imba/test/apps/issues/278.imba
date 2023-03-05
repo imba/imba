@@ -2,7 +2,7 @@ tag app-foo
 	def render
 		<self>
 			<h1> "FOO"
-
+			
 tag app-bar
 	def render
 		<self>
@@ -38,3 +38,4 @@ test do
 	app.render()
 	ok document.querySelector('app-root div + app-foo')
 	ok document.querySelector('app-bar') == null
+	

@@ -22,12 +22,12 @@ class One
 
 	def destruct {a,b,c} = {a:1,b:2,c:3}
 		yes
-
+	
 	def filter
 		sources.filter do(item\One)
 			item.refs.length > 1
 			item.refs[3].toUpperCase!
-
+	
 	def setup
 		for item in window.stuff\string[]
 			item.toUpperCase!

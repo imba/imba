@@ -62,6 +62,7 @@ Stream.prototype.pipe = function(dest, options) {
     dest.end();
   }
 
+
   function onclose() {
     if (didOnEnd) return;
     didOnEnd = true;

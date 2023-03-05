@@ -31,5 +31,5 @@ test 'cacheable function' do
 
 test 'dynamic tag name' do
 	let typ = 'todo'
-	let el = <{typ}-item title=typ>
+	let el = <{typ}-item title=typ> 
 	ok el.nodeName == 'TODO-ITEM'

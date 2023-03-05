@@ -10,7 +10,7 @@ export const SymbolFlags = {
 	Function:                1 << 4,   # Function
 	Class:                   1 << 5,   # Class
 	LocalComponent:          1 << 6,   # Interface
-	GlobalComponent:         1 << 7,   #
+	GlobalComponent:         1 << 7,   # 
 	RegularEnum:             1 << 8,   #  Enum
 	ValueModule:             1 << 9,   # Instantiated module - file etc
 	Parameter:               1 << 10,  # Uninstantiated module
@@ -28,14 +28,14 @@ export const SymbolFlags = {
 	Prototype:               1 << 22,  # Prototype property (no source representation)
 	ExportStar:              1 << 23,  # Export * declaration
 	Optional:                1 << 24,  # Optional property
-
+	
 	# Modifiers
 	IsSpecial:          1 << 27
 	IsImport:           1 << 28
 	IsStatic:           1 << 29
 	IsGlobal:           1 << 30
 	IsRoot:             1 << 31
-
+	
 }
 
 SymbolFlags.Component = SymbolFlags.LocalComponent | SymbolFlags.GlobalComponent
@@ -81,7 +81,7 @@ export class Sym
 
 	static def forToken tok,type,mods = 0
 		let match = typeMatch(type)
-
+		
 		if match
 			let sym = new self(match[2],tok.value,tok,match[3])
 			return sym
@@ -96,12 +96,13 @@ export class Sym
 		name = name
 		node = node
 		desc = desc
-
+		
 	get importSource
 		return null unless imported?
 		let ctx = node.context.closest('imports')
 		return ctx.sourcePath
 
+		
 	get exportName
 		if node.prev.match('keyword.as')
 			return node.prev.prev.value
@@ -109,7 +110,7 @@ export class Sym
 			'default'
 		else
 			node.value
-
+		
 	get importInfo
 		return null unless imported?
 		let ctx = node.context.closest('imports')
@@ -124,17 +125,17 @@ export class Sym
 		let type = desc and desc.datatype
 		return type if type
 		return #datatype if #datatype
-
+		
 		let next = node and node.nextNode
 		if next and next.type == 'type'
 			return next
-
+			
 		let scope = self.scope
-
+		
 		if scope and desc..kind == 'for'
 			let typ = scope.doc.getDestructuredPath(node,[[scope.expression,'__@iterable']])
 			return #datatype ||= typ
-
+			
 		if let m = importInfo
 			return m
 
@@ -148,10 +149,10 @@ export class Sym
 
 	get variable?
 		flags & SymbolFlags.Variable
-
+	
 	get parameter?
 		flags & SymbolFlags.Parameter
-
+	
 	get member?
 		flags & SymbolFlags.ClassMember
 
@@ -163,7 +164,7 @@ export class Sym
 
 	get global?
 		flags & SymbolFlags.IsGlobal
-
+		
 	get imported?
 		flags & SymbolFlags.IsImport
 
@@ -175,7 +176,7 @@ export class Sym
 
 	get scope
 		node..context..scope
-
+	
 	def addReference node
 		references ||= []
 		references.push(node)
@@ -207,7 +208,7 @@ export class Sym
 			SymbolKind.Function
 		else
 			SymbolKind.Method
-
+	
 	get semanticKind
 		if flags & SymbolFlags.Parameter
 			'parameter'
@@ -240,11 +241,12 @@ export class Sym
 
 		if flags & SymbolFlags.IsRoot
 			mods |= M.Root
-
+		
 		if flags & SymbolFlags.IsSpecial
 			mods |= M.Special
 
 		return mods
+
 
 export class ForVar < Sym
 

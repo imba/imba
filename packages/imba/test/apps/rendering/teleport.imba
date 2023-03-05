@@ -14,10 +14,10 @@ tag App
 		<self.app>
 			<div.bubble @click=clicks.push('bubble')> "Hello"
 			<div.stop @click.stop> "Hello"
-
+			
 			if hasNested
 				<NestedItem>
-
+				
 			# listen to global click event
 			if hasGlobal
 				<global @click=clicks.push('global')> <div.global-div> "Global div"
@@ -32,11 +32,11 @@ test "click" do
 	let app = <App>
 	# should not trigger before clicking
 	await click('body',[])
-
+	
 	imba.mount(app)
 
 	ok document.querySelector('body > .global-div')
-
+	
 	await click('body',['global'])
 	# eq clicks, 1
 	await click('.bubble',['bubble','global'])
@@ -47,7 +47,7 @@ test "click" do
 	app.render!
 	await click('body',[])
 	ok !document.querySelector('body > .global-div')
-
+	
 	hasNested = yes
 	app.render!
 	await click('.app',['app','parent'])

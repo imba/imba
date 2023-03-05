@@ -42,7 +42,7 @@ export def run code, filename: null
 if require:extensions
 	require:extensions['.imba'] = do |mod, sourcePath|
 		var options = {sourcePath: sourcePath, platform: 'node'}
-
+		
 		var body = fs.readFileSync(sourcePath, 'utf8')
 		var content = compile(body, options)
 		return mod._compile (content:js), sourcePath

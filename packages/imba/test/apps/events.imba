@@ -44,7 +44,7 @@ tag app-root
 				<nested-item> "nested"
 
 			<button.i :click.ping(items[0].title)>
-
+			
 			<ul> for item,i in items
 				<li :click.call(item)>
 

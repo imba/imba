@@ -58,6 +58,7 @@ export function format(f) {
   return str;
 };
 
+
 // Mark that a method should not be used.
 // Returns a modified function which warns once by default.
 // If --no-deprecation is set, then it is a no-op.
@@ -91,6 +92,7 @@ export function deprecate(fn, msg) {
   return deprecated;
 };
 
+
 var debugs = {};
 var debugEnviron;
 export function debuglog(set) {
@@ -110,6 +112,7 @@ export function debuglog(set) {
   }
   return debugs[set];
 };
+
 
 /**
  * Echos the value of a value. Trys to print the value out
@@ -174,6 +177,7 @@ inspect.styles = {
   'regexp': 'red'
 };
 
+
 function stylizeWithColor(str, styleType) {
   var style = inspect.styles[styleType];
 
@@ -185,9 +189,11 @@ function stylizeWithColor(str, styleType) {
   }
 }
 
+
 function stylizeNoColor(str, styleType) {
   return str;
 }
+
 
 function arrayToHash(array) {
   var hash = {};
@@ -198,6 +204,7 @@ function arrayToHash(array) {
 
   return hash;
 }
+
 
 function formatValue(ctx, value, recurseTimes) {
   // Provide a hook for user-specified inspect functions.
@@ -311,6 +318,7 @@ function formatValue(ctx, value, recurseTimes) {
   return reduceToSingleString(output, base, braces);
 }
 
+
 function formatPrimitive(ctx, value) {
   if (isUndefined(value))
     return ctx.stylize('undefined', 'undefined');
@@ -329,9 +337,11 @@ function formatPrimitive(ctx, value) {
     return ctx.stylize('null', 'null');
 }
 
+
 function formatError(value) {
   return '[' + Error.prototype.toString.call(value) + ']';
 }
+
 
 function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
   var output = [];
@@ -351,6 +361,7 @@ function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
   });
   return output;
 }
+
 
 function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
   var name, str, desc;
@@ -410,6 +421,7 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
   return name + ': ' + str;
 }
 
+
 function reduceToSingleString(output, base, braces) {
   var numLinesEst = 0;
   var length = output.reduce(function(prev, cur) {
@@ -429,6 +441,7 @@ function reduceToSingleString(output, base, braces) {
 
   return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
 }
+
 
 // NOTE: These type checking functions intentionally don't use `instanceof`
 // because it is fragile and can be easily faked with `Object.create()`.
@@ -502,9 +515,11 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
+
 function pad(n) {
   return n < 10 ? '0' + n.toString(10) : n.toString(10);
 }
+
 
 var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
               'Oct', 'Nov', 'Dec'];
@@ -518,10 +533,12 @@ function timestamp() {
   return [d.getDate(), months[d.getMonth()], time].join(' ');
 }
 
+
 // log is just a thin wrapper to console.log that prepends a timestamp
 export function log() {
   console.log('%s - %s', timestamp(), format.apply(null, arguments));
 }
+
 
 /**
  * Inherit the prototype methods from one constructor into another.

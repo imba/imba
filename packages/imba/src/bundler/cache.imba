@@ -4,12 +4,13 @@ import nfs from 'fs'
 import {createHash} from 'crypto'
 import {idGenerator} from './utils'
 
+
 const hashedKeyCache = {
 
 }
 
 const keyPathCache  = {
-
+	
 }
 import log from '../utils/logger'
 
@@ -22,6 +23,7 @@ export default class Cache
 		aliaspath = dir and np.resolve(dir,'.imba-aliases')
 		aliasmap = []
 		aliascache = {}
+		
 
 		data = {
 			aliases: {}
@@ -133,6 +135,7 @@ export default class Cache
 			console.log "key not added?",key,aliasmap
 			throw "could not add key to aliasmap"
 
+
 	def getKeyValue key
 		let path = fullKeyPath(key)
 		let val = await nodefs.promises.readFile(path,'utf8')
@@ -143,6 +146,7 @@ export default class Cache
 		let path = fullKeyPath(key)
 		let json = JSON.stringify(value)
 		nodefs.promises.writeFile(path,json)
+
 
 	def memo name, time, cb
 		let key = normalizeKey(name)
@@ -159,7 +163,7 @@ export default class Cache
 		# let file = program.fs.lookup(np.resolve(dir,key))
 		# let mtime = file.mtimesync
 		# console.log 'memo',dir,key,keytime,cached && cached.exists
-
+	
 		if keytime > time
 			cached = cache[key] = {
 				time: Date.now!

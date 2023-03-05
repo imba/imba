@@ -1153,3 +1153,4 @@ export class ImbaDocument
 
 		changes.push({newText: out, range: rangeAt(offset,offset)})
 		return result
+

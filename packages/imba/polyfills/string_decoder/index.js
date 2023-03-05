@@ -28,6 +28,7 @@ var isBufferEncoding = Buffer.isEncoding
        }
      }
 
+
 function assertEncoding(encoding) {
   if (encoding && !isBufferEncoding(encoding)) {
     throw new Error('Unknown encoding: ' + encoding);
@@ -74,6 +75,7 @@ export function StringDecoder(encoding) {
   // Number of bytes expected for the current incomplete multi-byte character.
   this.charLength = 0;
 };
+
 
 // write decodes the given buffer and returns it as JS string that is
 // guaranteed to not contain any partial multi-byte characters. Any partial

@@ -29,3 +29,5 @@ test do
 	bool = true
 	app.render()
 	eq app.textContent, "123{title}"
+
+

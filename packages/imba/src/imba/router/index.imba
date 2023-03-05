@@ -41,10 +41,11 @@ export class Router < EventEmitter
 		history = new History(self)
 		mode = o.mode or 'history'
 
+
 		if $web$
 			queue.on 'busy' do
 				global.document.flags.incr('_routing_')
-
+		
 			queue.on 'idle' do
 				global.document.flags.decr('_routing_')
 				commit!
@@ -76,7 +77,7 @@ export class Router < EventEmitter
 		else
 			options[key] = value
 		return self
-
+		
 	get realpath
 		if $web$
 			let loc = #doc.location
@@ -89,7 +90,7 @@ export class Router < EventEmitter
 
 	get states
 		history.currentStates
-
+	
 	set state value
 		if $web$
 			state.data = value
@@ -98,10 +99,10 @@ export class Router < EventEmitter
 
 	get ctx
 		#request
-
+		
 	def pushState state, title, url
 		history.pushState(state,title or null,String(url))
-
+	
 	def replaceState state, title, url
 		history.replaceState(state,title or null,String(url))
 
@@ -149,16 +150,16 @@ export class Router < EventEmitter
 				self.emit('change',req)
 				touch!
 				commit!
-
+		
 		if $web$
-			scheduler.add do
+			scheduler.add do 
 				let hash = #doc.location.hash
 				if hash != #hash
 					self.emit('hashchange',#hash = hash)
 
 		refreshing = no
 		self
-
+	
 	def onpopstate e
 		let from = history.index
 		let to = from
@@ -187,7 +188,7 @@ export class Router < EventEmitter
 		self.emit('beforechange',req)
 		return true if req.aborted
 		return
-
+		
 	def onhashchange e
 		emit('hashchange',#hash = #doc.location.hash)
 		commit!
@@ -199,7 +200,7 @@ export class Router < EventEmitter
 			let win = global.window
 			#hash = #doc.location.hash
 			location = Location.parse(realpath,self)
-
+			
 			win.onpopstate = self.onpopstate.bind(self) # do |e| onpopstate(e)
 			win.onbeforeunload = self.onbeforeunload.bind(self)
 
@@ -208,26 +209,26 @@ export class Router < EventEmitter
 			win.document.documentElement.emit('routerinit',self)
 			refresh
 		self
-
+		
 	def onclick e
 		return if e.metaKey or e.altKey
 
 		let a = null
 		let r = null
 		let t = e.target
-
+		
 		while t and (!a or !r)
 			a = t if !a and t.nodeName == 'A'
 			r = t if !r and t.#routeTo
 			t = t.parentNode
 
 		if a and r != a and (!r or r.contains(a))
-
+			
 			let href = a.getAttribute('href')
 			if href && !href.match(/\:\/\//) and (!a.getAttribute('target') or a.getAttribute('target') == '_self') and !a.classList.contains('external')
 				a.addEventListener('click',onclicklink.bind(self),once: true)
 		yes
-
+		
 	def onclicklink e
 		let a = e.currentTarget or e.target
 
@@ -275,10 +276,10 @@ export class Router < EventEmitter
 	set hash value
 		if $web$
 			history.replaceState(state,null,'#' + self.serializeParams(value))
-
+		
 	def match pattern
 		route(pattern).match(path)
-
+		
 	def route pattern
 		root.route(pattern)
 
@@ -288,7 +289,7 @@ export class Router < EventEmitter
 			url = path
 
 		if typeof url == 'number'
-			# now go
+			# now go 
 			global.history.go(url)
 			return self
 
@@ -297,7 +298,7 @@ export class Router < EventEmitter
 		let action = history.buildState(state,loc.path,yes)
 		self.refresh(push: yes, mode: 'push', location: loc, state: action, apply: [action])
 		self
-
+		
 	def replace url, state = null
 		if typeof url == 'object' and state === null
 			state = url
@@ -364,7 +365,7 @@ export class ElementRoute
 		# previous resolve
 		let v = self.router.#version
 		return unless #version =? v
-
+			
 		let r = route
 		let o = #options
 		let url = self.router.path
@@ -378,7 +379,7 @@ export class ElementRoute
 			#active = true
 			#match = match
 			match[#urlKey] = url
-
+			
 		if match
 			if changed or (prevUrl != url) or !shown
 				#resolved(match,last,prevUrl)
@@ -392,11 +393,12 @@ export class ElementRoute
 
 		return #match
 
+
 	def #enter
 		node.flags.remove('not-routed')
 		node.flags.add('routed')
 		node..routeDidEnter(self)
-
+		
 	def #resolved match,prev,prevUrl = ''
 		node..routeDidResolve(self,match,prev,prevUrl)
 
@@ -407,13 +409,13 @@ export class ElementRoute
 		node..routeDidLeave(self)
 
 export class ElementRouteTo < ElementRoute
-
+	
 	def #enter
 		self
-
+		
 	def #resolved
 		self
-
+		
 	def #leave
 		self
 
@@ -439,7 +441,7 @@ export class ElementRouteTo < ElementRoute
 
 		node.flags.toggle('active',!!match)
 		return
-
+	
 	def go
 		resolve!
 
@@ -451,6 +453,8 @@ export class ElementRouteTo < ElementRoute
 extend class Node
 	get router
 		ownerDocument.router
+	
+	
 
 extend class Element
 	set route value

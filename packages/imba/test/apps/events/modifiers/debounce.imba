@@ -4,7 +4,7 @@ describe "@event.debounce" do
 		<self>
 			# basic debouncing
 			<button.a @click.log('a').debounce(400ms).log('done')=(res=e)> "Button"
-
+	
 	let app = imba.mount <App>
 
 	test do
@@ -15,3 +15,4 @@ describe "@event.debounce" do
 		await spec.wait(400)
 		eq $1.log, ['a','a','a','done']
 		eq res.debounced.length,3
+

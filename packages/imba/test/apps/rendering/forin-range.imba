@@ -7,3 +7,4 @@ tag App
 
 test "remove from end" do
 	let app = <App>
+	

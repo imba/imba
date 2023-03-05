@@ -40,13 +40,15 @@ const Upcase = {
 		return
 }
 
+
 class Main
 	title @(new Accessor)
 	initials @(Upcase)
 
 class Sub < Main
 
-test "basics" do
+
+test "basics" do 
 	let obj = new Main
 	ok obj.@@title isa Accessor
 	obj.title = "obj"
@@ -57,14 +59,14 @@ test "basics" do
 	obj.initials = "saa"
 	eq obj.initials, "SAA"
 	eq obj.@@initials.$set,Upcase.$set
-
+	
 test "defaults" do
 	class Item
 		prop title = "hello" @(Upcase)
 
 		get stuff
 			Upcase.$get(10)
-
+			
 	let item = new Item
 	eq item.title, "HELLO"
 

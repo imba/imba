@@ -103,7 +103,7 @@ export def rewrite rule,ctx,o = {}
 			base.nestingOperator = '>>>'
 
 		parts.unshift(rule.rule = Object.assign([],{type: 'rule',rule: base,isScope:yes, nestingOperator: '>>>'}))
-
+	
 	# for part
 
 	for part,i in parts
@@ -115,7 +115,7 @@ export def rewrite rule,ctx,o = {}
 		let op = part.op = part.nestingOperator
 
 		if name == '*'
-			# Should only happen if we are scoped inside
+			# Should only happen if we are scoped inside 
 			if items.length == 0 and next and prev and !seenDeepOperator
 				prev.rule = next
 				next.op = next.nestingOperator = '>>>'

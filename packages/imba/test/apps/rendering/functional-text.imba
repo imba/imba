@@ -8,3 +8,4 @@ tag App
 test "functional components should support plain strings" do
 	let app = <App>
 	eq app.textContent,"test",warn: "not implemented yet"
+	

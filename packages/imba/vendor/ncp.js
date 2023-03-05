@@ -54,7 +54,7 @@ function ncp (source, dest, options, callback) {
   limit = (limit < 1) ? 1 : (limit > 512) ? 512 : limit;
 
   startCopy(currentPath);
-
+  
   function startCopy(source) {
     started++;
     if (filter) {
@@ -137,10 +137,10 @@ function ncp (source, dest, options, callback) {
   function copyFile(file, target) {
     var readStream = fs.createReadStream(file.name),
         writeStream = fs.createWriteStream(target, { mode: file.mode });
-
+    
     readStream.on('error', onError);
     writeStream.on('error', onError);
-
+    
     if(transform) {
       transform(readStream, writeStream, file);
     } else {
@@ -265,7 +265,7 @@ function ncp (source, dest, options, callback) {
     if (typeof errs.write === 'undefined') {
       errs.push(err);
     }
-    else {
+    else { 
       errs.write(err.stack + '\n\n');
     }
     return cb();
@@ -281,3 +281,4 @@ function ncp (source, dest, options, callback) {
     }
   }
 }
+

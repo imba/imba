@@ -21,6 +21,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
 import {toASCII} from 'punycode';
 import {isObject,isString,isNullOrUndefined,isNull} from 'util';
 import {parse as qsParse,stringify as qsStringify} from 'querystring';
@@ -336,6 +337,7 @@ function parse(self, url, parseQueryString, slashesDenoteHost) {
       rest = rest.split(ae).join(esc);
     }
   }
+
 
   // chop off from the tail first.
   var hash = rest.indexOf('#');

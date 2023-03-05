@@ -7,7 +7,7 @@ tag app-panel
 			<section> <slot> "content?"
 			<footer> "footer"
 			<section>
-				<slot name='footer'>
+				<slot name='footer'> 
 					<span.one> "foot?"
 					<span.two> "foot?"
 			<slot name='copy'> 'copy?'
@@ -22,7 +22,7 @@ tag app-root
 					<div.stuff> "content in panel"
 
 let app = <app-root>
-imba.mount app
+imba.mount app 
 
 test do
 	ok document.querySelector('app-panel section .stuff')

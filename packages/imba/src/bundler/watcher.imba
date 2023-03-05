@@ -28,7 +28,7 @@ export default class Watcher < Component
 				depth: 1,
 				ignored: isIgnored.bind(self) # ['.*','.git/**','.cache/**',fs.resolve('dist')],
 				cwd: fs.cwd
-			})
+			}) 
 
 			#watcher.on('change') do(src,stats)
 				src = normalize(src)
@@ -50,7 +50,7 @@ export default class Watcher < Component
 				emit('touch',src)
 
 		return #watcher
-
+	
 	def isIgnored path
 		return true if path.match(/(\/\.(git|imba-cache|cache)\/|\.DS_Store)/)
 		return false
@@ -75,3 +75,6 @@ export default class Watcher < Component
 	def start
 		instance
 		return self
+
+
+

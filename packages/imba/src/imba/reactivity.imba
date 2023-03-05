@@ -29,14 +29,14 @@ const METAREF = Symbol.for("~~")
 
 const SymbolForSymbol = do(sym,map)
 	map.set(sym,Symbol!) unless map.has(sym)
-	return map.get(sym)
-
+	return map.get(sym) 
+		
 const VALUESYM = do(name)
 	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.VALUE) : Symbol.for(name)
 
 const METASYM = do(name)
 	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.META) : Symbol.for("#{name}__")
-
+	
 const REFSYM = do(name)
 	typeof name == 'symbol' ? SymbolForSymbol(name,MAPS.REF) : Symbol.for("~{name}")
 
@@ -61,6 +61,7 @@ const DEREFERENCED = do(item,ref)
 	if beacon
 		beacon.removeSubscriber(ref)
 	return item
+
 
 class ArrayPatcher
 	def constructor array
@@ -124,6 +125,7 @@ class ArrayPatcher
 
 	def patch
 		end!
+
 
 def getExtensions obj
 	let descriptors = Object.getOwnPropertyDescriptors(obj.prototype)
@@ -205,9 +207,9 @@ class Context
 			res = patcher.end!
 			let diff = patcher.changes
 			let changes = diff.size
-
+			
 			if changes
-
+				
 				for [item,op] of diff
 					if op === 1
 						item.addSubscriber(beacon)
@@ -235,6 +237,7 @@ class Context
 		for reaction of items
 			reaction.call!
 		return
+
 
 class Root < Context
 
@@ -301,7 +304,7 @@ class Ref
 		if observers
 			for observer in observers
 				observer.invalidated(level + 1,this)
-
+		
 		if level == 0 and CTX == ROOT
 			CTX.flush!
 		yes
@@ -351,7 +354,7 @@ export class ObservableArray < Array
 	def find do OBSERVED(this,super)
 	def slice do OBSERVED(this,super)
 	def sort do OBSERVED(this,super)
-
+	
 	get len do OBSERVED(this,length)
 
 	set len value
@@ -420,6 +423,8 @@ extend class Map
 	def ##referenced ref do REFERENCED(this,ref,MapExtensions)
 	def ##dereferenced ref do DEREFERENCED(this,ref)
 
+
+
 class PropertyType
 	def constructor name,options = {}
 		self.name = name
@@ -469,7 +474,7 @@ class RefIndex
 
 	def add key, member
 		self.for(key).push(member)
-
+	
 	def delete key, member
 		let arr = self.for(key)
 		let idx = arr.indexOf(member)
@@ -520,7 +525,7 @@ class Memo
 		self.vkey = vkey
 		self.version = 0
 		# global.ops.push(self)
-
+		
 	get beacon
 		self
 
@@ -551,6 +556,7 @@ class Memo
 			# these are never - they are always computeds
 			observer.invalidated(stack,this)
 		self
+	
 
 	def value
 		CTX.add(self) if TRACKING
@@ -626,7 +632,7 @@ class Reaction
 		checkComputedValues = new Set
 		call!
 		self
-
+	
 	def deactivate
 		clearTimeout(timeout) if timeout
 		if observing
@@ -650,7 +656,7 @@ class Reaction
 				let v1 = value.version
 				if v0 != v1
 					break stale = yes
-
+				
 			unless stale
 				flags ~= F.POSSIBLY_STALE
 				checkComputedValues.clear!
@@ -693,7 +699,7 @@ class Awaits < Reaction
 	def resolve val
 		deactivate!
 		resolved = val
-
+	
 	def then ...params
 
 		if resolved !== undefined
@@ -757,9 +763,11 @@ export def awaits cb, options = {}
 export def observable object
 	object.##reactive
 
+
 export def run cb
 	let action = new Action(cb,global)
 	return action.run!
+
 
 export def reportChanged item
 	if item and item[OWNREF]
@@ -816,3 +824,4 @@ export def @action target, key, desc
 		let action = new Action(desc.value,null)
 		desc.value = do action.run(this,arguments)
 	return desc
+

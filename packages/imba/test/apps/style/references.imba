@@ -3,7 +3,7 @@ tag A1
 	css $btn fw:600
 	css .label fw:300
 	css $label fw:200
-
+	
 	<self>
 		<div.btn> '600'
 		<div$btn> '600'
@@ -12,7 +12,7 @@ tag A1
 
 tag A2 < A1
 	css $label fw:700
-
+	
 test do
 	let app = <A1>
 	eqcss app, 600, 0

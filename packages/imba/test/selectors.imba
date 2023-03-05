@@ -107,7 +107,7 @@ def run
 			# console.log "    {res.value}" if res.value
 			console.log "    {res.raw}" if res.raw
 			console.log res.rule.rule
-
+	
 	console.log "passed {tot - failed} / {tot}"
 	yes
 

@@ -7,22 +7,22 @@
  * Version: 1.0
  * Licence: MIT
  * Copyright: © Gauthier SCANO - 2020
- *
+ * 
  * Created according to W3C specification : https://www.w3.org/TR/css-values-4/
- *
+ * 
  * 							-- MIT License --
  * Copyright (c) 2020 Gauthier SCANO - https://github.com/gauthier-scano/
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -41,6 +41,7 @@ export default function CSSFormalSyntaxParser(syntax, commonProp = true, propert
 
     return this.setSyntax(syntax, commonProp);
 };
+
 
 CSSFormalSyntaxParser.setProperty = function (property) {
     CSSFormalSyntaxParser.prototype.property = property;
@@ -73,6 +74,7 @@ CSSFormalSyntaxParser.deleteBasicDataType = function (name) {
 
     return this;
 };
+
 
 CSSFormalSyntaxParser.generateRegExpType = function (regexp, defaultValue) {
     return {
@@ -114,6 +116,7 @@ CSSFormalSyntaxParser.generateRegExpListType = function (regexp, regexpProposal,
         }
     };
 };
+
 
 CSSFormalSyntaxParser.prototype = {
     action: null,
@@ -229,7 +232,7 @@ CSSFormalSyntaxParser.prototype = {
                         action.as[action.as.length] = buffer.groupAction || this.createComponentChecker(buffer.value, buffer.quantity, buffer.name);
                     }
 
-                    targetAction.as[targetAction.as.length] = action;	// The new action is automatically added to the
+                    targetAction.as[targetAction.as.length] = action;	// The new action is automatically added to the 
                     targetAction = action;
                     targetBuffer = buffer;
                 }

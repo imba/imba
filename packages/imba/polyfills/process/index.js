@@ -39,6 +39,7 @@ function runTimeout(fun) {
         }
     }
 
+
 }
 function runClearTimeout(marker) {
     if (cachedClearTimeout === clearTimeout) {
@@ -63,6 +64,8 @@ function runClearTimeout(marker) {
             return cachedClearTimeout.call(this, marker);
         }
     }
+
+
 
 }
 var queue = [];

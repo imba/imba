@@ -7,6 +7,7 @@
 # shorthand into the unambiguous long form, add implicit indentation and
 # parentheses, and generally clean things up.
 
+
 var T = require './token'
 var Token = T.Token
 
@@ -58,7 +59,7 @@ var EXPRESSION_END =
 	'BLOCK_PARAM_END': 1,
 	'STRING_END': 1,
 	'TAG_END': 1
-
+	
 var NO_IMPLICIT_PARENS = ['STYLE_START']
 var NO_IMPLICIT_BRACES = ['STYLE_START']
 
@@ -72,7 +73,7 @@ var SINGLE_LINERS =
 	BEGIN: 1
 	CATCH_VAR: 1
 
-var SINGLE_CLOSERS_MAP =
+var SINGLE_CLOSERS_MAP = 
 	TERMINATOR: yes
 	CATCH: yes
 	FINALLY: yes
@@ -152,6 +153,8 @@ var IMPLICIT_CALL_MAP =
 
 var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 
+
+
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SYMBOLID', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
@@ -166,7 +169,7 @@ var IMPLICIT_INDENT_CALL = [
 var IMPLICIT_UNSPACED_CALL = ['+', '-']
 
 # Tokens indicating that the implicit call must enclose a block of expressions.
-var IMPLICIT_BLOCK   = ['{', '[', ',','BLOCK_PARAM_END', 'DO'] # '->', '=>',
+var IMPLICIT_BLOCK   = ['{', '[', ',','BLOCK_PARAM_END', 'DO'] # '->', '=>', 
 
 var IMPLICIT_BLOCK_MAP = arrayToHash(IMPLICIT_BLOCK)
 
@@ -184,6 +187,7 @@ var NO_IMPLICIT_BLOCK_CALL = [
 var NO_CALL_TAG = ['CLASS', 'IF','UNLESS','TAG','WHILE','FOR','UNTIL','CATCH','FINALLY','MODULE','LEADING_WHEN','STRUCT']
 
 var NO_CALL_TAG_MAP = arrayToHash(NO_CALL_TAG)
+
 
 # console.log NO_IMPLICIT_BLOCK_CALL:length
 # NO_IMPLICIT_BLOCK_CALL
@@ -215,7 +219,7 @@ var LINEBREAKS       = ['TERMINATOR', 'INDENT', 'OUTDENT'] # Tokens that end a l
 var CALLCOUNT = 0
 # Based on the original rewriter.coffee from CoffeeScript
 export class Rewriter
-
+	
 	def initialize
 		@tokens = []
 		@options = {}
@@ -227,10 +231,10 @@ export class Rewriter
 		@starter = null
 		@len = 0
 		self
-
+	
 	def tokens
 		@tokens
-
+		
 	# Helpful snippet for debugging:
 	#     console.log (t[0] + '/' + t[1] for t in @tokens).join ' '
 	# Rewrite the token stream in multiple passes, one logical filter at
@@ -250,7 +254,7 @@ export class Rewriter
 		# flag empty methods
 		while i < (k - 1)
 			var token = tokens[i]
-
+			
 			if token.@type == 'DEF_BODY'
 				var next = tokens[i + 1]
 				if next and next.@type == TERMINATOR
@@ -298,7 +302,7 @@ export class Rewriter
 		var levels = 0
 		var token
 		var t,v
-
+ 
 		while i < tokens:length
 			token = tokens[i]
 
@@ -359,7 +363,7 @@ export class Rewriter
 			if token.@type !== TERMINATOR
 				break at = i
 			i++
-
+		
 		tokens.splice(0, at) if at
 		return
 
@@ -374,6 +378,7 @@ export class Rewriter
 			# return 1
 			tokens.splice(i, 1)
 			0
+
 
 	def tagDefArguments
 		yes
@@ -412,7 +417,7 @@ export class Rewriter
 
 	def addLeftBrace
 		self
-
+		
 	def addImplicitBraces
 		# Worst mess every written. Shuold be redone
 		var stack       = []
@@ -421,7 +426,7 @@ export class Rewriter
 		var startIndent = 0
 		var startIdx = null
 		var baseCtx = ['ROOT',0]
-
+		
 		var defType = 'DEF'
 		var noBraceContext = ['IF','TERNARY','FOR',defType]
 
@@ -444,7 +449,7 @@ export class Rewriter
 
 		var stackToken = do |a,b|
 			return [a,b]
-
+			
 		var indents = []
 		var balancedStack = []
 
@@ -452,18 +457,19 @@ export class Rewriter
 		scanTokens do |token,i,tokens|
 			var type = token.@type
 			var v = token.@value
-
+			
 			if type == 'CSS_SEL' and token.@closer
 				let idx = tokens.indexOf(token.@closer)
 				# console.log 'CSS jump to',i,idx,idx - i,tokens[idx - i]
 				return idx - i + 1
-
+			
 			if type == 'STYLE_START' and token.@closer
 				return tokens.indexOf(token.@closer) - i
-
+				
+			
 			if BALANCED_PAIRS[type]
 				balancedStack.unshift(type)
-
+			
 			elif INVERSES[type] and INVERSES[type] == balancedStack[0]
 				balancedStack.shift()
 
@@ -472,10 +478,11 @@ export class Rewriter
 
 			var ctx = stack:length ? stack[stack:length - 1] : baseCtx
 			var idx
-
+			
+			
 			if type == 'INDENT'
 				indents.unshift(token:scope)
-
+			
 			elif type == 'OUTDENT'
 				indents.shift
 
@@ -486,17 +493,17 @@ export class Rewriter
 			if v == '?'
 				stack.push stackToken('TERNARY',i)
 				return 1
-
+				
 			# if type == 'DEF'
 			# 	let prevTyp = T.typ(tokens[i - 1])
 			# 	console.log "found def -- should push to stack!",prevTyp,ctx[0]
 			# 	stack.push(stackToken('DEF',i))
-
+			
 			# no need to test for this here as well as in
 			if EXPRESSION_START[type]
 				if type === INDENT and noBraceContext.indexOf(ctx[0]) >= 0
 					stack.pop
-
+				
 				let tt = tokenType(i - 1)
 
 				if type === INDENT and (tt == '{' or tt == 'STYLE_START')
@@ -518,7 +525,7 @@ export class Rewriter
 					return 1
 
 				return 1
-
+			
 			# is this correct? same for if/class etc?
 			if ctx[0] == 'TERNARY' and (type === TERMINATOR or type === OUTDENT)
 				stack.pop
@@ -528,6 +535,7 @@ export class Rewriter
 				stack.pop
 				return 1
 
+
 			if type == ','
 				if ctx[0] == '{' and ctx:generated
 					close(token,i,stack.pop)
@@ -535,16 +543,18 @@ export class Rewriter
 				else
 					return 1
 				true
+			
+			
 
 			# found a type
 			let isDefInObject = (type == defType) and indents[0] not in ['CLASS','DEF','MODULE','TAG','STRUCT']
-			# isDefInObject = isDefInObject and
+			# isDefInObject = isDefInObject and 
 			if (type == ':' or isDefInObject) and ctx[0] != '{' and ctx[0] != 'TERNARY' and (noBraceContext.indexOf(ctx[0]) == -1 or ctx[0] == defType)
 				# could just check if the end was right before this?
-
+				
 				var tprev = tokens[i - 2]
 				let autoClose = no
-
+				
 				if type == defType
 					idx = i - 1
 					tprev = tokens[idx]
@@ -559,14 +569,14 @@ export class Rewriter
 
 				var t0 = tokens[idx - 1]
 				var t1 = tokens[idx]
-
+				
 				# console.log "{tokens[i - 1].@value} : (after {t0.@value}) ({tokenType(i - 2)}) [{indents[0]}] {t0 and t0:scope and t0:scope:autoClose} {t1.@type}"
-
+				
 				# now what about interpolated stuff?
 				# different for def
 				if !tprev or (tprev.@type not in ['INDENT','TERMINATOR'])
 					autoClose = yes
-
+					
 				if indents[0] and indents[0] in ['CLASS','DEF','MODULE','TAG','STRUCT']
 					autoClose = yes
 
@@ -576,7 +586,7 @@ export class Rewriter
 					tokens.splice(idx - 1,1)
 					var s = stackToken('{',i - 1)
 					s:generated = yes
-
+					
 					stack.push s
 					if type == defType
 						stack.push stackToken(defType,i)
@@ -589,9 +599,9 @@ export class Rewriter
 					tokens.splice(idx - 2,1)
 					var s = stackToken('{')
 					s:generated = yes
-					# s:autoClose =
+					# s:autoClose = 
 					stack.push s
-
+					
 					if type == defType
 						stack.push stackToken(defType,i)
 						return 1
@@ -602,13 +612,13 @@ export class Rewriter
 					if type == defType and (!t0 or t0.@type != '=')
 						stack.push stackToken(defType,i)
 						return 1
-
+					
 					var s = stackToken('{')
 					s:generated = yes
 					s:autoClose = autoClose
 					stack.push s
 					open(token,idx + 1) # should rather open at i - 2?
-
+					
 					if type == defType
 						stack.push stackToken(defType,i)
 						return 3
@@ -659,7 +669,7 @@ export class Rewriter
 
 		var callObject = no
 		var callIndent = no
-
+		
 		var i = 0
 		let stack = []
 		let currPair = null
@@ -670,7 +680,7 @@ export class Rewriter
 		# function will not be optimized in single run
 		# could tro to move this out
 		var parensCond = do |token,i,tokens|
-
+			
 			var type = token.@type
 
 			if !seenSingle and token:fromThen
@@ -682,13 +692,13 @@ export class Rewriter
 				seenSingle  = yes
 
 			if ifelse or type === 'SWITCH' or type == 'TRY'
-				seenControl = yes
+				seenControl = yes 
 
 			var prev = tokenType(i - 1)
 
 			if (type == '.' or type == '?.' or type == '::') and prev === OUTDENT
 				return yes
-
+				
 			if type == ':' and stack[stack:length - 1] == '?' and tokens[i - 1]:spaced
 				return yes
 
@@ -697,7 +707,7 @@ export class Rewriter
 
 			if (type == 'WHEN' or type == 'BY') and !seenFor
 				# console.log "dont close implicit call outside for"
-				return no
+				return no 
 
 			var post = tokens:length > (i + 1) ? tokens[i + 1] : null
 			var postTyp = post and post.@type
@@ -718,20 +728,22 @@ export class Rewriter
 
 			return no
 
+		
+
 		while tokens:length > (i + 1)
 			var token = tokens[i]
 			var type = token.@type
 			# ternary
 			if type == '?'
 				stack.push(type)
-
+			
 			if (type == 'STYLE_START' or type == 'CSS_SEL') and token.@closer
 				i = tokens.indexOf(token.@closer) + 1
 				continue
-
+			
 			if BALANCED_PAIRS[type]
 				stack.push(currPair = type)
-
+			
 			elif INVERSES[type] and INVERSES[type] == currPair
 				stack.pop()
 				currPair = stack[stack:length - 1]
@@ -739,7 +751,7 @@ export class Rewriter
 			if NO_IMPLICIT_PARENS.indexOf(currPair) >= 0
 				i++
 				continue
-
+				
 			if type == ':' and tokens[i - 1]:spaced and stack[stack:length - 1] == '?'
 				stack.pop()
 
@@ -757,6 +769,7 @@ export class Rewriter
 
 			if pt == 'TAG_END'
 				seenTagClose = prev
+
 
 			if NO_CALL_TAG_MAP[pt] # .indexOf(pt) >= 0
 				# CALLCOUNT++
@@ -779,6 +792,7 @@ export class Rewriter
 				if nt == 'TAG_START' and pt != 'TAG_END' and nextImpCall
 					callIndent = no
 
+
 			seenSingle  = no
 			seenControl = no
 
@@ -795,7 +809,7 @@ export class Rewriter
 
 			# where does fromThem come from?
 			if token:fromThen
-				continue i += 1
+				continue i += 1 
 
 			# here we deal with :spaced and :newLine
 			unless callObject or callIndent or (prev and prev:spaced) and (prev:call or IMPLICIT_FUNC_MAP[pt]) and (IMPLICIT_CALL_MAP[type] or !(token:spaced or token:newLine) and IMPLICIT_UNSPACED_CALL.indexOf(type) >= 0)
@@ -827,6 +841,8 @@ export class Rewriter
 
 		return
 
+
+
 	def indentCondition token,i,tokens
 		var t = token.@type
 		SINGLE_CLOSERS_MAP[t] and token.@value !== ';' and not (t == 'ELSE' and @starter != 'IF' and @starter != 'THEN')
@@ -835,6 +851,7 @@ export class Rewriter
 		var idx = tokenType(i - 1) === ',' ? (i - 1) : i
 		tokens.splice idx, 0, T.OUTDENT
 		return
+
 
 	# Because our grammar is LALR(1), it can't handle some single-line
 	# expressions that lack ending delimiters. The **Rewriter** adds the implicit
@@ -849,7 +866,7 @@ export class Rewriter
 
 		var i = 0
 		var tokens = @tokens
-		var starter
+		var starter 
 
 		while i < tokens:length
 			var token = tokens[i]
@@ -899,7 +916,7 @@ export class Rewriter
 			1
 
 	# Look up a type by token index.
-	def type i
+	def type i 
 		# if i < 0 then return null
 		throw "deprecated"
 		var tok = @tokens[i]

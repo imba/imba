@@ -18,7 +18,7 @@ export default class Component < EventEmitter
 		let diff = now - prev
 		#timestamps[name] = now		
 		return diff
-
+	
 	def timed name = 'default'
 		let str = "time {name}: {time(name)}"
 

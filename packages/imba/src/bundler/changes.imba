@@ -8,7 +8,7 @@ export default class ChangeLog
 		pulled = 0
 		options = o
 		batch = null
-
+	
 	def flush
 		if batch
 			if options.withFlags
@@ -35,10 +35,10 @@ export default class ChangeLog
 		offset += log.length
 		log.length = 0
 		self
-
+	
 	get cursor
 		offset + log.length
-
+	
 	get length
 		log.length
 
@@ -49,7 +49,7 @@ export default class ChangeLog
 		let pos = map.get(target)
 		let cur = cursor
 		# let len = log.length
-
+	
 		if pos == undefined or pos < cur
 			map.set(target,cur)
 			# console.log 'setting target',pos,cur

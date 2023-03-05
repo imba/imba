@@ -2,9 +2,9 @@
 declare namespace imbacss {
 	/**
 	 * Specifies the width of the content area, padding area or border area (depending on 'box-sizing') of certain boxes.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/width)
-	 *
+	 * 
 	 * @alias w
 	*/
 	interface width extends _ {
@@ -28,9 +28,9 @@ declare namespace imbacss {
 	interface w extends width { }
 	/**
 	 * Specifies the height of the content area, padding area or border area (depending on 'box-sizing') of certain boxes.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/height)
-	 *
+	 * 
 	 * @alias h
 	*/
 	interface height extends _ {
@@ -54,9 +54,9 @@ declare namespace imbacss {
 	interface h extends height { }
 	/**
 	 * Specifies the width and height of the content area, padding area or border area (depending on 'box-sizing') of certain boxes.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/size)
-	 *
+	 * 
 	 * @alias s
 	 * @custom
 	*/
@@ -81,9 +81,9 @@ declare namespace imbacss {
 	interface s extends size { }
 	/**
 	 * In combination with 'float' and 'position', determines the type of box or boxes that are generated for an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/display)
-	 *
+	 * 
 	 * @alias d
 	*/
 	interface display extends _ {
@@ -331,9 +331,9 @@ declare namespace imbacss {
 	interface d extends display { }
 	/**
 	 * Shorthand property to set values the thickness of the padding area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. The value may not be negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding)
-	 *
+	 * 
 	 * @alias p
 	*/
 	interface padding extends _ {
@@ -345,9 +345,9 @@ declare namespace imbacss {
 	interface p extends padding { }
 	/**
 	 * The position CSS property sets how an element is positioned in a document. The top, right, bottom, and left properties determine the final location of positioned elements.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/position)
-	 *
+	 * 
 	 * @alias pos
 	*/
 	interface position extends _ {
@@ -380,9 +380,9 @@ declare namespace imbacss {
 	interface pos extends position { }
 	/**
 	 * Shorthand property for setting border width, style, and color.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border)
-	 *
+	 * 
 	 * @alias bd
 	*/
 	interface border extends _ {
@@ -394,9 +394,9 @@ declare namespace imbacss {
 	interface bd extends border { }
 	/**
 	 * Shorthand property to set values the thickness of the margin area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. Negative values for margin properties are allowed, but there may be implementation-specific limits.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin)
-	 *
+	 * 
 	 * @alias m
 	*/
 	interface margin extends _ {
@@ -410,9 +410,9 @@ declare namespace imbacss {
 	interface m extends margin { }
 	/**
 	 * Set asset as inline background svg
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/svg)
-	 *
+	 * 
 	*/
 	interface svg extends _ {
 		set(val: any): void;
@@ -421,9 +421,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies how far an absolutely positioned box's top margin edge is offset below the top edge of the box's 'containing block'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/top)
-	 *
+	 * 
 	 * @alias t
 	*/
 	interface top extends _ {
@@ -438,9 +438,9 @@ declare namespace imbacss {
 	interface t extends top { }
 	/**
 	 * Specifies how far an absolutely positioned box's left margin edge is offset to the right of the left edge of the box's 'containing block'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/left)
-	 *
+	 * 
 	 * @alias l
 	*/
 	interface left extends _ {
@@ -455,9 +455,9 @@ declare namespace imbacss {
 	interface l extends left { }
 	/**
 	 * Shorthand property to set values the thickness of the margin area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. Negative values for margin properties are allowed, but there may be implementation-specific limits..
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-top)
-	 *
+	 * 
 	 * @alias mt
 	*/
 	interface marginΞtop extends _ {
@@ -471,9 +471,9 @@ declare namespace imbacss {
 	interface mt extends marginΞtop { }
 	/**
 	 * Sets the color of an element's text
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/color)
-	 *
+	 * 
 	 * @alias c
 	*/
 	interface color extends _ {
@@ -485,9 +485,9 @@ declare namespace imbacss {
 	interface c extends color { }
 	/**
 	 * Indicates the desired height of glyphs from the font. For scalable fonts, the font-size is a scale factor applied to the EM unit of the font. (Note that certain glyphs may bleed outside their EM box.) For non-scalable fonts, the font-size is converted into absolute units and matched against the declared font-size of the font, using the same absolute coordinate space for both of the matched values.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-size)
-	 *
+	 * 
 	 * @alias fs
 	*/
 	interface fontΞsize extends _ {
@@ -517,9 +517,9 @@ declare namespace imbacss {
 	interface fs extends fontΞsize { }
 	/**
 	 * Sets the background color of an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-color)
-	 *
+	 * 
 	 * @alias bgc
 	*/
 	interface backgroundΞcolor extends _ {
@@ -531,9 +531,9 @@ declare namespace imbacss {
 	interface bgc extends backgroundΞcolor { }
 	/**
 	 * Describes how inline contents of a block are horizontally aligned if the contents do not completely fill the line box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-align)
-	 *
+	 * 
 	 * @alias ta
 	*/
 	interface textΞalign extends _ {
@@ -563,9 +563,9 @@ declare namespace imbacss {
 	interface ta extends textΞalign { }
 	/**
 	 * Opacity of an element's text, where 1 is opaque and 0 is entirely transparent.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/opacity)
-	 *
+	 * 
 	 * @alias o
 	*/
 	interface opacity extends _ {
@@ -577,9 +577,9 @@ declare namespace imbacss {
 	interface o extends opacity { }
 	/**
 	 * Shorthand property for setting most background properties at the same place in the style sheet.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background)
-	 *
+	 * 
 	 * @alias bg
 	*/
 	interface background extends _ {
@@ -603,9 +603,9 @@ declare namespace imbacss {
 	interface bg extends background { }
 	/**
 	 * Specifies weight of glyphs in the font, their degree of blackness or stroke thickness.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight)
-	 *
+	 * 
 	 * @alias fw
 	*/
 	interface fontΞweight extends _ {
@@ -656,9 +656,9 @@ declare namespace imbacss {
 	interface fw extends fontΞweight { }
 	/**
 	 * Shorthand for setting 'overflow-x' and 'overflow-y'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow)
-	 *
+	 * 
 	 * @alias of
 	*/
 	interface overflow extends _ {
@@ -685,9 +685,9 @@ declare namespace imbacss {
 	interface of extends overflow { }
 	/**
 	 * Specifies a prioritized list of font family names or generic family names. A user agent iterates through the list of family names until it matches an available font that contains a glyph for the character to be rendered.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-family)
-	 *
+	 * 
 	 * @alias ff
 	*/
 	interface fontΞfamily extends _ {
@@ -709,9 +709,9 @@ declare namespace imbacss {
 	interface ff extends fontΞfamily { }
 	/**
 	 * Specifies how a box should be floated. It may be set for any element, but only applies to elements that generate boxes that are not absolutely positioned.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/float)
-	 *
+	 * 
 	*/
 	interface float extends _ {
 		set(val: this): void;
@@ -735,9 +735,9 @@ declare namespace imbacss {
 
 	/**
 	 * Determines the block-progression dimension of the text content area of an inline box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/line-height)
-	 *
+	 * 
 	 * @alias lh
 	*/
 	interface lineΞheight extends _ {
@@ -752,9 +752,9 @@ declare namespace imbacss {
 	interface lh extends lineΞheight { }
 	/**
 	 * Specifies the behavior of the 'width' and 'height' properties.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/box-sizing)
-	 *
+	 * 
 	*/
 	interface boxΞsizing extends _ {
 		set(val: this): void;
@@ -769,9 +769,9 @@ declare namespace imbacss {
 
 	/**
 	 * Decorations applied to font used for an element's text.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration)
-	 *
+	 * 
 	 * @alias td
 	*/
 	interface textΞdecoration extends _ {
@@ -810,9 +810,9 @@ declare namespace imbacss {
 	interface td extends textΞdecoration { }
 	/**
 	 * For a positioned box, the 'z-index' property specifies the stack level of the box in the current stacking context and whether the box establishes a local stacking context.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/z-index)
-	 *
+	 * 
 	 * @alias zi
 	*/
 	interface zΞindex extends _ {
@@ -827,9 +827,9 @@ declare namespace imbacss {
 	interface zi extends zΞindex { }
 	/**
 	 * Affects the vertical positioning of the inline boxes generated by an inline-level element inside a line box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/vertical-align)
-	 *
+	 * 
 	 * @alias va
 	*/
 	interface verticalΞalign extends _ {
@@ -870,9 +870,9 @@ declare namespace imbacss {
 	interface va extends verticalΞalign { }
 	/**
 	 * Allows control over cursor appearance in an element
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/cursor)
-	 *
+	 * 
 	*/
 	interface cursor extends _ {
 		set(val: this | Ψurl | Ψnumber): void;
@@ -1013,9 +1013,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand property to set values the thickness of the margin area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. Negative values for margin properties are allowed, but there may be implementation-specific limits..
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-left)
-	 *
+	 * 
 	 * @alias ml
 	*/
 	interface marginΞleft extends _ {
@@ -1029,9 +1029,9 @@ declare namespace imbacss {
 	interface ml extends marginΞleft { }
 	/**
 	 * Shorthand property to set values the thickness of the top margin and bottom margin.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-y)
-	 *
+	 * 
 	 * @alias my
 	 * @custom
 	*/
@@ -1046,9 +1046,9 @@ declare namespace imbacss {
 	interface my extends marginΞy { }
 	/**
 	 * Shorthand property to set values the thickness of the left margin and right margin.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-x)
-	 *
+	 * 
 	 * @alias mx
 	 * @custom
 	*/
@@ -1063,9 +1063,9 @@ declare namespace imbacss {
 	interface mx extends marginΞx { }
 	/**
 	 * Defines the radii of the outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius)
-	 *
+	 * 
 	 * @alias rd
 	*/
 	interface borderΞradius extends _ {
@@ -1077,9 +1077,9 @@ declare namespace imbacss {
 	interface rd extends borderΞradius { }
 	/**
 	 * Shorthand property to set values the thickness of the margin area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. Negative values for margin properties are allowed, but there may be implementation-specific limits..
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-bottom)
-	 *
+	 * 
 	 * @alias mb
 	*/
 	interface marginΞbottom extends _ {
@@ -1093,9 +1093,9 @@ declare namespace imbacss {
 	interface mb extends marginΞbottom { }
 	/**
 	 * Shorthand property to set values the thickness of the margin area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. Negative values for margin properties are allowed, but there may be implementation-specific limits..
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-right)
-	 *
+	 * 
 	 * @alias mr
 	*/
 	interface marginΞright extends _ {
@@ -1109,9 +1109,9 @@ declare namespace imbacss {
 	interface mr extends marginΞright { }
 	/**
 	 * Specifies how far an absolutely positioned box's right margin edge is offset to the left of the right edge of the box's 'containing block'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/right)
-	 *
+	 * 
 	 * @alias r
 	*/
 	interface right extends _ {
@@ -1126,9 +1126,9 @@ declare namespace imbacss {
 	interface r extends right { }
 	/**
 	 * Shorthand property to set values the thickness of the padding area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. The value may not be negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-left)
-	 *
+	 * 
 	 * @alias pl
 	*/
 	interface paddingΞleft extends _ {
@@ -1140,9 +1140,9 @@ declare namespace imbacss {
 	interface pl extends paddingΞleft { }
 	/**
 	 * Shorthand property to set values the thickness of the padding area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. The value may not be negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-top)
-	 *
+	 * 
 	 * @alias pt
 	*/
 	interface paddingΞtop extends _ {
@@ -1154,9 +1154,9 @@ declare namespace imbacss {
 	interface pt extends paddingΞtop { }
 	/**
 	 * Shorthand property to set values the thickness of the left padding and right padding.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-x)
-	 *
+	 * 
 	 * @alias px
 	 * @custom
 	*/
@@ -1169,9 +1169,9 @@ declare namespace imbacss {
 	interface px extends paddingΞx { }
 	/**
 	 * Shorthand property to set values the thickness of the top padding and bottom padding.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-y)
-	 *
+	 * 
 	 * @alias py
 	 * @custom
 	*/
@@ -1184,9 +1184,9 @@ declare namespace imbacss {
 	interface py extends paddingΞy { }
 	/**
 	 * Allows authors to constrain content width to a certain range.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-width)
-	 *
+	 * 
 	 * @alias maw
 	*/
 	interface maxΞwidth extends _ {
@@ -1210,9 +1210,9 @@ declare namespace imbacss {
 	interface maw extends maxΞwidth { }
 	/**
 	 * Specifies how far an absolutely positioned box's bottom margin edge is offset above the bottom edge of the box's 'containing block'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/bottom)
-	 *
+	 * 
 	 * @alias b
 	*/
 	interface bottom extends _ {
@@ -1227,9 +1227,9 @@ declare namespace imbacss {
 	interface b extends bottom { }
 	/**
 	 * Determines which page-based occurrence of a given element is applied to a counter or string value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/content)
-	 *
+	 * 
 	*/
 	interface content extends _ {
 		set(val: this | Ψstring | Ψurl): void;
@@ -1255,9 +1255,9 @@ declare namespace imbacss {
 
 	/**
 	 * Attaches one or more drop-shadows to the box. The property is a comma-separated list of shadows, each specified by 2-4 length values, an optional color, and an optional 'inset' keyword. Omitted lengths are 0; omitted colors are a user agent chosen color.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow)
-	 *
+	 * 
 	 * @alias bxs
 	*/
 	interface boxΞshadow extends _ {
@@ -1275,9 +1275,9 @@ declare namespace imbacss {
 	interface bxs extends boxΞshadow { }
 	/**
 	 * Sets the background image(s) of an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-image)
-	 *
+	 * 
 	 * @alias bgi
 	*/
 	interface backgroundΞimage extends _ {
@@ -1292,9 +1292,9 @@ declare namespace imbacss {
 	interface bgi extends backgroundΞimage { }
 	/**
 	 * Shorthand property to set values the thickness of the padding area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. The value may not be negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-right)
-	 *
+	 * 
 	 * @alias pr
 	*/
 	interface paddingΞright extends _ {
@@ -1306,9 +1306,9 @@ declare namespace imbacss {
 	interface pr extends paddingΞright { }
 	/**
 	 * Shorthand property for the 'white-space-collapsing' and 'text-wrap' properties.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/white-space)
-	 *
+	 * 
 	 * @alias ws
 	*/
 	interface whiteΞspace extends _ {
@@ -1335,9 +1335,9 @@ declare namespace imbacss {
 	interface ws extends whiteΞspace { }
 	/**
 	 * Shorthand property to set values the thickness of the padding area. If left is omitted, it is the same as right. If bottom is omitted it is the same as top, if right is omitted it is the same as top. The value may not be negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-bottom)
-	 *
+	 * 
 	 * @alias pb
 	*/
 	interface paddingΞbottom extends _ {
@@ -1349,9 +1349,9 @@ declare namespace imbacss {
 	interface pb extends paddingΞbottom { }
 	/**
 	 * Allows authors to constrain content height to a certain range.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-height)
-	 *
+	 * 
 	 * @alias mih
 	*/
 	interface minΞheight extends _ {
@@ -1374,9 +1374,9 @@ declare namespace imbacss {
 	interface mih extends minΞheight { }
 	/**
 	 * A two-dimensional transformation is applied to an element through the 'transform' property. This property contains a list of transform functions similar to those allowed by SVG.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transform)
-	 *
+	 * 
 	*/
 	interface transform extends _ {
 		set(val: this): void;
@@ -1441,9 +1441,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand property for setting border width, style and color.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom)
-	 *
+	 * 
 	 * @alias bdb
 	*/
 	interface borderΞbottom extends _ {
@@ -1455,9 +1455,9 @@ declare namespace imbacss {
 	interface bdb extends borderΞbottom { }
 	/**
 	 * Specifies whether the boxes generated by an element are rendered. Invisible boxes still affect layout (set the ‘display’ property to ‘none’ to suppress box generation altogether).
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/visibility)
-	 *
+	 * 
 	*/
 	interface visibility extends _ {
 		set(val: this): void;
@@ -1475,9 +1475,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the initial position of the background image(s) (after any resizing) within their corresponding background positioning area.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position)
-	 *
+	 * 
 	 * @alias bgp
 	*/
 	interface backgroundΞposition extends _ {
@@ -1489,9 +1489,9 @@ declare namespace imbacss {
 	interface bgp extends backgroundΞposition { }
 	/**
 	 * Shorthand property for setting border width, style and color
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top)
-	 *
+	 * 
 	 * @alias bdt
 	*/
 	interface borderΞtop extends _ {
@@ -1503,9 +1503,9 @@ declare namespace imbacss {
 	interface bdt extends borderΞtop { }
 	/**
 	 * Allows authors to constrain content width to a certain range.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-width)
-	 *
+	 * 
 	 * @alias miw
 	*/
 	interface minΞwidth extends _ {
@@ -1528,9 +1528,9 @@ declare namespace imbacss {
 	interface miw extends minΞwidth { }
 	/**
 	 * Shorthand property for 'outline-style', 'outline-width', and 'outline-color'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline)
-	 *
+	 * 
 	 * @alias ol
 	*/
 	interface outline extends _ {
@@ -1548,9 +1548,9 @@ declare namespace imbacss {
 	interface ol extends outline { }
 	/**
 	 * The color of the border around all four edges of an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-color)
-	 *
+	 * 
 	 * @alias bc
 	*/
 	interface borderΞcolor extends _ {
@@ -1562,9 +1562,9 @@ declare namespace imbacss {
 	interface bc extends borderΞcolor { }
 	/**
 	 * Specifies how background images are tiled after they have been sized and positioned.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-repeat)
-	 *
+	 * 
 	 * @alias bgr
 	*/
 	interface backgroundΞrepeat extends _ {
@@ -1576,9 +1576,9 @@ declare namespace imbacss {
 	interface bgr extends backgroundΞrepeat { }
 	/**
 	 * Controls capitalization effects of an element’s text.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-transform)
-	 *
+	 * 
 	 * @alias tt
 	*/
 	interface textΞtransform extends _ {
@@ -1602,9 +1602,9 @@ declare namespace imbacss {
 	interface tt extends textΞtransform { }
 	/**
 	 * Specifies the size of the background images.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-size)
-	 *
+	 * 
 	 * @alias bgs
 	*/
 	interface backgroundΞsize extends _ {
@@ -1625,9 +1625,9 @@ declare namespace imbacss {
 	interface bgs extends backgroundΞsize { }
 	/**
 	 * Indicates which sides of an element's box(es) may not be adjacent to an earlier floating box. The 'clear' property does not consider floats inside the element itself or in other block formatting contexts.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/clear)
-	 *
+	 * 
 	*/
 	interface clear extends _ {
 		set(val: this): void;
@@ -1648,9 +1648,9 @@ declare namespace imbacss {
 
 	/**
 	 * Allows authors to constrain content height to a certain range.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-height)
-	 *
+	 * 
 	 * @alias mah
 	*/
 	interface maxΞheight extends _ {
@@ -1674,9 +1674,9 @@ declare namespace imbacss {
 	interface mah extends maxΞheight { }
 	/**
 	 * Shorthand for setting 'list-style-type', 'list-style-position' and 'list-style-image'
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style)
-	 *
+	 * 
 	*/
 	interface listΞstyle extends _ {
 		set(val: this | Ψimage | Ψurl): void;
@@ -1729,9 +1729,9 @@ declare namespace imbacss {
 
 	/**
 	 * Allows italic or oblique faces to be selected. Italic forms are generally cursive in nature while oblique faces are typically sloped versions of the regular face.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-style)
-	 *
+	 * 
 	*/
 	interface fontΞstyle extends _ {
 		set(val: this): void;
@@ -1749,9 +1749,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand property for setting 'font-style', 'font-variant', 'font-weight', 'font-size', 'line-height', and 'font-family', at the same place in the style sheet. The syntax of this property is based on a traditional typographical shorthand notation to set multiple properties related to fonts.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font)
-	 *
+	 * 
 	*/
 	interface font extends _ {
 		set(val: this | Ψfont): void;
@@ -1844,9 +1844,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand property for setting border width, style and color
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-left)
-	 *
+	 * 
 	 * @alias bdl
 	*/
 	interface borderΞleft extends _ {
@@ -1858,9 +1858,9 @@ declare namespace imbacss {
 	interface bdl extends borderΞleft { }
 	/**
 	 * Shorthand property for setting border width, style and color
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-right)
-	 *
+	 * 
 	 * @alias bdr
 	*/
 	interface borderΞright extends _ {
@@ -1872,9 +1872,9 @@ declare namespace imbacss {
 	interface bdr extends borderΞright { }
 	/**
 	 * Text can overflow for example when it is prevented from wrapping.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-overflow)
-	 *
+	 * 
 	 * @alias tof
 	*/
 	interface textΞoverflow extends _ {
@@ -1892,9 +1892,9 @@ declare namespace imbacss {
 	interface tof extends textΞoverflow { }
 	/**
 	 * Shorthand that sets the four 'border-*-width' properties. If it has four values, they set top, right, bottom and left in that order. If left is missing, it is the same as right; if bottom is missing, it is the same as top; if right is missing, it is the same as top.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-width)
-	 *
+	 * 
 	 * @alias bw
 	*/
 	interface borderΞwidth extends _ {
@@ -1906,9 +1906,9 @@ declare namespace imbacss {
 	interface bw extends borderΞwidth { }
 	/**
 	 * Aligns flex items along the main axis of the current line of the flex container.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/justify-content)
-	 *
+	 * 
 	 * @alias jc
 	*/
 	interface justifyΞcontent extends _ {
@@ -1968,9 +1968,9 @@ declare namespace imbacss {
 	interface jc extends justifyΞcontent { }
 	/**
 	 * Aligns flex items along the cross axis of the current line of the flex container.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/align-items)
-	 *
+	 * 
 	 * @alias ai
 	*/
 	interface alignΞitems extends _ {
@@ -1997,9 +1997,9 @@ declare namespace imbacss {
 	interface ai extends alignΞitems { }
 	/**
 	 * Specifies the handling of overflow in the vertical direction.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-y)
-	 *
+	 * 
 	 * @alias ofy
 	*/
 	interface overflowΞy extends _ {
@@ -2023,9 +2023,9 @@ declare namespace imbacss {
 	interface ofy extends overflowΞy { }
 	/**
 	 * Specifies under what circumstances a given element can be the target element for a pointer event.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/pointer-events)
-	 *
+	 * 
 	 * @alias pe
 	*/
 	interface pointerΞevents extends _ {
@@ -2064,9 +2064,9 @@ declare namespace imbacss {
 	interface pe extends pointerΞevents { }
 	/**
 	 * The style of the border around edges of an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-style)
-	 *
+	 * 
 	 * @alias bs
 	*/
 	interface borderΞstyle extends _ {
@@ -2078,9 +2078,9 @@ declare namespace imbacss {
 	interface bs extends borderΞstyle { }
 	/**
 	 * Specifies the minimum, maximum, and optimal spacing between grapheme clusters.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/letter-spacing)
-	 *
+	 * 
 	 * @alias ls
 	*/
 	interface letterΞspacing extends _ {
@@ -2095,9 +2095,9 @@ declare namespace imbacss {
 	interface ls extends letterΞspacing { }
 	/**
 	 * Shorthand property combines six of the animation properties into a single property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation)
-	 *
+	 * 
 	*/
 	interface animation extends _ {
 		set(val: this | Ψtime | ΨtimingΞfunction | Ψidentifier | Ψnumber, arg1: any, arg2: any, arg3: any): void;
@@ -2133,9 +2133,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the handling of overflow in the horizontal direction.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-x)
-	 *
+	 * 
 	 * @alias ofx
 	*/
 	interface overflowΞx extends _ {
@@ -2159,9 +2159,9 @@ declare namespace imbacss {
 	interface ofx extends overflowΞx { }
 	/**
 	 * Specifies how flex items are placed in the flex container, by setting the direction of the flex container’s main axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-direction)
-	 *
+	 * 
 	 * @alias fld
 	*/
 	interface flexΞdirection extends _ {
@@ -2185,9 +2185,9 @@ declare namespace imbacss {
 	interface fld extends flexΞdirection { }
 	/**
 	 * Specifies whether the UA may break within a word to prevent overflow when an otherwise-unbreakable string is too long to fit.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/word-wrap)
-	 *
+	 * 
 	*/
 	interface wordΞwrap extends _ {
 		set(val: this): void;
@@ -2202,9 +2202,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the components of a flexible length: the flex grow factor and flex shrink factor, and the flex basis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex)
-	 *
+	 * 
 	 * @alias fl
 	*/
 	interface flex extends _ {
@@ -2225,9 +2225,9 @@ declare namespace imbacss {
 	interface fl extends flex { }
 	/**
 	 * Selects a table's border model.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-collapse)
-	 *
+	 * 
 	*/
 	interface borderΞcollapse extends _ {
 		set(val: this): void;
@@ -2242,9 +2242,9 @@ declare namespace imbacss {
 
 	/**
 	 * Non-standard. Specifies the magnification scale of the object. See 'transform: scale()' for a standards-based alternative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/zoom)
-	 *
+	 * 
 	*/
 	interface zoom extends _ {
 		set(val: this | Ψinteger | Ψnumber | Ψpercentage): void;
@@ -2255,9 +2255,9 @@ declare namespace imbacss {
 
 	/**
 	 * Used to construct the default contents of a list item’s marker
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style-type)
-	 *
+	 * 
 	*/
 	interface listΞstyleΞtype extends _ {
 		set(val: this | Ψstring): void;
@@ -2314,9 +2314,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the radii of the bottom left outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-left-radius)
-	 *
+	 * 
 	 * @alias rdbl
 	*/
 	interface borderΞbottomΞleftΞradius extends _ {
@@ -2328,9 +2328,9 @@ declare namespace imbacss {
 	interface rdbl extends borderΞbottomΞleftΞradius { }
 	/**
 	 * Paints the interior of the given graphical element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/fill)
-	 *
+	 * 
 	*/
 	interface fill extends _ {
 		set(val: this | Ψcolor | Ψurl): void;
@@ -2345,9 +2345,9 @@ declare namespace imbacss {
 
 	/**
 	 * Establishes the origin of transformation for an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transform-origin)
-	 *
+	 * 
 	 * @alias origin
 	*/
 	interface transformΞorigin extends _ {
@@ -2359,9 +2359,9 @@ declare namespace imbacss {
 	interface origin extends transformΞorigin { }
 	/**
 	 * Controls whether the flex container is single-line or multi-line, and the direction of the cross-axis, which determines the direction new lines are stacked in.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-wrap)
-	 *
+	 * 
 	 * @alias flw
 	*/
 	interface flexΞwrap extends _ {
@@ -2382,9 +2382,9 @@ declare namespace imbacss {
 	interface flw extends flexΞwrap { }
 	/**
 	 * Enables shadow effects to be applied to the text of the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-shadow)
-	 *
+	 * 
 	 * @alias txs
 	*/
 	interface textΞshadow extends _ {
@@ -2399,9 +2399,9 @@ declare namespace imbacss {
 	interface txs extends textΞshadow { }
 	/**
 	 * Defines the radii of the top left outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-left-radius)
-	 *
+	 * 
 	 * @alias rdtl
 	*/
 	interface borderΞtopΞleftΞradius extends _ {
@@ -2413,9 +2413,9 @@ declare namespace imbacss {
 	interface rdtl extends borderΞtopΞleftΞradius { }
 	/**
 	 * Defines the radii of the top left and top right outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-radius)
-	 *
+	 * 
 	 * @alias rdt
 	 * @custom
 	*/
@@ -2428,9 +2428,9 @@ declare namespace imbacss {
 	interface rdt extends borderΞtopΞradius { }
 	/**
 	 * Defines the radii of the top left and bottom left outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-left-radius)
-	 *
+	 * 
 	 * @alias rdl
 	 * @custom
 	*/
@@ -2443,9 +2443,9 @@ declare namespace imbacss {
 	interface rdl extends borderΞleftΞradius { }
 	/**
 	 * Defines the radii of the bottom left and bottom right outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-radius)
-	 *
+	 * 
 	 * @alias rdb
 	 * @custom
 	*/
@@ -2458,9 +2458,9 @@ declare namespace imbacss {
 	interface rdb extends borderΞbottomΞradius { }
 	/**
 	 * Defines the radii of the top right and bottom right outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-right-radius)
-	 *
+	 * 
 	 * @alias rdr
 	 * @custom
 	*/
@@ -2473,9 +2473,9 @@ declare namespace imbacss {
 	interface rdr extends borderΞrightΞradius { }
 	/**
 	 * Controls the appearance of selection.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/user-select)
-	 *
+	 * 
 	 * @alias us
 	*/
 	interface userΞselect extends _ {
@@ -2501,9 +2501,9 @@ declare namespace imbacss {
 	interface us extends userΞselect { }
 	/**
 	 * Deprecated. Use the 'clip-path' property when support allows. Defines the visible portion of an element’s box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/clip)
-	 *
+	 * 
 	*/
 	interface clip extends _ {
 		set(val: this): void;
@@ -2518,9 +2518,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the radii of the bottom right outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-right-radius)
-	 *
+	 * 
 	 * @alias rdbr
 	*/
 	interface borderΞbottomΞrightΞradius extends _ {
@@ -2532,9 +2532,9 @@ declare namespace imbacss {
 	interface rdbr extends borderΞbottomΞrightΞradius { }
 	/**
 	 * Specifies line break opportunities for non-CJK scripts.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/word-break)
-	 *
+	 * 
 	*/
 	interface wordΞbreak extends _ {
 		set(val: this): void;
@@ -2552,9 +2552,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the radii of the top right outer border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-right-radius)
-	 *
+	 * 
 	 * @alias rdtr
 	*/
 	interface borderΞtopΞrightΞradius extends _ {
@@ -2566,9 +2566,9 @@ declare namespace imbacss {
 	interface rdtr extends borderΞtopΞrightΞradius { }
 	/**
 	 * Sets the flex grow factor. Negative numbers are invalid.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-grow)
-	 *
+	 * 
 	 * @alias flg
 	*/
 	interface flexΞgrow extends _ {
@@ -2580,9 +2580,9 @@ declare namespace imbacss {
 	interface flg extends flexΞgrow { }
 	/**
 	 * Sets the color of the top border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-color)
-	 *
+	 * 
 	 * @alias bct
 	*/
 	interface borderΞtopΞcolor extends _ {
@@ -2594,9 +2594,9 @@ declare namespace imbacss {
 	interface bct extends borderΞtopΞcolor { }
 	/**
 	 * Sets the color of the bottom border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-color)
-	 *
+	 * 
 	 * @alias bcb
 	*/
 	interface borderΞbottomΞcolor extends _ {
@@ -2608,9 +2608,9 @@ declare namespace imbacss {
 	interface bcb extends borderΞbottomΞcolor { }
 	/**
 	 * Sets the flex shrink factor. Negative numbers are invalid.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-shrink)
-	 *
+	 * 
 	 * @alias fls
 	*/
 	interface flexΞshrink extends _ {
@@ -2622,9 +2622,9 @@ declare namespace imbacss {
 	interface fls extends flexΞshrink { }
 	/**
 	 * The creator of SVG content might want to provide a hint to the implementation about what tradeoffs to make as it renders text. The ‘text-rendering’ property provides these hints.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-rendering)
-	 *
+	 * 
 	*/
 	interface textΞrendering extends _ {
 		set(val: this): void;
@@ -2644,9 +2644,9 @@ declare namespace imbacss {
 
 	/**
 	 * Allows the default alignment along the cross axis to be overridden for individual flex items.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/align-self)
-	 *
+	 * 
 	 * @alias as
 	*/
 	interface alignΞself extends _ {
@@ -2676,9 +2676,9 @@ declare namespace imbacss {
 	interface as extends alignΞself { }
 	/**
 	 * Specifies the indentation applied to lines of inline content in a block. The indentation only affects the first line of inline content in the block unless the 'hanging' keyword is specified, in which case it affects all lines except the first.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-indent)
-	 *
+	 * 
 	*/
 	interface textΞindent extends _ {
 		set(val: Ψpercentage | Ψlength): void;
@@ -2687,9 +2687,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes how the animation will progress over one cycle of its duration.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timing-function)
-	 *
+	 * 
 	*/
 	interface animationΞtimingΞfunction extends _ {
 		set(val: ΨtimingΞfunction, arg1: any, arg2: any, arg3: any): void;
@@ -2698,9 +2698,9 @@ declare namespace imbacss {
 
 	/**
 	 * The lengths specify the distance that separates adjoining cell borders. If one length is specified, it gives both the horizontal and vertical spacing. If two are specified, the first gives the horizontal spacing and the second the vertical spacing. Lengths may not be negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-spacing)
-	 *
+	 * 
 	*/
 	interface borderΞspacing extends _ {
 		set(val: Ψlength): void;
@@ -2709,9 +2709,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the inline base direction or directionality of any bidi paragraph, embedding, isolate, or override established by the box. Note: for HTML content use the 'dir' attribute and 'bdo' element rather than this property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/direction)
-	 *
+	 * 
 	*/
 	interface direction extends _ {
 		set(val: this): void;
@@ -2726,9 +2726,9 @@ declare namespace imbacss {
 
 	/**
 	 * Determines the background painting area.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-clip)
-	 *
+	 * 
 	 * @alias bgclip
 	*/
 	interface backgroundΞclip extends _ {
@@ -2740,9 +2740,9 @@ declare namespace imbacss {
 	interface bgclip extends backgroundΞclip { }
 	/**
 	 * Sets the color of the left border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-left-color)
-	 *
+	 * 
 	 * @alias bcl
 	*/
 	interface borderΞleftΞcolor extends _ {
@@ -2754,9 +2754,9 @@ declare namespace imbacss {
 	interface bcl extends borderΞleftΞcolor { }
 	/**
 	 * `@font-face` descriptor. Specifies the resource containing font data. It is required, whether the font is downloadable or locally installed.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/src)
-	 *
+	 * 
 	*/
 	interface src extends _ {
 		set(val: this | Ψurl | Ψidentifier, arg1: any, arg2: any, arg3: any): void;
@@ -2774,9 +2774,9 @@ declare namespace imbacss {
 
 	/**
 	 * Determines whether touch input may trigger default behavior supplied by user agent.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action)
-	 *
+	 * 
 	*/
 	interface touchΞaction extends _ {
 		set(val: this): void;
@@ -2808,9 +2808,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the color of the right border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-right-color)
-	 *
+	 * 
 	 * @alias bcr
 	*/
 	interface borderΞrightΞcolor extends _ {
@@ -2822,9 +2822,9 @@ declare namespace imbacss {
 	interface bcr extends borderΞrightΞcolor { }
 	/**
 	 * Specifies the name of the CSS property to which the transition is applied.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-property)
-	 *
+	 * 
 	*/
 	interface transitionΞproperty extends _ {
 		set(val: this | Ψproperty): void;
@@ -2839,9 +2839,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines a list of animations that apply. Each name is used to select the keyframe at-rule that provides the property values for the animation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-name)
-	 *
+	 * 
 	*/
 	interface animationΞname extends _ {
 		set(val: this | Ψidentifier, arg1: any, arg2: any, arg3: any): void;
@@ -2853,9 +2853,9 @@ declare namespace imbacss {
 
 	/**
 	 * Processes an element’s rendering before it is displayed in the document, by applying one or more filter effects.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/filter)
-	 *
+	 * 
 	*/
 	interface filter extends _ {
 		set(val: this | Ψurl): void;
@@ -2900,9 +2900,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the length of time that an animation takes to complete one cycle.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-duration)
-	 *
+	 * 
 	*/
 	interface animationΞduration extends _ {
 		set(val: Ψtime, arg1: any, arg2: any, arg3: any): void;
@@ -2911,9 +2911,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies whether the UA may break within a word to prevent overflow when an otherwise-unbreakable string is too long to fit within the line box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-wrap)
-	 *
+	 * 
 	*/
 	interface overflowΞwrap extends _ {
 		set(val: this): void;
@@ -2928,9 +2928,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines when the transition will start. It allows a transition to begin execution some period of time from when it is applied.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-delay)
-	 *
+	 * 
 	*/
 	interface transitionΞdelay extends _ {
 		set(val: Ψtime, arg1: any, arg2: any, arg3: any): void;
@@ -2939,9 +2939,9 @@ declare namespace imbacss {
 
 	/**
 	 * Paints along the outline of the given graphical element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke)
-	 *
+	 * 
 	*/
 	interface stroke extends _ {
 		set(val: this | Ψcolor | Ψurl): void;
@@ -2956,9 +2956,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies variant representations of the font
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant)
-	 *
+	 * 
 	*/
 	interface fontΞvariant extends _ {
 		set(val: this): void;
@@ -2973,9 +2973,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the thickness of the bottom border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-width)
-	 *
+	 * 
 	 * @alias bwb
 	*/
 	interface borderΞbottomΞwidth extends _ {
@@ -2987,9 +2987,9 @@ declare namespace imbacss {
 	interface bwb extends borderΞbottomΞwidth { }
 	/**
 	 * Defines when the animation will start.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-delay)
-	 *
+	 * 
 	*/
 	interface animationΞdelay extends _ {
 		set(val: Ψtime, arg1: any, arg2: any, arg3: any): void;
@@ -2998,9 +2998,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the thickness of the top border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-width)
-	 *
+	 * 
 	 * @alias bwt
 	*/
 	interface borderΞtopΞwidth extends _ {
@@ -3012,9 +3012,9 @@ declare namespace imbacss {
 	interface bwt extends borderΞtopΞwidth { }
 	/**
 	 * Specifies how long the transition from the old value to the new value should take.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-duration)
-	 *
+	 * 
 	*/
 	interface transitionΞduration extends _ {
 		set(val: Ψtime, arg1: any, arg2: any, arg3: any): void;
@@ -3023,9 +3023,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the flex basis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-basis)
-	 *
+	 * 
 	 * @alias flb
 	*/
 	interface flexΞbasis extends _ {
@@ -3043,9 +3043,9 @@ declare namespace imbacss {
 	interface flb extends flexΞbasis { }
 	/**
 	 * Provides a rendering hint to the user agent, stating what kinds of changes the author expects to perform on the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/will-change)
-	 *
+	 * 
 	*/
 	interface willΞchange extends _ {
 		set(val: this | Ψidentifier): void;
@@ -3063,9 +3063,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines what values are applied by the animation outside the time it is executing.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-fill-mode)
-	 *
+	 * 
 	*/
 	interface animationΞfillΞmode extends _ {
 		set(val: this, arg1: any, arg2: any, arg3: any): void;
@@ -3086,9 +3086,9 @@ declare namespace imbacss {
 
 	/**
 	 * Width of the outline.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-width)
-	 *
+	 * 
 	 * @alias olw
 	*/
 	interface outlineΞwidth extends _ {
@@ -3100,9 +3100,9 @@ declare namespace imbacss {
 	interface olw extends outlineΞwidth { }
 	/**
 	 * Controls the algorithm used to lay out the table cells, rows, and columns.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/table-layout)
-	 *
+	 * 
 	*/
 	interface tableΞlayout extends _ {
 		set(val: this): void;
@@ -3117,9 +3117,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies how the contents of a replaced element should be scaled relative to the box established by its used height and width.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/object-fit)
-	 *
+	 * 
 	*/
 	interface objectΞfit extends _ {
 		set(val: this): void;
@@ -3143,9 +3143,9 @@ declare namespace imbacss {
 
 	/**
 	 * Controls the order in which children of a flex container appear within the flex container, by assigning them to ordinal groups.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/order)
-	 *
+	 * 
 	*/
 	interface order extends _ {
 		set(val: Ψinteger): void;
@@ -3154,9 +3154,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes how the intermediate values used during a transition will be calculated.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transition-timing-function)
-	 *
+	 * 
 	*/
 	interface transitionΞtimingΞfunction extends _ {
 		set(val: ΨtimingΞfunction, arg1: any, arg2: any, arg3: any): void;
@@ -3165,9 +3165,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies whether or not an element is resizable by the user, and if so, along which axis/axes.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/resize)
-	 *
+	 * 
 	*/
 	interface resize extends _ {
 		set(val: this): void;
@@ -3188,9 +3188,9 @@ declare namespace imbacss {
 
 	/**
 	 * Style of the outline.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-style)
-	 *
+	 * 
 	 * @alias ols
 	*/
 	interface outlineΞstyle extends _ {
@@ -3205,9 +3205,9 @@ declare namespace imbacss {
 	interface ols extends outlineΞstyle { }
 	/**
 	 * Sets the thickness of the right border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-right-width)
-	 *
+	 * 
 	 * @alias bwr
 	*/
 	interface borderΞrightΞwidth extends _ {
@@ -3219,9 +3219,9 @@ declare namespace imbacss {
 	interface bwr extends borderΞrightΞwidth { }
 	/**
 	 * Specifies the width of the stroke on the current object.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-width)
-	 *
+	 * 
 	*/
 	interface strokeΞwidth extends _ {
 		set(val: Ψpercentage | Ψlength): void;
@@ -3230,9 +3230,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the number of times an animation cycle is played. The default value is one, meaning the animation will play from beginning to end once.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-iteration-count)
-	 *
+	 * 
 	*/
 	interface animationΞiterationΞcount extends _ {
 		set(val: this | Ψnumber, arg1: any, arg2: any, arg3: any): void;
@@ -3244,9 +3244,9 @@ declare namespace imbacss {
 
 	/**
 	 * Aligns a flex container’s lines within the flex container when there is extra space in the cross-axis, similar to how 'justify-content' aligns individual items within the main-axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/align-content)
-	 *
+	 * 
 	 * @alias ac
 	*/
 	interface alignΞcontent extends _ {
@@ -3276,9 +3276,9 @@ declare namespace imbacss {
 	interface ac extends alignΞcontent { }
 	/**
 	 * Offset the outline and draw it beyond the border edge.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-offset)
-	 *
+	 * 
 	 * @alias olo
 	*/
 	interface outlineΞoffset extends _ {
@@ -3290,9 +3290,9 @@ declare namespace imbacss {
 	interface olo extends outlineΞoffset { }
 	/**
 	 * Determines whether or not the 'back' side of a transformed element is visible when facing the viewer. With an identity transform, the front side of an element faces the viewer.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/backface-visibility)
-	 *
+	 * 
 	*/
 	interface backfaceΞvisibility extends _ {
 		set(val: this): void;
@@ -3307,9 +3307,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the thickness of the left border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-left-width)
-	 *
+	 * 
 	 * @alias bwl
 	*/
 	interface borderΞleftΞwidth extends _ {
@@ -3321,9 +3321,9 @@ declare namespace imbacss {
 	interface bwl extends borderΞleftΞwidth { }
 	/**
 	 * Specifies how flexbox items are placed in the flexbox.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-flow)
-	 *
+	 * 
 	 * @alias flf
 	*/
 	interface flexΞflow extends _ {
@@ -3356,9 +3356,9 @@ declare namespace imbacss {
 	interface flf extends flexΞflow { }
 	/**
 	 * Changes the appearance of buttons and other controls to resemble native controls.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/appearance)
-	 *
+	 * 
 	*/
 	interface appearance extends _ {
 		set(val: any): void;
@@ -3367,9 +3367,9 @@ declare namespace imbacss {
 
 	/**
 	 * The level of embedding with respect to the bidirectional algorithm.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-bidi)
-	 *
+	 * 
 	*/
 	interface unicodeΞbidi extends _ {
 		set(val: this): void;
@@ -3396,9 +3396,9 @@ declare namespace imbacss {
 
 	/**
 	 * Controls the pattern of dashes and gaps used to stroke paths.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-dasharray)
-	 *
+	 * 
 	*/
 	interface strokeΞdasharray extends _ {
 		set(val: this | Ψlength | Ψpercentage | Ψnumber): void;
@@ -3410,9 +3410,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the distance into the dash pattern to start the dash.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-dashoffset)
-	 *
+	 * 
 	*/
 	interface strokeΞdashoffset extends _ {
 		set(val: Ψpercentage | Ψlength): void;
@@ -3421,9 +3421,9 @@ declare namespace imbacss {
 
 	/**
 	 * `@font-face` descriptor. Defines the set of Unicode codepoints that may be supported by the font face for which it is declared.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-range)
-	 *
+	 * 
 	*/
 	interface unicodeΞrange extends _ {
 		set(val: this | ΨunicodeΞrange): void;
@@ -3645,9 +3645,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies additional spacing between “words”.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/word-spacing)
-	 *
+	 * 
 	*/
 	interface wordΞspacing extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -3659,9 +3659,9 @@ declare namespace imbacss {
 
 	/**
 	 * The text-size-adjust CSS property controls the text inflation algorithm used on some smartphones and tablets. Other browsers will ignore this property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-size-adjust)
-	 *
+	 * 
 	*/
 	interface textΞsizeΞadjust extends _ {
 		set(val: any): void;
@@ -3670,9 +3670,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the style of the top border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-style)
-	 *
+	 * 
 	 * @alias bst
 	*/
 	interface borderΞtopΞstyle extends _ {
@@ -3684,9 +3684,9 @@ declare namespace imbacss {
 	interface bst extends borderΞtopΞstyle { }
 	/**
 	 * Sets the style of the bottom border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-style)
-	 *
+	 * 
 	 * @alias bsb
 	*/
 	interface borderΞbottomΞstyle extends _ {
@@ -3698,9 +3698,9 @@ declare namespace imbacss {
 	interface bsb extends borderΞbottomΞstyle { }
 	/**
 	 * Defines whether or not the animation should play in reverse on alternate cycles.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-direction)
-	 *
+	 * 
 	*/
 	interface animationΞdirection extends _ {
 		set(val: this, arg1: any, arg2: any, arg3: any): void;
@@ -3721,9 +3721,9 @@ declare namespace imbacss {
 
 	/**
 	 * Provides a hint to the user-agent about what aspects of an image are most important to preserve when the image is scaled, to aid the user-agent in the choice of an appropriate scaling algorithm.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/image-rendering)
-	 *
+	 * 
 	*/
 	interface imageΞrendering extends _ {
 		set(val: this): void;
@@ -3749,9 +3749,9 @@ declare namespace imbacss {
 
 	/**
 	 * Applies the same transform as the perspective(<number>) transform function, except that it applies only to the positioned or transformed children of the element, not to the transform on the element itself.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/perspective)
-	 *
+	 * 
 	*/
 	interface perspective extends _ {
 		set(val: this | Ψlength): void;
@@ -3763,9 +3763,9 @@ declare namespace imbacss {
 
 	/**
 	 * specifies, as a space-separated track list, the line names and track sizing functions of the grid.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-columns)
-	 *
+	 * 
 	 * @alias gtc
 	*/
 	interface gridΞtemplateΞcolumns extends _ {
@@ -3798,9 +3798,9 @@ declare namespace imbacss {
 	interface gtc extends gridΞtemplateΞcolumns { }
 	/**
 	 * Specifies the position of the '::marker' pseudo-element's box in the list item.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style-position)
-	 *
+	 * 
 	*/
 	interface listΞstyleΞposition extends _ {
 		set(val: this): void;
@@ -3815,9 +3815,9 @@ declare namespace imbacss {
 
 	/**
 	 * Provides low-level control over OpenType font features. It is intended as a way of providing access to font features that are not widely used but are needed for a particular use case.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-feature-settings)
-	 *
+	 * 
 	*/
 	interface fontΞfeatureΞsettings extends _ {
 		set(val: this | Ψstring | Ψinteger): void;
@@ -3835,9 +3835,9 @@ declare namespace imbacss {
 
 	/**
 	 * Indicates that an element and its contents are, as much as possible, independent of the rest of the document tree.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/contain)
-	 *
+	 * 
 	*/
 	interface contain extends _ {
 		set(val: this): void;
@@ -3867,9 +3867,9 @@ declare namespace imbacss {
 
 	/**
 	 * If background images have been specified, this property specifies their initial position (after any resizing) within their corresponding background positioning area.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position-x)
-	 *
+	 * 
 	*/
 	interface backgroundΞpositionΞx extends _ {
 		set(val: this | Ψlength | Ψpercentage, arg1: any, arg2: any, arg3: any): void;
@@ -3887,9 +3887,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines how nested elements are rendered in 3D space.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transform-style)
-	 *
+	 * 
 	*/
 	interface transformΞstyle extends _ {
 		set(val: this): void;
@@ -3904,9 +3904,9 @@ declare namespace imbacss {
 
 	/**
 	 * For elements rendered as a single box, specifies the background positioning area. For elements rendered as multiple boxes (e.g., inline boxes on several lines, boxes on several pages) specifies which boxes 'box-decoration-break' operates on to determine the background positioning area(s).
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-origin)
-	 *
+	 * 
 	 * @alias bgo
 	*/
 	interface backgroundΞorigin extends _ {
@@ -3918,9 +3918,9 @@ declare namespace imbacss {
 	interface bgo extends backgroundΞorigin { }
 	/**
 	 * Sets the style of the left border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-left-style)
-	 *
+	 * 
 	 * @alias bsl
 	*/
 	interface borderΞleftΞstyle extends _ {
@@ -3932,9 +3932,9 @@ declare namespace imbacss {
 	interface bsl extends borderΞleftΞstyle { }
 	/**
 	 * The font-display descriptor determines how a font face is displayed based on whether and when it is downloaded and ready to use.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-display)
-	 *
+	 * 
 	*/
 	interface fontΞdisplay extends _ {
 		set(val: any): void;
@@ -3943,9 +3943,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies a clipping path where everything inside the path is visible and everything outside is clipped out.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/clip-path)
-	 *
+	 * 
 	*/
 	interface clipΞpath extends _ {
 		set(val: this | Ψurl | Ψshape | ΨgeometryΞbox): void;
@@ -3960,9 +3960,9 @@ declare namespace imbacss {
 
 	/**
 	 * Controls whether hyphenation is allowed to create more break opportunities within a line of text.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/hyphens)
-	 *
+	 * 
 	*/
 	interface hyphens extends _ {
 		set(val: this): void;
@@ -3980,9 +3980,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies whether the background images are fixed with regard to the viewport ('fixed') or scroll along with the element ('scroll') or its contents ('local').
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-attachment)
-	 *
+	 * 
 	 * @alias bga
 	*/
 	interface backgroundΞattachment extends _ {
@@ -4003,9 +4003,9 @@ declare namespace imbacss {
 	interface bga extends backgroundΞattachment { }
 	/**
 	 * Sets the style of the right border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-right-style)
-	 *
+	 * 
 	 * @alias bsr
 	*/
 	interface borderΞrightΞstyle extends _ {
@@ -4017,9 +4017,9 @@ declare namespace imbacss {
 	interface bsr extends borderΞrightΞstyle { }
 	/**
 	 * The color of the outline.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/outline-color)
-	 *
+	 * 
 	 * @alias olc
 	*/
 	interface outlineΞcolor extends _ {
@@ -4034,9 +4034,9 @@ declare namespace imbacss {
 	interface olc extends outlineΞcolor { }
 	/**
 	 * Logical 'margin-bottom'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-block-end)
-	 *
+	 * 
 	*/
 	interface marginΞblockΞend extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -4047,9 +4047,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines whether the animation is running or paused.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-play-state)
-	 *
+	 * 
 	*/
 	interface animationΞplayΞstate extends _ {
 		set(val: this): void;
@@ -4064,9 +4064,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies quotation marks for any number of embedded quotations.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/quotes)
-	 *
+	 * 
 	*/
 	interface quotes extends _ {
 		set(val: this | Ψstring): void;
@@ -4078,9 +4078,9 @@ declare namespace imbacss {
 
 	/**
 	 * If background images have been specified, this property specifies their initial position (after any resizing) within their corresponding background positioning area.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position-y)
-	 *
+	 * 
 	*/
 	interface backgroundΞpositionΞy extends _ {
 		set(val: this | Ψlength | Ψpercentage, arg1: any, arg2: any, arg3: any): void;
@@ -4098,9 +4098,9 @@ declare namespace imbacss {
 
 	/**
 	 * Selects a normal, condensed, or expanded face from a font family.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch)
-	 *
+	 * 
 	*/
 	interface fontΞstretch extends _ {
 		set(val: this): void;
@@ -4133,9 +4133,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the shape to be used at the end of open subpaths when they are stroked.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-linecap)
-	 *
+	 * 
 	*/
 	interface strokeΞlinecap extends _ {
 		set(val: this): void;
@@ -4153,9 +4153,9 @@ declare namespace imbacss {
 
 	/**
 	 * Determines the alignment of the replaced element inside its box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/object-position)
-	 *
+	 * 
 	*/
 	interface objectΞposition extends _ {
 		set(val: Ψposition | Ψlength | Ψpercentage): void;
@@ -4164,9 +4164,9 @@ declare namespace imbacss {
 
 	/**
 	 * Property accepts one or more names of counters (identifiers), each one optionally followed by an integer. The integer gives the value that the counter is set to on each occurrence of the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/counter-reset)
-	 *
+	 * 
 	*/
 	interface counterΞreset extends _ {
 		set(val: this | Ψidentifier | Ψinteger): void;
@@ -4178,9 +4178,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'margin-top'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-block-start)
-	 *
+	 * 
 	*/
 	interface marginΞblockΞstart extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -4191,9 +4191,9 @@ declare namespace imbacss {
 
 	/**
 	 * Manipulate the value of existing counters.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/counter-increment)
-	 *
+	 * 
 	*/
 	interface counterΞincrement extends _ {
 		set(val: this | Ψidentifier | Ψinteger): void;
@@ -4205,9 +4205,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the color of text decoration (underlines overlines, and line-throughs) set on the element with text-decoration-line.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration-color)
-	 *
+	 * 
 	 * @alias tdc
 	*/
 	interface textΞdecorationΞcolor extends _ {
@@ -4219,9 +4219,9 @@ declare namespace imbacss {
 	interface tdc extends textΞdecorationΞcolor { }
 	/**
 	 * Sets the image that will be used as the list item marker. When the image is available, it will replace the marker set with the 'list-style-type' marker.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/list-style-image)
-	 *
+	 * 
 	*/
 	interface listΞstyleΞimage extends _ {
 		set(val: this | Ψimage): void;
@@ -4233,9 +4233,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes the optimal number of columns into which the content of the element will be flowed.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-count)
-	 *
+	 * 
 	*/
 	interface columnΞcount extends _ {
 		set(val: this | Ψinteger): void;
@@ -4247,9 +4247,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand property for setting 'border-image-source', 'border-image-slice', 'border-image-width', 'border-image-outset' and 'border-image-repeat'. Omitted values are set to their initial values.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image)
-	 *
+	 * 
 	*/
 	interface borderΞimage extends _ {
 		set(val: this | Ψlength | Ψpercentage | Ψnumber | Ψurl): void;
@@ -4281,9 +4281,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the gap between columns. If there is a column rule between columns, it will appear in the middle of the gap.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-gap)
-	 *
+	 * 
 	 * @alias cg
 	*/
 	interface columnΞgap extends _ {
@@ -4298,9 +4298,9 @@ declare namespace imbacss {
 	interface cg extends columnΞgap { }
 	/**
 	 * Defines rules for page breaks inside an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/page-break-inside)
-	 *
+	 * 
 	*/
 	interface pageΞbreakΞinside extends _ {
 		set(val: this): void;
@@ -4315,9 +4315,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the opacity of the painting operation used to paint the interior the current object.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/fill-opacity)
-	 *
+	 * 
 	*/
 	interface fillΞopacity extends _ {
 		set(val: Ψnumber): void;
@@ -4326,9 +4326,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'padding-left'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-inline-start)
-	 *
+	 * 
 	*/
 	interface paddingΞinlineΞstart extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -4337,9 +4337,9 @@ declare namespace imbacss {
 
 	/**
 	 * In the separated borders model, this property controls the rendering of borders and backgrounds around cells that have no visible content.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/empty-cells)
-	 *
+	 * 
 	*/
 	interface emptyΞcells extends _ {
 		set(val: this): void;
@@ -4356,9 +4356,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies control over which ligatures are enabled or disabled. A value of ‘normal’ implies that the defaults set by the font are used.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-ligatures)
-	 *
+	 * 
 	*/
 	interface fontΞvariantΞligatures extends _ {
 		set(val: this): void;
@@ -4403,9 +4403,9 @@ declare namespace imbacss {
 
 	/**
 	 * The text-decoration-skip CSS property specifies what parts of the element’s content any text decoration affecting the element must skip over. It controls all text decoration lines drawn by the element and also any text decoration lines drawn by its ancestors.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration-skip)
-	 *
+	 * 
 	*/
 	interface textΞdecorationΞskip extends _ {
 		set(val: any): void;
@@ -4414,9 +4414,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the way of justifying a box inside its container along the appropriate axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/justify-self)
-	 *
+	 * 
 	 * @alias js
 	*/
 	interface justifyΞself extends _ {
@@ -4468,9 +4468,9 @@ declare namespace imbacss {
 	interface js extends justifyΞself { }
 	/**
 	 * Defines rules for page breaks after an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/page-break-after)
-	 *
+	 * 
 	*/
 	interface pageΞbreakΞafter extends _ {
 		set(val: this): void;
@@ -4494,9 +4494,9 @@ declare namespace imbacss {
 
 	/**
 	 * specifies, as a space-separated track list, the line names and track sizing functions of the grid.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-rows)
-	 *
+	 * 
 	 * @alias gtr
 	*/
 	interface gridΞtemplateΞrows extends _ {
@@ -4529,9 +4529,9 @@ declare namespace imbacss {
 	interface gtr extends gridΞtemplateΞrows { }
 	/**
 	 * Logical 'padding-right'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-inline-end)
-	 *
+	 * 
 	*/
 	interface paddingΞinlineΞend extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -4540,9 +4540,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand that specifies the gutters between grid columns and grid rows in one declaration. Replaced by 'gap' property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-gap)
-	 *
+	 * 
 	*/
 	interface gridΞgap extends _ {
 		set(val: Ψlength): void;
@@ -4551,9 +4551,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand that resets all properties except 'direction' and 'unicode-bidi'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/all)
-	 *
+	 * 
 	*/
 	interface all extends _ {
 		set(val: this): void;
@@ -4562,9 +4562,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand for 'grid-column-start' and 'grid-column-end'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column)
-	 *
+	 * 
 	 * @alias gc
 	*/
 	interface gridΞcolumn extends _ {
@@ -4582,9 +4582,9 @@ declare namespace imbacss {
 	interface gc extends gridΞcolumn { }
 	/**
 	 * Specifies the opacity of the painting operation used to stroke the current object.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-opacity)
-	 *
+	 * 
 	*/
 	interface strokeΞopacity extends _ {
 		set(val: Ψnumber): void;
@@ -4593,9 +4593,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'margin-left'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline-start)
-	 *
+	 * 
 	*/
 	interface marginΞinlineΞstart extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -4606,9 +4606,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'margin-right'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline-end)
-	 *
+	 * 
 	*/
 	interface marginΞinlineΞend extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -4619,9 +4619,9 @@ declare namespace imbacss {
 
 	/**
 	 * Controls the color of the text insertion indicator.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/caret-color)
-	 *
+	 * 
 	*/
 	interface caretΞcolor extends _ {
 		set(val: this | Ψcolor): void;
@@ -4633,9 +4633,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the minimum number of line boxes in a block container that must be left in a fragment before a fragmentation break.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/orphans)
-	 *
+	 * 
 	*/
 	interface orphans extends _ {
 		set(val: Ψinteger): void;
@@ -4644,9 +4644,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the position of the caption box with respect to the table box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/caption-side)
-	 *
+	 * 
 	*/
 	interface captionΞside extends _ {
 		set(val: this): void;
@@ -4661,9 +4661,9 @@ declare namespace imbacss {
 
 	/**
 	 * Establishes the origin for the perspective property. It effectively sets the X and Y position at which the viewer appears to be looking at the children of the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/perspective-origin)
-	 *
+	 * 
 	*/
 	interface perspectiveΞorigin extends _ {
 		set(val: Ψposition | Ψpercentage | Ψlength): void;
@@ -4672,9 +4672,9 @@ declare namespace imbacss {
 
 	/**
 	 * Indicates what color to use at that gradient stop.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stop-color)
-	 *
+	 * 
 	*/
 	interface stopΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -4683,9 +4683,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the minimum number of line boxes of a block container that must be left in a fragment after a break.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/widows)
-	 *
+	 * 
 	*/
 	interface widows extends _ {
 		set(val: Ψinteger): void;
@@ -4694,9 +4694,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the scrolling behavior for a scrolling box, when scrolling happens due to navigation or CSSOM scrolling APIs.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-behavior)
-	 *
+	 * 
 	*/
 	interface scrollΞbehavior extends _ {
 		set(val: this): void;
@@ -4711,9 +4711,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the gutters between grid columns. Replaced by 'column-gap' property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column-gap)
-	 *
+	 * 
 	 * @alias gcg
 	*/
 	interface gridΞcolumnΞgap extends _ {
@@ -4725,9 +4725,9 @@ declare namespace imbacss {
 	interface gcg extends gridΞcolumnΞgap { }
 	/**
 	 * A shorthand property which sets both 'column-width' and 'column-count'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/columns)
-	 *
+	 * 
 	*/
 	interface columns extends _ {
 		set(val: this | Ψlength | Ψinteger): void;
@@ -4739,9 +4739,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes the width of columns in multicol elements.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-width)
-	 *
+	 * 
 	*/
 	interface columnΞwidth extends _ {
 		set(val: this | Ψlength): void;
@@ -4753,9 +4753,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the formula that must be used to mix the colors with the backdrop.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode)
-	 *
+	 * 
 	*/
 	interface mixΞblendΞmode extends _ {
 		set(val: this): void;
@@ -4812,9 +4812,9 @@ declare namespace imbacss {
 
 	/**
 	 * Kerning is the contextual adjustment of inter-glyph spacing. This property controls metric kerning, kerning that utilizes adjustment data contained in the font.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-kerning)
-	 *
+	 * 
 	*/
 	interface fontΞkerning extends _ {
 		set(val: this): void;
@@ -4832,9 +4832,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies inward offsets from the top, right, bottom, and left edges of the image, dividing it into nine regions: four corners, four edges and a middle.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-slice)
-	 *
+	 * 
 	*/
 	interface borderΞimageΞslice extends _ {
 		set(val: this | Ψnumber | Ψpercentage): void;
@@ -4846,9 +4846,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies how the images for the sides and the middle part of the border image are scaled and tiled. If the second keyword is absent, it is assumed to be the same as the first.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-repeat)
-	 *
+	 * 
 	*/
 	interface borderΞimageΞrepeat extends _ {
 		set(val: this): void;
@@ -4869,9 +4869,9 @@ declare namespace imbacss {
 
 	/**
 	 * The four values of 'border-image-width' specify offsets that are used to divide the border image area into nine parts. They represent inward distances from the top, right, bottom, and left sides of the area, respectively.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-width)
-	 *
+	 * 
 	*/
 	interface borderΞimageΞwidth extends _ {
 		set(val: this | Ψlength | Ψpercentage | Ψnumber): void;
@@ -4883,9 +4883,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand for 'grid-row-start' and 'grid-row-end'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row)
-	 *
+	 * 
 	 * @alias gr
 	*/
 	interface gridΞrow extends _ {
@@ -4903,9 +4903,9 @@ declare namespace imbacss {
 	interface gr extends gridΞrow { }
 	/**
 	 * Determines the width of the tab character (U+0009), in space characters (U+0020), when rendered.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/tab-size)
-	 *
+	 * 
 	*/
 	interface tabΞsize extends _ {
 		set(val: Ψinteger | Ψlength): void;
@@ -4914,9 +4914,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the gutters between grid rows. Replaced by 'row-gap' property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row-gap)
-	 *
+	 * 
 	 * @alias grg
 	*/
 	interface gridΞrowΞgap extends _ {
@@ -4928,9 +4928,9 @@ declare namespace imbacss {
 	interface grg extends gridΞrowΞgap { }
 	/**
 	 * Specifies the line style for underline, line-through and overline text decoration.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration-style)
-	 *
+	 * 
 	 * @alias tds
 	*/
 	interface textΞdecorationΞstyle extends _ {
@@ -4960,9 +4960,9 @@ declare namespace imbacss {
 	interface tds extends textΞdecorationΞstyle { }
 	/**
 	 * Specifies what set of line breaking restrictions are in effect within the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/line-break)
-	 *
+	 * 
 	*/
 	interface lineΞbreak extends _ {
 		set(val: this): void;
@@ -4983,9 +4983,9 @@ declare namespace imbacss {
 
 	/**
 	 * The values specify the amount by which the border image area extends beyond the border box on the top, right, bottom, and left sides respectively. If the fourth value is absent, it is the same as the second. If the third one is also absent, it is the same as the first. If the second one is also absent, it is the same as the first. Numbers represent multiples of the corresponding border-width.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-outset)
-	 *
+	 * 
 	*/
 	interface borderΞimageΞoutset extends _ {
 		set(val: Ψlength | Ψnumber): void;
@@ -4994,9 +4994,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand for setting 'column-rule-width', 'column-rule-style', and 'column-rule-color' at the same place in the style sheet. Omitted values are set to their initial values.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-rule)
-	 *
+	 * 
 	*/
 	interface columnΞrule extends _ {
 		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
@@ -5005,9 +5005,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the default justify-self for all items of the box, giving them the default way of justifying each box along the appropriate axis
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/justify-items)
-	 *
+	 * 
 	 * @alias ji
 	*/
 	interface justifyΞitems extends _ {
@@ -5061,9 +5061,9 @@ declare namespace imbacss {
 	interface ji extends justifyΞitems { }
 	/**
 	 * Determine a grid item’s size and location within the grid by contributing a line, a span, or nothing (automatic) to its grid placement. Shorthand for 'grid-row-start', 'grid-column-start', 'grid-row-end', and 'grid-column-end'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-area)
-	 *
+	 * 
 	 * @alias ga
 	*/
 	interface gridΞarea extends _ {
@@ -5081,9 +5081,9 @@ declare namespace imbacss {
 	interface ga extends gridΞarea { }
 	/**
 	 * When two line segments meet at a sharp angle and miter joins have been specified for 'stroke-linejoin', it is possible for the miter to extend far beyond the thickness of the line stroking the path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-miterlimit)
-	 *
+	 * 
 	*/
 	interface strokeΞmiterlimit extends _ {
 		set(val: Ψnumber): void;
@@ -5092,9 +5092,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes how the last line of a block or a line right before a forced line break is aligned when 'text-align' is set to 'justify'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-align-last)
-	 *
+	 * 
 	*/
 	interface textΞalignΞlast extends _ {
 		set(val: this): void;
@@ -5118,9 +5118,9 @@ declare namespace imbacss {
 
 	/**
 	 * The backdrop-filter CSS property lets you apply graphical effects such as blurring or color shifting to the area behind an element. Because it applies to everything behind the element, to see the effect you must make the element or its background at least partially transparent.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/backdrop-filter)
-	 *
+	 * 
 	*/
 	interface backdropΞfilter extends _ {
 		set(val: any): void;
@@ -5129,9 +5129,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the size of implicitly created rows.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-rows)
-	 *
+	 * 
 	 * @alias gar
 	*/
 	interface gridΞautoΞrows extends _ {
@@ -5155,9 +5155,9 @@ declare namespace imbacss {
 	interface gar extends gridΞautoΞrows { }
 	/**
 	 * Specifies the shape to be used at the corners of paths or basic shapes when they are stroked.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stroke-linejoin)
-	 *
+	 * 
 	*/
 	interface strokeΞlinejoin extends _ {
 		set(val: this): void;
@@ -5175,9 +5175,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies an orthogonal rotation to be applied to an image before it is laid out.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/shape-outside)
-	 *
+	 * 
 	*/
 	interface shapeΞoutside extends _ {
 		set(val: this | Ψimage | Ψbox | Ψshape): void;
@@ -5192,9 +5192,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies what line decorations, if any, are added to the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration-line)
-	 *
+	 * 
 	 * @alias tdl
 	*/
 	interface textΞdecorationΞline extends _ {
@@ -5218,9 +5218,9 @@ declare namespace imbacss {
 	interface tdl extends textΞdecorationΞline { }
 	/**
 	 * The scroll-snap-align property specifies the box’s snap position as an alignment of its snap area (as the alignment subject) within its snap container’s snapport (as the alignment container). The two values specify the snapping alignment in the block axis and inline axis, respectively. If only one value is specified, the second value defaults to the same value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-align)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞalign extends _ {
 		set(val: any, arg1: any): void;
@@ -5229,9 +5229,9 @@ declare namespace imbacss {
 
 	/**
 	 * Indicates the algorithm (or winding rule) which is to be used to determine what parts of the canvas are included inside the shape.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/fill-rule)
-	 *
+	 * 
 	*/
 	interface fillΞrule extends _ {
 		set(val: this): void;
@@ -5246,9 +5246,9 @@ declare namespace imbacss {
 
 	/**
 	 * Controls how the auto-placement algorithm works, specifying exactly how auto-placed items get flowed into the grid.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-flow)
-	 *
+	 * 
 	 * @alias gaf
 	*/
 	interface gridΞautoΞflow extends _ {
@@ -5269,9 +5269,9 @@ declare namespace imbacss {
 	interface gaf extends gridΞautoΞflow { }
 	/**
 	 * Defines how strictly snap points are enforced on the scroll container.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞtype extends _ {
 		set(val: this): void;
@@ -5289,9 +5289,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines rules for page breaks before an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/page-break-before)
-	 *
+	 * 
 	*/
 	interface pageΞbreakΞbefore extends _ {
 		set(val: this): void;
@@ -5315,9 +5315,9 @@ declare namespace imbacss {
 
 	/**
 	 * Determine a grid item’s size and location within the grid by contributing a line, a span, or nothing (automatic) to its grid placement.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column-start)
-	 *
+	 * 
 	 * @alias gcs
 	*/
 	interface gridΞcolumnΞstart extends _ {
@@ -5335,9 +5335,9 @@ declare namespace imbacss {
 	interface gcs extends gridΞcolumnΞstart { }
 	/**
 	 * Specifies named grid areas, which are not associated with any particular grid item, but can be referenced from the grid-placement properties.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-areas)
-	 *
+	 * 
 	 * @alias gta
 	*/
 	interface gridΞtemplateΞareas extends _ {
@@ -5352,9 +5352,9 @@ declare namespace imbacss {
 	interface gta extends gridΞtemplateΞareas { }
 	/**
 	 * Describes the page/column/region break behavior inside the principal box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/break-inside)
-	 *
+	 * 
 	*/
 	interface breakΞinside extends _ {
 		set(val: this): void;
@@ -5375,9 +5375,9 @@ declare namespace imbacss {
 
 	/**
 	 * In continuous media, this property will only be consulted if the length of columns has been constrained. Otherwise, columns will automatically be balanced.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-fill)
-	 *
+	 * 
 	*/
 	interface columnΞfill extends _ {
 		set(val: this): void;
@@ -5392,9 +5392,9 @@ declare namespace imbacss {
 
 	/**
 	 * Determine a grid item’s size and location within the grid by contributing a line, a span, or nothing (automatic) to its grid placement.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-column-end)
-	 *
+	 * 
 	 * @alias gce
 	*/
 	interface gridΞcolumnΞend extends _ {
@@ -5412,9 +5412,9 @@ declare namespace imbacss {
 	interface gce extends gridΞcolumnΞend { }
 	/**
 	 * Specifies an image to use instead of the border styles given by the 'border-style' properties and as an additional background layer for the element. If the value is 'none' or if the image cannot be displayed, the border styles will be used.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-image-source)
-	 *
+	 * 
 	*/
 	interface borderΞimageΞsource extends _ {
 		set(val: this | Ψimage): void;
@@ -5426,9 +5426,9 @@ declare namespace imbacss {
 
 	/**
 	 * The overflow-anchor CSS property provides a way to opt out browser scroll anchoring behavior which adjusts scroll position to minimize content shifts.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-anchor)
-	 *
+	 * 
 	 * @alias ofa
 	*/
 	interface overflowΞanchor extends _ {
@@ -5440,9 +5440,9 @@ declare namespace imbacss {
 	interface ofa extends overflowΞanchor { }
 	/**
 	 * Determine a grid item’s size and location within the grid by contributing a line, a span, or nothing (automatic) to its grid placement.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row-start)
-	 *
+	 * 
 	 * @alias grs
 	*/
 	interface gridΞrowΞstart extends _ {
@@ -5460,9 +5460,9 @@ declare namespace imbacss {
 	interface grs extends gridΞrowΞstart { }
 	/**
 	 * Determine a grid item’s size and location within the grid by contributing a line, a span, or nothing (automatic) to its grid placement.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-row-end)
-	 *
+	 * 
 	 * @alias gre
 	*/
 	interface gridΞrowΞend extends _ {
@@ -5480,9 +5480,9 @@ declare namespace imbacss {
 	interface gre extends gridΞrowΞend { }
 	/**
 	 * Specifies control over numerical forms.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-numeric)
-	 *
+	 * 
 	*/
 	interface fontΞvariantΞnumeric extends _ {
 		set(val: this): void;
@@ -5518,9 +5518,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the blending mode of each background layer.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/background-blend-mode)
-	 *
+	 * 
 	*/
 	interface backgroundΞblendΞmode extends _ {
 		set(val: this): void;
@@ -5577,9 +5577,9 @@ declare namespace imbacss {
 
 	/**
 	 * The text-decoration-skip-ink CSS property specifies how overlines and underlines are drawn when they pass over glyph ascenders and descenders.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration-skip-ink)
-	 *
+	 * 
 	 * @alias tdsi
 	*/
 	interface textΞdecorationΞskipΞink extends _ {
@@ -5591,9 +5591,9 @@ declare namespace imbacss {
 	interface tdsi extends textΞdecorationΞskipΞink { }
 	/**
 	 * Sets the color of the column rule
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-rule-color)
-	 *
+	 * 
 	*/
 	interface columnΞruleΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -5602,9 +5602,9 @@ declare namespace imbacss {
 
 	/**
 	 * In CSS setting to 'isolate' will turn the element into a stacking context. In SVG, it defines whether an element is isolated or not.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/isolation)
-	 *
+	 * 
 	*/
 	interface isolation extends _ {
 		set(val: this): void;
@@ -5619,9 +5619,9 @@ declare namespace imbacss {
 
 	/**
 	 * Provides hints about what tradeoffs to make as it renders vector graphics elements such as <path> elements and basic shapes such as circles and rectangles.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/shape-rendering)
-	 *
+	 * 
 	*/
 	interface shapeΞrendering extends _ {
 		set(val: this): void;
@@ -5642,9 +5642,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the style of the rule between columns of an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-rule-style)
-	 *
+	 * 
 	*/
 	interface columnΞruleΞstyle extends _ {
 		set(val: ΨlineΞstyle): void;
@@ -5653,9 +5653,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'border-right-width'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-end-width)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞendΞwidth extends _ {
 		set(val: Ψlength | ΨlineΞwidth): void;
@@ -5664,9 +5664,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'border-left-width'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-start-width)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞstartΞwidth extends _ {
 		set(val: Ψlength | ΨlineΞwidth): void;
@@ -5675,9 +5675,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies the size of implicitly created columns.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-auto-columns)
-	 *
+	 * 
 	 * @alias gac
 	*/
 	interface gridΞautoΞcolumns extends _ {
@@ -5701,9 +5701,9 @@ declare namespace imbacss {
 	interface gac extends gridΞautoΞcolumns { }
 	/**
 	 * This is a shorthand property for both 'direction' and 'block-progression'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/writing-mode)
-	 *
+	 * 
 	*/
 	interface writingΞmode extends _ {
 		set(val: this): void;
@@ -5727,9 +5727,9 @@ declare namespace imbacss {
 
 	/**
 	 * Indicates the algorithm which is to be used to determine what parts of the canvas are included inside the shape.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/clip-rule)
-	 *
+	 * 
 	*/
 	interface clipΞrule extends _ {
 		set(val: this): void;
@@ -5744,9 +5744,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies control over capitalized forms.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-caps)
-	 *
+	 * 
 	*/
 	interface fontΞvariantΞcaps extends _ {
 		set(val: this): void;
@@ -5776,9 +5776,9 @@ declare namespace imbacss {
 
 	/**
 	 * Used to align (start-, middle- or end-alignment) a string of text relative to a given point.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-anchor)
-	 *
+	 * 
 	*/
 	interface textΞanchor extends _ {
 		set(val: this): void;
@@ -5796,9 +5796,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the opacity of a given gradient stop.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/stop-opacity)
-	 *
+	 * 
 	*/
 	interface stopΞopacity extends _ {
 		set(val: Ψnumber): void;
@@ -5807,9 +5807,9 @@ declare namespace imbacss {
 
 	/**
 	 * The mask CSS property alters the visibility of an element by either partially or fully hiding it. This is accomplished by either masking or clipping the image at specific points.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask)
-	 *
+	 * 
 	*/
 	interface mask extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -5818,9 +5818,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes the page/column break behavior after the generated box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-span)
-	 *
+	 * 
 	*/
 	interface columnΞspan extends _ {
 		set(val: this): void;
@@ -5835,9 +5835,9 @@ declare namespace imbacss {
 
 	/**
 	 * Allows control of glyph substitute and positioning in East Asian text.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-east-asian)
-	 *
+	 * 
 	*/
 	interface fontΞvariantΞeastΞasian extends _ {
 		set(val: this): void;
@@ -5876,9 +5876,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the position of an underline specified on the same element: it does not affect underlines specified by ancestor elements. This property is typically used in vertical writing contexts such as in Japanese documents where it often desired to have the underline appear 'over' (to the right of) the affected run of text
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-underline-position)
-	 *
+	 * 
 	*/
 	interface textΞunderlineΞposition extends _ {
 		set(val: this): void;
@@ -5895,9 +5895,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes the page/column/region break behavior after the generated box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/break-after)
-	 *
+	 * 
 	*/
 	interface breakΞafter extends _ {
 		set(val: this): void;
@@ -5933,9 +5933,9 @@ declare namespace imbacss {
 
 	/**
 	 * Describes the page/column/region break behavior before the generated box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/break-before)
-	 *
+	 * 
 	*/
 	interface breakΞbefore extends _ {
 		set(val: this): void;
@@ -5971,9 +5971,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines whether the content of the <mask> element is treated as as luminance mask or alpha mask.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-type)
-	 *
+	 * 
 	*/
 	interface maskΞtype extends _ {
 		set(val: this): void;
@@ -5988,9 +5988,9 @@ declare namespace imbacss {
 
 	/**
 	 * Sets the width of the rule between columns. Negative values are not allowed.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/column-rule-width)
-	 *
+	 * 
 	*/
 	interface columnΞruleΞwidth extends _ {
 		set(val: Ψlength | ΨlineΞwidth): void;
@@ -5999,9 +5999,9 @@ declare namespace imbacss {
 
 	/**
 	 * The row-gap CSS property specifies the gutter between grid rows.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/row-gap)
-	 *
+	 * 
 	 * @alias rg
 	*/
 	interface rowΞgap extends _ {
@@ -6013,9 +6013,9 @@ declare namespace imbacss {
 	interface rg extends rowΞgap { }
 	/**
 	 * Specifies the orientation of text within a line.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-orientation)
-	 *
+	 * 
 	*/
 	interface textΞorientation extends _ {
 		set(val: this): void;
@@ -6033,9 +6033,9 @@ declare namespace imbacss {
 
 	/**
 	 * The scroll-padding property is a shorthand property which sets all of the scroll-padding longhands, assigning values much like the padding property does for the padding-* longhands.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding)
-	 *
+	 * 
 	*/
 	interface scrollΞpadding extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -6044,9 +6044,9 @@ declare namespace imbacss {
 
 	/**
 	 * Shorthand for setting grid-template-columns, grid-template-rows, and grid-template-areas in a single declaration.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template)
-	 *
+	 * 
 	 * @alias gt
 	*/
 	interface gridΞtemplate extends _ {
@@ -6079,9 +6079,9 @@ declare namespace imbacss {
 	interface gt extends gridΞtemplate { }
 	/**
 	 * Logical 'border-right-color'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-end-color)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞendΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -6090,9 +6090,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'border-left-color'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-start-color)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞstartΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -6101,9 +6101,9 @@ declare namespace imbacss {
 
 	/**
 	 * The scroll-snap-stop CSS property defines whether the scroll container is allowed to "pass over" possible snap positions.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-stop)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞstop extends _ {
 		set(val: any): void;
@@ -6112,9 +6112,9 @@ declare namespace imbacss {
 
 	/**
 	 * Adds a margin to a 'shape-outside'. This defines a new shape that is the smallest contour that includes all the points that are the 'shape-margin' distance outward in the perpendicular direction from a point on the underlying shape.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/shape-margin)
-	 *
+	 * 
 	*/
 	interface shapeΞmargin extends _ {
 		set(val: Ψurl | Ψlength | Ψpercentage): void;
@@ -6123,9 +6123,9 @@ declare namespace imbacss {
 
 	/**
 	 * Defines the alpha channel threshold used to extract the shape using an image. A value of 0.5 means that the shape will enclose all the pixels that are more than 50% opaque.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/shape-image-threshold)
-	 *
+	 * 
 	*/
 	interface shapeΞimageΞthreshold extends _ {
 		set(val: Ψnumber): void;
@@ -6134,9 +6134,9 @@ declare namespace imbacss {
 
 	/**
 	 * The gap CSS property is a shorthand property for row-gap and column-gap specifying the gutters between grid rows and columns.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/gap)
-	 *
+	 * 
 	 * @alias g
 	*/
 	interface gap extends _ {
@@ -6148,9 +6148,9 @@ declare namespace imbacss {
 	interface g extends gap { }
 	/**
 	 * Logical 'min-height'. Mapping depends on the element’s 'writing-mode'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-inline-size)
-	 *
+	 * 
 	*/
 	interface minΞinlineΞsize extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -6159,9 +6159,9 @@ declare namespace imbacss {
 
 	/**
 	 * Specifies an orthogonal rotation to be applied to an image before it is laid out.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/image-orientation)
-	 *
+	 * 
 	*/
 	interface imageΞorientation extends _ {
 		set(val: this | Ψangle): void;
@@ -6176,9 +6176,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'height'. Mapping depends on the element’s 'writing-mode'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inline-size)
-	 *
+	 * 
 	*/
 	interface inlineΞsize extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -6190,9 +6190,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'padding-top'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-block-start)
-	 *
+	 * 
 	*/
 	interface paddingΞblockΞstart extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -6201,9 +6201,9 @@ declare namespace imbacss {
 
 	/**
 	 * Logical 'padding-bottom'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-block-end)
-	 *
+	 * 
 	*/
 	interface paddingΞblockΞend extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -6214,9 +6214,9 @@ declare namespace imbacss {
 	 * The text-combine-upright CSS property specifies the combination of multiple characters into the space of a single character. If the combined text is wider than 1em, the user agent must fit the contents within 1em. The resulting composition is treated as a single upright glyph for layout and decoration. This property only has an effect in vertical writing modes.
 
 This is used to produce an effect that is known as tate-chū-yoko (縦中横) in Japanese, or as 直書橫向 in Chinese.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-combine-upright)
-	 *
+	 * 
 	*/
 	interface textΞcombineΞupright extends _ {
 		set(val: any): void;
@@ -6225,9 +6225,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'width'. Mapping depends on the element’s 'writing-mode'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/block-size)
-	 *
+	 * 
 	*/
 	interface blockΞsize extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -6239,9 +6239,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'min-width'. Mapping depends on the element’s 'writing-mode'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-block-size)
-	 *
+	 * 
 	*/
 	interface minΞblockΞsize extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -6250,9 +6250,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * The scroll-padding-top property defines offsets for the top of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-top)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞtop extends _ {
 		set(val: any): void;
@@ -6261,9 +6261,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-right-style'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-end-style)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞendΞstyle extends _ {
 		set(val: ΨlineΞstyle): void;
@@ -6272,9 +6272,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-top-width'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-start-width)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞstartΞwidth extends _ {
 		set(val: Ψlength | ΨlineΞwidth): void;
@@ -6283,9 +6283,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-bottom-width'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-end-width)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞendΞwidth extends _ {
 		set(val: Ψlength | ΨlineΞwidth): void;
@@ -6294,9 +6294,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-bottom-color'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-end-color)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞendΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -6305,9 +6305,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-left-style'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-start-style)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞstartΞstyle extends _ {
 		set(val: ΨlineΞstyle): void;
@@ -6316,9 +6316,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-top-color'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-start-color)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞstartΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -6327,9 +6327,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-bottom-style'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-end-style)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞendΞstyle extends _ {
 		set(val: ΨlineΞstyle): void;
@@ -6338,9 +6338,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Logical 'border-top-style'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-start-style)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞstartΞstyle extends _ {
 		set(val: ΨlineΞstyle): void;
@@ -6349,9 +6349,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * The font-variation-settings CSS property provides low-level control over OpenType or TrueType font variations, by specifying the four letter axis names of the features you want to vary, along with their variation values.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variation-settings)
-	 *
+	 * 
 	*/
 	interface fontΞvariationΞsettings extends _ {
 		set(val: any): void;
@@ -6360,9 +6360,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Controls the order that the three paint operations that shapes and text are rendered with: their fill, their stroke and any markers they might have.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/paint-order)
-	 *
+	 * 
 	*/
 	interface paintΞorder extends _ {
 		set(val: this): void;
@@ -6380,9 +6380,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Specifies the color space for imaging operations performed via filter effects.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/color-interpolation-filters)
-	 *
+	 * 
 	*/
 	interface colorΞinterpolationΞfilters extends _ {
 		set(val: this): void;
@@ -6400,9 +6400,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Specifies the marker that will be drawn at the last vertices of the given markable element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/marker-end)
-	 *
+	 * 
 	*/
 	interface markerΞend extends _ {
 		set(val: this | Ψurl): void;
@@ -6417,9 +6417,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * The scroll-padding-left property defines offsets for the left of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-left)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞleft extends _ {
 		set(val: any): void;
@@ -6428,9 +6428,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Indicates what color to use to flood the current filter primitive subregion.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flood-color)
-	 *
+	 * 
 	*/
 	interface floodΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -6439,9 +6439,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Indicates what opacity to use to flood the current filter primitive subregion.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/flood-opacity)
-	 *
+	 * 
 	*/
 	interface floodΞopacity extends _ {
 		set(val: Ψnumber | Ψpercentage): void;
@@ -6450,9 +6450,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Defines the color of the light source for filter primitives 'feDiffuseLighting' and 'feSpecularLighting'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/lighting-color)
-	 *
+	 * 
 	*/
 	interface lightingΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -6461,9 +6461,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Specifies the marker that will be drawn at the first vertices of the given markable element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/marker-start)
-	 *
+	 * 
 	*/
 	interface markerΞstart extends _ {
 		set(val: this | Ψurl): void;
@@ -6478,9 +6478,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Specifies the marker that will be drawn at all vertices except the first and last.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/marker-mid)
-	 *
+	 * 
 	*/
 	interface markerΞmid extends _ {
 		set(val: this | Ψurl): void;
@@ -6495,9 +6495,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * Specifies the marker symbol that shall be used for all points on the sets the value for all vertices on the given ‘path’ element or basic shape.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/marker)
-	 *
+	 * 
 	*/
 	interface marker extends _ {
 		set(val: this | Ψurl): void;
@@ -6512,9 +6512,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 
 	/**
 	 * The place-content CSS shorthand property sets both the align-content and justify-content properties.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/place-content)
-	 *
+	 * 
 	 * @alias jac
 	*/
 	interface placeΞcontent extends _ {
@@ -6528,9 +6528,9 @@ This is used to produce an effect that is known as tate-chū-yoko (縦中横) in
 	 * The offset-path CSS property specifies the offset path where the element gets positioned. The exact element’s position on the offset path is determined by the offset-distance property. An offset path is either a specified path with one or multiple sub-paths or the geometry of a not-styled basic shape. Each shape or path must define an initial position for the computed value of "0" for offset-distance and an initial direction which specifies the rotation of the object to the initial position.
 
 In this specification, a direction (or rotation) of 0 degrees is equivalent to the direction of the positive x-axis in the object’s local coordinate system. In other words, a rotation of 0 degree points to the right side of the UA if the object and its ancestors have no transformation applied.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-path)
-	 *
+	 * 
 	*/
 	interface offsetΞpath extends _ {
 		set(val: any): void;
@@ -6539,9 +6539,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The offset-rotate CSS property defines the direction of the element while positioning along the offset path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-rotate)
-	 *
+	 * 
 	*/
 	interface offsetΞrotate extends _ {
 		set(val: any): void;
@@ -6550,9 +6550,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The offset-distance CSS property specifies a position along an offset-path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-distance)
-	 *
+	 * 
 	*/
 	interface offsetΞdistance extends _ {
 		set(val: any): void;
@@ -6561,9 +6561,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The transform-box CSS property defines the layout box to which the transform and transform-origin properties relate.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/transform-box)
-	 *
+	 * 
 	*/
 	interface transformΞbox extends _ {
 		set(val: any): void;
@@ -6572,9 +6572,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The CSS place-items shorthand property sets both the align-items and justify-items properties. The first value is the align-items property value, the second the justify-items one. If the second value is not present, the first value is also used for it.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/place-items)
-	 *
+	 * 
 	 * @alias jai
 	*/
 	interface placeΞitems extends _ {
@@ -6586,9 +6586,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	interface jai extends placeΞitems { }
 	/**
 	 * Logical 'max-height'. Mapping depends on the element’s 'writing-mode'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-inline-size)
-	 *
+	 * 
 	*/
 	interface maxΞinlineΞsize extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -6600,9 +6600,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Logical 'max-width'. Mapping depends on the element’s 'writing-mode'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-block-size)
-	 *
+	 * 
 	*/
 	interface maxΞblockΞsize extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -6614,9 +6614,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Used by the parent of elements with display: ruby-text to control the position of the ruby text with respect to its base.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-position)
-	 *
+	 * 
 	*/
 	interface rubyΞposition extends _ {
 		set(val: this): void;
@@ -6636,9 +6636,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-right property defines offsets for the right of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-right)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞright extends _ {
 		set(val: any): void;
@@ -6647,9 +6647,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-bottom property defines offsets for the bottom of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-bottom)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞbottom extends _ {
 		set(val: any): void;
@@ -6658,9 +6658,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-inline-start property defines offsets for the start edge in the inline dimension of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-inline-start)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞinlineΞstart extends _ {
 		set(val: any): void;
@@ -6669,9 +6669,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-block-start property defines offsets for the start edge in the block dimension of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-block-start)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞblockΞstart extends _ {
 		set(val: any): void;
@@ -6680,9 +6680,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-block-end property defines offsets for the end edge in the block dimension of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-block-end)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞblockΞend extends _ {
 		set(val: any): void;
@@ -6691,9 +6691,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-inline-end property defines offsets for the end edge in the inline dimension of the optimal viewing region of the scrollport: the region used as the target region for placing things in view of the user. This allows the author to exclude regions of the scrollport that are obscured by other content (such as fixed-positioned toolbars or sidebars) or simply to put more breathing room between a targeted element and the edges of the scrollport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-inline-end)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞinlineΞend extends _ {
 		set(val: any): void;
@@ -6702,9 +6702,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The place-self CSS property is a shorthand property sets both the align-self and justify-self properties. The first value is the align-self property value, the second the justify-self one. If the second value is not present, the first value is also used for it.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/place-self)
-	 *
+	 * 
 	 * @alias jas
 	*/
 	interface placeΞself extends _ {
@@ -6716,9 +6716,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	interface jas extends placeΞself { }
 	/**
 	 * The font-optical-sizing CSS property allows developers to control whether browsers render text with slightly differing visual representations to optimize viewing at different sizes, or not. This only works for fonts that have an optical size variation axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-optical-sizing)
-	 *
+	 * 
 	*/
 	interface fontΞopticalΞsizing extends _ {
 		set(val: any): void;
@@ -6727,9 +6727,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The grid CSS property is a shorthand property that sets all of the explicit grid properties ('grid-template-rows', 'grid-template-columns', and 'grid-template-areas'), and all the implicit grid properties ('grid-auto-rows', 'grid-auto-columns', and 'grid-auto-flow'), in a single declaration.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/grid)
-	 *
+	 * 
 	*/
 	interface grid extends _ {
 		set(val: Ψidentifier | Ψlength | Ψpercentage | Ψstring | this): void;
@@ -6738,9 +6738,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Logical 'border-left'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-start)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞstart extends _ {
 		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
@@ -6749,9 +6749,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Logical 'border-right'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-end)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞend extends _ {
 		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
@@ -6760,9 +6760,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Logical 'border-bottom'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-end)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞend extends _ {
 		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
@@ -6771,9 +6771,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The offset CSS property is a shorthand property for animating an element along a defined path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset)
-	 *
+	 * 
 	*/
 	interface offset extends _ {
 		set(val: any): void;
@@ -6782,9 +6782,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Logical 'border-top'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-start)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞstart extends _ {
 		set(val: Ψlength | ΨlineΞwidth | ΨlineΞstyle | Ψcolor): void;
@@ -6793,9 +6793,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-block property is a shorthand property which sets the scroll-padding longhands for the block dimension.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-block)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞblock extends _ {
 		set(val: any, arg1: any): void;
@@ -6804,9 +6804,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scroll-padding-inline property is a shorthand property which sets the scroll-padding longhands for the inline dimension.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-padding-inline)
-	 *
+	 * 
 	*/
 	interface scrollΞpaddingΞinline extends _ {
 		set(val: any, arg1: any): void;
@@ -6815,9 +6815,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The overscroll-behavior-block CSS property sets the browser's behavior when the block direction boundary of a scrolling area is reached.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior-block)
-	 *
+	 * 
 	*/
 	interface overscrollΞbehaviorΞblock extends _ {
 		set(val: any): void;
@@ -6826,9 +6826,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The overscroll-behavior-inline CSS property sets the browser's behavior when the inline direction boundary of a scrolling area is reached.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior-inline)
-	 *
+	 * 
 	*/
 	interface overscrollΞbehaviorΞinline extends _ {
 		set(val: any): void;
@@ -6837,9 +6837,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Shorthand property for setting 'motion-path', 'motion-offset' and 'motion-rotation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/motion)
-	 *
+	 * 
 	*/
 	interface motion extends _ {
 		set(val: this | Ψurl | Ψlength | Ψpercentage | Ψangle | Ψshape | ΨgeometryΞbox): void;
@@ -6860,9 +6860,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Preserves the readability of text when font fallback occurs by adjusting the font-size so that the x-height is the same regardless of the font used.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-size-adjust)
-	 *
+	 * 
 	*/
 	interface fontΞsizeΞadjust extends _ {
 		set(val: this | Ψnumber): void;
@@ -6874,9 +6874,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset CSS property defines the logical block and inline start and end offsets of an element, which map to physical offsets depending on the element's writing mode, directionality, and text orientation. It corresponds to the top and bottom, or right and left properties depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset)
-	 *
+	 * 
 	*/
 	interface inset extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -6885,9 +6885,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Selects the justification algorithm used when 'text-align' is set to 'justify'. The property applies to block containers, but the UA may (but is not required to) also support it on inline elements.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-justify)
-	 *
+	 * 
 	*/
 	interface textΞjustify extends _ {
 		set(val: this): void;
@@ -6918,9 +6918,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Specifies the motion path the element gets positioned at.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/motion-path)
-	 *
+	 * 
 	*/
 	interface motionΞpath extends _ {
 		set(val: this | Ψurl | Ψshape | ΨgeometryΞbox): void;
@@ -6935,9 +6935,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset-inline-start CSS property defines the logical inline start inset of an element, which maps to a physical offset depending on the element's writing mode, directionality, and text orientation. It corresponds to the top, right, bottom, or left property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset-inline-start)
-	 *
+	 * 
 	*/
 	interface insetΞinlineΞstart extends _ {
 		set(val: any): void;
@@ -6946,9 +6946,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset-inline-end CSS property defines the logical inline end inset of an element, which maps to a physical inset depending on the element's writing mode, directionality, and text orientation. It corresponds to the top, right, bottom, or left property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset-inline-end)
-	 *
+	 * 
 	*/
 	interface insetΞinlineΞend extends _ {
 		set(val: any): void;
@@ -6957,9 +6957,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The scale CSS property allows you to specify scale transforms individually and independently of the transform property. This maps better to typical user interface usage, and saves having to remember the exact order of transform functions to specify in the transform value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scale)
-	 *
+	 * 
 	 * @alias scale
 	*/
 	interface scale extends _ {
@@ -6971,9 +6971,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	interface scale extends scale { }
 	/**
 	 * The translate CSS property allows you to specify translation transforms individually and independently of the transform property. This maps better to typical user interface usage, and saves having to remember the exact order of transform functions to specify in the transform value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/translate)
-	 *
+	 * 
 	*/
 	interface translate extends _ {
 		set(val: any): void;
@@ -6982,9 +6982,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Defines an anchor point of the box positioned along the path. The anchor point specifies the point of the box which is to be considered as the point that is moved along the path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-anchor)
-	 *
+	 * 
 	*/
 	interface offsetΞanchor extends _ {
 		set(val: any): void;
@@ -6993,9 +6993,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Specifies the initial position of the offset path. If position is specified with static, offset-position would be ignored.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-position)
-	 *
+	 * 
 	*/
 	interface offsetΞposition extends _ {
 		set(val: any): void;
@@ -7004,9 +7004,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The padding-block CSS property defines the logical block start and end padding of an element, which maps to physical padding properties depending on the element's writing mode, directionality, and text orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-block)
-	 *
+	 * 
 	*/
 	interface paddingΞblock extends _ {
 		set(val: any, arg1: any): void;
@@ -7015,9 +7015,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The orientation CSS @media media feature can be used to apply styles based on the orientation of the viewport (or the page box, for paged media).
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/orientation)
-	 *
+	 * 
 	*/
 	interface orientation extends _ {
 		set(val: any): void;
@@ -7026,9 +7026,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The user-zoom CSS descriptor controls whether or not the user can change the zoom factor of a document defined by @viewport.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/user-zoom)
-	 *
+	 * 
 	*/
 	interface userΞzoom extends _ {
 		set(val: any): void;
@@ -7037,9 +7037,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The margin-block CSS property defines the logical block start and end margins of an element, which maps to physical margins depending on the element's writing mode, directionality, and text orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-block)
-	 *
+	 * 
 	*/
 	interface marginΞblock extends _ {
 		set(val: any, arg1: any): void;
@@ -7048,9 +7048,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The margin-inline CSS property defines the logical inline start and end margins of an element, which maps to physical margins depending on the element's writing mode, directionality, and text orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-inline)
-	 *
+	 * 
 	*/
 	interface marginΞinline extends _ {
 		set(val: any, arg1: any): void;
@@ -7059,9 +7059,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The padding-inline CSS property defines the logical inline start and end padding of an element, which maps to physical padding properties depending on the element's writing mode, directionality, and text orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/padding-inline)
-	 *
+	 * 
 	*/
 	interface paddingΞinline extends _ {
 		set(val: any, arg1: any): void;
@@ -7070,9 +7070,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset-block CSS property defines the logical block start and end offsets of an element, which maps to physical offsets depending on the element's writing mode, directionality, and text orientation. It corresponds to the top and bottom, or right and left properties depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset-block)
-	 *
+	 * 
 	*/
 	interface insetΞblock extends _ {
 		set(val: any, arg1: any): void;
@@ -7081,9 +7081,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset-inline CSS property defines the logical block start and end offsets of an element, which maps to physical offsets depending on the element's writing mode, directionality, and text orientation. It corresponds to the top and bottom, or right and left properties depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset-inline)
-	 *
+	 * 
 	*/
 	interface insetΞinline extends _ {
 		set(val: any, arg1: any): void;
@@ -7092,9 +7092,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The border-block-color CSS property defines the color of the logical block borders of an element, which maps to a physical border color depending on the element's writing mode, directionality, and text orientation. It corresponds to the border-top-color and border-bottom-color, or border-right-color and border-left-color property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-color)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞcolor extends _ {
 		set(val: any, arg1: any): void;
@@ -7103,9 +7103,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The border-block CSS property is a shorthand property for setting the individual logical block border property values in a single place in the style sheet.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block)
-	 *
+	 * 
 	*/
 	interface borderΞblock extends _ {
 		set(val: any): void;
@@ -7114,9 +7114,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The border-inline CSS property is a shorthand property for setting the individual logical inline border property values in a single place in the style sheet.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline)
-	 *
+	 * 
 	*/
 	interface borderΞinline extends _ {
 		set(val: any): void;
@@ -7125,9 +7125,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset-block-start CSS property defines the logical block start offset of an element, which maps to a physical offset depending on the element's writing mode, directionality, and text orientation. It corresponds to the top, right, bottom, or left property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset-block-start)
-	 *
+	 * 
 	*/
 	interface insetΞblockΞstart extends _ {
 		set(val: any): void;
@@ -7136,9 +7136,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The inset-block-end CSS property defines the logical block end offset of an element, which maps to a physical offset depending on the element's writing mode, directionality, and text orientation. It corresponds to the top, right, bottom, or left property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/inset-block-end)
-	 *
+	 * 
 	*/
 	interface insetΞblockΞend extends _ {
 		set(val: any): void;
@@ -7147,9 +7147,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Deprecated. Use 'isolation' property instead when support allows. Specifies how the accumulation of the background image is managed.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/enable-background)
-	 *
+	 * 
 	*/
 	interface enableΞbackground extends _ {
 		set(val: this | Ψinteger | Ψlength | Ψpercentage): void;
@@ -7164,9 +7164,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Controls glyph orientation when the inline-progression-direction is horizontal.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/glyph-orientation-horizontal)
-	 *
+	 * 
 	*/
 	interface glyphΞorientationΞhorizontal extends _ {
 		set(val: Ψangle | Ψnumber): void;
@@ -7175,9 +7175,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Controls glyph orientation when the inline-progression-direction is vertical.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/glyph-orientation-vertical)
-	 *
+	 * 
 	*/
 	interface glyphΞorientationΞvertical extends _ {
 		set(val: this | Ψangle | Ψnumber): void;
@@ -7189,9 +7189,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * Indicates whether the user agent should adjust inter-glyph spacing based on kerning tables that are included in the relevant font or instead disable auto-kerning and set inter-character spacing to a specific length.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/kerning)
-	 *
+	 * 
 	*/
 	interface kerning extends _ {
 		set(val: this | Ψlength): void;
@@ -7203,9 +7203,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 
 	/**
 	 * The image-resolution property specifies the intrinsic resolution of all raster images used in or on the element. It affects both content images (e.g. replaced elements and generated content) and decorative images (such as background-image). The intrinsic resolution of an image is used to determine the image’s intrinsic dimensions.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/image-resolution)
-	 *
+	 * 
 	*/
 	interface imageΞresolution extends _ {
 		set(val: any): void;
@@ -7216,9 +7216,9 @@ In this specification, a direction (or rotation) of 0 degrees is equivalent to t
 	 * The max-zoom CSS descriptor sets the maximum zoom factor of a document defined by the @viewport at-rule. The browser will not zoom in any further than this, whether automatically or at the user's request.
 
 A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed in. Smaller values are zoomed out.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-zoom)
-	 *
+	 * 
 	*/
 	interface maxΞzoom extends _ {
 		set(val: any): void;
@@ -7229,9 +7229,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	 * The min-zoom CSS descriptor sets the minimum zoom factor of a document defined by the @viewport at-rule. The browser will not zoom out any further than this, whether automatically or at the user's request.
 
 A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed in. Smaller values are zoomed out.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/min-zoom)
-	 *
+	 * 
 	*/
 	interface minΞzoom extends _ {
 		set(val: any): void;
@@ -7240,9 +7240,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * A distance that describes the position along the specified motion path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/motion-offset)
-	 *
+	 * 
 	*/
 	interface motionΞoffset extends _ {
 		set(val: Ψlength | Ψpercentage): void;
@@ -7251,9 +7251,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Defines the direction of the element while positioning along the motion path.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/motion-rotation)
-	 *
+	 * 
 	*/
 	interface motionΞrotation extends _ {
 		set(val: this | Ψangle): void;
@@ -7268,9 +7268,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Defines the positioning of snap points along the x axis of the scroll container it is applied to.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-points-x)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞpointsΞx extends _ {
 		set(val: this): void;
@@ -7285,9 +7285,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Defines the positioning of snap points along the y axis of the scroll container it is applied to.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-points-y)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞpointsΞy extends _ {
 		set(val: this): void;
@@ -7302,9 +7302,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Defines the x and y coordinate within the element which will align with the nearest ancestor scroll container’s snap-destination for the respective axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-coordinate)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞcoordinate extends _ {
 		set(val: this | Ψposition | Ψlength | Ψpercentage): void;
@@ -7316,9 +7316,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Define the x and y coordinate within the scroll container’s visual viewport which element snap points will align with.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-destination)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞdestination extends _ {
 		set(val: Ψposition | Ψlength | Ψpercentage): void;
@@ -7327,9 +7327,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-block-style CSS property defines the style of the logical block borders of an element, which maps to a physical border style depending on the element's writing mode, directionality, and text orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/viewport-fit)
-	 *
+	 * 
 	*/
 	interface viewportΞfit extends _ {
 		set(val: any): void;
@@ -7338,9 +7338,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-block-style CSS property defines the style of the logical block borders of an element, which maps to a physical border style depending on the element's writing mode, directionality, and text orientation. It corresponds to the border-top-style and border-bottom-style, or border-left-style and border-right-style properties depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-style)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞstyle extends _ {
 		set(val: any): void;
@@ -7349,9 +7349,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-block-width CSS property defines the width of the logical block borders of an element, which maps to a physical border width depending on the element's writing mode, directionality, and text orientation. It corresponds to the border-top-width and border-bottom-width, or border-left-width, and border-right-width property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-block-width)
-	 *
+	 * 
 	*/
 	interface borderΞblockΞwidth extends _ {
 		set(val: any): void;
@@ -7360,9 +7360,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-inline-color CSS property defines the color of the logical inline borders of an element, which maps to a physical border color depending on the element's writing mode, directionality, and text orientation. It corresponds to the border-top-color and border-bottom-color, or border-right-color and border-left-color property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-color)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞcolor extends _ {
 		set(val: any, arg1: any): void;
@@ -7371,9 +7371,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-inline-style CSS property defines the style of the logical inline borders of an element, which maps to a physical border style depending on the element's writing mode, directionality, and text orientation. It corresponds to the border-top-style and border-bottom-style, or border-left-style and border-right-style properties depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-style)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞstyle extends _ {
 		set(val: any): void;
@@ -7382,9 +7382,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-inline-width CSS property defines the width of the logical inline borders of an element, which maps to a physical border width depending on the element's writing mode, directionality, and text orientation. It corresponds to the border-top-width and border-bottom-width, or border-left-width, and border-right-width property depending on the values defined for writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-inline-width)
-	 *
+	 * 
 	*/
 	interface borderΞinlineΞwidth extends _ {
 		set(val: any): void;
@@ -7393,9 +7393,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The overflow-block CSS media feature can be used to test how the output device handles content that overflows the initial containing block along the block axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-block)
-	 *
+	 * 
 	*/
 	interface overflowΞblock extends _ {
 		set(val: any): void;
@@ -7404,9 +7404,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor. Needs to be specified if the counter system is 'additive'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/additive-symbols)
-	 *
+	 * 
 	*/
 	interface additiveΞsymbols extends _ {
 		set(val: Ψinteger | Ψstring | Ψimage | Ψidentifier): void;
@@ -7415,9 +7415,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Provides alternative text for assistive technology to replace the generated content of a ::before or ::after element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/alt)
-	 *
+	 * 
 	*/
 	interface alt extends _ {
 		set(val: Ψstring | this): void;
@@ -7426,9 +7426,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * IE only. Used to extend behaviors of the browser.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/behavior)
-	 *
+	 * 
 	*/
 	interface behavior extends _ {
 		set(val: Ψurl): void;
@@ -7437,9 +7437,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies whether individual boxes are treated as broken pieces of one continuous box, or whether each box is individually wrapped with the border and padding.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/box-decoration-break)
-	 *
+	 * 
 	*/
 	interface boxΞdecorationΞbreak extends _ {
 		set(val: this): void;
@@ -7454,9 +7454,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies a fallback counter style to be used when the current counter style can’t create a representation for a given counter value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/fallback)
-	 *
+	 * 
 	*/
 	interface fallback extends _ {
 		set(val: Ψidentifier): void;
@@ -7465,9 +7465,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The value of 'normal' implies that when rendering with OpenType fonts the language of the document is used to infer the OpenType language system, used to select language specific features when rendering.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-language-override)
-	 *
+	 * 
 	*/
 	interface fontΞlanguageΞoverride extends _ {
 		set(val: this | Ψstring): void;
@@ -7479,9 +7479,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Controls whether user agents are allowed to synthesize bold or oblique font faces when a font family lacks bold or italic faces.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-synthesis)
-	 *
+	 * 
 	*/
 	interface fontΞsynthesis extends _ {
 		set(val: this): void;
@@ -7499,9 +7499,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * For any given character, fonts can provide a variety of alternate glyphs in addition to the default glyph for that character. This property provides control over the selection of these alternate glyphs.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-alternates)
-	 *
+	 * 
 	*/
 	interface fontΞvariantΞalternates extends _ {
 		set(val: this): void;
@@ -7534,9 +7534,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies the vertical position
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/font-variant-position)
-	 *
+	 * 
 	*/
 	interface fontΞvariantΞposition extends _ {
 		set(val: this): void;
@@ -7554,9 +7554,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Controls the state of the input method editor for text fields.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/ime-mode)
-	 *
+	 * 
 	*/
 	interface imeΞmode extends _ {
 		set(val: this): void;
@@ -7580,9 +7580,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Sets the mask layer image of an element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-image)
-	 *
+	 * 
 	*/
 	interface maskΞimage extends _ {
 		set(val: this | Ψurl | Ψimage, arg1: any, arg2: any, arg3: any): void;
@@ -7597,9 +7597,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Indicates whether the mask layer image is treated as luminance mask or alpha mask.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-mode)
-	 *
+	 * 
 	*/
 	interface maskΞmode extends _ {
 		set(val: this | Ψurl | Ψimage, arg1: any, arg2: any, arg3: any): void;
@@ -7617,9 +7617,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies the mask positioning area.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-origin)
-	 *
+	 * 
 	*/
 	interface maskΞorigin extends _ {
 		set(val: ΨgeometryΞbox | this, arg1: any, arg2: any, arg3: any): void;
@@ -7628,9 +7628,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies how mask layer images are positioned.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-position)
-	 *
+	 * 
 	*/
 	interface maskΞposition extends _ {
 		set(val: Ψposition | Ψlength | Ψpercentage, arg1: any, arg2: any, arg3: any): void;
@@ -7639,9 +7639,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies how mask layer images are tiled after they have been sized and positioned.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-repeat)
-	 *
+	 * 
 	*/
 	interface maskΞrepeat extends _ {
 		set(val: Ψrepeat, arg1: any, arg2: any, arg3: any): void;
@@ -7650,9 +7650,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies the size of the mask layer images.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-size)
-	 *
+	 * 
 	*/
 	interface maskΞsize extends _ {
 		set(val: this | Ψlength | Ψpercentage, arg1: any, arg2: any, arg3: any): void;
@@ -7670,9 +7670,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Provides an way to control directional focus navigation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/nav-down)
-	 *
+	 * 
 	*/
 	interface navΞdown extends _ {
 		set(val: this | Ψidentifier | Ψstring): void;
@@ -7690,9 +7690,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Provides an input-method-neutral way of specifying the sequential navigation order (also known as 'tabbing order').
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/nav-index)
-	 *
+	 * 
 	*/
 	interface navΞindex extends _ {
 		set(val: this | Ψnumber): void;
@@ -7704,9 +7704,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Provides an way to control directional focus navigation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/nav-left)
-	 *
+	 * 
 	*/
 	interface navΞleft extends _ {
 		set(val: this | Ψidentifier | Ψstring): void;
@@ -7724,9 +7724,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Provides an way to control directional focus navigation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/nav-right)
-	 *
+	 * 
 	*/
 	interface navΞright extends _ {
 		set(val: this | Ψidentifier | Ψstring): void;
@@ -7744,9 +7744,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Provides an way to control directional focus navigation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/nav-up)
-	 *
+	 * 
 	*/
 	interface navΞup extends _ {
 		set(val: this | Ψidentifier | Ψstring): void;
@@ -7764,9 +7764,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Defines how to alter the representation when the counter value is negative.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/negative)
-	 *
+	 * 
 	*/
 	interface negative extends _ {
 		set(val: Ψimage | Ψidentifier | Ψstring): void;
@@ -7775,9 +7775,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Logical 'bottom'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-block-end)
-	 *
+	 * 
 	*/
 	interface offsetΞblockΞend extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -7789,9 +7789,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Logical 'top'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-block-start)
-	 *
+	 * 
 	*/
 	interface offsetΞblockΞstart extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -7803,9 +7803,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Logical 'right'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-inline-end)
-	 *
+	 * 
 	*/
 	interface offsetΞinlineΞend extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -7817,9 +7817,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Logical 'left'. Mapping depends on the parent element’s 'writing-mode', 'direction', and 'text-orientation'.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/offset-inline-start)
-	 *
+	 * 
 	*/
 	interface offsetΞinlineΞstart extends _ {
 		set(val: this | Ψlength | Ψpercentage): void;
@@ -7831,9 +7831,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies a “fixed-width” counter style, where representations shorter than the pad value are padded with a particular <symbol>
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/pad)
-	 *
+	 * 
 	*/
 	interface pad extends _ {
 		set(val: Ψinteger | Ψimage | Ψstring | Ψidentifier): void;
@@ -7842,9 +7842,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies a <symbol> that is prepended to the marker representation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/prefix)
-	 *
+	 * 
 	*/
 	interface prefix extends _ {
 		set(val: Ψimage | Ψstring | Ψidentifier): void;
@@ -7853,9 +7853,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Defines the ranges over which the counter style is defined.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/range)
-	 *
+	 * 
 	*/
 	interface range extends _ {
 		set(val: this | Ψinteger): void;
@@ -7870,9 +7870,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Specifies how text is distributed within the various ruby boxes when their contents do not exactly fill their respective boxes.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-align)
-	 *
+	 * 
 	*/
 	interface rubyΞalign extends _ {
 		set(val: this): void;
@@ -7911,9 +7911,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines whether, and on which side, ruby text is allowed to partially overhang any adjacent text in addition to its own base, when the ruby text is wider than the ruby base.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-overhang)
-	 *
+	 * 
 	*/
 	interface rubyΞoverhang extends _ {
 		set(val: this): void;
@@ -7934,9 +7934,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines whether, and on which side, ruby text is allowed to partially overhang any adjacent text in addition to its own base, when the ruby text is wider than the ruby base.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-span)
-	 *
+	 * 
 	*/
 	interface rubyΞspan extends _ {
 		set(val: this): void;
@@ -7951,9 +7951,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the top and left edges of the scroll box and scroll arrows of a scroll bar.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-3dlight-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞ3dlightΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -7962,9 +7962,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the arrow elements of a scroll arrow.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-arrow-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞarrowΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -7973,9 +7973,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the main elements of a scroll bar, which include the scroll box, track, and scroll arrows.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-base-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞbaseΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -7984,9 +7984,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the gutter of a scroll bar.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-darkshadow-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞdarkshadowΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -7995,9 +7995,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the scroll box and scroll arrows of a scroll bar.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-face-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞfaceΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -8006,9 +8006,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the top and left edges of the scroll box and scroll arrows of a scroll bar.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-highlight-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞhighlightΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -8017,9 +8017,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the bottom and right edges of the scroll box and scroll arrows of a scroll bar.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-shadow-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞshadowΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -8028,9 +8028,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * Determines the color of the track element of a scroll bar.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-track-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞtrackΞcolor extends _ {
 		set(val: Ψcolor): void;
@@ -8039,9 +8039,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies a <symbol> that is appended to the marker representation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/suffix)
-	 *
+	 * 
 	*/
 	interface suffix extends _ {
 		set(val: Ψimage | Ψstring | Ψidentifier): void;
@@ -8050,9 +8050,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies which algorithm will be used to construct the counter’s representation based on the counter value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/system)
-	 *
+	 * 
 	*/
 	interface system extends _ {
 		set(val: this | Ψinteger): void;
@@ -8082,9 +8082,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * `@counter-style` descriptor. Specifies the symbols used by the marker-construction algorithm specified by the system descriptor.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/symbols)
-	 *
+	 * 
 	*/
 	interface symbols extends _ {
 		set(val: Ψimage | Ψstring | Ψidentifier): void;
@@ -8093,9 +8093,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The aspect-ratio   CSS property sets a preferred aspect ratio for the box, which will be used in the calculation of auto sizes and some other layout functions.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/aspect-ratio)
-	 *
+	 * 
 	*/
 	interface aspectΞratio extends _ {
 		set(val: any): void;
@@ -8104,9 +8104,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * In combination with elevation, the azimuth CSS property enables different audio sources to be positioned spatially for aural presentation. This is important in that it provides a natural way to tell several voices apart, as each can be positioned to originate at a different location on the sound stage. Stereo output produce a lateral sound stage, while binaural headphones and multi-speaker setups allow for a fully three-dimensional stage.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/azimuth)
-	 *
+	 * 
 	*/
 	interface azimuth extends _ {
 		set(val: any): void;
@@ -8115,9 +8115,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-end-end-radius CSS property defines a logical border radius on an element, which maps to a physical border radius that depends on on the element's writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-end-end-radius)
-	 *
+	 * 
 	*/
 	interface borderΞendΞendΞradius extends _ {
 		set(val: Ψradius, arg1: any): void;
@@ -8126,9 +8126,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-end-start-radius CSS property defines a logical border radius on an element, which maps to a physical border radius depending on the element's writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-end-start-radius)
-	 *
+	 * 
 	*/
 	interface borderΞendΞstartΞradius extends _ {
 		set(val: Ψradius, arg1: any): void;
@@ -8137,9 +8137,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-start-end-radius CSS property defines a logical border radius on an element, which maps to a physical border radius depending on the element's writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-start-end-radius)
-	 *
+	 * 
 	*/
 	interface borderΞstartΞendΞradius extends _ {
 		set(val: Ψradius, arg1: any): void;
@@ -8148,9 +8148,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The border-start-start-radius CSS property defines a logical border radius on an element, which maps to a physical border radius that depends on the element's writing-mode, direction, and text-orientation.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/border-start-start-radius)
-	 *
+	 * 
 	*/
 	interface borderΞstartΞstartΞradius extends _ {
 		set(val: Ψradius, arg1: any): void;
@@ -8159,9 +8159,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The box-ordinal-group CSS property assigns the flexbox's child elements to an ordinal group.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/box-ordinal-group)
-	 *
+	 * 
 	*/
 	interface boxΞordinalΞgroup extends _ {
 		set(val: any): void;
@@ -8170,9 +8170,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The color-adjust property is a non-standard CSS extension that can be used to force printing of background colors and images in browsers based on the WebKit engine.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/color-adjust)
-	 *
+	 * 
 	*/
 	interface colorΞadjust extends _ {
 		set(val: any): void;
@@ -8181,9 +8181,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The counter-set CSS property sets a CSS counter to a given value. It manipulates the value of existing counters, and will only create new counters if there isn't already a counter of the given name on the element.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/counter-set)
-	 *
+	 * 
 	*/
 	interface counterΞset extends _ {
 		set(val: any): void;
@@ -8192,9 +8192,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The hanging-punctuation CSS property specifies whether a punctuation mark should hang at the start or end of a line of text. Hanging punctuation may be placed outside the line box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/hanging-punctuation)
-	 *
+	 * 
 	*/
 	interface hangingΞpunctuation extends _ {
 		set(val: any): void;
@@ -8203,9 +8203,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The initial-letter CSS property specifies styling for dropped, raised, and sunken initial letters.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/initial-letter)
-	 *
+	 * 
 	*/
 	interface initialΞletter extends _ {
 		set(val: any): void;
@@ -8214,9 +8214,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The initial-letter-align CSS property specifies the alignment of initial letters within a paragraph.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/initial-letter-align)
-	 *
+	 * 
 	*/
 	interface initialΞletterΞalign extends _ {
 		set(val: any): void;
@@ -8225,9 +8225,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The line-clamp property allows limiting the contents of a block container to the specified number of lines; remaining content is fragmented away and neither rendered nor measured. Optionally, it also allows inserting content into the last line box to indicate the continuity of truncated/interrupted content.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/line-clamp)
-	 *
+	 * 
 	*/
 	interface lineΞclamp extends _ {
 		set(val: any): void;
@@ -8236,9 +8236,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The line-height-step CSS property defines the step units for line box heights. When the step unit is positive, line box heights are rounded up to the closest multiple of the unit. Negative values are invalid.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/line-height-step)
-	 *
+	 * 
 	*/
 	interface lineΞheightΞstep extends _ {
 		set(val: any): void;
@@ -8247,9 +8247,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 
 	/**
 	 * The margin-trim property allows the container to trim the margins of its children where they adjoin the container’s edges.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/margin-trim)
-	 *
+	 * 
 	*/
 	interface marginΞtrim extends _ {
 		set(val: any): void;
@@ -8260,9 +8260,9 @@ A zoom factor of 1.0 or 100% corresponds to no zooming. Larger values are zoomed
 	 * The mask-border CSS property lets you create a mask along the edge of an element's border.
 
 This property is a shorthand for mask-border-source, mask-border-slice, mask-border-width, mask-border-outset, mask-border-repeat, and mask-border-mode. As with all shorthand properties, any omitted sub-values will be set to their initial value.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border)
-	 *
+	 * 
 	*/
 	interface maskΞborder extends _ {
 		set(val: any): void;
@@ -8271,9 +8271,9 @@ This property is a shorthand for mask-border-source, mask-border-slice, mask-bor
 
 	/**
 	 * The mask-border-mode CSS property specifies the blending mode used in a mask border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border-mode)
-	 *
+	 * 
 	*/
 	interface maskΞborderΞmode extends _ {
 		set(val: any): void;
@@ -8282,9 +8282,9 @@ This property is a shorthand for mask-border-source, mask-border-slice, mask-bor
 
 	/**
 	 * The mask-border-outset CSS property specifies the distance by which an element's mask border is set out from its border box.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border-outset)
-	 *
+	 * 
 	*/
 	interface maskΞborderΞoutset extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -8293,9 +8293,9 @@ This property is a shorthand for mask-border-source, mask-border-slice, mask-bor
 
 	/**
 	 * The mask-border-repeat CSS property defines how the edge regions of a source image are adjusted to fit the dimensions of an element's mask border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border-repeat)
-	 *
+	 * 
 	*/
 	interface maskΞborderΞrepeat extends _ {
 		set(val: any, arg1: any): void;
@@ -8304,9 +8304,9 @@ This property is a shorthand for mask-border-source, mask-border-slice, mask-bor
 
 	/**
 	 * The mask-border-slice CSS property divides the image specified by mask-border-source into regions. These regions are used to form the components of an element's mask border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border-slice)
-	 *
+	 * 
 	*/
 	interface maskΞborderΞslice extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -8317,9 +8317,9 @@ This property is a shorthand for mask-border-source, mask-border-slice, mask-bor
 	 * The mask-border-source CSS property specifies the source image used to create an element's mask border.
 
 The mask-border-slice property is used to divide the source image into regions, which are then dynamically applied to the final mask border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border-source)
-	 *
+	 * 
 	*/
 	interface maskΞborderΞsource extends _ {
 		set(val: any): void;
@@ -8328,9 +8328,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The mask-border-width CSS property specifies the width of an element's mask border.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-border-width)
-	 *
+	 * 
 	*/
 	interface maskΞborderΞwidth extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -8339,9 +8339,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The mask-clip CSS property determines the area, which is affected by a mask. The painted content of an element must be restricted to this area.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-clip)
-	 *
+	 * 
 	*/
 	interface maskΞclip extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -8350,9 +8350,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The mask-composite CSS property represents a compositing operation used on the current mask layer with the mask layers below it.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-composite)
-	 *
+	 * 
 	*/
 	interface maskΞcomposite extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -8361,9 +8361,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The max-liens property forces a break after a set number of lines
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/max-lines)
-	 *
+	 * 
 	*/
 	interface maxΞlines extends _ {
 		set(val: any): void;
@@ -8372,9 +8372,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The overflow-clip-box CSS property specifies relative to which box the clipping happens when there is an overflow. It is short hand for the overflow-clip-box-inline and overflow-clip-box-block properties.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-clip-box)
-	 *
+	 * 
 	*/
 	interface overflowΞclipΞbox extends _ {
 		set(val: any): void;
@@ -8383,9 +8383,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The overflow-inline CSS media feature can be used to test how the output device handles content that overflows the initial containing block along the inline axis.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overflow-inline)
-	 *
+	 * 
 	*/
 	interface overflowΞinline extends _ {
 		set(val: any): void;
@@ -8394,9 +8394,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The overscroll-behavior CSS property is shorthand for the overscroll-behavior-x and overscroll-behavior-y properties, which allow you to control the browser's scroll overflow behavior — what happens when the boundary of a scrolling area is reached.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior)
-	 *
+	 * 
 	*/
 	interface overscrollΞbehavior extends _ {
 		set(val: any, arg1: any): void;
@@ -8405,9 +8405,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The overscroll-behavior-x CSS property is allows you to control the browser's scroll overflow behavior — what happens when the boundary of a scrolling area is reached — in the x axis direction.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior-x)
-	 *
+	 * 
 	*/
 	interface overscrollΞbehaviorΞx extends _ {
 		set(val: any): void;
@@ -8416,9 +8416,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The overscroll-behavior-y CSS property is allows you to control the browser's scroll overflow behavior — what happens when the boundary of a scrolling area is reached — in the y axis direction.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior-y)
-	 *
+	 * 
 	*/
 	interface overscrollΞbehaviorΞy extends _ {
 		set(val: any): void;
@@ -8427,9 +8427,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * This property controls how ruby annotation boxes should be rendered when there are more than one in a ruby container box: whether each pair should be kept separate, the annotations should be collapsed and rendered as a group, or the separation should be determined based on the space available.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/ruby-merge)
-	 *
+	 * 
 	*/
 	interface rubyΞmerge extends _ {
 		set(val: any): void;
@@ -8438,9 +8438,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scrollbar-color CSS property sets the color of the scrollbar track and thumb.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-color)
-	 *
+	 * 
 	*/
 	interface scrollbarΞcolor extends _ {
 		set(val: any): void;
@@ -8448,10 +8448,10 @@ The mask-border-slice property is used to divide the source image into regions, 
 	}
 
 	/**
-	 * The scrollbar-width property allows the author to set the maximum thickness of an element’s scrollbars when they are shown.
-	 *
+	 * The scrollbar-width property allows the author to set the maximum thickness of an element’s scrollbars when they are shown. 
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scrollbar-width)
-	 *
+	 * 
 	*/
 	interface scrollbarΞwidth extends _ {
 		set(val: any): void;
@@ -8460,9 +8460,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin property is a shorthand property which sets all of the scroll-margin longhands, assigning values much like the margin property does for the margin-* longhands.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin)
-	 *
+	 * 
 	*/
 	interface scrollΞmargin extends _ {
 		set(val: any, arg1: any, arg2: any, arg3: any): void;
@@ -8471,9 +8471,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-block property is a shorthand property which sets the scroll-margin longhands in the block dimension.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-block)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞblock extends _ {
 		set(val: any, arg1: any): void;
@@ -8482,9 +8482,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-block-start property defines the margin of the scroll snap area at the start of the block dimension that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-block-start)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞblockΞstart extends _ {
 		set(val: any): void;
@@ -8493,9 +8493,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-block-end property defines the margin of the scroll snap area at the end of the block dimension that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-block-end)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞblockΞend extends _ {
 		set(val: any): void;
@@ -8504,9 +8504,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-bottom property defines the bottom margin of the scroll snap area that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-bottom)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞbottom extends _ {
 		set(val: any): void;
@@ -8515,9 +8515,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-inline property is a shorthand property which sets the scroll-margin longhands in the inline dimension.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-inline)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞinline extends _ {
 		set(val: any, arg1: any): void;
@@ -8526,9 +8526,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-inline-start property defines the margin of the scroll snap area at the start of the inline dimension that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-inline-start)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞinlineΞstart extends _ {
 		set(val: any): void;
@@ -8537,9 +8537,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-inline-end property defines the margin of the scroll snap area at the end of the inline dimension that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-inline-end)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞinlineΞend extends _ {
 		set(val: any): void;
@@ -8548,9 +8548,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-left property defines the left margin of the scroll snap area that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-left)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞleft extends _ {
 		set(val: any): void;
@@ -8559,9 +8559,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-right property defines the right margin of the scroll snap area that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-right)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞright extends _ {
 		set(val: any): void;
@@ -8570,9 +8570,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 
 	/**
 	 * The scroll-margin-top property defines the top margin of the scroll snap area that is used for snapping this box to the snapport. The scroll snap area is determined by taking the transformed border box, finding its rectangular bounding box (axis-aligned in the scroll container’s coordinate space), then adding the specified outsets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-margin-top)
-	 *
+	 * 
 	*/
 	interface scrollΞmarginΞtop extends _ {
 		set(val: any): void;
@@ -8583,9 +8583,9 @@ The mask-border-slice property is used to divide the source image into regions, 
 	 * The scroll-snap-type-x CSS property defines how strictly snap points are enforced on the horizontal axis of the scroll container in case there is one.
 
 Specifying any precise animations or physics used to enforce those snap points is not covered by this property but instead left up to the user agent.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type-x)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞtypeΞx extends _ {
 		set(val: any): void;
@@ -8596,9 +8596,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	 * The scroll-snap-type-y CSS property defines how strictly snap points are enforced on the vertical axis of the scroll container in case there is one.
 
 Specifying any precise animations or physics used to enforce those snap points is not covered by this property but instead left up to the user agent.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/scroll-snap-type-y)
-	 *
+	 * 
 	*/
 	interface scrollΞsnapΞtypeΞy extends _ {
 		set(val: any): void;
@@ -8607,9 +8607,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 
 	/**
 	 * The text-decoration-thickness CSS property sets the thickness, or width, of the decoration line that is used on text in an element, such as a line-through, underline, or overline.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-decoration-thickness)
-	 *
+	 * 
 	 * @alias tdt
 	*/
 	interface textΞdecorationΞthickness extends _ {
@@ -8621,9 +8621,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	interface tdt extends textΞdecorationΞthickness { }
 	/**
 	 * The text-emphasis CSS property is a shorthand property for setting text-emphasis-style and text-emphasis-color in one declaration. This property will apply the specified emphasis mark to each character of the element's text, except separator characters, like spaces,  and control characters.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-emphasis)
-	 *
+	 * 
 	 * @alias te
 	*/
 	interface textΞemphasis extends _ {
@@ -8635,9 +8635,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	interface te extends textΞemphasis { }
 	/**
 	 * The text-emphasis-color CSS property defines the color used to draw emphasis marks on text being rendered in the HTML document. This value can also be set and reset using the text-emphasis shorthand.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-emphasis-color)
-	 *
+	 * 
 	 * @alias tec
 	*/
 	interface textΞemphasisΞcolor extends _ {
@@ -8649,9 +8649,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	interface tec extends textΞemphasisΞcolor { }
 	/**
 	 * The text-emphasis-position CSS property describes where emphasis marks are drawn at. The effect of emphasis marks on the line height is the same as for ruby text: if there isn't enough place, the line height is increased.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-emphasis-position)
-	 *
+	 * 
 	 * @alias tep
 	*/
 	interface textΞemphasisΞposition extends _ {
@@ -8663,9 +8663,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	interface tep extends textΞemphasisΞposition { }
 	/**
 	 * The text-emphasis-style CSS property defines the type of emphasis used. It can also be set, and reset, using the text-emphasis shorthand.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-emphasis-style)
-	 *
+	 * 
 	 * @alias tes
 	*/
 	interface textΞemphasisΞstyle extends _ {
@@ -8677,9 +8677,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	interface tes extends textΞemphasisΞstyle { }
 	/**
 	 * The text-underline-offset CSS property sets the offset distance of an underline text decoration line (applied using text-decoration) from its original position.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/text-underline-offset)
-	 *
+	 * 
 	 * @alias tuo
 	*/
 	interface textΞunderlineΞoffset extends _ {
@@ -8691,9 +8691,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 	interface tuo extends textΞunderlineΞoffset { }
 	/**
 	 * The speak-as descriptor specifies how a counter symbol constructed with a given @counter-style will be represented in the spoken form. For example, an author can specify a counter symbol to be either spoken as its numerical value or just represented with an audio cue.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/speak-as)
-	 *
+	 * 
 	*/
 	interface speakΞas extends _ {
 		set(val: any): void;
@@ -8702,9 +8702,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 
 	/**
 	 * The bleed CSS at-rule descriptor, used with the @page at-rule, specifies the extent of the page bleed area outside the page box. This property only has effect if crop marks are enabled using the marks property.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/bleed)
-	 *
+	 * 
 	*/
 	interface bleed extends _ {
 		set(val: any): void;
@@ -8713,9 +8713,9 @@ Specifying any precise animations or physics used to enforce those snap points i
 
 	/**
 	 * The marks CSS at-rule descriptor, used with the @page at-rule, adds crop and/or cross marks to the presentation of the document. Crop marks indicate where the page should be cut. Cross marks are used to align sheets.
-	 *
+	 * 
 	 * [MDN Reference](https://developer.mozilla.org/en-US/docs/Web/CSS/marks)
-	 *
+	 * 
 	*/
 	interface marks extends _ {
 		set(val: any): void;
@@ -9363,3 +9363,4 @@ Specifying any precise animations or physics used to enforce those snap points i
 	}
 
 }
+

@@ -13,6 +13,7 @@ class Lion < Cat
 		console.info(params)
 		# super[name](...parans)
 
+
 let lion = new Lion
 let pars = [1,2,3]
 lion.log('hello',...pars)

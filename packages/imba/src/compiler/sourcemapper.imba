@@ -1,5 +1,5 @@
 export class SourceMapper
-
+	
 	static def strip input
 		input.replace(/\/\*\%([\w\|]*)\$\*\//g,'')
 
@@ -10,3 +10,5 @@ export class SourceMapper
 			map: null
 			toString: do this.code
 		}
+
+		

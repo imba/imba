@@ -15,7 +15,7 @@ export class Flags
 
 	def remove ref
 		return self unless contains(ref)
-
+	
 		let regex = new RegExp('(^|\\s)' + ref + '(?=\\s|$)', 'g')
 		string = string.replace(regex, '')
 		dom.classList.remove(ref)
@@ -24,7 +24,7 @@ export class Flags
 	def toggle ref, bool
 		bool = !contains(ref) if bool === undefined
 		bool ? add(ref) : remove(ref)
-
+		
 	def incr ref, duration = 0
 		let m = stacks
 		let c = m[ref] or 0
@@ -34,7 +34,7 @@ export class Flags
 			setTimeout(&,duration) do decr(ref)
 
 		return m[ref] = Math.max(c,0) + 1
-
+	
 	def decr ref
 		let m = stacks
 		let c = m[ref] or 0
@@ -59,7 +59,7 @@ export class Flags
 				vals[idx] = val
 			else
 				dirty = no
-
+		
 		if dirty
 			#extras = ' ' + vals.join(' ')
 			sync!

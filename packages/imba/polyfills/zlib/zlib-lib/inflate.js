@@ -13,6 +13,7 @@ var DISTS = 2;
 /* Public constants ==========================================================*/
 /* ===========================================================================*/
 
+
 /* Allowed flush values; see deflate() and inflate() below for details */
 //var Z_NO_FLUSH      = 0;
 //var Z_PARTIAL_FLUSH = 1;
@@ -21,6 +22,7 @@ var DISTS = 2;
 var Z_FINISH = 4;
 var Z_BLOCK = 5;
 var Z_TREES = 6;
+
 
 /* Return codes for the compression/decompression functions. Negative values
  * are errors, positive values are used for special but normal events.
@@ -38,8 +40,10 @@ var Z_BUF_ERROR = -5;
 /* The deflate compression method */
 var Z_DEFLATED = 8;
 
+
 /* STATES ====================================================================*/
 /* ===========================================================================*/
+
 
 var HEAD = 1; /* i: waiting for magic header */
 var FLAGS = 2; /* i: waiting for method and flags (gzip) */
@@ -76,6 +80,8 @@ var SYNC = 32; /* looking for synchronization bytes to restart inflate() */
 
 /* ===========================================================================*/
 
+
+
 var ENOUGH_LENS = 852;
 var ENOUGH_DISTS = 592;
 //var ENOUGH =  (ENOUGH_LENS+ENOUGH_DISTS);
@@ -84,12 +90,14 @@ var MAX_WBITS = 15;
 /* 32K LZ77 window */
 var DEF_WBITS = MAX_WBITS;
 
+
 function zswap32(q) {
   return (((q >>> 24) & 0xff) +
     ((q >>> 8) & 0xff00) +
     ((q & 0xff00) << 8) +
     ((q & 0xff) << 24));
 }
+
 
 function InflateState() {
   this.mode = 0; /* current inflate mode */
@@ -253,6 +261,7 @@ export function inflateInit(strm) {
   return inflateInit2(strm, DEF_WBITS);
 }
 
+
 /*
  Return state with length and distance decoding tables and index sizes set to
  fixed code decoding.  Normally this returns fixed tables from inffixed.h.
@@ -313,6 +322,7 @@ function fixedtables(state) {
   state.distcode = distfix;
   state.distbits = 5;
 }
+
 
 /*
  Update the window with the last wsize (normally 32K) bytes written before
@@ -397,6 +407,7 @@ export function inflate(strm, flush) {
 
   var order = /* permutation of code lengths */ [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
 
+
   if (!strm || !strm.state || !strm.output ||
     (!strm.input && strm.avail_in !== 0)) {
     return Z_STREAM_ERROR;
@@ -406,6 +417,7 @@ export function inflate(strm, flush) {
   if (state.mode === TYPE) {
     state.mode = TYPEDO;
   } /* skip check */
+
 
   //--- LOAD() ---
   put = strm.next_out;

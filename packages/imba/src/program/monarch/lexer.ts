@@ -26,6 +26,7 @@ function statePart(state: string, index: number): string {
 	return state.split('.')[index];
 }
 
+
 /**
  * Reuse the same stack elements up to a certain depth.
  */

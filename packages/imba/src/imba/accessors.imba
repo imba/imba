@@ -15,11 +15,12 @@ export def accessor value, target, key, name, slot, context
 	return value
 
 export def descriptor context, value, args = []
-	return new value(...args) if value.prototype
+	return new value(...args) if value.prototype 
 	return value.apply(context,args)
 
-export class Accessor
 
+export class Accessor
+	
 	# Store in localStorage - if target has unique `id`
 	local = no
 

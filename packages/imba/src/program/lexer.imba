@@ -6,7 +6,9 @@ import {compile} from './monarch/compile'
 import {MonarchTokenizer} from './monarch/lexer'
 export {Token} from './monarch/token'
 
+
 ###
+
 
 ###
 export class LexedLine
@@ -15,7 +17,7 @@ export class LexedLine
 	tokens\any[]
 	startState\any
 	endState\any
-
+	
 	def clone newOffset = offset
 		let clones = []
 		let delta = newOffset - offset
@@ -23,7 +25,7 @@ export class LexedLine
 			let clone = tok.clone()
 			clone.offset = tok.offset + delta
 			clones.push(clone)
-
+		
 		return new LexedLine({
 			offset: newOffset
 			startState: startState

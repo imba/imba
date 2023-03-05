@@ -26,6 +26,7 @@ test do
 	app.render()
 	ok app.querySelector('b:only-child')
 
+
 test do
 	num = 2
 	app.render()

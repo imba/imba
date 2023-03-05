@@ -41,7 +41,7 @@ export def unmount el
 	if el and el.#removeFrom
 		el.#removeFrom(el.parentNode)
 	return el
-
+		
 let instance = global.imba ||= {}
 instance.mount = mount
 instance.unmount = unmount

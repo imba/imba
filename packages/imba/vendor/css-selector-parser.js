@@ -358,7 +358,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
           if(op == '>' || op == '>>>' || op == '>>'){
             rule = RULE({tagName: '*'});
           } else {
-            throw Error('Rule expected after "' + op + '".');
+            throw Error('Rule expected after "' + op + '".');  
           }
         }
         rule.nestingOperator = op;
@@ -386,6 +386,8 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       pseudo.value = value;
     }
 
+    
+    
     return pseudo;
   }
 
@@ -464,7 +466,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         pos++;
         // This has to be a new rule right?
         (rule = rule || []).tagName = '*';
-
+        
       } else if (isIdentStart(chr) || chr === '\\') {
         (rule = rule || []).tagName = getIdent();
       } else if (chr === '$') {
@@ -557,7 +559,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         pos++;
         part.name = chr;
         var pseudo = part;
-
+          
         let pseudoName = str.charAt(pos++);
 
         if(pseudoName == '!'){
@@ -566,17 +568,17 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         }
 
         pseudoName += getIdent({'~':true,'+':true,'.':false,'>':true,'<':true});
-
+        
         if(pseudoName == 'unimportant'){
           unimportant = true;
           part.type = 'unimportant';
-
+          
           (rule = rule || currentRule || []).push(part);
           //let pseudo = this.parseSubRule('where');
           // (rule.pseudos = rule.pseudos || []).push(pseudo);
           continue;
         }
-
+        
         part.name += pseudoName;
         part.pseudo = pseudoName;
 
@@ -618,7 +620,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
           }
           pos++;
           pseudo.value = value;
-
+          
         }
         (rule = rule || currentRule || []).push(part);
       } else {
@@ -727,7 +729,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
       let s0 = entity.s1;
       let s1 = entity.s2;
       let tagName = entity.tagName;
-
+      
       if (tagName) {
         if (tagName === '*') {
           res = '*';
@@ -736,7 +738,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           let escaped = this.escapeIdentifier(tagName);
           // || TAG_NAMES[`svg_${tagName}`]
           if(native){
-            res = escaped;
+            res = escaped;  
           } else {
             res = `:is(${escaped},${escaped}-tag)`
           }
@@ -775,7 +777,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           pseudo = null;
           entity.pseudoElement ||= '::' + part.pseudo;
         }
-
+        
         if(flag){
           out = '.' + this.escapeIdentifier(flag);
         }
@@ -796,7 +798,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           // check if it is a native one
           let name = (desc && desc.name) ?? pseudo.pseudo;
           let escaped = this.escapeIdentifier(name);
-
+          
           if(desc && desc.valueType) {
             pseudo = desc;
           }
@@ -828,7 +830,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
             let pre = neg ? ':not' : ':is';
             out = `.\\@${escaped}`
             out = `${pre}(:${typeof desc.native == 'string' ? desc.native : escaped},${out})`;
-            neg = false;
+            neg = false; 
           } else if(desc.flag) {
             out = `.\\@${escaped}`
           } else {
@@ -837,7 +839,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         }
 
         if(part.closest) {
-          // fetch all the other
+          // fetch all the other 
           // out = `:${neg ? 'not' : 'is'}(${out},${out} *)`
           let parts = entity.filter(v=> v.closest == part);
           // console.log('found parts',parts.length);
@@ -859,6 +861,8 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         if(neg){
           out = `:not(${out})`
         }
+
+        
 
         res += out;
       }

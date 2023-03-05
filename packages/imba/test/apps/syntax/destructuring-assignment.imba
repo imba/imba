@@ -27,7 +27,7 @@ describe 'Array destructuring' do
 	test 'Swapping variables' do
 		let a = 1
 		let b = 3
-
+		
 		[a, b] = [b, a]
 		ok a == 3
 		ok b = 1
@@ -40,6 +40,7 @@ describe 'Array destructuring' do
 		const [a, ...b] = [1, 2, 3]
 		eq a, 1
 		eq b, [2,3]
+
 
 describe 'Object destructuring' do
 	test 'Basic assignment' do
@@ -94,7 +95,7 @@ describe 'Object destructuring' do
 
 		def drawChart({size = 'big', coords = {x: 0, y: 0}, radius = 25} = {})
 			return [size,coords.x,coords.y,radius]
-
+		
 		eq drawChart(coords: {x: 18, y: 30}, radius: 30), ['big',18,30,30]
 
 	test 'Nested object and array destructuring' do

@@ -1,6 +1,6 @@
 
 tag Custom
-
+	
 	def render
 		<self route='/custom'> "custom"
 			<div route='deep'> 'deep'
@@ -14,21 +14,23 @@ export tag App
 				<a$a href="/home"> "Home"
 				<a$b href="/about"> "About"
 				<a$c href="/custom"> "Custom"
-
+				
 			<section$body>
 
 				<div route="/home">
 					<div> "home"
 					<div route='deep'> 'deep'
+					
 
 				<div route="/about">
 					<div> "about"
 
 				<div route='/'> "/"
-
+					
 				<Custom>
 
 				<div route='*'> "404"
+					
 
 let app = imba.mount <App>
 let body = app.$body
@@ -36,9 +38,10 @@ let body = app.$body
 def go url, text = null
 	imba.router.go(url)
 	await imba.commit!
-
+	
 	if text !== null
 		eq body.textContent, text
+
 
 let events = []
 let event
@@ -51,7 +54,7 @@ router.on('change') do(e)
 test do
 
 	let i = 0
-
+	
 	while i++ < 50
 		router.go("/url{i}",{nr: i})
 		await imba.commit

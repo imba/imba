@@ -3,6 +3,7 @@
 // So write code to minimize size - no pregenerated tables
 // and array tools dependencies.
 
+
 // Use ordinary array, since untyped makes no boost here
 function makeTable() {
   var c, table = [];
@@ -21,6 +22,7 @@ function makeTable() {
 // Create table on load. Just 255 signed longs. Not a problem.
 var crcTable = makeTable();
 
+
 function crc32(crc, buf, len, pos) {
   var t = crcTable,
       end = pos + len;
@@ -33,5 +35,6 @@ function crc32(crc, buf, len, pos) {
 
   return (crc ^ (-1)); // >>> 0;
 }
+
 
 export default crc32;

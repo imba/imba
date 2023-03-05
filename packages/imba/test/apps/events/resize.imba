@@ -7,6 +7,7 @@ describe "@resize" do
 		prop w = 400
 		<self[inset:0]>
 			<div[pos:abs h:200px w:{w}px] @resize=events.push(e)>
+			
 
 	let app = imba.mount <App>
 
@@ -37,12 +38,13 @@ describe "@resize.css" do
 		<self[inset:0]>
 			<div$div[pos:abs h:200px w:{w}px] @resize.css=events.push(e)>
 				<div$clone[pos:abs w:(0.5elw)px h:(0.5elh)px]>
-
+			
 			# TODO support custom names in resize css selector?
 			<div$sidebar[pos:abs h:200px] @resize.css(1sbw,1sbh,self)>
 				<div$c[pos:abs w:(0.5elw)px h:(0.5elh)px]>
-
+				
 			<div$x[pos:absolute w:(0.2sbw)px]>
+			
 
 	let app = imba.mount <App>
 
@@ -56,8 +58,10 @@ describe "@resize.css" do
 		app.render!
 		await imba.commit!
 		eq app.$clone.offsetWidth,150
-
+		
+		
 	test do
 		app.$sidebar.style.width = 100px
 		await imba.commit!
 		eq app.$x.offsetWidth,20
+		

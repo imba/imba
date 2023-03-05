@@ -125,6 +125,7 @@ export function join() {
   }).join('/'));
 }
 
+
 // path.relative(from, to)
 // posix version
 export function relative(from, to) {
@@ -197,6 +198,7 @@ export function basename(path, ext) {
   }
   return f;
 }
+
 
 export function extname(path) {
   return splitPath(path)[3];

@@ -26,7 +26,7 @@ class Storage
 			return cache.rich[key]
 
 		let raw = store.getItem(key)
-		# if we are
+		# if we are 
 		if raw != undefined
 			if cache.raw[key] == raw
 				return cache.rich[key]
@@ -48,7 +48,7 @@ class Storage
 
 		if cached !== value or typ == 'object'
 			let prev = store.getItem(key)
-
+			
 			if value == undefined
 				store.removeItem(key)
 				delete cache.rich[key]

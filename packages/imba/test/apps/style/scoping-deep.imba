@@ -12,7 +12,7 @@ tag app-root
 	css >>> .rule fw:303
 	css >> .rule fw:302
 	css > .rule fw:301
-
+	
 	css .box >>> .rule fw:403
 	css .box >> .rule fw:402
 	css .box > .rule fw:401
@@ -25,6 +25,8 @@ tag app-root
 			<.rule> '401'
 			extrule('402')
 			<div> extrule('403')
+		
+			
 
 imba.mount(let app = <app-root tabIndex=0>)
 
@@ -33,7 +35,7 @@ test do
 	let els = app.getElementsByClassName('rule')
 	for el in els
 		eqcss el, parseInt(el.textContent)
-
+		
 	eqcss a, 301
 	# eqcss app.children[1], 300
 	# eqcss app.children[2].children[0], 500

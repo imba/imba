@@ -17,6 +17,7 @@ var stdin = process.stdin;
 var stdout = process.stdout;
 var ansi = helpers.ansi;
 
+
 var parseOpts = {
 	alias: {
 		o: 'output',
@@ -29,7 +30,7 @@ var parseOpts = {
 		w: 'watch',
 		d: 'debug'
 	},
-
+	
 	schema: {
 		output: {type: 'string'},
 		outext: {type: 'string'},
@@ -42,7 +43,7 @@ var parseOpts = {
 		hmr: null,
 		raw: null
 	},
-
+	
 	groupz: ['sourcemap']
 };
 
@@ -73,9 +74,10 @@ function CLI(options){
 	this._current = null;
 	if(!options.fs) Object.defineProperty(options,'fs',{value: fs, enumerable:false});
 	if(!options.path) Object.defineProperty(options,'path',{value: path, enumerable:false});
-
+	
 	this;
 };
+
 
 CLI.prototype.sources = function(v){ return this._sources; }
 CLI.prototype.setSources = function(v){ this._sources = v; return this; };
@@ -88,7 +90,7 @@ CLI.prototype.ensureDir = function (src){
 		if (i < 1) { continue; };
 		// what about relative paths here? no good? might be important for symlinks etc no?
 		var dir = parts.slice(0,i + 1).join(path.sep);
-
+		
 		if (fs.existsSync(dir)) {
 			var stat = fs.statSync(dir);
 		} else if (part.match(/\.(imba\d?|js)$/) || i == len - 1) {
@@ -107,11 +109,11 @@ CLI.prototype.findRecursive = function (root,pattern){
 	var results = [];
 	root = path.relative(process.cwd(),root);
 	root = path.normalize(root);
-
+	
 	var read = function(src,depth) {
 		src = path.normalize(src);
 		var stat = fs.statSync(src);
-
+		
 		if (stat.isDirectory() && depth > 0) {
 			var files = fs.readdirSync(src);
 			let res = [];
@@ -123,14 +125,14 @@ CLI.prototype.findRecursive = function (root,pattern){
 			return results.push(src);
 		};
 	};
-
+	
 	if (m = root.match(/\/\*\.imba\d?$/)) {
 		root = root.slice(0,-m[0].length);
 		read(root,1);
 	} else {
 		read(root,10);
 	};
-
+	
 	return results;
 };
 
@@ -138,7 +140,7 @@ CLI.prototype.pathToSource = function (src,coll,o,root){
 	if(root === undefined) root = null;
 	var abs = path.resolve(process.cwd(),src);
 	var stat = fs.statSync(abs);
-
+	
 	if (stat.isDirectory()) {
 		// console.log "is directory",findRecursive(abs)
 		var files = this.findRecursive(abs);
@@ -147,27 +149,28 @@ CLI.prototype.pathToSource = function (src,coll,o,root){
 		};
 		return;
 	};
-
+	
 	var file = {
 		filename: path.basename(src),
 		sourcePath: abs,
 		sourceBody: fs.readFileSync(abs,'utf8')
 	};
-
+	
 	if (o.output) {
 		var rel = root ? path.relative(root,abs) : file.filename;
 		file.targetPath = path.resolve(o.output,rel);
 	} else if (!o.stdio) {
 		file.targetPath = file.sourcePath;
 	};
-
+	
 	if (file.targetPath) {
 		var ext = ('.' + (o.outext || 'js')).replace(/^\.+/,'.');
 		file.targetPath = file.targetPath.replace(/\.imba\d?$/,ext);
 	};
-
+	
 	return coll.push(file);
 };
+
 
 CLI.prototype.cwd = function (){
 	return process.cwd();
@@ -176,16 +179,16 @@ CLI.prototype.cwd = function (){
 CLI.prototype.run = function (){
 	var self = this, o_, main_;
 	(o_ = self.o()).platform || (o_.platform = 'node');
-
+	
 	if (self.o().output) {
 		self.o().output = path.normalize(path.resolve(self.cwd(),self.o().output));
 	};
-
+	
 	var paths = ((typeof (main_ = self.o().main)=='string'||main_ instanceof String)) ? [self.o().main] : ((self.o().main || []));
 	for (let i = 0, items = iter$(paths), len = items.length; i < len; i++) {
 		self.pathToSource(items[i],self._sources,self._options);
 	};
-
+	
 	if (self.o().stdio) {
 		if (!self.o().output) { self.o().print = true };
 		var chunks = [];
@@ -279,9 +282,9 @@ CLI.prototype.tokenize = function (){
 			throw e;
 			out = e._options.tokens;
 		}
-
+		
 		src.tokens = out;
-
+		
 		let res = [];
 		for (let i = 0, items = iter$(src.tokens), len = items.length, t; i < len; i++) {
 			t = items[i];
@@ -299,15 +302,15 @@ CLI.prototype.tokenize = function (){
 			} else {
 				s = self.b(("[" + typ + " " + id + "]"));
 			};
-
+			
 			if (t._loc != -1 && self.o().sourcemap) {
 				s = ("(" + (t._loc) + ":" + (t._len) + ")") + s; // chalk.bold(s)
 			};
-
+			
 			res.push(s);
 		};
 		var strings = res;
-
+		
 		return process.stdout.write(strings.join(' ') + '\n');
 	});
 };
@@ -322,25 +325,25 @@ CLI.prototype.compileFile = function (src){
 	var opts = Object.create(self.o());
 	// opts.filename = src.filename;
 	opts.sourcePath = src.sourcePath;
-
+	
 	if(opts.extlib) opts.imbaPath = null;
-
+	
 	var out = {};
 	var t = Date.now();
 	var at = new Date().toTimeString().substr(0,8);
 	var srcp = self.o().stdio ? src.sourcePath : path.relative(process.cwd(),src.sourcePath);
 	var dstp = src.targetPath && path.relative(process.cwd(),src.targetPath);
-
+	
 	var srcpAbs = path.resolve(srcp);
 	var dstpAbs = path.resolve(dstp);
-
+	
 	if (srcp.indexOf("../") >= 0) {
 		srcp = srcpAbs;
 		dstp = dstpAbs;
 	};
 
 	opts.sourcePath = srcpAbs;
-
+	
 	try {
 		if (src.sourcePath.match(/\.imba1$/)) {
 			imbac1 || (imbac1 = require("../script/bootstrap.compiler.js"));
@@ -374,16 +377,16 @@ CLI.prototype.compileFile = function (src){
 			out.js = out.js + "\n//# sourceMappingURL=" + path.basename(src.targetPath + '.map');
 		}
 	};
-
+	
 	src.output = out;
-
+	
 	let status = ("" + self.gray(("" + at + " compile")) + " " + srcp + " " + self.gray("to") + " " + dstp + " " + self.green(out.compileTime + "ms"));
-
+	
 	if (out.error) {
 
 		status += self.red(" [1 error]");
 	};
-
+	
 	if (out.warnings && out.warnings.length) {
 		let count = out.warnings.length;
 		status += self.yellow((" [" + count + " warning" + ((count > 1) ? 's' : '') + "]"));
@@ -394,7 +397,7 @@ CLI.prototype.compileFile = function (src){
 		status += self.red((" [" + count + " error" + ((count > 1) ? 's' : '') + "]"));
 		if (!self.o().print) {
 			self.log(status);
-
+			
 			out.errors.forEach(function(err,i){
 				if(err.toError instanceof Function){
 					err = err.toError();
@@ -429,7 +432,7 @@ CLI.prototype.compileFile = function (src){
 		}
 		// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
 	};
-
+	
 	if (out.warnings && !self.o().silent && !self.o().print) {
 		// log "   {out:warnings:length} warnings"
 		out.warnings.forEach(function(err,i){
@@ -449,7 +452,8 @@ CLI.prototype.compileFile = function (src){
 		})
 		// helpers
 	};
-
+	
+	
 	if (self.o().watch && !src.watcher) {
 		var now = Date.now();
 		src.watcher = fs.watch(src.sourcePath,function(type,filename) {
@@ -465,7 +469,8 @@ CLI.prototype.compileFile = function (src){
 			};
 		});
 	};
-
+	
+	
 	if (self.o().print && out.js) {
 		process.stdout.write(out.js);
 	};
@@ -496,11 +501,12 @@ CLI.prototype.finish = function (){
 	return this;
 };
 
+
 function main(){
 	var o = helpers.parseArgs(process.argv.slice(2),parseOpts);
 
 	(o.colors == null) ? (o.colors = true) : o.colors;
-
+	
 	if (o.version) {
 		return console.log(package.version);
 	} else if (!(o.main || o.stdio) || o.help) {

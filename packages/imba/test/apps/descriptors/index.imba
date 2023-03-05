@@ -5,7 +5,7 @@ The descriptor syntax allows you to concisely set/toggle properties on an object
 let check = do(a,b) eq JSON.stringify(a), JSON.stringify(b)
 
 describe 'descriptors' do
-
+	
 	test 'basics' do
 		# if you supply no object it will create one
 		let x = @({}).one.two.three	
@@ -39,7 +39,7 @@ describe 'descriptors' do
 	test 'getting the target' do
 		return # add later
 		# a descriptor always sets .self to the value of self in the context it was created
-		# the magical method
+		# the magical method 
 		def generate
 			let item = {}
 			let desc = @(item).hey = 20
