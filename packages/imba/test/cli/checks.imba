@@ -19,7 +19,7 @@ export default {
 			/--shared: 1/
 		]
 	}
-	
+
 	"imba build app/multi.html": {
 		"dist/multi.html": [
 			/assets\/home\.\w{8}\.js/
@@ -34,6 +34,6 @@ export default {
 	}
 
 	"imba build --web app/home.imba": {
-		
+
 	}
 }

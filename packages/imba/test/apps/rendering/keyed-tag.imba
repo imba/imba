@@ -7,7 +7,7 @@ tag Item
 	<self> data.name
 
 tag App
-	
+
 	def render
 		<self>
 			<Item $key=data.id data=data>
@@ -21,4 +21,3 @@ test do
 	app.render!
 	let b = app.children[0]
 	ok a != b
-	

@@ -1,3 +1,10 @@
+global.L = console.log
+global.E = do
+	process.stderr.write "\x1b[31m"
+	console.error(...$0)
+	process.stderr.write "\x1b[0m"
+	process.exit(1)
+
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
 import {
@@ -918,6 +925,7 @@ export default class Bundle < Component
 			return cached
 
 	def build force = no
+
 		buildcache[self] ||= new Promise do(resolve)
 			if (built =? true) or force
 
@@ -960,6 +968,7 @@ export default class Bundle < Component
 			return resolve(result)
 
 	def rebuild {force = no} = {}
+
 		unless built and result and result.rebuild isa Function
 			return build(yes)
 
@@ -1552,6 +1561,8 @@ export default class Bundle < Component
 
 			# is this only really needed for hmr?
 			await mfile.write(JSON.stringify(entryManifest,null,2),manifest.hash)
+
+			L("\x1bc") if program.clear
 
 			if program.#listening
 				log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening

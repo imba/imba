@@ -3,7 +3,7 @@ describe "@key" do
 	let ctx = {}
 	let events = []
 	let res = null
-	
+
 	def cb e
 		events.push(e)
 		res = e
@@ -21,7 +21,7 @@ describe "@key" do
 			@keydown.del.log('del')
 			# @keydown.key.log('key')
 		>
-		
+
 	let app = imba.mount <App>
 
 	# resize should be triggered immediately
@@ -31,4 +31,3 @@ describe "@key" do
 			await spec.keyboard.down(key)
 			await imba.commit!
 			eq $1.log,[key]
-		

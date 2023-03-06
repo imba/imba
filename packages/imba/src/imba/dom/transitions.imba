@@ -3,7 +3,7 @@ import {Emitter} from '../utils'
 
 class Transitions < Emitter
 	selectors = {}
-	
+
 	def addSelectors add, group
 		let arr = selectors[group] ||= []
 		arr.push(...add)
@@ -15,7 +15,7 @@ class Transitions < Emitter
 			if selectors[group]
 				sels.push(...selectors[group])
 		sels and sels.length ? sels.join(',') : null
-		
+
 	def nodesForBase base, kind = 'transition'
 		let hits = [base]
 		let query = (selectors[kind] or []).join(',')
@@ -34,7 +34,6 @@ class Transitions < Emitter
 		return [] unless sel
 		nodes.filter do $1.matches(sel)
 
-
 export const transitions = new Transitions
 
 let instance = global.imba ||= {}
@@ -47,26 +46,26 @@ export class Easer < Emitter
 		#phase = null
 		#nodes = []
 		#sizes = new Map
-		
+
 	def log ...params
 		return
-		
+
 	get flags
 		dom.flags
-		
+
 	def flag flags
 		for node in #nodes
 			node.flags.add(flags)
 		self
-	
+
 	def unflag flags
 		for node in #nodes
 			node.flags.remove(flags)			
 		self
-		
+
 	def commit
 		dom.offsetWidth
-		
+
 	def enable mode
 		if mode
 			#mode = mode
@@ -75,25 +74,25 @@ export class Easer < Emitter
 		dom.#insertInto = #insertInto.bind(self)
 		dom.#removeFrom = #removeFrom.bind(self)
 		flags.add('_ease_')
-		
+
 	def disable
 		flags.remove('_ease_')
 		yes
-	
+
 	set phase val
 		let prev = #phase
-		
+
 		if #phase =? val
 			unflag("@{prev}") if prev
 			flag("@{val}")  if val
-		
+
 			# clearing all the node animations
 			unless val
 				unflag('@out')
 				unflag('@in')
 				unflag('@off')
 				#nodes = null
-				
+
 			if val == 'enter' and prev == 'leave'
 				dom..transition-out-cancel(self)
 			if val == 'leave' and prev == 'enter'
@@ -106,19 +105,19 @@ export class Easer < Emitter
 				dom..transition-out-end(self)
 			if prev == 'enter' and !val
 				dom..transition-in-end(self)
-	
+
 	get phase
 		#phase
-		
+
 	get leaving?
 		phase == 'leave'
-	
+
 	get entering?
 		phase == 'enter'
-	
+
 	get idle?
 		phase == null
-		
+
 	def track cb
 		let anims = {before: get_document!.getAnimations!}
 		commit!
@@ -149,7 +148,7 @@ export class Easer < Emitter
 		else
 			anims.finished = Promise.resolve(yes)
 		return anims
-		
+
 	def getAnimatedNodes
 		return transitions.nodesForBase(dom)
 
@@ -186,13 +185,13 @@ export class Easer < Emitter
 		let finish = do
 			clearNodeSizes(sizes) if sizes
 			phase = null if entering?
-		
+
 		if leaving?
 			let anims = track do
 				phase = 'enter'
 				unflag('@off')
 				unflag('@out')
-				
+
 			# what if there are no animations?
 			anims.finished.then(finish) do log('error cancel leave',$1)
 			return dom
@@ -200,7 +199,7 @@ export class Easer < Emitter
 		let parConnected = get_document!.contains(parent)
 
 		before ? parent.insertBefore(dom,before) : parent.appendChild(dom)
-		
+
 		#nodes = getAnimatedNodes!
 
 		# Could it be better to set the flags before adding it to the dom?
@@ -215,10 +214,10 @@ export class Easer < Emitter
 		flag('@off')
 		flag('@in')
 		flag('@enter')
-		
+
 		commit!
 		unflag('_instant_')
-		
+
 		let anims = #anims = track do
 			phase = 'enter'
 			applyNodeSizes(sizes)
@@ -261,12 +260,12 @@ export class Easer < Emitter
 			flag('@off')
 			flag('@out')
 			clearNodeSizes(sizes)
-		
+
 		# do it in the same tick if we find no running animations(!)
 		unless anims.own.length
 			finalize!
 			return
-		
+
 		anims.finished.then(finalize) do
 			yes
 		return
@@ -280,36 +279,36 @@ extend class Element
 	# called when element is ready to enter	
 	def transition-in transition
 		yes
-	
+
 	# called when element has finished entering
 	def transition-in-end transition
 		yes
-	
+
 	# called when element has been asked to leave while entering
 	def transition-in-cancel transition
 		yes
-	
+
 	# called when element starts to leave
 	def transition-out transition
 		yes
-	
+
 	# called when element is done leaving
 	def transition-out-end transition
 		yes
-	
+
 	# called when element re-enters while leaving
 	def transition-out-cancel transition
 		yes
-		
+
 	get ease
 		#_easer_ ||= new Easer(self)
-		
+
 	set ease value\any
 		if value == no
 			#_easer_..disable!
 			return
 
 		ease.enable(value)
-		
+
 export def use_dom_transitions
 	yes

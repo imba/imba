@@ -1,7 +1,7 @@
 import np from 'node:path'
 import nfs from 'node:fs'
 import url from 'node:url'
-import c from 'picocolors'
+import c from 'colors'
 import merge from 'lodash.merge'
 # import merge from 'deepmerge'
 

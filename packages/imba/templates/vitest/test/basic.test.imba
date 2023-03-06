@@ -10,7 +10,7 @@ test "Math.sqrt()", do
 	expect(Math.sqrt(2)).toBe Math.SQRT2
 
 test "JSON", do
-	const input = 
+	const input =
 		foo: "hello"
 		bar: "world"
 	const output = JSON.stringify(input)

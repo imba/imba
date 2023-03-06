@@ -56,28 +56,12 @@ def cssChanged(prev, next)
 	return !isCodeEqual(prev..code, next..code)
 
 def jsChanged(prev, next, filename)
-	let prevJs\string = prev..code
-	return yes if !prevJs
-	const i = prevJs.indexOf("\n/*__css_import__*/")
-	prevJs = prevJs
-		.replace(/^\/\/#\ssourceMapp(.*)$/mg, "")
-		.replace('\n\n/*__css_import__*/', '/*__css_import__*/')
-	const nextJs = next..code
-	const diff = Diff.diffChars(prevJs, nextJs)
-	const addedOrRemoved = []
-	diff.forEach do(part)
-		const color = part.added ? "\x1b[32m" : part.removed ? "\x1b[31m" : "\x1b[33m"
-		const what = part.added ? "part.added" : part.removed ? "part.removed" : "no change"
-		addedOrRemoved.push {color, what, value:part.value} if part.added or part.removed
-	# debug HMR
-	# addedOrRemoved.forEach do
-	# 	console.log("\x1b[36m", $1.what) 
-	# 	console.log ($1.color, $1.value.replace(/\n/g, "") ? "newlines": $1.value)
-	if addedOrRemoved.find(do $1.value.replace(/\n/g, "") !== "")
-		# console.log "added or removed", addedOrRemoved
-		return yes
-	else
-		return no
+	try
+		prev = prev.code.substring(0,prev.code.lastIndexOf('\n\n'))
+		next = next.code.substring(0,next.code.lastIndexOf('\n\n'))
+		next isnt prev
+	catch
+		yes
 
 ###
  # remove code that only changes metadata and does not require a js update for the component to keep working

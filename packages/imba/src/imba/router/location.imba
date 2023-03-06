@@ -2,7 +2,7 @@
 export const ROUTES = {}
 
 export class Location
-	
+
 	static def parse url, router
 		if url isa Location
 			return url
@@ -11,7 +11,7 @@ export class Location
 	def constructor url, router
 		router = router
 		self.parse(url)
-	
+
 	def parse url
 		url = new URL(url,router.origin) unless url isa URL
 		if let alias = router..aliases[url.pathname]
@@ -24,15 +24,15 @@ export class Location
 
 	def reparse
 		parse(url)
-		
+
 	# should definitely add match here
 	get searchParams
 		url.searchParams
-	
+
 	def search
 		let str = searchParams ? searchParams.toString() : ''
 		str ? ('?' + str) : ''
-		
+
 	def update value
 		if value isa Object
 			for own k,v of value
@@ -44,10 +44,10 @@ export class Location
 
 	def clone
 		new Location(url.href,router)
-		
+
 	def equals other
 		self.toString() == String(other)
-	
+
 	get href
 		url.href
 
@@ -62,7 +62,7 @@ export class Location
 			get: #getQueryParam.bind(self)
 			set: #setQueryParam.bind(self)
 		})
-		
+
 	def toString
 		href
 

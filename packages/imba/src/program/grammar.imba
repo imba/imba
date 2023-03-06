@@ -14,7 +14,6 @@ def regexify array, pattern = '#'
 		pattern.replace('#',escaped)
 	new RegExp('(?:' + items.join('|') + ')')
 
-
 def denter indent,outdent,stay,o = {}
 	if indent == null
 		indent = toodeep
@@ -63,7 +62,6 @@ def denter indent,outdent,stay,o = {}
 		return [ [/^(\t*)(?=#\s|#$)/,{cases: clones}], rule ]
 
 	return rule
-	
 
 export const states = {
 
@@ -125,9 +123,9 @@ export const states = {
 		'expr_'
 		[/[ ]+/, 'white']
 		'common_'
-		
+
 	]
-	
+
 	indentable_: [
 		[/^[ ]+/, 'white']
 		denter('@>_paren_indent&-_indent',null,null)
@@ -139,7 +137,7 @@ export const states = {
 		denter(2,-1,0)
 		'block_'
 	]
-	
+
 	_paren_indent: [
 		denter(2,-1,0)
 		'block_'
@@ -314,7 +312,7 @@ export const states = {
 		[/\}/, '}', '@pop']
 		[/(@id)(\s*:\s*)/, ['key','operator.assign.key-value','@object_value']]
 		[/(@id)/, 'identifier.$F']
-		[/\[/, '[', '@object_dynamic_key='] # 
+		[/\[/, '[', '@object_dynamic_key='] #
 		[/\s*=\s*/,'operator.assign','@object_value=']
 		[/:/,'operator.assign.key-value','@object_value=']
 		[/\,/,'delimiter.comma']
@@ -386,13 +384,13 @@ export const states = {
 		[/\(/,'(',switchTo: '@_do_params']
 		[/./,'@rematch',switchTo:'@_do']
 	]
-	
+
 	do_piped: [
 		denter(null,-1,-1)
 		[/\s*\|/,'args.open',switchTo: '@_do_piped_params']
 		[/./,'@rematch',switchTo:'@_do']
 	]
-	
+
 	_do_piped_params: [
 		[/\|/,'args.close',switchTo: '@_do']
 		'params_'
@@ -441,7 +439,7 @@ export const states = {
 		[/(import)(\s+type)(?=\s[\w\$\@\{])/,['keyword.import','keyword.type','@>import_body&-_imports=decl-import/part']]
 		[/(import)@B/,'keyword.import','@>import_body&-_imports=decl-import/part']
 	]
-	
+
 	import_body: [
 		denter(null,-1,0)
 		[/(@esmIdentifier)( +from)/,['identifier.$F.default','keyword.from',switchTo: '@import_source']]
@@ -457,7 +455,7 @@ export const states = {
 		'comma_'
 		'common_'
 	]
-	
+
 	import_source: [
 		denter(null,-1,0)
 		[/["']/, 'path.open','@_path=$#']
@@ -486,9 +484,6 @@ export const states = {
 		'common_'		
 	]
 
-	
-
-
 	esm_specifiers: [
 		[/\}/, '}', '@pop']
 		[/(@esmIdentifier)(\s+as\s+)(@esmIdentifier)/, ['alias','keyword.as','identifier.const.$F',switchTo: '@/delim']]
@@ -500,7 +495,6 @@ export const states = {
 		'whitespace'
 	]
 
-	
 	_path: [
 		[/[^"'\`\{\\]+/, 'path']
 		[/@escapes/, 'path.escape']
@@ -525,7 +519,7 @@ export const states = {
 
 		[/(def)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.function.decl-const-func','@>def_params&$1/$1']]
 	]
-	
+
 	flow_: [
 		# [/(else)(?=\s|$)/, ['keyword.$1','@flow_start.$S2.flow.$S4']]
 		[/(if|else|elif|unless)(?=\s|$)/, ['keyword.$1','@flow_start=$1']]
@@ -668,7 +662,7 @@ export const states = {
 		[/(get|set|def|static|prop|attr)@B/,'keyword.$0']
 		'field_'
 		'common_'
-		
+
 	]
 
 	_tagclass: [
@@ -749,7 +743,6 @@ export const states = {
 		'expr_'
 	]
 
-
 	inline_var_body: [
 		[/\[/, 'array.[', '@array_var_body']
 		[/\{/, 'object.{', '@object_body']
@@ -806,8 +799,6 @@ export const states = {
 		}]
 		[/[\w\-\$]+/,'type']
 	]
-	
-	
 
 	css_: [
 		[/global(?=\s+css@B)/,'keyword.$#']
@@ -998,8 +989,6 @@ export const states = {
 		[/(?=\@@optid)/,'','@_tag_event&-_listener']
 	]
 
-	
-	
 	_tag_part: [
 		[/\)|\}|\]|\>/,'@rematch', '@pop']
 	]
@@ -1026,7 +1015,7 @@ export const states = {
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-tagattrvalue']
 		[/\s+/,'@rematch','@pop']
 	]
-	
+
 	_tag_interpolation: [
 		[/\}/,'tag.$/.interpolation.close','@pop']
 		'expr_'
@@ -1049,7 +1038,7 @@ export const states = {
 		[/\/\/\//, { token: 'regexp.slash.open', bracket: '@open', next: '@_hereregexp'}]
 		[/(\/)(\/)/, ['regexp.slash.open','regexp.slash.close']]
 	]
-	
+
 	_regexp: [
 		[/(\{)(\d+(?:,\d*)?)(\})/, ['regexp.escape.control', 'regexp.escape.control', 'regexp.escape.control'] ],
 		[/(\[)(\^?)(?=(?:[^\]\\\/]|\\.)+)/, ['regexp.escape.control',{ token: 'regexp.escape.control', next: '@_regexrange'}]],
@@ -1090,7 +1079,7 @@ export const states = {
 # 4 = various flags (F)
 # 5 = the monarch substate -- for identifiers++
 def rewrite-state raw
-	
+
 	let state = ['$S1','$S2','$S3','$S4','$S5','$S6']
 
 	if raw.match(/\@(pop|push|popall)/)
@@ -1135,7 +1124,7 @@ def rewrite-token raw
 	raw = raw.replace('$&','$S3')
 	raw = raw.replace('$I','$S2')
 	raw = raw.replace('$T','$S2')
-	
+
 	# if orig != raw
 	#	console.log 'rewriting token',orig,raw
 	return raw
@@ -1194,7 +1183,6 @@ def rewrite-actions actions,add
 
 def rewrite-rule owner, key
 	let rule = owner[key]
-	
 
 for own key,rules of states
 	let i = 0
@@ -1270,7 +1258,7 @@ export const grammar = {
 	# anyIdentifierOpt: /(?:@anyIdentifier)?/
 	id:  /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
-	fieldid: /[\@\#]*@plainid/ 
+	fieldid: /[\@\#]*@plainid/
 	propid: /[\@\#]*@plainid/
 	defid: /[\@\#]*@plainid/
 	decid: /\@@plainid/
@@ -1287,14 +1275,14 @@ export const grammar = {
 	implicitCall: /(?!\s(?:and|or|is|isa)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
 	cssModifier: /(?:\@+[\<\>\!]?[\w\-]+\+?|\.+@id\-?)/
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
-	
+
 	cssVariable: /(?:--|\$)[\w\-\$]+/
 	cssPropertyName: /[\w\-\$]+/
 	# cssModifier: /\@[\w\-\$]+/
 	cssPropertyKey: /(?:@cssPropertyName(?:@cssModifier)*|@cssModifier+)(?:\s*[\:\=])/
 	cssUpModifier: /\.\.[\w\-\$]+/
 	cssIsModifier: /\.[\w\-\$]+/
-	
+
 	regEx: /\/(?!\/\/)(?:[^\/\\]|\\.)*\/[igm]*/,
 	regexpctl: /[(){}\[\]\$\^|\-*+?\.]/,
 	regexpesc: /\\(?:[bBdDfnrstvwWn0\\\/]|@regexpctl|c[A-Z]|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4})/,

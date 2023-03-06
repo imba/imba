@@ -11,11 +11,11 @@ var setMixin = {
             this._items = [].slice.call(arguments,0);
     },
     concat: function concat (setB) {
-        this._items.push.apply(this._items, setB._items || setB); 
+        this._items.push.apply(this._items, setB._items || setB);
         return this;
     },
     eq: function eq (set) {
-        return this._items.length === set._items.length && this.subset(set); 
+        return this._items.length === set._items.length && this.subset(set);
     },
     indexOf: function indexOf (item) {
         if(item && item.eq) {
@@ -90,4 +90,3 @@ var Set = typal.construct(setMixin).mix({
 
 if (typeof exports !== 'undefined')
     exports.Set = Set;
-

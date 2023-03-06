@@ -95,7 +95,6 @@ class WorkerInstance
 			fork.on('exit') do(code) process.exit(code)
 			return fork
 
-		
 		cluster.setupMaster(args)
 
 		let worker = cluster.fork(env)
@@ -114,7 +113,7 @@ class WorkerInstance
 				log.error "exited with error code: %red",code
 			elif !worker.#next
 				log.info "exited"
-		
+
 		worker.on 'listening' do(address)
 			o.#listening = address
 			log.success "listening on %address",address unless o.vite
@@ -157,14 +156,13 @@ class WorkerInstance
 				reload!
 
 		current = worker
-	
+
 	def broadcast event
 		current..send(event)
 
 	def reload
 		start!
 		self
-
 
 export default class Runner < Component
 	viteNodeServer
@@ -256,7 +254,7 @@ export default class Runner < Component
 		const hash = createHash(body)
 		const fpath = np.join o.tmpdir, "bundle.{hash}.mjs"
 		# in windows, the path would start with c: ...
-		# and esm doesn't support it. 
+		# and esm doesn't support it.
 		const vnpath = pathToFileURL(np.join o.tmpdir, "vite-node-client.mjs")
 		const vn-vendored = np.resolve __dirname, np.join("..", "vendor","vite-node-client.mjs")
 		nfs.writeFileSync(vnpath, nfs.readFileSync(vn-vendored, 'utf-8')) unless nfs.existsSync(vnpath)
@@ -300,6 +298,7 @@ export default class Runner < Component
 		return self
 
 	def reload
+		console.log("\x1bc") if o.clear
 		log.info "reloading %path",o.name
 		for worker of workers
 			worker.reload!

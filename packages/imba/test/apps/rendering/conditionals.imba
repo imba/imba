@@ -27,7 +27,7 @@ tag app-root
 				flipper()
 			<div>
 			fragif()
-			<em> "Here" 
+			<em> "Here"
 			if value
 				<button.flipping> "flipping"
 			<div>
@@ -45,18 +45,18 @@ test "check" do
 	app.render()
 	ok !app.querySelector('button.flipping')
 	ok !app.querySelector('b.flipper')
-	
+
 test "cond && tag" do
-	
+
 	tag App
 		<self>
 			pos && <a>
 				<span> 'a'
 			neg || <b>
 				<span> 'b'
-	
+
 	let app = <App>
-	
+
 	let run = do(pos,neg)
 		app.pos = pos
 		app.neg = neg
@@ -67,4 +67,3 @@ test "cond && tag" do
 	eq run(yes,yes), 'a'
 	eq run(yes,no), 'ab'
 	eq run(no,no), 'b'
-	

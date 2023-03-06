@@ -4,7 +4,6 @@ import {nextTick} from 'process';
 import {Readable} from './readable';
 import {Writable} from './writable';
 
-
 inherits(Duplex, Readable);
 
 var keys = Object.keys(Writable.prototype);

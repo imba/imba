@@ -1,10 +1,10 @@
 declare namespace imbacss {
-    /** Represents elements whose numeric position in a series of siblings is odd 1, 3, 5, etc 
+    /** Represents elements whose numeric position in a series of siblings is odd 1, 3, 5, etc
 * @detail :nth-child(odd)
 */
     interface αodd { name: 'nth-child', valueType: 'string', value: 'odd' };
 
-    /** Represents elements whose numeric position in a series of siblings is even 2, 4, 6, etc 
+    /** Represents elements whose numeric position in a series of siblings is even 2, 4, 6, etc
      * @detail :nth-child(even)
     */
     interface αeven { name: 'nth-child', valueType: 'string', value: 'even' };
@@ -14,12 +14,12 @@ declare namespace imbacss {
      */
     interface αfirst { name: 'first-child' }
 
-    /** Represents the last element among a group of sibling elements 
+    /** Represents the last element among a group of sibling elements
      * @detail :last-child
     */
     interface αlast { name: 'last-child' };
 
-    /** Represents an element without any siblings 
+    /** Represents an element without any siblings
      * @detail :only-child
     */
     interface αonly { name: 'only-child' };
@@ -47,7 +47,6 @@ declare namespace imbacss {
 
     /** Element OR descendant of element has focus */
     interface αfocin {};
-
 
     /** @detail (min-width: 480px) */
     interface αxs { media: '(min-width: 480px)' }
@@ -77,16 +76,16 @@ declare namespace imbacss {
 
     // color modifiers
 
-    /** Indicates that user has notified that they prefer an interface that has a dark theme. 
+    /** Indicates that user has notified that they prefer an interface that has a dark theme.
      * @detail (prefers-color-scheme: dark)
     */
     interface αdark { media: '(prefers-color-scheme: dark)' }
 
-    /** Indicates that user has notified that they prefer an interface that has a light theme, or has not expressed an active preference. 
+    /** Indicates that user has notified that they prefer an interface that has a light theme, or has not expressed an active preference.
      * @detail (prefers-color-scheme: light)
     */
     interface αlight { media: '(prefers-color-scheme: light)' }
-    
+
     /**
      * @custom
      * @summary Matches when a `@touch` handler is active for element
@@ -98,13 +97,13 @@ declare namespace imbacss {
      * @summary Matches when a `@touch.moved` modifier is active for element
      */
     interface αmove { flag: '@move' }
-    
+
     /**
      * @custom
      * @summary Matches when a `@touch.hold` modifier is active for element
      */
     interface αhold { flag: '@hold' }
-    
+
     /**
      * @custom
      * @summary Matches components rendered from server that are not hydrated
@@ -117,20 +116,20 @@ declare namespace imbacss {
      */
      interface αsuspended { flag: '@suspended' }
 
-    /** 
+    /**
      * The viewport is in a landscape orientation, i.e., the width is greater than the height.
      * @detail (orientation: landscape)
      *  */
     interface αlandscape { media: '(orientation: landscape)' }
 
-    /** 
+    /**
      * The viewport is in a portrait orientation, i.e.,  the height is greater than or equal to the width.
      * @detail (orientation: portrait)
         */
     interface αportrait { media: '(orientation: portrait)' }
 
-    /** 
-     * @summary Intended for paged material and documents viewed on a screen in print preview mode. 
+    /**
+     * @summary Intended for paged material and documents viewed on a screen in print preview mode.
      * @detail (media: print)
     */
     interface αprint { media: 'print' }
@@ -141,51 +140,49 @@ declare namespace imbacss {
     */
     interface αscreen { media: 'screen' }
 
-    /** 
-     * @summary Pseudo-element that is the first child of the selected element 
+    /**
+     * @summary Pseudo-element that is the first child of the selected element
      * @detail ::before { ... }
      * @pseudoelement
     */
     interface αbefore { name: '::before' }
 
-    /** 
-     * @summary Pseudo-element that is the last child of the selected element 
+    /**
+     * @summary Pseudo-element that is the last child of the selected element
      * @pseudoelement
      * @detail ::after { ... }
     */
     interface αafter { name: '::after' }
-    
-    /** 
+
+    /**
      * @see [Transitions](https://imba.io/css/transitions)
      * @summary Target styles before entering / after leaving the dom
      * @custom
     */
      interface αoff { }
 
-    /** 
+    /**
      * @see [Transitions](https://imba.io/css/transitions)
      * @summary Initial styles for element entering the dom
      * @custom
     */
     interface αin { }
 
-    /** 
+    /**
      * @see [Transitions](https://imba.io/css/transitions)
      * @summary Target styles for element leaving the dom
      * @custom
     */
     interface αout { }
 
-    
-
-    /** 
+    /**
      * @see [Transitions](https://imba.io/css/transitions)
      * @summary Matches when element is transitioning into the dom
      * @custom
     */
      interface αenter { }
 
-    /** 
+    /**
      * @see [Transitions](https://imba.io/css/transitions)
      * @summary Matches when element is transitioning out of the dom
      * @custom

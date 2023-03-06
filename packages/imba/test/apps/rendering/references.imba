@@ -1,6 +1,6 @@
 
 describe "basic references" do
-	
+
 	tag App
 		<self>
 			<div>
@@ -9,7 +9,7 @@ describe "basic references" do
 				<button$other-button @click=($name.value="jean")> "Change"
 
 	let app = imba.mount <App>
-	
+
 	test "refence works" do
 		app.render!
 		eq app.$name.value, "john"
@@ -17,15 +17,14 @@ describe "basic references" do
 		eq app.$name.value, "jane"
 		app.$other-button.click!
 		eq app.$name.value, "jean"
-		
 
 describe "references before render" do
 	tag Button
 		prop target
 		prop value
-		
+
 		<self @click=(target.value = value)> <slot>
-	
+
 	tag App
 		bool = no
 		<self>
@@ -37,7 +36,7 @@ describe "references before render" do
 				<input$other>
 
 	let app = imba.mount <App>
-	
+
 	test "refence works" do
 		# app.render!
 		eq app.$name.value, "john"

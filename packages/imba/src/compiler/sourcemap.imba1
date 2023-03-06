@@ -11,7 +11,7 @@ var VLQ_VALUE_MASK = VLQ_CONTINUATION_BIT - 1
 var BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
 export class SourceMap
-	
+
 	prop result
 
 	def source
@@ -62,7 +62,7 @@ export class SourceMap
 		var groups = {}
 		var uniqueGroups = {}
 		var match
-		# split the code in lines. go through each line 
+		# split the code in lines. go through each line
 		# go through the code looking for LOC markers
 		# remove markers along the way and keep track of
 		# console.log source:js
@@ -180,7 +180,7 @@ export class SourceMap
 				buffer += ',' unless nr == 0
 				var src = map[0]
 				var dest = map[1]
-				
+
 				buffer += encodeVlq(dest[1] - lastColumn)
 				lastColumn = dest[1]
 				# add index
@@ -194,7 +194,6 @@ export class SourceMap
 				lastSourceColumn = src[1]
 
 			buffer += ";"
-
 
 		var rel = @targetPath and path.relative(path.dirname(@targetPath),@sourcePath)
 
@@ -224,10 +223,10 @@ export class SourceMap
 			elif typeof btoa == 'function'
 				str = btoa(str)
 			else
-				
+
 				return
 			return "\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,{str}"
-		
+
 		console.warn "base64 encoding not supported - skipping inline sourceMapping"
 		return ""
 
@@ -255,6 +254,3 @@ export class SourceMap
 
 	def encodeBase64 value
 		BASE64_CHARS[value] # or throw Error.new("Cannot Base64 encode value: {value}")
-
-		
-		

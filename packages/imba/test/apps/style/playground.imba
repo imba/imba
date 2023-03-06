@@ -1,19 +1,18 @@
 
-
 tag app-root
-	
+
 	css @not-lg
 		l:vflex
-	
+
 	css $sidebar
 		background:red
-		
+
 	css p:local
 		color:red
 
 	def expand
 		$sidebar.open!
-	
+
 	def render
 		<self>
 			<div$sidebar> "Hello"
@@ -22,7 +21,7 @@ tag app-root
 imba.mount <app-root>
 
 tag app-inherited < app-root
-	
+
 	css p
 		font-size: 20px
 

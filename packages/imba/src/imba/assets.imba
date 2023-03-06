@@ -12,7 +12,7 @@ import fs from 'fs'
 class ImbaAsset
 	def constructor src
 		src = src
-	
+
 	get entry
 		global.IMBA_MANIFEST..[src]
 

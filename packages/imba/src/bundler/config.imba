@@ -67,7 +67,6 @@ export const NODE_BUILTINS = [
 	"zlib"
 ]
 
-
 export const LOADER_EXTENSIONS = {
 	".png": "file",
 	".bmp": "file",
@@ -101,7 +100,6 @@ export const LOADER_EXTENSIONS = {
 	".opus": "file",
 	".wasm": "file"
 }
-
 
 export const defaultConfig = {
 	bundles: []
@@ -198,8 +196,6 @@ export def merge config, patch, ...up
 
 	let otyp = typeof config
 	let vtyp = typeof patch
-
-
 
 	otyp = 'array' if config isa Array
 	vtyp = 'array' if patch isa Array

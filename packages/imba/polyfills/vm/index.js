@@ -4,7 +4,6 @@ from https://github.com/substack/vm-browserify/blob/bfd7c5f59edec856dc7efe0b77a4
 MIT license no Copyright holder mentioned
 */
 
-
 function Object_keys(obj) {
   if (Object.keys) return Object.keys(obj)
   else {
@@ -143,7 +142,6 @@ Script.prototype.runInNewContext = function(context) {
   return res;
 };
 
-
 export function createScript(code) {
   return new Script(code);
 }
@@ -184,7 +182,6 @@ export default {
   runInThisContext: runInThisContext,
   runInNewContext: runInNewContext
 }
-
 
 /*
 from indexOf

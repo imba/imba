@@ -9,7 +9,7 @@ tag app-root
 	prop model = {
 		update: do(val) counter = val
 	}
-	
+
 	def hello
 		counter++
 
@@ -27,7 +27,6 @@ tag app-root
 			for index in values
 				<div .index{index} @click=(counter = index)> "Item {index}"
 
-			
 let app = <app-root>
 imba.mount app
 
@@ -56,10 +55,9 @@ test "click" do
 	app.render()
 	await spec.click('.add',no)
 	eq app.counter,4
-	
 
 test "within loop" do
-	
+
 	for val in values
 		app.counter = 0
 		await spec.click(".index{val}",no)
@@ -69,9 +67,8 @@ test "click" do
 	app.counter = 0
 	await spec.click('.model',no)
 	eq app.counter,10
-	
+
 test "click" do
 	app.counter = 0
 	# await spec.click('.value',no)
 	# eq app.value, [0,'click',true]
-

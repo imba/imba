@@ -178,8 +178,6 @@ export function compileSubstitution(str: string): any[] {
 	return parts;
 }
 
-
-
 /**
  * substituteMatches is used on lexer strings and can substitutes predefined patterns:
  * 		$$  => $

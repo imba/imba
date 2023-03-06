@@ -14,7 +14,7 @@ class ResizeEvent < CustomEvent
 			let wu = helpers.parseDimension(wunit)
 			let hu = helpers.parseDimension(hunit)
 			let el = helpers.toElement(sel,target)
-			
+
 			let wp = wu ? "--u_{wu[1]}" : "--{wunit}"
 			let hp = hu ? "--u_{hu[1]}" : "--{hunit}"
 
@@ -37,7 +37,7 @@ def getResizeObserver
 		unless resizeObserver
 			console.warn(':resize not supported in this browser')
 			resizeObserver = {observe: (do yes)}
-		
+
 	resizeObserver ||= new ResizeObserver do(entries)
 		for entry in entries
 			let e = new CustomEvent('resize', bubbles: false, detail: entry)
@@ -45,7 +45,7 @@ def getResizeObserver
 			e.rect = entry.contentRect
 			e.#extendType(ResizeEvent)
 			entry.target.dispatchEvent(e)
-			
+
 			let e2 = new CustomEvent('resized', bubbles: true, detail: entry)
 			entry.target.dispatchEvent(e2)
 		return

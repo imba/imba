@@ -9,17 +9,15 @@ describe "@touch" do
 			> "Rect"
 
 	let app = imba.mount <App>
-	
+
 	test ".flag" do
 		await imba.commit!
 		await spec.mouse.down(30,30)
 		await imba.commit!
 		await spec.wait(400)
 		ok !!app.querySelector('section.hello')
-		
+
 		# eq res.x,1
 		# eq res.y,1
 		# await spec.mouse.up!
 		# ok !app.querySelector('section.hello')
-		
-	

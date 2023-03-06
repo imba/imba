@@ -44,7 +44,7 @@ async function bundle(options){
     var parser = require('../build/grammar.js').parser;
     fs.writeFileSync(__dirname + "/../build/parser.js", parser.generate());
     console.log('built parser');
-    
+
 }
 
 bundle({

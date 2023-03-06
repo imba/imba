@@ -9,10 +9,9 @@ def @indexable target
 
 @indexable
 class Model
-	
+
 	def constructor
 		seed = Math.random!
-
 
 describe 'class decorators' do
 	test do
@@ -22,6 +21,6 @@ describe 'class decorators' do
 
 		data[one] = 1
 		data[two] = 2
-		
+
 		eq data[one], 1
 		eq data[two], 2

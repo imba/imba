@@ -101,10 +101,10 @@ export def diagnosticToESB item, add = {}
 			lineText: item.lineText
 		},add)
 	}
-	
+
 export def normalizePath src
 	src.replace(/\/+/g,'/').replace(/\/\.\//g,'/')
-	
+
 export def relativePath ...parts
 	np.relative(...parts).split('\\').join('/')
 
@@ -123,7 +123,6 @@ export def rename src, pattern
 	let ext = np.extname(src)
 	let name = np.basename(src,ext)
 	return np.join(dir,pattern.replace('*',name))
-
 
 	let parsed = np.parse(src)
 	if typeof pattern == 'string'
@@ -160,7 +159,7 @@ export def resolveConfig cwd, name
 
 export def extendObject obj,patch,path = []
 	mergeConfig(obj,patch,...path)
-	
+
 export def resolvePath name, cwd = '.', cb = null
 	# console.log 'resolve path',name,cwd
 	let src = np.resolve(cwd,name)
@@ -181,10 +180,9 @@ export def resolveFile name,cwd,handler
 	return null
 
 export def resolvePackage cwd
-	resolveFile('package.json',cwd) do 
+	resolveFile('package.json',cwd) do
 		let body = JSON.parse($1.body)
 		return body
-
 
 # generates a function that converts integers to a short
 # alphanumeric string utilizing the supplied alphabet

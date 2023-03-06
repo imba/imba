@@ -14,7 +14,7 @@ const KeyMap = {
 	up: 'ArrowUp'
 	down: 'ArrowDown'
 	del: 'Backspace'
-	
+
 }
 
 const pup = do(ns,...params)
@@ -28,10 +28,9 @@ const pup = do(ns,...params)
 
 class PupKeyboard
 
-
 	def type text, options = {}
 		await puppy('keyboard.type',[text,options])
-		
+
 	def down key, options = {}
 		key = KeyMap[key] or key
 		await puppy('keyboard.down',[key,options])
@@ -59,13 +58,13 @@ class PupMouse
 
 	def move x = 0, y = 0
 		await puppy('mouse.move',[x,y])
-	
+
 	def up x = 0, y = 0
 		await puppy('mouse.up',[])
-		
+
 	def click x = 0, y = 0, o = {}
 		await puppy('mouse.click',[x,y,o])
-		
+
 	def touch ...coords
 		let first = coords.shift!
 		await down(first[0],first[1])
@@ -103,7 +102,6 @@ const fmt = do(code,string)
 	str = "\x1B[{code}m{str}{resetStr}"
 	return str
 
-
 class SpecComponent
 
 	def log ...params
@@ -115,9 +113,8 @@ class SpecComponent
 	get root
 		parent ? parent.root : self
 
-
 global class Spec < SpecComponent
-	
+
 	get keyboard
 		_keyboard ||= new PupKeyboard
 
@@ -126,7 +123,7 @@ global class Spec < SpecComponent
 
 	get page
 		_page ||= new PupPage
-	
+
 	def click sel, trusted = yes, options = {}
 		if typeof trusted == 'object'
 			options = trusted
@@ -191,7 +188,7 @@ global class Spec < SpecComponent
 
 	def describe name, blk
 		blocks.push new SpecGroup(name, blk, self)
-	
+
 	def test name, blk
 		let inline = stack[-1] isa SpecExample
 
@@ -218,7 +215,7 @@ global class Spec < SpecComponent
 
 	def eq actual, expected, options
 		new SpecAssert(context, actual,expected, options)
-	
+
 	def step i = 0
 		Spec.CURRENT = self
 		let block = blocks[i]
@@ -260,7 +257,7 @@ global class Spec < SpecComponent
 
 		for test in tests
 			test.failed ? failed.push(test) : ok.push(test)
-		
+
 		let logs = [
 			fmt('green',"{ok.length} OK")
 			fmt('red',"{failed.length} FAILED")
@@ -285,7 +282,7 @@ global class SpecGroup < SpecComponent
 		name = name
 		blocks = []
 		blk = blk
-		
+
 		self
 
 	get fullName
@@ -293,7 +290,7 @@ global class SpecGroup < SpecComponent
 
 	def describe name, blk
 		blocks.push new SpecGroup(name, blk, self)
-	
+
 	def test name, blk
 		blocks.push new SpecExample(name, blk, self)
 
@@ -307,7 +304,7 @@ global class SpecGroup < SpecComponent
 				await pre()
 
 		block.run! # this is where we wan to await?
-	
+
 	def start
 		emit('start', [self])
 		SPEC.eval(blk,self) if blk
@@ -316,18 +313,17 @@ global class SpecGroup < SpecComponent
 			console.group(name)
 		else
 			console.log "\n-------- {name} --------"
-		
+
 	def finish
 		console.groupEnd(name) if console.groupEnd
 		if parent == SPEC
 			cleanup!
 		emit('done', [self])
-		
+
 	def cleanup
 		if $web$
 			document.body.innerHTML = ''
 		await imba.commit!
-		
 
 global class SpecExample < SpecComponent
 
@@ -360,7 +356,7 @@ global class SpecExample < SpecComponent
 	def start
 		emit('start')
 		console.group(fullName)
-	
+
 	def finish
 		failed ? fail! : pass!
 		let fails = assertions.filter do $1.critical
@@ -421,7 +417,7 @@ global class SpecAssert < SpecComponent
 
 	get critical
 		failed && !options.warn
-	
+
 	def fail
 		failed = yes
 		if options.warn
@@ -454,7 +450,7 @@ global def before name, blk do SPEC.before(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
-	
+
 global def eqcss el, match,sel,o = {}
 	if typeof el == 'string'
 		el = document.querySelector(el)

@@ -27,5 +27,4 @@ function adler32(adler, buf, len, pos) {
   return (s1 | (s2 << 16)) |0;
 }
 
-
 export default adler32;
