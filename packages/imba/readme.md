@@ -7,7 +7,7 @@
 
 <p align="center">
 	<a target="_blank" href="https://discord.gg/mkcbkRw">
-		<img src="https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square">
+		<img src="https://img.shields.io/discord/682180555286380545?color=7289DA&label=%23imba&logo=discord&logoColor=white&style=flat-square">
 	</a>
 	<a target="_blank" href="https://www.npmjs.com/package/imba">
 		<img src="https://img.shields.io/npm/dm/imba.svg?style=flat-square">
