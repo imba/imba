@@ -70,8 +70,8 @@ class KeyedTagFragment < Fragment
 
 		# console.log 'insertChild',item,index
 		# log 'insertBefore',index,item,parentNode
-		if index > 0
-			let other = self.array[index - 1]
+		let other = self.array[index - 1]
+		if index > 0 and other
 			# will fail with text nodes
 			par.#insertChild(item,other.nextSibling)
 		else
