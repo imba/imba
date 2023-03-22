@@ -1,5 +1,5 @@
 import cluster from 'cluster'
-import np from 'path'
+import np from 'node:path'
 import cp from 'child_process'
 import nfs from 'node:fs'
 import { pathToFileURL } from 'node:url';
@@ -98,7 +98,6 @@ class WorkerInstance
 		cluster.setupMaster(args)
 
 		let worker = cluster.fork(env)
-
 		worker.nr = restarts++
 		let prev = worker.#prev = current
 
@@ -121,16 +120,17 @@ class WorkerInstance
 			# now we can kill the reloaded process?
 
 		worker.on 'error' do
-			log.info "%red","errored"
+			log.info "%red", "errored" # '
 
 		# worker.on 'online' do log.info "%green","online"
 		# worker.on 'message' do(message, handle)
 
 		worker.on 'message' do(message, handle)
-			# console.log "msg", message, handle
 			if message.type == 'fetch'
-				# console.log "parent: fetching", message
-				let md = await runner.fetchModule(message.id)
+				let md
+				try md = await runner.fetchModule(message.id) catch error
+					console.error "Error fetching module {message.id}", error.name, error.message
+					return process.exit 1
 				if message.id.endsWith("?url&entry")
 					try await create-dev-styles! catch error
 						console.log "error creating DEV SSR styles", error
@@ -233,14 +233,19 @@ export default class Runner < Component
 			.replace("__FILE__", fileToRun)
 		# start uncommend to upgrade vite-node-client
 		# const output = await Vite.build
+		# 	# configFile: no
 		# 	optimizeDeps: {disabled: yes}
+		# 	esbuild:
+		# 		target: "node18"
+		# 		platform: "node"
 		# 	ssr:
 		# 		target: "node"
+		# 		# transformMode: { ssr: [new RegExp(builtinModules.join("|"), 'gi')] }
 		# 	build:
 		# 		minify: no
 		# 		rollupOptions:
 		# 			external: builtinModules
-		# 		target: "node16"
+		# 		target: "node18"
 		# 		lib:
 		# 			formats: ["es"]
 		# 			entry: require.resolve("vite-node/client").replace(".cjs", ".mjs")
@@ -249,6 +254,7 @@ export default class Runner < Component
 		# const license = nfs.readFileSync(np.join(require.resolve("vite-node/client"), "..", "..", "LICENSE"), "utf-8")
 		# const content = "/* {license} */\n{output[0].output[0].code}"
 		# nfs.writeFileSync(np.resolve(__dirname, np.join("..", 'vendor', 'vite-node-client.mjs')), content)
+		# process.exit 1
 		# end   uncommend to upgrade vite-node-client
 
 		const hash = createHash(body)

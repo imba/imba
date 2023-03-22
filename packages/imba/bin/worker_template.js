@@ -7,7 +7,7 @@ function handleError(msg, error) {
 const runner = new ViteNodeRunner({
 	root: ["__ROOT__"],
 	base: ["__BASE__"],
-	debug: true,
+	// debug: true,
 	fetchModule: async function (id) {
 		return new Promise((resolve) => {
 			try {
@@ -43,7 +43,6 @@ const runner = new ViteNodeRunner({
 }
 );
 const file = '__FILE__'
-
 await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });

@@ -90,11 +90,6 @@ console.log "server created"
 const server = app.listen port, do console.log "http://localhost:{port}"
 const exitProcess = do
 	console.log "exiting process"
-	process.off "SIGTERM", exitProcess
-	process.off "SIGINT", exitProcess
-	process.stdin.off "end", exitProcess
 	try await server.close do console.log "server closed" finally process.exit 0
 
-process.once "SIGTERM", exitProcess
-process.once "SIGINT", exitProcess
 process.stdin.on "end", exitProcess

@@ -14,4 +14,4 @@ export default tag App
 		<self>
 			<button[c:liloc6 bg:yellow4] @click.log("st")=(count++)> "Hello {count} times hello. Version: {import.meta.env.MY_NAME}"
 
-imba.mount <App>, document.getElementById "root"
+imba.mount <App>, document.getElementById "root" unless $node$

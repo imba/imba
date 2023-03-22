@@ -2,7 +2,7 @@ import np from 'node:path'
 import nfs from 'node:fs'
 import url from 'node:url'
 import c from 'colors'
-import merge from 'lodash.merge'
+import mergeWith from 'lodash.mergewith'
 # import merge from 'deepmerge'
 
 const _dirname = if typeof __dirname !== 'undefined' then __dirname else np.dirname(url.fileURLToPath(import.meta.url))
@@ -84,9 +84,21 @@ export def getConfigFilePath(type, opts)
 
 	return defaultConfig if !configObj
 	
-	merge(defaultConfig, configObj)
+	mergeWith(defaultConfig, configObj) do(objValue, srcValue, prop)
+		# merge configs while removing duplicates
+		if Array.isArray(objValue) and Array.isArray(srcValue)
+			const flatSrc = srcValue.flat!
+			const flatObj = objValue.flat!
+			const merged = flatSrc.concat flatObj
+			return merged.filter do(v, i, a)
+				const ind = a.findLastIndex do(v2)
+					if prop == 'plugins'
+						v2..name === v..name
+					else
+						v2 === v
 
-	
+				return ind == i
+
 export def ensurePackagesInstalled(dependencies, root)
 	const to-install = []
 	const {isPackageExists} = require('local-pkg')

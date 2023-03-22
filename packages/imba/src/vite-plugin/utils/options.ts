@@ -25,8 +25,7 @@ import { findRootImbaDependencies, needsOptimization, ImbaDependency } from './d
 import { createRequire } from 'module';
 import { esbuildImbaPlugin, facadeEsbuildImbaPluginName } from './esbuild';
 import { addExtraPreprocessors } from './preprocess';
-import deepmerge from 'lodash.merge';
-// import deepmerge from 'deepmerge';
+import deepmerge from 'lodash.mergewith';
 
 const allowedPluginOptions = new Set([
 	'include',

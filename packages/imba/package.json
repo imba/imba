@@ -116,14 +116,13 @@
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
     "vite": "^4.1.4",
-    "vite-node": "^0.29.1",
+    "vite-node": "^0.29.7",
     "vite-tsconfig-paths-silent": "^4.0.5",
     "vitest": "^0.29.1",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
     "@antfu/install-pkg": "^0.1.1",
-    "lodash.merge": "^4.6.2",
     "chokidar": "^3.4.3",
     "colors": "1.4.0",
     "cross-spawn": "^7.0.3",
@@ -131,6 +130,7 @@
     "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
     "local-pkg": "^0.4.2",
+    "lodash.mergewith": "^4.6.2",
     "prompts": "^2.4.2"
   },
   "directories": {},
