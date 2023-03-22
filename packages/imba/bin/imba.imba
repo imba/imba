@@ -293,6 +293,7 @@ def run entry, o, extras
 				server: {
 					...config.server,
 					port: o.port,
+					host: o.host,
 				},
 				build: {
 					...config.build,
@@ -376,7 +377,6 @@ def common cmd
 	cmd
 		.option("-o, --outdir <dir>", "Directory to output files")
 		.option("-w, --watch", "Continously build and watch project")
-		.option("-c, --clear", "Clear the terminal's scrollback buffer on every build")
 		.option("--loglevel <level>", "Log level: debug|info|success|warning|error|silent")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
@@ -413,6 +413,7 @@ common(cli.command('preview').description('Locally preview production build (Vit
 common(cli.command('serve [script]').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("--port <port>", "Specify port")
+	.option("--host [host]", "Specify host (true for 0.0.0.0) more in https://vitejs.dev/config/server-options.html#server-host")
 	.action(run)
 
 cli
