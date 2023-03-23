@@ -260,7 +260,7 @@ extend class Element
 		self
 
 	def #afterVisit
-		self.render! if self.render
+		self.render! if self.render and self.prototype
 		##visitContext = null if ##visitContext
 		return
 
