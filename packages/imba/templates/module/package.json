@@ -12,10 +12,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "start": "vite",
     "build": "vite build",
-    "watch": "vite build --watch",
-    "preview": "vite preview"
+    "watch": "vite build --watch"
   },
   "devDependencies": {
     "vite": "*",

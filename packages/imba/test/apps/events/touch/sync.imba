@@ -9,7 +9,7 @@ describe "@touch" do
 			> "Rect"
 
 	let app = imba.mount <App>
-	
+
 	test "start" do
 		await imba.commit!
 		await spec.mouse.down(30,30)
@@ -20,5 +20,3 @@ describe "@touch" do
 		await spec.mouse.move(40,40)
 		eq res.x,2
 		eq data.x,1
-		
-	

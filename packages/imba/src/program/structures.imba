@@ -47,11 +47,9 @@ export class Range
 
 	def getText str
 		str.slice(start,end)
-		
+
 	def equals other
 		other.offset == offset and other.length == length
-
-
 
 export const DiagnosticSeverity = {
 	Error: 1
@@ -74,7 +72,7 @@ export class Diagnostic
 		self.source	= data.source
 		self.message = data.message
 		DOCMAP.set(self,doc)
-	
+
 	get #source
 		DOCMAP.get(self)
 

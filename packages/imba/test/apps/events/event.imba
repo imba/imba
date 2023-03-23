@@ -8,13 +8,13 @@ describe "@event.sel" do
 			>
 				<span> "Button"
 				<b> "bold"
-			
+
 			# when matching on parent classes we need to
 			# include :scope to refer to this element
 			<div.two
 				@click.sel('.parent :scope').log('parent')
 			> "Button"
-			
+
 	let app = imba.mount <App>
 
 	test('sel') do
@@ -37,7 +37,7 @@ describe "@event.trusted" do
 				@click.trusted.log('trusted')
 				@click.!trusted.log('!trusted')
 			> "Button"
-			
+
 	let app = imba.mount <App>
 
 	test 'untrusted' do
@@ -60,7 +60,7 @@ describe "@event.if" do
 				@click.if(!bool).log('false')
 				@click.!if(bool).log('!false')
 			> "Button"
-			
+
 	let app = imba.mount <App>
 
 	test do

@@ -9,7 +9,7 @@ describe "@touch" do
 			> "Rect"
 
 	let app = imba.mount <App>
-	
+
 	test "start" do
 		await imba.commit!
 		await spec.mouse.down(30,30)
@@ -20,8 +20,7 @@ describe "@touch" do
 		await spec.mouse.move(40,40)
 		eq res.x,2
 		eq data.x,1
-		
-	
+
 describe "@touch no rounding" do
 	let data = {x:0,y:0}
 	let res = null
@@ -33,12 +32,10 @@ describe "@touch no rounding" do
 			> "Rect"
 
 	let app = imba.mount <App>
-	
+
 	test "start" do
 		await imba.commit!
 		await spec.mouse.down(70,70)
 		await imba.commit!
 		eq res.x,0.5
 		eq res.y,0.5
-		
-	

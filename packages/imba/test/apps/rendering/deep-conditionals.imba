@@ -11,7 +11,7 @@ tag A1
 
 test do
 	const tree = <A1>
-	
+
 	ok !!tree.querySelector('span:only-child')
 	a = 1
 	tree.render!

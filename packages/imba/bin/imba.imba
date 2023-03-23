@@ -2,6 +2,7 @@ import np from 'path'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
+import print-info from '../src/utils/print-info'
 import {program as cli} from 'commander'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
@@ -277,6 +278,7 @@ def common cmd
 	cmd
 		.option("-o, --outdir <dir>", "Directory to output files")
 		.option("-w, --watch", "Continously build and watch project")
+		.option("-c, --clear", "Clear the terminal's scrollback buffer on every build")
 		.option("--loglevel <level>", "Log level: debug|info|success|warning|error|silent")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
@@ -326,6 +328,10 @@ cli
 	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
 	.option('-y, --yes', 'Say yes to any confirmation prompts')
 	.action(do create($1, $2.opts!))
+
+cli
+	.command('info').description('Print helpful information')
+	.action(do print-info!)
 
 log.ts 'parse options'
 

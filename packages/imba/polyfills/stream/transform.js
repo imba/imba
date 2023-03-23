@@ -40,9 +40,7 @@
 // would be consumed, and then the rest would wait (un-transformed) until
 // the results of the previous transformed chunk were consumed.
 
-
 import {Duplex} from './duplex';
-
 
 import {inherits} from 'util';
 inherits(Transform, Duplex);

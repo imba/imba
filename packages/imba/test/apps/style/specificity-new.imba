@@ -18,10 +18,9 @@ tag App
 	css .f2 fw:400
 	css .f3 fw:300
 	css .f5 fw:400
-	
 
 	f2val = "400"
-	
+
 	<self>
 		css .f3 fw:400
 		<.f1> "400"
@@ -33,12 +32,12 @@ tag App
 			# You would expect this to be more important? - or would no?
 			"600"
 		<div.f5>
-			css fw:700 
+			css fw:700
 			"700"
 		<div>
 			css .f3 fw:700
 			<div.f3> "700"
-		
+
 		<div>
 			css .f3 fw:701
 			<div.f3> "701"

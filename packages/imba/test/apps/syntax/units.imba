@@ -32,7 +32,7 @@ test do
 	const twoFps = 500
 	eq 2fps, twoFps
 	eq 50fps, 20
-	
+
 	const num = 10
 	eq (-num)px, '-10px'
 	eq (num)%, '10%'

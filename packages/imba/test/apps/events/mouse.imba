@@ -12,7 +12,7 @@ describe "mouse" do
 			# <div.nleft @click.!left.log('click')> "Button"
 
 	let app = imba.mount <App>
-	
+
 	test "@mousedown" do
 		await spec.click('.any')
 		await spec.click('.any',{button: 'middle'})
@@ -45,14 +45,13 @@ describe "mouse" do
 		await spec.click('.not-middle',{button: 'left'})
 		await spec.click('.not-middle',{button: 'right'})
 		eq $1.log, ['click','click']
-	
+
 	test "@mousedown.right" do
 		await spec.click('.right',{button: 'left'})
 		await spec.click('.right',{button: 'middle'})
 		eq $1.log, []
 		await spec.click('.right',{button: 'right'})
 		eq $1.log, ['click']
-
 
 describe "@mouse.shift|ctrl|alt|meta" do
 
@@ -82,7 +81,7 @@ describe "@mouse.shift|ctrl|alt|meta" do
 			<div.alt-not-shift
 				@mousedown.alt.!shift.log('alt')
 			> "Button"
-			
+
 	let app = imba.mount <App>
 
 	for typ in ['shift','ctrl','alt','meta']
@@ -90,10 +89,10 @@ describe "@mouse.shift|ctrl|alt|meta" do
 			await spec.click(".{typ}")
 			await spec.keyboard.hold(typ) do spec.click(".{typ}")
 			eq log, ["!{typ}",typ]
-	
+
 	# combining multiple modifiers
 	test '.alt.!shift' do({log})
-	
+
 		await spec.keyboard.hold('alt') do
 			await spec.keyboard.hold('shift') do
 				await spec.click(".alt-not-shift")

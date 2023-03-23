@@ -51,7 +51,7 @@ test 'actions' do
 
 		@computed get total
 			price * qty
-		
+
 		def incr1
 			price += 1
 			qty += 1
@@ -63,8 +63,7 @@ test 'actions' do
 		@autorun def updated
 			runs++
 			console.log "total price is now {total}"
-		
-		
+
 	let order = new Order
 	eq runs,1
 	order.incr1!
@@ -92,7 +91,7 @@ test 'arrays' do
 				sum += line.total
 			return sum
 
-		def add price = 1, qty = 1 
+		def add price = 1, qty = 1
 			let line = new OrderLine(price: price, qty: qty)
 			lines.push(line)
 			return line
@@ -100,8 +99,7 @@ test 'arrays' do
 		@autorun def updated
 			runs++
 			console.log "total price is now {total}"
-		
-		
+
 	let order = new Order
 	eq order.total,0
 	let line = order.add(10,1)
@@ -133,7 +131,7 @@ test 'Sets' do
 				sum += line.total
 			return sum
 
-		def add price = 1, qty = 1 
+		def add price = 1, qty = 1
 			let line = new OrderLine(price: price, qty: qty)
 			lines.add(line)
 			return line
@@ -141,7 +139,7 @@ test 'Sets' do
 		@autorun def updated
 			runs++
 			console.log "total price is now {total}"
-		
+
 	let order = new Order
 	eq order.total,0
 	let line = order.add(10,1)
@@ -171,7 +169,7 @@ test 'Maps' do
 		@autorun def updated
 			runs++
 			console.log "total price is now {total}"
-		
+
 	let item = new Entry
 	eq item.reactionCount,0
 	item.react "😀"

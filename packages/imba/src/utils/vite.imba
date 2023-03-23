@@ -1,7 +1,7 @@
 import np from 'node:path'
 import nfs from 'node:fs'
 const {isPackageExists} = require('local-pkg')
-import c from 'picocolors'
+import c from 'colors'
 
 const EXIT_CODE_RESTART = 43
 export const viteServerConfigFile = np.join(__dirname,"./vite.config.server.mjs")
@@ -9,8 +9,8 @@ export const vitestSetupPath = np.join(__dirname,"./test-setup.mjs")
 
 export def importWithFallback(bundled, user)
 	let pkg
-	try 
-		pkg = await import(user) 
+	try
+		pkg = await import(user)
 	catch error
 		pkg = await import(bundled)
 	pkg

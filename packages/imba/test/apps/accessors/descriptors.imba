@@ -22,11 +22,10 @@ class Model
 			$set: do(value,target,key,name)
 				unless value isa type
 					value = new type(value)
-					
+
 				console.info(`setting {name}`) if this.log
 				target[key] = value.toUpperCase!
 		}
-
 
 class User < Model
 	name as @uppercase
@@ -38,5 +37,3 @@ test "descriptors" do
 	eq obj.name, "SINDRE"
 	obj.other = "Hey"
 	eq $1.log, ['setting other']
-
-

@@ -28,5 +28,3 @@ export def startWorkers
 		stop: decr
 		exec: do(...pars) pool.exec(...pars)
 	}
-
-

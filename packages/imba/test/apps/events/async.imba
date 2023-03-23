@@ -6,10 +6,10 @@ extend class Event
 		return res
 
 extend class Element
-	
+
 	def on$point
 		console.log 'on$handler'
-		# remove / clear some of the options from 
+		# remove / clear some of the options from
 
 	def on$resize
 		console.log 'on$resize'
@@ -71,6 +71,5 @@ tag app-root
 				@pointer.meta.capture.dragging
 				@click.toggleFlag('expanded')
 			> "Can resize"
-
 
 imba.mount <app-root>

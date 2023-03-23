@@ -334,5 +334,5 @@ for own name,ref of MAP
 	MAP[name] = TYPES[keys[ref]]
 	if name.indexOf('svg_') == 0
 		MAP[name.replace('_',':')] = MAP[name]
- 
+
 # END SCHEMA

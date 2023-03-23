@@ -1,4 +1,4 @@
-const p = console.log
+const L = console.log
 const cwd = process.cwd!
 const swd = __dirname
 
@@ -33,6 +33,10 @@ const templates =
 		path: 'module'
 		name: 'Module'
 		desc: 'A module that can be used in any JavaScript project (Vite bundler)'
+	'cli':
+		path: 'cli'
+		name: 'CLI Tool'
+		desc: 'A CLI tool ready for npm publishing'
 
 const noCopy = [
 	'.git'
@@ -73,15 +77,15 @@ def assertCleanGit
 def main name, opts
 
 	try
-		throw '' unless parseInt(process.version.slice(1).split('.',1)[0]) >= 16
+		throw 1 unless parseInt(process.version.slice(1).split('.',1)[0]) >= 16
 	catch
-		p "Detected Node {process.version}, v16 or higher is recommended.".yellow
+		L "Detected Node {process.version}, v16 or higher is recommended.".yellow
 
 	const promptOpts = onCancel: do quit!
 
-	let projectName
-	try projectName = toValidRepoName name
-	catch e p(e.red)
+	let projectName =
+		try toValidRepoName name
+		catch e L(e.red)
 
 	projectName ??= (await prompt {
 		type: 'text'
@@ -97,7 +101,7 @@ def main name, opts
 	assertCleanGit! if projectName is '.'
 
 	let template = templates[opts.template]
-	p('Template not found'.red) if opts.template and not template
+	L('Template not found'.red) if opts.template and not template
 
 	template ??= (await prompt {
 		type: 'select'
@@ -129,20 +133,20 @@ def main name, opts
 
 	try
 		copy src, dest
-		p "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
+		L "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
-	p '\nInstalling dependencies'.bold
+	L '\nInstalling dependencies'.bold
 
 	try
 		process.chdir(dest) unless projectName is '.'
 		spawn.sync 'npm', ['pkg', 'set', "name={packageName}"]
 		spawn.sync 'npm', ['up', '-S'], stdio:'inherit'
 	catch e
-		p "\nFailed to install dependencies:\n\n{e}".red
+		L "\nFailed to install dependencies:\n\n{e}".red
 
-	p """
+	L """
 
 		Install the vscode extension for an optimal experience:
 		  {'https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba'.blue}

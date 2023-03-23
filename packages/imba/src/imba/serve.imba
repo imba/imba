@@ -3,6 +3,7 @@ import cluster from 'cluster'
 import nfs from 'fs'
 import np from 'path'
 import {EventEmitter} from 'events'
+import {env} from './env'
 
 import http from 'http'
 import https from 'https'
@@ -17,12 +18,12 @@ const defaultHeaders = {
 	json: {'Content-Type': 'application/json; charset=utf-8'}
 	css: {'Content-Type': 'text/css; charset=utf-8'}
 	map: {'Content-Type': 'application/json; charset=utf-8'}
-		
+
 	otf: {'Content-Type': 'font/otf'}
 	ttf: {'Content-Type': 'font/ttf'}
 	woff: {'Content-Type': 'font/woff'}
 	woff2: {'Content-Type': 'font/woff2'}
-	
+
 	svg: {'Content-Type': 'image/svg+xml'}
 	avif: {'Content-Type': 'image/avif'}
 	gif: {'Content-Type': 'image/gif'}
@@ -34,7 +35,7 @@ const defaultHeaders = {
 	ico: {'Content-Type': 'image/x-icon'}
 	bmp: {'Content-Type': 'image/bmp'}
 	pdf: {'Content-Type': 'application/pdf'}
-	
+
 	webm: {'Content-Type': 'video/webm'}
 	weba: {'Content-Type': 'audio/webm'}
 	avi: {'Content-Type': 'video/x-msvideo'}
@@ -49,7 +50,7 @@ const defaultHeaders = {
 	ogv: {'Content-Type': 'video/ogg'}
 	oga: {'Content-Type': 'audio/ogg'}
 	opus: {'Content-Type': 'audio/opus'}
-	
+
 }
 
 const proc = global.process
@@ -67,7 +68,7 @@ class Servers < Set
 	def reload o = {}	
 		for server of self
 			server.reload(o)
-	
+
 	def broadcast msg, ...rest
 		for server of self
 			server.broadcast(msg,...rest)
@@ -112,7 +113,7 @@ const process = new class Process < EventEmitter
 
 			let promises = for server of servers
 				server.close!
-			
+
 			setTimeout(&,100) do proc.exit(0)
 			await Promise.all(promises)
 			proc.exit(0)
@@ -137,12 +138,11 @@ const process = new class Process < EventEmitter
 		send('reload')
 		return
 
-
 def deepImports src, links = [], depth = 0
 	let asset = global.IMBA_MANIFEST[src]
 	return links if links.indexOf(src) >= 0
 	if asset..imports
-		
+
 		for item in asset..imports
 			# if links.indexOf(item) >= 0 and depth > 10
 			#	console.warn "already found import!!",item,links
@@ -173,7 +173,6 @@ class AssetResponder
 			headers['Link'] = deepImports(url).map(do "<{$1}>; rel=modulepreload; as=script").join(', ')
 
 		path = server.localPathForUrl(url)
-
 
 	def respond req, res
 		nfs.access(path,nfs.constants.R_OK) do(err)
@@ -210,7 +209,7 @@ class Server
 	def localPathForUrl url
 		let src = url.replace(/\?.*$/,'')
 		return urlToLocalPathMap[src] ??= if true
-			let path = np.resolve(publicPath,'.' + src)
+			let path = np.resolve(env.publicPath,'.' + src)
 			let res = nfs.existsSync(path) and path
 			if !res and staticDir
 				path = np.resolve(staticDir,'.' + src)
@@ -240,11 +239,9 @@ class Server
 		assetResponders = {}
 		urlToLocalPathMap = {}
 		publicExistsMap = {}
-		# temporary hack for pm2
-		rootDir = try proc.env.IMBA_OUTDIR or np.dirname(proc.env.pm_exec_path or proc.argv[1])
-		publicPath = try np.resolve(rootDir,proc.env.IMBA_PUBDIR or global.IMBA_PUBDIR or 'public')
+
 		staticDir = global.IMBA_STATICDIR or ''
-		
+
 		if proc.env.IMBA_PATH
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
 
@@ -253,7 +250,7 @@ class Server
 		# fetch and remove the original request listener
 		let originalHandler = server._events.request
 		let dom = global.#dom
-		
+
 		srv.off('request',originalHandler)
 
 		# check if this is an express app?
@@ -297,7 +294,7 @@ class Server
 					let stream = nfs.createReadStream(devtoolsPath)
 					res.writeHead(200, defaultHeaders.js)
 					return stream.pipe(res)
-				
+
 				if url == '/__hmr__'
 					let headers = {
 						'Content-Type': 'text/event-stream'
@@ -312,7 +309,6 @@ class Server
 					req.on('close') do clients.delete(res)
 					return true
 
-
 			# create full url
 			let headers = req.headers
 			let base
@@ -320,7 +316,7 @@ class Server
 			if ishttp2
 				base = headers[':scheme'] + '://' + headers[':authority']
 			else
-				let scheme = req.connection.encrypted ? 'https' : 'http' # 
+				let scheme = req.connection.encrypted ? 'https' : 'http' #
 				base = scheme + '://' + headers.host
 
 			let asset = manifest[url]
@@ -352,7 +348,7 @@ class Server
 					catch e
 						res.writeHead(503,{})
 						return res.end!
-			
+
 			# continue to the real server
 			if dom
 				let loc = new dom.Location(req.url,base)
@@ -395,7 +391,7 @@ class Server
 		for res in stalledResponses
 			res.end!
 		stalledResponses = []
-	
+
 	def close
 		pause!
 

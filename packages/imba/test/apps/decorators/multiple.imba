@@ -1,5 +1,4 @@
 
-
 def @bench target,key,desc
 	let prev = desc.value
 	desc.value = do
@@ -17,24 +16,21 @@ def @log target,key,desc
 			console.log "call {prefix} {key}"
 			return prev.apply(this,arguments)
 		return
-		
 
-
-		
 class Item
-	
+
 	@log('hello') @bench
 	def setup
 		let i = 0
 		let sum = 0
 		let items = []
 		while ++i < 100000
-			
+
 			let val = Math.random!
 			items.push(val)
 			sum += val
 		return sum
-		
+
 test 'multiple' do
 	let item = new Item
 	item.setup!

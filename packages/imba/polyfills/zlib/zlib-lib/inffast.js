@@ -67,7 +67,6 @@ export default function inflate_fast(strm, start) {
   var from;                   /* where to copy match from */
   var from_source;
 
-
   var input, output; // JS specific, because we have no pointers
 
   /* copy state to local variables */
@@ -93,7 +92,6 @@ export default function inflate_fast(strm, start) {
   dcode = state.distcode;
   lmask = (1 << state.lenbits) - 1;
   dmask = (1 << state.distbits) - 1;
-
 
   /* decode literals and length/distances until end-of-block or not enough
      input data or output space */

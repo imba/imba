@@ -53,14 +53,14 @@ export class Node
 		start.end = end
 		visit!
 		return parent
-	
+
 	def find pattern
 		findChildren(pattern,yes)[0]
-		
+
 	get childNodes
 		let nodes = doc.getNodesInScope(self)
 		nodes
-		
+
 	def findChildren pattern, returnFirst = no
 		let found = []
 		let tok = start
@@ -98,7 +98,7 @@ export class Node
 
 	get name
 		$name or ''
-	
+
 	get value
 		doc.content.slice(start.offset,next ? next.offset : -1)
 
@@ -133,7 +133,6 @@ export class Group < Node
 
 	def lookup ...params
 		return parent.lookup(...params)
-
 
 export class ValueNode < Group
 
@@ -180,20 +179,20 @@ export class Scope < Node
 				$name = 'render'
 				if ident.symbol
 					ident.symbol.name = 'render'
-	
+
 	get selfPath
 		let path = self.path
 		if property?
 			return path.slice(0,path.lastIndexOf('.'))
 		return path
-	
+
 	get path
 		let par = parent ? parent.path : ''
-		
+
 		if property?
 			let sep = static? ? '.' : '.prototype.'
 			return parent ? "{parent.path}{sep}{name}" : name
-		
+
 		if component?
 			if name[0] == name[0].toLowerCase!
 				return name.replace(/\-/g,'_') + '$$TAG$$'
@@ -218,10 +217,10 @@ export class Scope < Node
 
 	get root?
 		self isa Root
-	
+
 	get top?
 		self isa Root
-		
+
 	get class?
 		!!type.match(/^class/) or component?
 
@@ -230,19 +229,19 @@ export class Scope < Node
 
 	get static?
 		!!(ident && ident.mods & M.Static)
-	
+
 	get handler?
 		!!type.match(/handler|spy/)
 
 	get member?
 		!!type.match(/def|get|set/)
-	
+
 	get property?
 		!!type.match(/def|get|set|field/)
 
 	get flow?
 		!!type.match(/if|else|elif|unless|for|while|until/)
-	
+
 	get closure?
 		!!type.match(/class|component|def|get|set|do/)
 
@@ -261,14 +260,14 @@ export class Scope < Node
 			if self.root?
 				symbol.flags |= SymbolFlags.IsRoot
 		return symbol
-		
+
 	def lookup token, kind = SymbolFlags.Scoped
 		let name = token.value
 		if name[name.length - 1] == '!'
 			name = name.slice(0,-1)
 		if let variable = varmap[name]
 			# variable.reference(token)
-			
+
 			return variable # token.var
 		return null
 
@@ -305,14 +304,13 @@ export class WeakScope < Scope
 
 	def lookup ...params
 		return parent.lookup(...params)
-		
+
 export class FieldScope < Scope
-	
+
 	get selfScope
 		self
 
 	# get selfPath
-		
 
 export class SelectorNode < Group
 
@@ -338,7 +336,7 @@ export class StylePropValue < Group
 
 	get propertyName
 		parent.propertyName
-	
+
 	get modifier
 		parent.modifier
 
@@ -352,7 +350,7 @@ export class StylePropNode < Group
 		if start.prev.pops
 			return start.prev.pops
 		return null
-	
+
 	get propertyName
 		key..propertyName
 		# let name = find('stylepropkey')
@@ -364,7 +362,7 @@ export class StylePropNode < Group
 export class StyleInterpolation < Group
 
 export class PathNode < Group
-	
+
 	get innerText
 		value.slice(1,-1)
 
@@ -382,7 +380,7 @@ export class TagNode < Group
 
 	get parentTag
 		closest('tagcontent')..ownerTag
-	
+
 	get ancestorTags
 		closest('tagcontent')..ownerTags
 
@@ -406,7 +404,6 @@ export class TagAttrNode < Group
 
 	get tagName
 		parent.name
-			
 
 export class TagAttrValueNode < Group
 
@@ -426,7 +423,7 @@ export class TagContent < WeakScope
 
 	get ownerTags
 		let els = [ownerTag]
-		
+
 		while let el = els[0].parentTag
 			els.unshift(el)
 			# curr = parent.closest('tagcontent')
@@ -453,16 +450,16 @@ export class BracketsNode < Group
 			cls = IndexNode
 
 		new cls(doc,tok,scope,typ,types)
-	
+
 export class BracesNode < Group
-	
+
 export class SpecifiersNode < BracesNode
 
 export class ArrayNode < BracketsNode
-	
+
 	get delimiters
 		childNodes.filter do $1.match('delimiter')
-	
+
 	def indexOfNode node
 		let delims = delimiters
 		let index = 0
@@ -478,29 +475,29 @@ export class TypeAnnotationNode < Group
 	def constructor
 		super
 		prev.datatype = self
-		
+
 	def toString
 		value
 
 export class InterpolatedValueNode < Group
 
 export class ObjectNode < BracesNode
-	
+
 export class ImportsNode < Group
-	
+
 	get isTypeOnly
 		start.prev.match('keyword.type')
-	
+
 	get sourcePath
 		let path = childNodes.find do $1.match('path')
 		return path..innerText
-		
+
 	get specifiers
 		childNodes.find do $1.match('specifiers')
-		
+
 	get default
 		childNodes.find do $1.match('.default')
-		
+
 	get namespace
 		childNodes.find do $1.match('.ns')
 

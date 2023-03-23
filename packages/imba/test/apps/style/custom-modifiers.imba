@@ -9,7 +9,7 @@ let flags = document.documentElement.classList
 
 test do
 	eqcss el, 500
-	# 
+	#
 	flags.add('is-guest')
 	eqcss el, 600
 	flags.add('some-state')

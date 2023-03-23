@@ -52,7 +52,7 @@ export class History
 		else
 			id = store.id = (store.id or 0) + 1
 			cache = store(id)
-			
+
 		if index == -1
 			# could break forward navigation for browser as well
 			replaceState({initial: yes},null,router.path)
@@ -100,7 +100,7 @@ export class History
 		return new State(self,state,yes)
 
 	def pushState state, title, url, significant = yes
-		
+
 		unless state isa State
 			state = buildState(state,url,significant)
 
@@ -110,6 +110,6 @@ export class History
 		#states.length = cache.length = Math.max(state.index + 1,0)
 		global.history[significant ? 'pushState' : 'replaceState'](String(state),title or null,state.path)		
 		return self
-		
+
 	def replaceState state, title, url
 		pushState(state,title,url,no)

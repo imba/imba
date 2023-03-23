@@ -1,3 +1,10 @@
+global.L = console.log
+global.E = do
+	process.stderr.write "\x1b[31m"
+	console.error(...$0)
+	process.stderr.write "\x1b[0m"
+	process.exit(1)
+
 import * as esbuild from 'esbuild'
 import {startWorkers} from './pooler'
 import {
@@ -5,6 +12,8 @@ import {
 	extendObject,replaceAll,normalizePath,
 	relativePath,ImageRegex,FontRegex,resolvePackage
 } from './utils'
+
+import print-info from '../utils/print-info'
 
 import {StyleTheme} from '../compiler/styler'
 
@@ -392,12 +401,7 @@ export default class Bundle < Component
 			log.error "code-splitting not allowed when format is not esm"
 
 		if main?
-			try log.debug "node version: {process.version.slice(1)}"
-			try log.debug "node path: {process.argv[0]}"
-			try log.debug "node realpath: {nfs.realpathSync(process.argv[0])}"
-			try log.debug "imba version: {(resolvePackage(np.resolve(__dirname,'..')) or {}).version}"
-			try log.debug "imba path: {process.argv[1]}"
-			try log.debug "imba realpath: {nfs.realpathSync(process.argv[1])}"
+			try print-info log.debug.bind(log)
 			log.ts "created main bundle"
 			manifest = {}
 
@@ -921,6 +925,7 @@ export default class Bundle < Component
 			return cached
 
 	def build force = no
+
 		buildcache[self] ||= new Promise do(resolve)
 			if (built =? true) or force
 
@@ -963,6 +968,7 @@ export default class Bundle < Component
 			return resolve(result)
 
 	def rebuild {force = no} = {}
+
 		unless built and result and result.rebuild isa Function
 			return build(yes)
 
@@ -1555,6 +1561,8 @@ export default class Bundle < Component
 
 			# is this only really needed for hmr?
 			await mfile.write(JSON.stringify(entryManifest,null,2),manifest.hash)
+
+			L("\x1bc") if program.clear
 
 			if program.#listening
 				log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening

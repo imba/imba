@@ -70,7 +70,7 @@ We've reworked a core part of how style selectors are compiled in terms of speci
     ```imba
     # color of span is blue when button is hovered
     <button> <span[c^@hover:blue]>
-    # opacity of nested i is 1 only when button is foxused 
+    # opacity of nested i is 1 only when button is foxused
     <button> <span> <i[o:0 o^^@focus:1]>
     ```
 
@@ -83,7 +83,6 @@ We've reworked a core part of how style selectors are compiled in terms of speci
 * All new `imba create` command (by @familyfriendlymikey)
 
 * Remove support for old `prop name @set ...` syntax for watching when property is changed. Implement using descriptors instead.
-
 
 ## 2.0.0-alpha.224
 
@@ -129,7 +128,6 @@ We've reworked a core part of how style selectors are compiled in terms of speci
 
 * Streamlined more css shorthands and added more tests for styling
 
-
 ## 2.0.0-alpha.221
 
 * Add shorthands for `outline-*` css properties.
@@ -157,7 +155,6 @@ We've reworked a core part of how style selectors are compiled in terms of speci
 
     class Item < Model
     ```
-
 
 ## 2.0.0-alpha.219
 
@@ -201,7 +198,7 @@ Last version (with new features) before `beta.1`. This release contains breaking
 
 * Simplify output from `imba build`
 
-    The output of imba build is now possible to run directly through node (and soon Bun). We 
+    The output of imba build is now possible to run directly through node (and soon Bun). We
 
 * Allow running html file directly with `imba some-entry.html`
 
@@ -260,7 +257,7 @@ Last version (with new features) before `beta.1`. This release contains breaking
 
 ## 2.0.0-alpha.213
 
-* Make `@event.emit('...')` on `<global/teleport>` dispath event inside their literal parent (fixes #693) 
+* Make `@event.emit('...')` on `<global/teleport>` dispath event inside their literal parent (fixes #693)
 
 ## 2.0.0-alpha.210
 
@@ -303,7 +300,7 @@ Last version (with new features) before `beta.1`. This release contains breaking
 * Support tagged templates
 
     Works like in plain js, but `{}` is still used for interpolation instead of `${}`.
-    
+
     ```imba
         import md from 'tag-markdown'
         const html = md`## Welcome to {name}`
@@ -312,7 +309,6 @@ Last version (with new features) before `beta.1`. This release contains breaking
 * Add internal `#__patch__(props)` method for class instances to update fields
 
 * Stop shimming top-level await (delegates responsibility to esbuild)
-
 
 ## 2.0.0-alpha.204
 
@@ -340,13 +336,13 @@ Last version (with new features) before `beta.1`. This release contains breaking
             ...
     ```
 
-    If `@lazy` is not found in the file above, the compiler will essentially include 
+    If `@lazy` is not found in the file above, the compiler will essentially include
     `import {@lazy} from 'imba` when compiling.
 
 * Introduced experimental state management decorators
 
-    A minimal set of decorators heavily inspired by MobX that allows you to mark classes 
-    and objects as observable, and run code upon changes. This feature will be kept under 
+    A minimal set of decorators heavily inspired by MobX that allows you to mark classes
+    and objects as observable, and run code upon changes. This feature will be kept under
     wraps until it has been battle-tested.
 
 ## 2.0.0-alpha.201
@@ -392,7 +388,7 @@ Last version (with new features) before `beta.1`. This release contains breaking
 
     ```imba
     css div
-        @!hover o:0.5 # div:not(:hover) { opacity: 0.5 } 
+        @!hover o:0.5 # div:not(:hover) { opacity: 0.5 }
         @!md d:none # @media (max-width: 767px) { div { display:none } }
     # also works for classes
     css div
@@ -459,7 +455,7 @@ Last version (with new features) before `beta.1`. This release contains breaking
 
 * Improved syntax for functional tags
 
-    If you supply `()` after a tag name, Imba will now treat it as a functional tag. Ie, `<some-name(1,2)>` is equal to `<( some-name(1,2) )>`. The old syntax may be phased out before final release. 
+    If you supply `()` after a tag name, Imba will now treat it as a functional tag. Ie, `<some-name(1,2)>` is equal to `<( some-name(1,2) )>`. The old syntax may be phased out before final release.
 
     ```imba
     def List items
@@ -494,7 +490,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 
 * Rename $key to key
 
-    To give elements a stable identity (usually inside lists) you should now use `<el key=value>` instead of `<el $key=value>`. `$key` is deprecated and will be removed in `beta.1`. 
+    To give elements a stable identity (usually inside lists) you should now use `<el key=value>` instead of `<el $key=value>`. `$key` is deprecated and will be removed in `beta.1`.
 
 * Allow using any object as `<element key=...>` value
 
@@ -590,7 +586,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 
     tag Button
         css p:2 fs:sm hue:blue
-    
+
     # styles from classes take precedence
     <Button.warn.large>
     ```
@@ -640,7 +636,6 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 * Exposed `imba.hotkeys.humanize` for converting hotkey combos to readable shortcuts
 
 * Exposed `imba.hotkeys.htmlify` for converting hotkey combos to readable shortcuts as html
-
 
 ## 2.0.0-alpha.190
 
@@ -721,7 +716,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 
     ```imba
     import * as icons from 'imba-codicons'
-    
+
     <svg src=icons.volume-up>
     # you get completions and previews for all icons, but only volume-up
     # will be bundled in your code now
@@ -750,11 +745,11 @@ There will likely be a few more alpha releases fixing regressions and issues rel
     (ctrl+c,ctrl+s,ctrl+click) vs (⌘c,⌘s,⌘+click) etc, it makes sense to have an event
     modifier that takes care of checking the platform. `@mouse.mod` will return true of
     ⌘ is pressed on mac, and Ctrl is pressed on all other platforms.
-    
+
     ```imba
     <div @click.mod.stop=openInNewWindow @click=openHere>
     ```
-    
+
 * Fixed bug in `@event.throttle` modifier
 
 ## 2.0.0-alpha.183
@@ -772,18 +767,18 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 ## 2.0.0-alpha.176
 
 - Deprecated `@touch.moved-dir`
-    
+
     The direction of the `@touch.moved` modifier can now be specified in the second argument of `@touch.moved` instead of as 6 separate modifiers. These are not used that often and it seems natural to keep inside a single modifier instead.
-    
+
     ```imba
     <div @touch.moved-left(4px)> # before
     <div @touch.moved(4px,'left')> # after
     ```
 
 - Renamed style property `tint` to `hue`
-    
+
     Hue is a better name for the newly introduced `tint` style property.
-    
+
     ```imba
     # hue can be set to any named color from the imba color palette
     <div[hue:orange]>
@@ -793,33 +788,33 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 - Refactored event modifiers
 
     Foundations to allow defining custom event modifiers down the road. Complex modifiers have access to the context in which it was called, including a state-object that is persisted across events etc. Documentation fo this will be in place before 2.0 final. As an example, a tiny `@keydown.f1` modifier for only passing through F1 can be defined like this:
-    
+
     ```imba
     extend class KeyboardEvent
-      
+
       def @f1
         return keyCode == 112
     ```
-    
+
 - Changed behavior of `@event.throttle` modifier
 
     `throttle` would previously fire once and suppress subsequent events for a certain duration (default 250ms). Now it will re-fire at the end of the throttling if there were any suppressed events during the initial throttle. For events like `@resize` and `@scroll` where you just want to limit how often they fire, the new behavior is much more useful.
-    
+
     ```imba
     # handler will be called immediately upon scrolling and keep emitting
-    # every 100ms until there are no more scroll events. 
+    # every 100ms until there are no more scroll events.
     <div @scroll.throttle(100ms)=handler>
-    
+
     # So, clicking this button twice will trigger once immediately,
     # and then again after 1 second. Previously the second click would
     # never trigger.
     <div @click.throttle(1s)=handler>
     ```
-    
+
 - Introduced `@event.cooldown` modifier
 
     The old `throttle` was renamed to `cooldown`. Ie, if you want subsequent button clicks to be suppressed for `n` time (250ms default) you should now use `cooldown` instead of `throttle`.
-    
+
     ```imba
     # So, clicking this button twice will trigger once immediately, and
     # the next click will be ignored as long as it happens less than a second later
@@ -829,21 +824,21 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 - Allow negated event modifiers
 
     Certain event modifiers are called guards, like `@keydown.enter`, `@click.self` etc. These are modifiers that essentially evaluate to true/false and decides whether to continue handling an event or not. `@click.self` would only trigger if the target of the event is the same as the element to which the `@click` is bound. Now you can include a `!` in front of any such event handler to only continue if the guard is false.
-    
+
     Ie. `<div @click.!shift=...>` would only trigger if shiftKey is _not_ pressed.
-    
+
     ```imba
     #  Only call handler if shiftKey is NOT pressed
     <div @click.!shift=handler>
-    
+
     #  Only call handler if target does NOT match the selector
     <div @click.!sel('.active')=handler>
     ```
-  
+
 - Introduced `@mouse.left`, `@mouse.middle`, and `@mouse.right` modifiers
-    
+
     Only trigger if the left,middle, or right mouse button is pressed. Works for all mouse and pointer events, as well as the custom `@touch` event.
-    
+
      ```imba
     #  Only call handler if the middle mouse button was pressed
     <div @click.middle=handler>
@@ -851,11 +846,11 @@ There will likely be a few more alpha releases fixing regressions and issues rel
     #  Only start touch handling if the right mouse button was pressed
     <div @touch.right=handler>
     ```
-    
+
 - Introduced `@intersect.flag` modifier
 
     The `flag` modifier now works differently for `@intersect` event. It will add a css class to the element when it is intersecting and remove it whenever it is not intersecting.
-    
+
      ```imba
     # the html class showing will be present on div
     # whenever it is intersecting with the viewport
@@ -865,7 +860,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 - Introduced `@touch.end` modifier
 
     The `end` guard breaks unless the touch is in its ending state.
-    
+
     ```imba
     # handler is only called at the end of the touch
     <div @touch.end=handler>
@@ -874,9 +869,9 @@ There will likely be a few more alpha releases fixing regressions and issues rel
     ```
 
 - Introduced `@touch.hold(dur=1000ms)` modifier
-    
+
     The `hold` modifier allows you to require an element to be pressed for some time (default 1000ms) until it starts allow events to come through.
-  
+
     ```imba
     # handler is only called once the touch has been held for 1000ms
     <div @touch.hold=handler>
@@ -884,11 +879,10 @@ There will likely be a few more alpha releases fixing regressions and issues rel
     <div @touch.ctrl.hold(250ms)=handler>
     ```
 
-
 - Introduced `@touch.apply(target,xprop='x',yprop='y')` modifier
 
-    Like `@touch.sync` but just setting the x,y values on an object directly instead of adding to the previous values. 
-    
+    Like `@touch.sync` but just setting the x,y values on an object directly instead of adding to the previous values.
+
     ```imba
     const obj = {}
     # apply is essentially shorthand for setting properties:
@@ -896,18 +890,17 @@ There will likely be a few more alpha releases fixing regressions and issues rel
     <div @touch=(obj.x = e.x, obj.y = e.y)>
     ```
 
-
 - Added `@event.key(keyOrCode)` modifier for keyboard events
 
     KeyboardEvent.keyCode is deprecated but still useful in many cases. If you supply a number to the modifier it will stop handling if `keyCode` does not match this number.
-    
+
     ```imba
     # Only trigger if F1 is pressed (event.keyCode==112)
     <div @keydown.key(112)=handler>
     ```
-    
+
     If you supply a string it will compare it against KeyboardEvent.key.
-    
+
     ```imba
     # Only trigger if PrintScreen is pressed (event.key=='PrintScreen')
     <div @keydown.key('PrintScreen')=handler>
@@ -916,7 +909,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 - Changed behavior of `@touch.moved` modifier
 
     Now, if you add a `moved-left(threshold = 4px)` modifier, the event handling will be cancelled if the touch has moved more in any other direction (in this case up,down, or right) _before_ moving 4px left.
-    
+
     ```imba
     # If user moves more than 10px up/down before left/right
     # the touch will not be handled
@@ -926,9 +919,9 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 - Improved behaviour of `@touch` and `@click` events
 
     `@click` events on nested children of an element with a `@touch` handler would previously be prevented. This made `@touch` pretty challenging to use for things like dragging elements with buttons etc.
-    
+
     Now `@click` events will be triggered unless the `@touch` handler has a `prevent` modifier, a `moved(-x|y|up|down)` modifier that has activated, or a `hold` modifier that has activated.
-    
+
     ```imba
     # button click is triggered onless touch is held more than 500ms
     <li @touch.hold(500ms)=draghandle> <button @click=handle>
@@ -936,9 +929,9 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 
 - Improved behaviour of `@touch` and scrolling on touch devices
     Previously, scrolling (and clicking) would be disabled for any element with a `@touch` handler on iOS. Ie. if you added `@touch` to a custom slider, scrolling would not work if the user happened to touch down on the slider while flicking down the page.
-    
+
     Scrolling is disabled by the `prevent` modifier, an activated `moved` modifier or activated `hold` modifier.
-    
+
     ```imba
     # Scrolling will now work fine when touching the div and flicking up/down.
     # Only if the user holds still on the element for 500ms will scrolling and
@@ -975,7 +968,7 @@ There will likely be a few more alpha releases fixing regressions and issues rel
 - Fix: Rendering list inside conditional
 - Support css blocks inside conditionals in tag trees
 - Warn about interpolated style values outside of tag trees
-- Improved specificity for nested css rules  
+- Improved specificity for nested css rules
 
 ## 2.0.0-alpha.171
 

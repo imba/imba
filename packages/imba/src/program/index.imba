@@ -8,4 +8,3 @@ export { SymbolKind,SemanticTokenTypes,SemanticTokenModifiers,Keywords,KeywordTy
 export { SymbolFlags,Sym} from './symbol'
 export { Node,Scope,Group } from './scope'
 export { Position,Range } from './structures'
-

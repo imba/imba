@@ -34,12 +34,12 @@ def parseUrl str
 	if hshidx >= 0
 		url.hash = str.slice(hshidx + 1)
 		str = url.url = str.slice(0,hshidx)
-	
+
 	if qryidx >= 0
 		let q = url.query = str.slice(qryidx + 1)
 		str = str.slice(0,qryidx)
 		url.query = queryCache[q] ||= new URLSearchParams(q)
-	
+
 	url.path = str
 	return url
 
@@ -50,13 +50,13 @@ export class RootRoute
 		#routes = {}
 		#match = new Match
 		#match.path = ''
-	
+
 	def route pattern
 		#routes[pattern] ||= new Route(router,pattern,self)
 
 	def match
 		return #match
-	
+
 	def resolve url
 		return '/'
 
@@ -69,16 +69,16 @@ export class Route
 		#symbol = Symbol!
 		#matches = {}
 		#routes = {}
-	
+
 	def route pattern
 		#routes[pattern] ||= new Route(router,pattern,self)
 
 	get fullPath
 		"{parent.fullPath}/{$path}"
-	
+
 	def load cb
 		router.queue.add cb
-		
+
 	set path path
 		return if $path == path
 
@@ -87,7 +87,7 @@ export class Route
 		groups = []
 		cache = {}
 		dynamic = no
-		
+
 		if path.indexOf('?') >= 0
 			let parts = path.split('?')
 			path = parts.shift()
@@ -116,14 +116,14 @@ export class Route
 				return "{pattern}\."
 			else
 				return pattern
-		
+
 		if path == '' and query
 			return
 
 		if path == '*'
 			regex = anyRegex
 			return self
-			
+
 		path = '^' + path
 		let end = path[path.length - 1]
 		if end == '$' or end == '/'
@@ -152,13 +152,13 @@ export class Route
 			let fullpath = prefix + match[0]
 			let matchid = [$path]
 			let params = {}
-			
+
 			if groups.length
 				for item,i in match
 					if let name = groups[i - 1]
 						params[name] = item
 						matchid.push(item)
-			
+
 			if query
 				for own k,v of query
 					let name = k
@@ -168,7 +168,7 @@ export class Route
 						return null	if m
 						matchid.push('1')
 						continue
-					
+
 					if v[0] == ':'
 						name = v.slice(1)
 						v = true
@@ -186,7 +186,6 @@ export class Route
 			return result
 
 		return null
-
 
 	def resolve url = router.path
 		return raw.replace(/\$/g,'') if raw[0] == '/' and !dynamic

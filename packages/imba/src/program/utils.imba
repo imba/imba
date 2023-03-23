@@ -96,7 +96,6 @@ export def editIsFull e
 export def editIsIncremental e
 	return !editIsFull(e) && (e.rangeLength === undefined or typeof e.rangeLength === 'number')
 
-
 export def fastExtractSymbols text
 	let lines = text.split(/\n/)
 	let symbols = []
@@ -113,7 +112,7 @@ export def fastExtractSymbols text
 		let indent = line.match(/^\t*/)[0].length
 
 		while scope.indent >= indent
-			scope = scope.parent or root 
+			scope = scope.parent or root
 
 		m = line.match(/^(\t*((?:export )?(?:static )?(?:extend )?)(class|tag|def|get|set|prop|attr) )(\@?[\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 		# m ||= line.match(/^(.*(def|get|set|prop|attr) )([\w\-\$]+)/)
@@ -147,10 +146,9 @@ export def fastExtractSymbols text
 
 			if symbol.static
 				symbol.containerName = 'static'
-			
+
 			symbol.containerName = m[2] + m[3]
-				
-			
+
 			if kind == 'tag' and m = line.match(/\<\s+([\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 				symbol.superclass = m[1]
 
@@ -162,7 +160,7 @@ export def fastExtractSymbols text
 			scope = symbol
 
 			symbols.push(symbol)
-	
+
 	root.all = symbols
 	console.log 'fast outline',text.length,Date.now! - t0
 	return root

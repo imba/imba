@@ -1,21 +1,38 @@
 <p align="center">
-<a href="https://imba.io" target="_blank">
-<img width="300" src="https://github.com/imba/brand/blob/master/imba-web-logo.png"></a>
+  <a href="https://imba.io">
+    <img height=128 src="https://raw.githubusercontent.com/imba/branding-imba/master/yellow-wing-logo/imba.svg">
+    <h1 align="center">Imba</h1>
+  </a>
 </p>
 
-[![install size](https://packagephobia.now.sh/badge?p=imba)](https://packagephobia.now.sh/result?p=imba)
-[![Downloads](https://img.shields.io/npm/dm/imba.svg)](https://npmcharts.com/compare/imba?minimal=true) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com) [![License](https://img.shields.io/npm/l/imba.svg)](https://www.npmjs.com/package/imba)
+<p align="center">
+	<a target="_blank" href="https://discord.gg/mkcbkRw">
+		<img src="https://img.shields.io/discord/682180555286380545?color=7289DA&label=%23imba&logo=discord&logoColor=white">
+	</a>
+	<a target="_blank" href="https://www.npmjs.com/package/imba">
+		<img src="https://img.shields.io/npm/dm/imba.svg">
+	</a>
+	<a target="_blank" href="http://makeapullrequest.com">
+		<img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
+	</a>
+	<a target="_blank" href="https://www.npmjs.com/package/imba">
+		<img src="https://img.shields.io/npm/l/imba.svg">
+	</a>
+</p>
 
-Imba is a friendly full-stack programming language for the web that compiles to performant JavaScript.
-It has language-level support for defining, extending, subclassing, instantiating and rendering DOM nodes.
+Imba is a friendly full-stack programming language for the web that
+compiles to performant JavaScript. It has language-level support for
+defining, extending, subclassing, instantiating and rendering DOM
+nodes.
 
 ## Get started
 
+Try Imba instantly in your browser with our
+[playground](https://imba.io/try/examples/apps/playground/app.imba),
+or create a new project with:
+
 ```sh
-npx imba create hello-world
-cd hello-world
-npm install
-npm start
+npx imba create
 ```
 
 ## Documentation
@@ -28,25 +45,82 @@ To get started with Imba, we recommend reading through the [official guide](http
 
 Imba's syntax is minimal, beautiful, and packed with clever features. It combines logic, markup and styling in a powerful way. Fewer keystrokes and less switching files mean you'll be able to build things fast.
 
-![ "basics"](https://user-images.githubusercontent.com/8467/121170829-074a8900-c856-11eb-88d9-d4a922c24893.png)
+```imba
+import './util/reset.css'
+
+global css html,body m:0 p:0 w:100% h:100%
+
+tag login-form < form
+
+	css input rd:md bc:gray3 h:20px fs:md
+	css button rd:md c:white bg:gray4 @hover:blue4
+
+	<self @submit.prevent=api.login(name,secret)>
+		<input.username type='text' bind=name>
+		<input.password type='password' bind=secret>
+		<button> "Login as {name}"
+
+imba.mount <login-form[pos:abs d:grid ja:center]>
+```
 
 ### Runs on both server and client
 
 Imba powers both the frontend and the backend of Scrimba.com, our learning platform with 100K+ monthly active users. On the frontend, Imba replaces e.g., Vue or React, and on the backend, it works with the Node ecosystem (e.g., npm).
 
-![ "server"](https://user-images.githubusercontent.com/8467/121170852-0fa2c400-c856-11eb-8aab-322d4b6a875d.png)
+```imba
+import express from 'express'
+import services from './services.ts'
+import html from './index.html'
+import image from './confused-cat.png'
+
+const app = express!
+
+app.get '/404' do (req,res)
+	res.send String <html> <body>
+		<img src=image>
+		<h1> "We could not find this page!"
+
+app.get '/' do (req,res)
+	res.send html.body
+```
 
 ### Integrated styling
 
 Inspired by Tailwind, Imba brings styles directly into your code. Styles can be scoped to files, components, and even parts of your tag trees. Style modifiers like @hover, @lg, @landscape and @dark can be used for extremely concise yet powerful styling.
 
-![ "styles"](https://user-images.githubusercontent.com/8467/121170905-1e897680-c856-11eb-8b67-2014f0c508e6.png)
+```imba
+# global styles
+global css button
+	position: relative
+	display: block
+	background: #b2f5ea
+	@hover background: #b2f9ea
+
+# tailwind-inspired shorthands
+global css button
+	pos:relative d:block bg:blue5 bg@hover:blue6
+
+tag App
+	# scoped styles
+	css item bg:blue4 m:2
+
+	<self[d:grid pos:relative]> # inline styles
+		<ul> for {type,title} in items
+			<li.item is-{type}> title
+```
 
 ### Blazing fast, Zero config
 
 Imba comes with a built-in bundler based on the blazing fast esbuild. Import stylesheets, images, typescript, html, workers and more without any configuration. Bundling is so fast that there is no difference between production and development mode - it all happens on-demand.
 
-![ "bundling"](https://user-images.githubusercontent.com/8467/121170927-247f5780-c856-11eb-95bf-fa09ca5f8cff.png)
+```imba
+# importing a worker
+const worker = import.worker './analyzer'
+const analyzer = new Worker(worker.url)
+# import an image
+const logo = import './images/logo.png'
+console.log "logo size: {logo.width}x{logo.height} - at {logo.url}"
+```
 
 When you run your app with the `imba` command, it automatically bundles and compiles your imba code, along with typescript, css and many other file types. It provides automatic reloading of both the server and client.
 
@@ -54,23 +128,21 @@ When you run your app with the `imba` command, it automatically bundles and comp
 
 The tooling is implemented as a typescript server plugin giving us great intellisense, diagnostics, and even cross-file refactorings that works with js/ts files in the same project. You can import types just like in typescript, and annotate variables, parameters and expressions. Like the language, the tooling is still in alpha, but improving every day.
 
-![ "types"](https://user-images.githubusercontent.com/8467/121170940-29440b80-c856-11eb-82bb-ac821d0d0c36.png)
+```imba
+import type { CookieOptions } from 'express-serve-static-core'
+
+def flash res\Response, body\string, settings = {}
+	let options\CookieOptions = {
+		...settings
+		maxAge: 86400
+		secure: true
+		httpOnly: false
+	}
+
+	res.cookie('flash',body,options)
+```
 
 ## Community
-
- [![Forum](https://img.shields.io/badge/discourse-forum-brightgreen.svg?style=flat-square)](https://users.imba.io) [![Join the chat at https://discord.gg/mkcbkRw](https://img.shields.io/badge/discord-chat-7289da.svg?style=flat-square)](https://discord.gg/mkcbkRw)
-
-### Imba Community Meeting
-
-Everyone is welcome! This is a great place to report your issues, hangout and talk about your project using Imba. If you have an open pull request which has not seen attention, you can ping during the meeting.
-
-For the exact meeting times, please use the Meetup group [Imba Oslo Meetup](https://www.meetup.com/Imba-Oslo-Meetup), this is where you can see the timezone, cancellations, etc.
-
-You can join us remotely via [Zoom](https://us02web.zoom.us/j/2571893359?pwd=MVRkdWtsbm50UUZ0di81bXVvTjl0UT09).
-
-Did you miss a meeting? No worries, catch up via the [meeting notes](https://bit.ly/2JyjGM1) or [video recordings](https://www.youtube.com/playlist?list=PLf1a9PYKGPdl3OMBHV72Oz23eFy9q51jJ).
-
-### Chat
 
 For questions and support, please use our community chat on
 [Discord](https://discord.gg/mkcbkRw).

@@ -11,4 +11,3 @@ if import.meta.vitest
 		expect(counter).toBeTruthy!
 		counter.click!
 		waitFor do expect(screen.getByText("Count is 1")).toBeTruthy!
-

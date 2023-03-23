@@ -3,7 +3,7 @@ let data =
 		name: 'hello'
 		login: do 200
 	method: do 1
-		
+
 test do
 	eq data..user..name, 'hello'
 	ok !data..user..age

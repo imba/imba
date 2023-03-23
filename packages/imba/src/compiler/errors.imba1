@@ -5,7 +5,7 @@ var util = require './helpers'
 const meta = WeakMap.new
 
 export class ImbaParseError < Error
-	
+
 	def self.wrap err
 		# what about the stacktrace?
 		self.new(err)
@@ -14,11 +14,11 @@ export class ImbaParseError < Error
 		this:error = e
 
 		@options = o or {}
-		
+
 		this:severity = @options:severity or 'error'
-		
+
 		let msg = e:message
-		
+
 		if let m = msg.match(/Unexpected '([\w\-]+)'/)
 			if m[1] == 'TERMINATOR'
 				msg = 'Unexpected newline'
@@ -47,7 +47,7 @@ export class ImbaParseError < Error
 		while tok and (tok.@loc == -1 or tok.@loc == 0 or tok.@len == 0)
 			tok = o:tokens[--idx]
 		return tok
-		
+
 	get token
 		return @token if @token
 		var o = @options
@@ -64,7 +64,7 @@ export class ImbaParseError < Error
 			'Syntax Error'
 		else
 			msg
-	
+
 	def loc
 		@loc or start?.region
 
@@ -136,7 +136,7 @@ export class ImbaTraverseError < ImbaParseError
 
 	def loc
 		@loc
-		
+
 	def excerpt
 		var excerpt = super
 		excerpt + '\n---\n' + this:error:stack

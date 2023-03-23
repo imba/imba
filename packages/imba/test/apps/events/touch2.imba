@@ -24,7 +24,7 @@ tag App
 
 		<div @pointerdown.log('pointerdown')> 'down'
 			<div @touch.meta.stop.log('touching')> 'meta stop'
-		
+
 		<div @click.log('clicked')> 'click'
 			<div @touch.cancel.log('touching')> 'cancel'
 
