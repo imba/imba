@@ -26,7 +26,7 @@ export const modifiers =
 	'first-of-type': {}
 	'first-page': {name: 'first'}
 	fullscreen: {}
-	focus: {}
+	focus: {shim: yes}
 	focin: {name: 'focus-within'}
 	'focus-within': {}
 	'focus-visible': {}
@@ -113,6 +113,11 @@ export const modifiers =
 	portrait: {media: '(orientation: portrait)', medianeg: '(orientation: landscape)'}
 	dark: {media: '(prefers-color-scheme: dark)', medianeg: '(prefers-color-scheme: light)'}
 	light: {media: '(prefers-color-scheme: light)', medianeg: '(prefers-color-scheme: dark)'}
+
+	standalone: {media: '(display-mode: standalone)'}
+	browser: {media: '(display-mode: browser)'}
+	# TODO support @supports in selector compiler
+	# ios: {supports: '(-webkit-touch-callout: none)'}
 
 	# mac: {ua: 'mac'}
 	# ios: {ua: 'ios'}

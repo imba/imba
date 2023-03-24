@@ -427,6 +427,7 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
       } else if(chr == '.' && str.charAt(pos + 1) == '.'){
         closest = part;
         rule = rule || currentRule;
+        part.implicitScope = true;
         pos++;
         // Now add a closestRule
         // rule.closest ||= []
