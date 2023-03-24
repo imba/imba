@@ -1,21 +1,21 @@
 import {
-	transformWithEsbuild,
-	ESBuildOptions,
+	// transformWithEsbuild,
+	// ESBuildOptions,
 	ResolvedConfig,
-	TransformResult,
+	// TransformResult,
 	Plugin
 } from 'vite';
-import MagicString from 'magic-string';
+// import MagicString from 'magic-string';
 // import { preprocess } from 'imba/compiler';
 import { Preprocessor, PreprocessorGroup, Processed, ResolvedOptions } from './options';
-import { TransformPluginContext } from 'rollup';
+// import { TransformPluginContext } from 'rollup';
 import { log } from './log';
-import { buildSourceMap } from './sourcemap';
-import path from 'path';
+// import { buildSourceMap } from './sourcemap';
+// import path from 'path';
 
-const supportedStyleLangs = ['css', 'less', 'sass', 'scss', 'styl', 'stylus', 'postcss'];
+// const supportedStyleLangs = ['css', 'less', 'sass', 'scss', 'styl', 'stylus', 'postcss'];
 
-const supportedScriptLangs = ['ts'];
+// const supportedScriptLangs = ['ts'];
 
 // function createViteScriptPreprocessor(): Preprocessor {
 // 	return async ({ attributes, content, filename = '' }) => {
@@ -88,21 +88,21 @@ const supportedScriptLangs = ['ts'];
  *
  * only used during dev with enabled css hmr
  */
-function createInjectScopeEverythingRulePreprocessorGroup(): PreprocessorGroup {
-	return {
-		style({ content, filename }) {
-			const s = new MagicString(content);
-			s.append(' *{}');
-			return {
-				code: s.toString(),
-				map: s.generateDecodedMap({
-					source: filename ? path.basename(filename) : undefined,
-					hires: true
-				})
-			};
-		}
-	};
-}
+// function createInjectScopeEverythingRulePreprocessorGroup(): PreprocessorGroup {
+// 	return {
+// 		style({ content, filename }) {
+// 			const s = new MagicString(content);
+// 			s.append(' *{}');
+// 			return {
+// 				code: s.toString(),
+// 				map: s.generateDecodedMap({
+// 					source: filename ? path.basename(filename) : undefined,
+// 					hires: true
+// 				})
+// 			};
+// 		}
+// 	};
+// }
 
 function buildExtraPreprocessors(options: ResolvedOptions, config: ResolvedConfig) {
 	const prependPreprocessors: PreprocessorGroup[] = [];
@@ -167,9 +167,9 @@ function buildExtraPreprocessors(options: ResolvedOptions, config: ResolvedConfi
 		appendPreprocessors.push(...pluginsWithPreprocessors.map((p) => p.api.imbaPreprocess));
 	}
 
-	if (options.hot && options.emitCss) {
-		appendPreprocessors.push(createInjectScopeEverythingRulePreprocessorGroup());
-	}
+	// if (options.hot && options.emitCss) {
+	// 	appendPreprocessors.push(createInjectScopeEverythingRulePreprocessorGroup());
+	// }
 
 	return { prependPreprocessors, appendPreprocessors };
 }
@@ -229,20 +229,20 @@ function validateSourceMapOutputWrapper(group: PreprocessorGroup, i: number): Pr
 							}
 						);
 				}
-				if (invalidMap) {
-					try {
-						const map = await buildSourceMap(options.content, result.code, options.filename);
-						if (map) {
-							log.debug.enabled &&
-								log.debug(
-									`adding generated sourcemap to preprocesor result for ${options.filename}`
-								);
-							result.map = map;
-						}
-					} catch (e) {
-						log.error(`failed to build sourcemap`, e);
-					}
-				}
+				// if (invalidMap) {
+				// 	try {
+				// 		const map = await buildSourceMap(options.content, result.code, options.filename);
+				// 		if (map) {
+				// 			log.debug.enabled &&
+				// 				log.debug(
+				// 					`adding generated sourcemap to preprocesor result for ${options.filename}`
+				// 				);
+				// 			result.map = map;
+				// 		}
+				// 	} catch (e) {
+				// 		log.error(`failed to build sourcemap`, e);
+				// 	}
+				// }
 			}
 			return result;
 		};

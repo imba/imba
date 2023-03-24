@@ -105,9 +105,7 @@
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
     "fdir": "^4.1.0",
-    "get-port": "^5.1.1",
     "image-size": "^0.9.3",
-    "magic-string": "^0.26.7",
     "micromatch": "^4.0.5",
     "ora": "^5.2.0",
     "picomatch": "^2.2.2",
@@ -122,6 +120,7 @@
     "workerpool": "^6.0.3"
   },
   "dependencies": {
+    "get-port": "^5.1.1",
     "@antfu/install-pkg": "^0.1.1",
     "chokidar": "^3.4.3",
     "colors": "1.4.0",
