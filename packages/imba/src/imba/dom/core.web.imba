@@ -449,7 +449,7 @@ export def createComponent name, parent, flags, text, ctx
 		let cls = CustomTagConstructors[name]
 		let typ = cls.prototype.#htmlNodeName
 		if typ and supportsCustomizedBuiltInElements
-			el = document.createElement(typ,is: name)
+			el = document.createElement(typ,is: cmpname)
 		elif cls.create$ and typ
 			el = document.createElement(typ)
 			el.setAttribute('is',cmpname)
