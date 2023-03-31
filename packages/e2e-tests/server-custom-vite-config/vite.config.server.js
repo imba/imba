@@ -1,5 +1,5 @@
 import { builtinModules } from 'module'
-import { imba } from 'vite-plugin-imba'
+import imbaPlugin from 'imba/plugin'
 
 export default function ({ mode }) {
 	return {
@@ -8,7 +8,7 @@ export default function ({ mode }) {
 			__APP_VERSION__: '"a1"',
 			"import.meta.vitest": undefined
 		},
-		plugins: [imba({ ssr: true })],
+		plugins: [imbaPlugin({ ssr: true })],
 		resolve: {
 			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 		},

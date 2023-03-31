@@ -1,4 +1,5 @@
 import np from 'path'
+import url from 'url'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
@@ -11,7 +12,7 @@ import Cache from '../src/bundler/cache'
 import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import { spawn } from 'child_process'
-import { viteServerConfigFile, resolveWithFallbacks, ensurePackagesInstalled, vitestSetupPath } from '../src/utils/vite'
+import { getConfigFilePath, ensurePackagesInstalled, imbaConfigPath } from '../src/utils/vite'
 import create from './create.imba'
 import * as dotenv from 'dotenv'
 
@@ -82,8 +83,9 @@ def parseOptions options, extras = []
 	options.imbaPath ||= np.resolve(__dirname,'..')
 	options.command = command
 	options.extras = extras
-
-	options.config = resolveConfig(cwd,options.config or 'imbaconfig.json')
+	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
+	options.imbaConfig = await getConfigFilePath("root")
+	options.vite = yes if options.imbaConfig.bundler == 'vite'
 	options.package = resolvePackage(cwd) or {}
 	options.dotenv = resolveFile('.env',cwd)
 	options.nodeModulesPath = resolvePath('node_modules',cwd)
@@ -155,41 +157,21 @@ def parseOptions options, extras = []
 	options.#parsed = yes
 	return options
 
-def eject(o)
-	o = parseOptions(o)
-	const configPath = "vite.config.server.js"
-	if nfs.existsSync(configPath) and !o.force
-		return console.log "You already have a vite.config.server in your project. Delete it or use `imba eject --force` to overwrite"
-	const configContent = nfs.readFileSync(viteServerConfigFile, 'utf-8')
-	nfs.writeFileSync(configPath, configContent.replace(/\/\/eject\s/g, ''))
-	console.log "✅ vite.config.server.mjs has been successfully {o.force ? 'overwritten': 'created'}"
-	const setupPath = "test-setup.mjs"
-	if nfs.existsSync(setupPath) and !o.force
-		return console.log "You already have a test-setup.mjs in your project. Delete it or use `imba eject --force` to overwrite"
-	const setupContent = nfs.readFileSync(vitestSetupPath, 'utf-8')
-	nfs.writeFileSync(setupPath, setupContent)
-	console.log "✅ test-setup.mjs has been successfully {o.force ? 'overwritten': 'created'}"
-	console.log "💎 You can still run the project using imba <server.imba> --vite and it will pick your config"
-	console.log "💎 Run `vite build -c vite.config.server.js` to create your build"
-	console.log "⚠️ You might need to change the entry from server.imba to the name of your entry file"
-	console.log "✨ Visit https://vitejs.dev/ to check the docs or join https://imba.io/community if you get stuck or simply have a question"
 
 def test o
-	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom', 'vite-tsconfig-paths-silent'], process.cwd())
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
-	let configFile = resolveWithFallbacks(viteServerConfigFile, ["vitest.config.ts", "vitest.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
-	if configFile == viteServerConfigFile
-		const original-setup-file = np.join(__dirname, "./test-setup.mjs")
-		# pick test setup file path
-		let setupFile = resolveWithFallbacks("test-setup", ["imba", "ts", "js", "mjs", "cjs"], {ext:"mjs"})
-		if setupFile == "test-setup.mjs"
-			setupFile = np.resolve original-setup-file
-		# create a temporary vite config file
-		const tmp-config = np.join __dirname, "temp-config.vite.js"
-		const body = nfs.readFileSync(viteServerConfigFile, "utf-8")
-		# inject the user's test setup file or the default one we provide
-		nfs.writeFileSync tmp-config, body.replace(/\/\*pholder\*\//g, "'{np.resolve(setupFile)}'")
-		configFile = tmp-config
+
+	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
+	
+	let configFile = testConfigPath
+
+	if testConfigPath == imbaConfigPath	
+		# create a temporary file and put the config there
+		configFile = np.join process.cwd(), "node_modules", "imba.vitest.config.mjs"
+		const content = nfs.readFileSync(testConfigPath, 'utf-8')
+		nfs.writeFileSync(configFile, content)
+
 	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
 	const options =
 		cwd: process.cwd()
@@ -201,18 +183,36 @@ def test o
 	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
-	return cli.help! unless o.args.length > 0
+	if entry.._name == 'preview'
+		# no args
+		o = entry
+		entry = undefined
+
+	unless o._name == 'preview' or o._name == 'serve' or o._name == 'build'
+		return cli.help! if o.args.length == 0
+
+	let prog = o = await parseOptions(o,extras)
+
+	if o.vite and (o.command == 'preview' or o.command == 'serve' or o.command == 'build') and !entry
+		if nfs.existsSync("index.html")
+			entry = "index.html"
+		else
+			return console.log "Imba {o.command} without an argument expects an index.html file. But none was found in the root of the project."
+
+	if (o.command == 'serve' or o.command == 'build') and !o.vite and !entry
+		console.log "imba {o.command} error: missing required argument 'script'"
+		process.exit 1
+
 	let [path,q] = entry.split('?')
 
 	path = np.resolve(path)
 
-	let prog = o = parseOptions(o,extras)
-
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
-
 	if o.vite
-		await ensurePackagesInstalled(['vite', 'vite-node', 'vite-plugin-imba'], process.cwd())
+		const packagesToCheck = ['vite', 'vite-tsconfig-paths-silent']
+		packagesToCheck.push 'vite-node' if o.command == 'run'
+		await ensurePackagesInstalled(packagesToCheck, process.cwd())
 
 	# TODO support multiple entrypoints - especially for html
 
@@ -246,24 +246,124 @@ def run entry, o, extras
 	let out
 	out = await bundle.build! unless o.vite
 
-	if o.command == 'build'
-		if o.vite
-			let Vite = await import("vite")
-			const configFile = resolveWithFallbacks(viteServerConfigFile, ["vite.config.ts", "vite.config.js", "vite.config.ts", "vite.config.js", "vite.config.server.js"])
-			await Vite.build
-				# configFile: configFile
-				configFile: configFile
-				build:
-					rollupOptions:
-						input: entry
+	if o.vite
+		let Vite = await import("vite")
+		if o.command == 'preview'
+			const previewServer = await Vite.preview
+				preview:
+					port: o.port
+			return previewServer.printUrls!
 
-		return
+		if o.command == 'serve'
+
+			const config = await getConfigFilePath("client", {command: "serve", mode: "development"})
+			let plugins = config.plugins
+
+			if !entry.endsWith ".html"
+				const serve-entry = entry
+				def servePlugin
+
+					def configureServer(server)
+						# (in callback) -> execute after internal vite middlewares
+						do server.middlewares.use "/" do(req, res, next)
+
+							res.end """
+									<!DOCTYPE html>
+									<html lang="en">
+										<head>
+											<meta charset="utf-8" />
+											<meta name="viewport" content="width=device-width,initial-scale=1" />
+											<title>Imba app</title>
+											<script type="module" src="./{serve-entry}"></script>
+										</head>
+										<body></body>
+									</html>
+							"""
+
+					return {
+						name: "vite-plugin-imba-serve-plugin"
+						configureServer: configureServer
+					}
+				plugins.push servePlugin()
+				entry = undefined
+
+			config.configFile = no
+			viteServer = await Vite.createServer({
+				...config,
+				plugins: plugins,
+				server: {
+					...config.server,
+					port: o.port,
+					host: o.host,
+				},
+				build: {
+					...config.build,
+					rollupOptions: {...config.build.rollupOptions, input: entry}
+				}
+			})
+			await viteServer.listen!
+
+			return viteServer.printUrls!
+		if o.command == 'build'
+			# build client
+			let entry-points
+
+			const options = {command: "build", mode: "production"}
+			let clientConfig = await getConfigFilePath("client", options)
+
+			if entry.endsWith "html"
+				entry-points = entry
+				await Vite.build({
+					...clientConfig,
+					build: {
+						...clientConfig.build,
+						outDir: "dist",
+						ssrManifest: no,
+						rollupOptions: {
+							...clientConfig.build.rollupOptions,
+							input: entry-points
+						}
+					}
+				})
+				return
+
+			else
+				let serverConfig = await getConfigFilePath("server", options)
+
+				const serverBuild = await Vite.build({
+					...serverConfig,
+					configFile: no,
+					build: {
+						...serverConfig.build,
+						rollupOptions: {
+							...serverConfig.build.rollupOptions,
+							input: np.join(process.cwd(), entry),
+						}
+					}
+				})
+
+				entry-points = Object.keys(serverBuild.output[0].modules).filter(do $1.endsWith "?url&entry").map(do $1.replace("?url&entry", ""))
+
+				return unless entry-points.length
+
+			await Vite.build({
+				...clientConfig,
+				build: {
+					...clientConfig.build,
+					rollupOptions: {
+						...clientConfig.build.rollupOptions,
+						input: entry-points
+					}
+				}
+			})
+			return
 	let run = do
 		o.name ||= entry	
 		let runner = new Runner(bundle,o)
 		if o.vite
 			await runner.initVite!
 		runner.start!
+
 	if o.vite
 		run()
 	elif out..main
@@ -278,7 +378,6 @@ def common cmd
 	cmd
 		.option("-o, --outdir <dir>", "Directory to output files")
 		.option("-w, --watch", "Continously build and watch project")
-		.option("-c, --clear", "Clear the terminal's scrollback buffer on every build")
 		.option("--loglevel <level>", "Log level: debug|info|success|warning|error|silent")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
 		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
@@ -302,20 +401,21 @@ common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("--inspect", "Debug")
 	.action(run)
 
-common(cli.command('build <script>').description('Build an imba/js/html entrypoint and their dependencies'))
+common(cli.command('build [script]').description('Build an imba/js/html entrypoint and their dependencies'))
 	.option("--platform <platform>", "Platform for entry","browser")
 	.action(run)
 	# .option("--as <preset>", "Configuration preset","node")
 
-# watch should be implied?
-common(cli.command('serve <script>').description('Spawn a webserver for an imba/js/html entrypoint'))
-	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
+common(cli.command('preview').description('Locally preview production build (Vite only)'))
+	.option("--port <port>", "Specify port")
 	.action(run)
 
-cli
-	.command('eject').description('Output the default vite config file to allow customizing it (no worries, you can delete and imba will use the default one)')
-	.option("-f, --force", "Overwrite vite.config.server.js file when it exists")
-	.action(eject)
+# watch should be implied?
+common(cli.command('serve [script]').description('Spawn a webserver for an imba/js/html entrypoint'))
+	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
+	.option("--port <port>", "Specify port")
+	.option("--host [host]", "Specify host (true for 0.0.0.0) more in https://vitejs.dev/config/server-options.html#server-host")
+	.action(run)
 
 cli
 	.command('test').description('Run tests: This is a wrapper on top of vitest')

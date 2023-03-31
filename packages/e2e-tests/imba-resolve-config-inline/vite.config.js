@@ -1,9 +1,9 @@
-import { imba } from 'vite-plugin-imba';
+import imbaPlugin from 'imba/plugin';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
 	mode: 'staging',
-	plugins: [imba({
+	plugins: [imbaPlugin({
 		compilerOptions: {
 			theme: {
 				colors: {

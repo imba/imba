@@ -7,13 +7,9 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-	"dependencies": {
-		"imba": "file:../../imba"
-	},
   "devDependencies": {
     "imba": "file:../../imba",
-    "vite": "^3.0.9",
-    "vite-plugin-imba": "../../vite-plugin-imba"
+    "vite": "^4.1.4"
   },
   "type": "module"
 }

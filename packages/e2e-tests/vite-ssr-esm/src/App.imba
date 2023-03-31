@@ -17,4 +17,4 @@ export default tag App
 	def render
 		<self>
 			<button[c:green bg:yellow4] @click.log("st")=(count++)> "Hello {count} times hello"
-			<my-counter>
+			<my-count>

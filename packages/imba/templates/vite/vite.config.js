@@ -1,4 +1,4 @@
-import { imba } from 'vite-plugin-imba';
+import imba from 'imba/plugin';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

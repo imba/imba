@@ -1,4 +1,4 @@
-import { imba } from 'vite-plugin-imba';
+import imba from 'imba/plugin';
 import { resolve } from 'path'
 import { defineConfig } from 'vite';
 import { name } from './package.json'

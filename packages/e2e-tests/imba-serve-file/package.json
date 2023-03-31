@@ -1,0 +1,16 @@
+{
+  "name": "imba-serve",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "imba serve app.imba",
+    "build": "echo 'no build'",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "imba": "../../imba",
+    "vite": "^4.1.4",
+    "vite-tsconfig-paths-silent": "^4.0.5"
+  },
+  "type": "module"
+}

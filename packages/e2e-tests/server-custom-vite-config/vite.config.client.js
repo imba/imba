@@ -1,5 +1,5 @@
 import { build, defineConfig } from 'vite';
-import { imba } from 'vite-plugin-imba';
+import imbaPlugin from 'imba/plugin';
 import { resolve } from 'path'
 import {builtinModules} from 'module'
 
@@ -9,7 +9,7 @@ const entry = resolve(__dirname, "src/main.js")
 export default defineConfig(({ command, mode }) => {
 	return {
 		plugins: [
-			imba()
+			imbaPlugin()
 		],
 		resolve:{
 			extensions: ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']

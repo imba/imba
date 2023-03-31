@@ -8153,7 +8153,7 @@ export class TagAttr < TagPart
 			elif tagName == 'img'
 				kind = 'img'
 			elif tagName == 'script'
-				kind = 'web'
+				kind = STACK.@options:vite ? 'url&entry' : 'web'
 			elif tagName == 'style'
 				kind = 'css'
 

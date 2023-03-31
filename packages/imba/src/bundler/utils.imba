@@ -2,6 +2,7 @@ import nfs from 'fs'
 import np from 'path'
 import {createHash as cryptoCreateHash} from 'crypto'
 import os from 'os'
+import {getConfigFilePath} from '../utils/vite'
 
 import {resolve as parseConfig,merge as mergeConfig} from './config'
 import * as smc from 'sourcemap-codec'
@@ -153,7 +154,8 @@ export def resolveConfig cwd, name
 		config.#path = src
 		return parseConfig(config)
 	catch e
-		return parseConfig({})
+		const config = await getConfigFilePath("imba")
+		return parseConfig(config or {})
 
 export def extendObject obj,patch,path = []
 	mergeConfig(obj,patch,...path)

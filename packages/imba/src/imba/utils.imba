@@ -1,5 +1,7 @@
 const dashRegex = /-./g
 
+export const __served__ = new Set
+
 export class LazyProxy
 	static def for getter
 		new Proxy({}, new self(getter))
@@ -119,3 +121,6 @@ export class Emitter
 	def on name, ...params do listen(self,name,...params)
 	def once name, ...params do once(self,name,...params)
 	def un name, ...params do unlisten(self,name,...params)
+
+export def defineConfig config
+	config

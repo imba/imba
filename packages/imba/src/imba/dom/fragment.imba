@@ -243,5 +243,4 @@ extend class Node
 	def #getSlot name, context
 		if (name == '__' and !self.render) or !__slots
 			return self
-
 		return __slots[name] ||= createSlot(0,self)

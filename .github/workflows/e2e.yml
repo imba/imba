@@ -14,12 +14,12 @@ jobs:
   # this is the test matrix, it runs with node16 on linux,windows,macos + node14,18 on linux
   # it is skipped if the build step of the checks job wasn't successful (still runs if lint or audit fail)
   test:
-    timeout-minutes: 10
+    timeout-minutes: 20
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        node: [16]
+        node: [18]
         os: [ubuntu-latest, macos-latest, windows-latest]
         # include:
         #   - node: 14
@@ -43,13 +43,6 @@ jobs:
           npm link
         env:
           CI: true
-      - name: build the vite plugin
-        run: |
-          cd packages/vite-plugin-imba
-          npm install
-          npm run build
-          npm link imba
-          npm link
       - name: run tests
         run: |
           cd packages/e2e-tests

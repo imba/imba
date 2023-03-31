@@ -7,18 +7,19 @@ function handleError(msg, error) {
 const runner = new ViteNodeRunner({
 	root: ["__ROOT__"],
 	base: ["__BASE__"],
-	debug: true,
+	// debug: true,
 	fetchModule: async function (id) {
 		return new Promise((resolve) => {
 			try {
 				process.once('message', (msg) => {
 					const message = JSON.parse(msg)
-					if (message.type == "fetched" && id == message.id)
+					if (message.type == "fetched" && id == message.id){
 						resolve(message.md)
+					}
 				})
 				process.send({ type: 'fetch', id })
 			} catch (error) {
-				handleError(`Error fetching module {id}`, error)
+				handleError(`Error fetching module ${id}`, error)
 			}
 		})
 
@@ -35,14 +36,13 @@ const runner = new ViteNodeRunner({
 				})
 				process.send({ type: 'resolve', payload: { id, importer } })
 			} catch (error) {
-				handleError(`Error fetching module {id}`, error)
+				handleError(`Error resolving module with id ${id}`, error)
 			}
 		})
 	}
 }
 );
 const file = '__FILE__'
-
 await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });

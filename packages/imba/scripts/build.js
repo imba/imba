@@ -209,6 +209,7 @@ let bundles = [
 		entryPoints: ["src/imba/imba.imba"],
 		outdir: "dist",
 		platform: "browser",
+		external: [ "vite"],
 		format: "esm",
 		outExtension: { ".js": ".mjs" },
 	},
@@ -224,6 +225,7 @@ let bundles = [
 		outExtension: { ".js": ".node.js" },
 		format: "cjs",
 		outdir: "dist",
+		external: ["lodash.mergewith", "vite", 'colors', 'local-pkg'],
 		platform: "node",
 	},
 	{
@@ -231,6 +233,7 @@ let bundles = [
 		outExtension: { ".js": ".node.mjs" },
 		format: "esm",
 		outdir: "dist",
+		external: [ "vite", 'colors', 'local-pkg', 'get-port'],
 		platform: "node",
 	},
 	{
@@ -241,10 +244,43 @@ let bundles = [
 		],
 		outExtension: { ".js": ".imba.js" },
 		minify: true,
-		external: ["chokidar", "esbuild", "vite-node/client","vite-node/server", "vite-plugin-imba", "vite"],
+		external: ["lodash.mergewith", "chokidar", "esbuild", "vite-node/client","vite-node/server", "vite"],
 		outdir: ".",
 		format: "cjs",
 		platform: "node",
-	}
+	},
+	{
+		entryPoints: [
+			"program.imba"
+		],
+		outExtension: { ".js": ".browser.imba.js" },
+		minify: true,
+		external: ["chokidar", "esbuild", "vite-node/client","vite-node/server", "vite"],
+		outdir: ".",
+		format: "esm",
+		platform: "browser",
+	},
+	{
+		entryPoints: [
+			"src/vite-plugin/plugin.imba"
+		],
+		outExtension: { ".js": ".mjs" },
+		minify: true,
+		external: ["lodash.mergewith", "colors", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
+		outdir: "dist",
+		format: "esm",
+		platform: "node",
+	},
+	{
+		entryPoints: [
+			"src/vite-plugin/plugin.imba"
+		],
+		outExtension: { ".js": ".cjs" },
+		minify: true,
+		external: ["lodash.mergewith", "colors", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
+		outdir: "dist",
+		format: "cjs",
+		platform: "node",
+	},
 ];
 bundle(bundles)
