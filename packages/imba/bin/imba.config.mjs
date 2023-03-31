@@ -1,7 +1,7 @@
 import {defineConfig} from 'imba'
 import { builtinModules } from 'module'
 import imbaPlugin from 'imba/plugin'
-import tsconfigPaths from 'vite-tsconfig-paths-silent'
+
 import np from 'node:path'
 import nfs from 'node:fs'
 
@@ -27,7 +27,7 @@ export default defineConfig(()=>{
 		client: {
 			type: "",
 			envPrefix,
-			plugins: [imbaPlugin(),  tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]})],
+			plugins: [imbaPlugin()],
 			resolve: { extensions: ['.web.imba', ...extensions], dedupe: ['imba']  },
 			build: {
 				outDir: "dist/public",
@@ -47,7 +47,7 @@ export default defineConfig(()=>{
 		server: {
 			appType: "custom",
 			envPrefix,
-			plugins: [imbaPlugin({ ssr: true }), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
+			plugins: [imbaPlugin({ ssr: true })],
 			resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba']  },
 			esbuild: {
 				target: "node16",
@@ -83,7 +83,7 @@ export default defineConfig(()=>{
 			},
 		},
 		// we duplicate the plugins and resolve config here for the tests
-		plugins: [imbaPlugin({ssr: true}), tsconfigPaths({silent: true, loose: true,extensions, projects: [np.resolve(".")]}),],
+		plugins: [imbaPlugin({ssr: true})],
 		envPrefix,
 		resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] },
 		test: {

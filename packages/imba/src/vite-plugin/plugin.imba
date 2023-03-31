@@ -1,7 +1,7 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
 import type { Plugin, HmrContext } from "vite";
-import {transformWithEsbuild, normalizePath} from 'vite'
+import {normalizePath} from 'vite'
 import * as esbuild from 'esbuild'
 import { buildIdParser,  normalize, injectQuery, parseRequest } from "./utils/id";
 import type { IdParser, ImbaRequest } from "./utils/id";

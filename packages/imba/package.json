@@ -74,33 +74,29 @@
     }
   },
   "peerDependencies": {
-      "@testing-library/dom": "*",
-      "@testing-library/jest-dom": "*",
-      "vite": "*",
-      "vite-node": "*",
-      "vite-tsconfig-paths-silent": "*",
-      "vitest": "*"
+    "@testing-library/dom": "*",
+    "@testing-library/jest-dom": "*",
+    "vite": "*",
+    "vite-node": "*",
+    "vitest": "*"
+  },
+  "peerDependenciesMeta": {
+    "@testing-library/dom": {
+      "optional": true
     },
-    "peerDependenciesMeta": {
-      "@testing-library/dom": {
-        "optional": true
-      },
-      "@testing-library/jest-dom": {
-        "optional": true
-      },
-      "vite": {
-        "optional": true
-      },
-      "vite-node": {
-        "optional": true
-      },
-      "vite-tsconfig-paths-silent": {
-        "optional": true
-      },
-      "vitest": {
-        "optional": true
-      }
+    "@testing-library/jest-dom": {
+      "optional": true
     },
+    "vite": {
+      "optional": true
+    },
+    "vite-node": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
@@ -115,19 +111,19 @@
     "tree-kill": "^1.2.2",
     "vite": "^4.1.4",
     "vite-node": "^0.29.7",
-    "vite-tsconfig-paths-silent": "^4.0.5",
     "vitest": "^0.29.1",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
-    "get-port": "^5.1.1",
     "@antfu/install-pkg": "^0.1.1",
     "chokidar": "^3.4.3",
     "colors": "1.4.0",
     "cross-spawn": "^7.0.3",
+    "debug": "^4.3.4",
     "dotenv": "^16.0.3",
     "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
+    "get-port": "^5.1.1",
     "local-pkg": "^0.4.2",
     "lodash.mergewith": "^4.6.2",
     "prompts": "^2.4.2"

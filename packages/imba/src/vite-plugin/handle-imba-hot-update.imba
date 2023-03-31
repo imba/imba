@@ -3,7 +3,6 @@ import {log,logCompilerWarnings} from "./utils/log"
 import type {ImbaRequest} from "./utils/id"
 import {VitePluginImbaCache} from "./utils/vite-plugin-imba-cache"
 import type {ResolvedOptions} from "./utils/options"
-import * as Diff from 'diff'
 
 export def handleImbaHotUpdate(compileImba, ctx\HmrContext, imbaRequest\ImbaRequest, cache\VitePluginImbaCache, options\ResolvedOptions)
 	if !cache.has(imbaRequest)
