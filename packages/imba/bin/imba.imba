@@ -159,7 +159,7 @@ def parseOptions options, extras = []
 
 
 def test o
-	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom', 'vite-tsconfig-paths-silent'], process.cwd())
+	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 
 	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
@@ -183,7 +183,7 @@ def test o
 	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
-	if entry.._name == 'preview'
+	if entry.._name == 'preview' or (entry.._name == 'serve' and !o)
 		# no args
 		o = entry
 		entry = undefined
@@ -210,7 +210,7 @@ def run entry, o, extras
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
 	if o.vite
-		const packagesToCheck = ['vite', 'vite-tsconfig-paths-silent']
+		const packagesToCheck = ['vite']
 		packagesToCheck.push 'vite-node' if o.command == 'run'
 		await ensurePackagesInstalled(packagesToCheck, process.cwd())
 
@@ -411,7 +411,7 @@ common(cli.command('preview').description('Locally preview production build (Vit
 	.action(run)
 
 # watch should be implied?
-common(cli.command('serve [script]').description('Spawn a webserver for an imba/js/html entrypoint'))
+common(cli.command('serve').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("--port <port>", "Specify port")
 	.option("--host [host]", "Specify host (true for 0.0.0.0) more in https://vitejs.dev/config/server-options.html#server-host")
