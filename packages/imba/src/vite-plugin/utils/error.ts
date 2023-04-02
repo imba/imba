@@ -13,7 +13,7 @@ export function toRollupError(error: Warning & Error, options: ResolvedOptions):
 		return {
 			name: "Compilation error",
 			id: error._sourcePath,
-			message: buildExtendedLogMessage({message: `Compildation error: ${error.message}`}),
+			message: buildExtendedLogMessage({message: `Compilation error: ${error.message}`}),
 
 		} as RollupError;
 	}
