@@ -366,7 +366,7 @@ def run entry, o, extras
 
 	if o.vite
 		run()
-	elif out..main and !o.command == 'build'
+	elif out..main and o.command != 'build'
 		run()
 	elif o.watch
 		bundle.once('built',run)
