@@ -1,7 +1,6 @@
 import {defineConfig} from 'imba'
 import { builtinModules } from 'module'
 import imbaPlugin from 'imba/plugin'
-import {mergeConfig} from 'vite'
 import np from 'node:path'
 import nfs from 'node:fs'
 import url from 'node:url'
@@ -40,7 +39,8 @@ export default defineConfig(async ({mode, command})=>{
 
         /** REPLACE_ME */
 
-        finalTest = mergeConfig(finalTest, userTestConfig)
+		const Vite = await import('vite')
+        finalTest = Vite.mergeConfig(finalTest, userTestConfig)
     }
 	return ({
 		client: {
