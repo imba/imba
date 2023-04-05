@@ -1,9 +1,10 @@
 import {defineConfig} from 'imba'
 import { builtinModules } from 'module'
 import imbaPlugin from 'imba/plugin'
-
+import {mergeConfig} from 'vite'
 import np from 'node:path'
 import nfs from 'node:fs'
+import url from 'node:url'
 
 // uppercase letters + _
 let envPrefix = ['_']
@@ -13,7 +14,9 @@ let envPrefix = ['_']
 const extensions = ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 const setupFiles = ['node_modules/imba/bin/test-setup.mjs']
 
-export default defineConfig(()=>{
+let userTestConfig = {}
+
+export default defineConfig(async ({mode, command})=>{
 
 	extensions.forEach((ext)=>{
 		const name = `test-setup${ext}`
@@ -22,7 +25,23 @@ export default defineConfig(()=>{
 			setupFiles.push(path)
 		}
 	})
+    let finalTest = {test:{
+			globals: true,
+			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+			environment: "jsdom",
+			setupFiles,
+        	exclude: ['node_modules']
+			// define: {
+			// 	'import.meta.vitest': undefined,
+			// },
+	}}
+    if(mode == "test"){
 
+        /** REPLACE_ME */
+
+        finalTest = mergeConfig(finalTest, userTestConfig)
+    }
 	return ({
 		client: {
 			type: "",
@@ -86,15 +105,6 @@ export default defineConfig(()=>{
 		plugins: [imbaPlugin({ssr: true})],
 		envPrefix,
 		resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] },
-		test: {
-			globals: true,
-			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-			environment: "jsdom",
-			setupFiles,
-			define: {
-				'import.meta.vitest': undefined,
-			},
-		}
+		test: finalTest.test
 	})
 })

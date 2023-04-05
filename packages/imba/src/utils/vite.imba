@@ -37,20 +37,15 @@ export def getConfigFilePath(type, opts)
 			if nfs.existsSync path
 				let {default: imbaConfig} = await import(String url.pathToFileURL path)
 				if typeof imbaConfig == "function"
-					imbaConfig = imbaConfig({command, mode})
-
-				if imbaConfig[type]
-					if imbaConfig.plugins
-						return path
-					else
-						console.warn("You need to configure the plugins manually at the top level config or create a vitest.config.js file")
+					imbaConfig = await imbaConfig(opts)
+				return path
 		# otherwise use the default test config
 		return imbaConfigPath
 
 	# load default imba config
 	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
 	if typeof defaultImbaConfig == "function"
-		defaultImbaConfig = defaultImbaConfig({command, mode})
+		defaultImbaConfig = await defaultImbaConfig({command, mode})
 
 
 	const defaultConfig = defaultImbaConfig[type]
@@ -77,7 +72,7 @@ export def getConfigFilePath(type, opts)
 
 	let {default: imbaConfig} = await import(String url.pathToFileURL configPath)
 	if typeof imbaConfig == "function"
-		imbaConfig = imbaConfig({command, mode})
+		imbaConfig = await imbaConfig({command, mode})
 
 	return imbaConfig if type == "root"
 	const configObj = imbaConfig[type]

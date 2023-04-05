@@ -161,16 +161,18 @@ def parseOptions options, extras = []
 def test o
 	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
-
 	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
 	
 	let configFile = testConfigPath
 
-	if testConfigPath == imbaConfigPath	
-		# create a temporary file and put the config there
-		configFile = np.join process.cwd(), "node_modules", "imba.vitest.config.mjs"
-		const content = nfs.readFileSync(testConfigPath, 'utf-8')
-		nfs.writeFileSync(configFile, content)
+	# create a temporary file and put the config there
+	configFile = np.join process.cwd(), "node_modules", "imba.vitest.config.mjs"
+	let content = nfs.readFileSync(imbaConfigPath, 'utf-8')
+	if testConfigPath
+		content = content.replace '/** REPLACE_ME */', `
+			let userTestConfig = (await import(String(url.pathToFileURL('{testConfigPath}')))).default;
+		`
+	nfs.writeFileSync(configFile, content)
 
 	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
 	const options =
@@ -183,10 +185,12 @@ def test o
 	const vitest = spawn vitest-path, params, options
 
 def run entry, o, extras
-	if entry.._name == 'preview' or (entry.._name == 'serve' and !o)
+	if entry.._name == 'preview' or entry.._name == 'serve'
 		# no args
+		let t = o
 		o = entry
-		entry = undefined
+		entry = t
+		entry = entry[0] if entry..length
 
 	unless o._name == 'preview' or o._name == 'serve' or o._name == 'build'
 		return cli.help! if o.args.length == 0
