@@ -69,6 +69,7 @@ def getIntersectionObserver opts = IntersectionEventDefaults
 
 extend class Element
 	def on$intersect mods,context,handler,o
+		return unless $web$
 		let obs
 		if mods.options
 			let th = []
