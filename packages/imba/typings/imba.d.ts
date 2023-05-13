@@ -744,9 +744,31 @@ declare module "imba" {
 	interface VitestConfig extends TestConfig { }
 
 	interface Config {
+        /**
+         * Bundler to use for all imba cli commands.
+         * Defaults to "builtin"
+         */
+        bundler?: "vite" | "builtin",
+        /**
+         * Imba configuration.
+         * See https://imba.io/docs/css/colors#color-theming-create-config-file for more
+         */
 		imba?: ImbaConfig;
+        /**
+         * Vitest configuration
+         */
 		test?: TestConfig;
+        /**
+         * Vite Configuration used for client side bundling.
+         * More in https://vitejs.dev/config/
+         * See defaults in packages/imba/bin/imba.config.mjs
+         */
 		client?: UserConfig;
+       /**
+         * Vite Configuration used for server side (node.js) bundling.
+         * More in https://vitejs.dev/config/
+         * See defaults in packages/imba/bin/imba.config.mjs
+         */ 
 		server?: UserConfig;
 	}
 
