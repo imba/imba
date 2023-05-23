@@ -1,7 +1,6 @@
 import {hooks} from './hooks'
 import {once,emit,listen} from './utils'
 import {scheduler,commit} from './scheduler'
-import {Node} from './dom/core'
 
 const F = {
 	TOUCHING: 1 << 1
@@ -137,7 +136,7 @@ def activateHooks
 	hooks.on('inited') do(instance)
 		let meta = instance[METAREF]
 		if meta
-			let istag = instance isa Node
+			let istag = instance isa global.Node
 			let obj = instance[OWNREF] ||= {}
 			for own k,v of meta
 				let reaction = obj[k] = new Reaction(instance[k],instance,v)
