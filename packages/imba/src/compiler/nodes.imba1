@@ -759,7 +759,8 @@ export class Stack
 			return isNode
 		elif key == 'WORKER'
 			@meta:universal = no
-			return platform and platform.indexOf('worker') > 0
+			return platform and platform.indexOf('worker') >= 0
+			
 		elif key == 'WEBWORKER'
 			@meta:universal = no
 			return platform == 'webworker'
