@@ -2147,13 +2147,20 @@ export class ClassField < Node
 			let paramIndex = option(:paramIndex)
 			let restIndex = option(:restIndex)
 			let access
+			let rest
 
 			if up isa InstancePatchBlock
 
-				let rest = ctor.@params.at(restIndex,yes,'$$',LIT('{}'))
+				rest = ctor.@params.at(restIndex,yes,'$$',LIT('{}'))
 				access = OP('.',rest,name)
 				access.cache(reuse: yes, name: 'v')
 				let right = OP('=',OP('.',THIS,name),access)
+
+				if wrapper
+					right = CALL(
+						OP('.',OP('.',THIS,@fname),STR('$init')),
+						[access,THIS,@vslot,LIT(@name.c(as: 'value')),rest]
+					)
 				out = OP('&&',OP('!==',access,UNDEFINED),right)
 
 			elif paramIndex != undefined
@@ -2165,7 +2172,7 @@ export class ClassField < Node
 					val = access
 
 			elif restIndex != undefined
-				let rest = ctor.@params.at(restIndex,yes,'$$',LIT('null'))
+				rest = ctor.@params.at(restIndex,yes,'$$',LIT('null'))
 				access = OP('.',rest,name)
 
 				if value
@@ -2178,10 +2185,12 @@ export class ClassField < Node
 				return
 
 			if wrapper
-				out = CALL(
-					OP('.',OP('.',THIS,@fname),STR('$init')),
-					[val,THIS,@vslot,LIT(@name.c(as: 'value'))]
-				)
+				unless up isa InstancePatchBlock
+					out = CALL(
+						OP('.',OP('.',THIS,@fname),STR('$init')),
+						[val,THIS,@vslot,LIT(@name.c(as: 'value')),rest]
+					)
+				out = OP('&&',LIT('fields'),out)
 
 			out ||= OP('=',OP('.',THIS,name),val)
 			out = out.c + ';\n'
@@ -3306,6 +3315,7 @@ export class ClassDeclaration < Code
 		fn.set(noreturn: yes)
 		fn.params.at(0,yes,'$$',LIT('null')) # (restIndex,yes,'$$',LIT('{}'))
 		fn.params.at(1,yes,'deep',LIT('true'))
+		fn.params.at(2,yes,'fields',LIT('true'))
 		@instanceInit = fn
 
 	def instancePatch
@@ -3316,9 +3326,10 @@ export class ClassDeclaration < Code
 			yes
 
 		let param = fn.@params.at(0,yes,'$$',LIT('{}'))
+		let fieldparam = fn.@params.at(1,yes,'fields',LIT('true'))
 
 		if @superclass
-			let call = Super.callOp(patchKey,[param])
+			let call = Super.callOp(patchKey,[param,fieldparam])
 			call = OP('&&',OP('.',LIT('super'),patchKey),call)
 			fn.inject(call)
 
@@ -6389,16 +6400,28 @@ export class DescriptorPart < Node
 	def js
 		if context
 			let op = OP('.',context,@name)
+			let path = op
+
+			if value
+				return OP('=',path,value).c
+
+			let fn = OP('isa',path,LIT('Function'))
+
 			if params
-				yes
-				# TODO - implement this
+				# call if a function
 				op = CALL(op,params)
 				# op = OP('=',op,params.@nodes[0])
 			elif value
 				op = OP('=',op,value)
 			else
 				op = OP('=',op,TRUE)
-			return op.c
+
+			let pars = params or (value ? [value] : [])
+			let val = params and params.first or value or TRUE
+			let ternary = IF(fn,CALL(path,pars),OP('=',path,val))
+			
+			return ternary.c
+			# return op.c
 
 export class Descriptor < Node
 
@@ -6467,7 +6490,7 @@ export class Descriptor < Node
 		if item isa ArgList
 			if item.@generated
 				# extract options etc
-				let part = DescriptorPart.new(KEY('configure'))
+				let part = DescriptorPart.new(KEY('callback'))
 				part.params = item
 				@chain.push(@last = part)
 			else
@@ -6494,6 +6517,7 @@ export class Descriptor < Node
 		if @default
 			parts.add LIT("{ref.c}.default = {@default.c}")
 		if @literal
+			# TODO rename to primitive instead
 			parts.add LIT("{ref.c}.default.literal = {@literal.c}")
 
 		if @callback
@@ -11153,7 +11177,8 @@ export class StyleParens < ValueNode
 		elif option(:calc)
 			let unit = @options and String(@options:unit or '')
 			if unit
-				return "calc({plain} * 1{unit})"
+
+				return "calc(calc({plain}) * 1{unit})"
 			else
 				return "calc({plain})"
 
@@ -11255,6 +11280,12 @@ export class StyleFunction < Node
 		let out = "{name}({pars})"
 
 		if (@property and @property.isColor)
+			
+			if name == 'hsl'
+				let parts = @params.toArray.flat
+				if parts:length == 3
+					return AST.cary(parts).join(',')
+
 			if let res = Color.from(out)
 				return res.toVar
 
@@ -11349,6 +11380,8 @@ export class StyleDimension < StyleTerm
 			return number
 		elif unit in VALID_CSS_UNITS
 			return String(@value)
+		elif number == 1
+			return "var(--u_{unit},1{unit})"
 		else
 			return "calc(var(--u_{unit},1{unit}) * {@number})"
 			# return String(@value)
@@ -11535,8 +11568,12 @@ export class Util.Extend < Util
 			// @ts-ignore
 			const descriptors = Object.getOwnPropertyDescriptors(ext);
 			delete descriptors.constructor;
-			// @ts-ignore
-			Object.defineProperties(target,descriptors);
+			if(target.extend__ instanceof Function){
+				target.extend__(descriptors,ext);
+			} else {
+				// @ts-ignore
+				Object.defineProperties(target,descriptors);
+			}
 			return target;
 		};
 		'''
