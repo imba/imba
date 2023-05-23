@@ -65,6 +65,7 @@ var CUSTOM_EVENTS = {
 	intersect: 'events_intersect'
 	selection: 'events_selection'
 	resize: 'events_resize'
+	mutate: 'events_mutate'
 	hotkey: 'events_hotkey'
 	touch: 'events_touch'
 

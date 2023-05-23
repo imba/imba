@@ -26,6 +26,7 @@ export * from './events/pointer'
 export * from './events/touch'
 export * from './events/intersect'
 export * from './events/resize'
+export * from './events/mutate'
 export * from './events/selection'
 export * from './events/hotkey'
 
