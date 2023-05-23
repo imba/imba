@@ -9,9 +9,9 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
-import type { UserConfig } from 'vite'
-import type { UserConfig as TestConfig } from 'vitest'
-
+// import type { UserConfig } from 'vite'
+// import type { UserConfig as TestConfig } from 'vitest'
+// declare global {
 
 
 interface Node {
@@ -739,7 +739,7 @@ declare module "imba" {
 		**/
 		theme?: Theme
 	}
-
+    /*
 	interface ViteConfig extends UserConfig { }
 	interface VitestConfig extends TestConfig { }
 
@@ -748,7 +748,8 @@ declare module "imba" {
 		test?: TestConfig;
 		client?: UserConfig;
 		server?: UserConfig;
-	}
+	}*/
 
 	export function defineConfig(config: Config): Config;
 }
+// }
