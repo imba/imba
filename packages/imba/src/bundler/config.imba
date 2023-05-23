@@ -172,6 +172,13 @@ export const defaultConfig = {
 			splitting: false
 		}
 
+		webworker: {
+			extends: 'base'
+			format: 'esm'
+			platform: 'webworker'
+			splitting: false
+		}
+
 		sharedworker: {
 			extends: 'base'
 			format: 'esm'
