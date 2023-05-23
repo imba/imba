@@ -263,7 +263,7 @@ class Touch
 		return !!metaKey
 
 	def @primary
-		return !!isPrimary
+		return !!isPrimary and (pointerType != 'mouse' or originalEvent.button == 0)
 
 	def @mouse
 		return pointerType == 'mouse'
