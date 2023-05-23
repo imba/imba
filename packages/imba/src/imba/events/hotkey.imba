@@ -115,9 +115,11 @@ export const hotkeys = new class HotKeyManager
 				par = par.parentNode
 			return yes
 
-		# if there are multiple targets - and some of them have offset parent -
+		# if there are multiple targets - only include the ones that are visible
 		if targets.length > 1
-			let visible = targets.filter do $1.offsetParent
+			let visible = targets.filter do
+				let rect = $1.getBoundingClientRect()
+				$1.offsetParent or (rect.width > 0 or rect.height > 0)
 			targets = visible if visible.length > 0
 
 		return unless targets.length
