@@ -339,12 +339,16 @@ export const aliases =
 	tween: 'transition'
 
 	# easing
-	e: 'ease' # Deprecate
-
-	ea: 'ease'
+	e: 'ease-styles' # Deprecate
+	ea: 'ease-all'
 	ead: 'ease-all-duration'
 	eaf: 'ease-all-function'
 	eaw: 'ease-all-delay'
+
+	es: 'ease-styles'
+	esd: 'ease-styles-duration'
+	esf: 'ease-styles-function'
+	esw: 'ease-styles-delay'
 
 	eo: 'ease-opacity'
 	eod: 'ease-opacity-duration'
@@ -623,10 +627,16 @@ export class StyleTheme
 		{'margin-top': t, 'margin-bottom': b}
 
 	def ease pars
+		$ease(pars,'s')
+
+	def ease_all pars
 		$ease(pars,'a')
 
 	def ease_opacity pars
 		$ease(pars,'o')
+
+	def ease_styles pars
+		$ease(pars,'s')
 
 	def ease_box pars
 		$ease(pars,'b')
@@ -1259,6 +1269,7 @@ export class StyleTheme
 				if typ == '#'
 					return color.toString(a,typ)
 				elif typ == '##'
+					
 					return color.toVar(a)
 			return m
 		return text
@@ -1284,9 +1295,10 @@ export const StyleExtenders = {
 
 	ease: '''
 		--e_ad:0ms;--e_af:cubic-bezier(0.23, 1, 0.32, 1);--e_aw:0ms;
-		--e_od:var(--e_ad);--e_of:var(--e_af);--e_ow:var(--e_aw);
-		--e_cd:var(--e_ad);--e_cf:var(--e_af);--e_cw:var(--e_aw);
-		--e_bd:var(--e_ad);--e_bf:var(--e_af);--e_bw:var(--e_aw);
+		--e_sd:var(--e_ad);--e_sf:var(--e_af);--e_sw:var(--e_aw);
+		--e_od:var(--e_sd);--e_of:var(--e_sf);--e_ow:var(--e_sw);
+		--e_cd:var(--e_sd);--e_cf:var(--e_sf);--e_cw:var(--e_sw);
+		--e_bd:var(--e_sd);--e_bf:var(--e_sf);--e_bw:var(--e_sw);
 		--e_td:var(--e_bd);--e_tf:var(--e_bf);--e_tw:var(--e_bw);
 		--e_b:var(--e_bd) var(--e_bf) var(--e_bw);
 		--e_c:var(--e_cd) var(--e_cf) var(--e_cw);
@@ -1295,7 +1307,7 @@ export const StyleExtenders = {
 			all var(--e_ad) var(--e_af) var(--e_aw),
 			opacity var(--e_od) var(--e_of) var(--e_ow),
 			transform var(--e_td) var(--e_tf) var(--e_tw),
-			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c),
+			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c), filter var(--e_c),
 			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),min-width var(--e_b),min-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),
 			var(--e_rest);
 	'''
