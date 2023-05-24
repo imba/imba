@@ -15,7 +15,7 @@ export def use_events_pointer
 extend class PointerEvent
 
 	def @primary
-		return !!isPrimary
+		return !!isPrimary and (pointerType != 'mouse' or button == 0)
 
 	def @mouse
 		return pointerType == 'mouse'
