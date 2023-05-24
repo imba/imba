@@ -33,6 +33,11 @@ const exclude = [
 // 	// e2e projects starting with kit- or ending with -kit may require node16
 // 	exclude.push('packages/e2e-tests/kit-*/**', 'packages/e2e-tests/*-kit/**');
 // }
+                        
+if (os.platform() === 'win32') {
+  // flaky
+  exclude.push("**/imba-serve-file/**");
+}
 export default defineConfig({
   resolve: {
     alias: {
