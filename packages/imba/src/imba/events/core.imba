@@ -382,7 +382,7 @@ export class EventHandler
 
 			throw error
 
-		return
+		return state
 
 # Add methods to Element
 extend class Element
