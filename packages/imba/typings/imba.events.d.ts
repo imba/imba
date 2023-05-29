@@ -304,6 +304,13 @@ interface PointerEvent {
     αtouch(): boolean;
 
     /**
+     Only trigger if PointerEvent.isPrimary returns true
+        If pointerType is mouse it will only return true for main mouse button.
+    */
+    αprimary(): boolean;
+
+
+    /**
     * Only when pressure is at least amount (defaults to 0.5)
     * @detail (threshold=0.5)
     */
@@ -522,6 +529,12 @@ declare namespace imba {
          * @deprecated
          **/
         αflagΞname(target?: FlagTarget): void;
+
+        /**
+         Only trigger if PointerEvent.isPrimary returns true
+         If pointerType is mouse it will only return true for main mouse button.
+        */
+        αprimary(): boolean;
 
         /**
          * Only trigger handler if event.target matches selector
