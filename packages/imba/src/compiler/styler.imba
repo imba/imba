@@ -1044,8 +1044,8 @@ export class StyleTheme
 		return o
 
 	def outline params		
-		# outlined
-		if params.length == 3
+		# TODO use :where() selector for 0 specificity outline defaults
+		if params.length == 3 or (params.length == 1 and String(params[0]) == 'none')
 			return {outline: [params]}
 		let o = {__outline__: yes}
 		if isNumeric(params[0])
@@ -1536,7 +1536,7 @@ export class StyleRule
 				continue
 
 			elif key.match(/^outline-?/)
-				meta.outline = yes
+				# meta.outline = yes 
 				parts.push "{key}: {value} !important;"
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
@@ -1560,6 +1560,9 @@ export class StyleRule
 
 			elif key.match(/^__ease__$/)
 				yes
+			elif key.match(/^__outline__$/)
+				meta.outline = yes
+
 			else
 				if key.match(/^(width|height)$/)
 					# what about min/max sizes?
