@@ -1535,9 +1535,9 @@ export class StyleRule
 				subrules.push new StyleRule(self,selector,value,options)
 				continue
 
-			elif key.match(/^outline-?/)
-				# meta.outline = yes 
-				parts.push "{key}: {value} !important;"
+			# elif key.match(/^outline-?/)
+			#	# meta.outline = yes 
+			#	parts.push "{key}: {value} !important;"
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
 				unless meta.transform
