@@ -440,6 +440,10 @@ export class ElementRouteTo < ElementRoute
 		node.flags.toggle('active',!!match)
 		return
 
+	get url
+		resolve!
+		global.location.origin + #href
+
 	def go
 		resolve!
 
