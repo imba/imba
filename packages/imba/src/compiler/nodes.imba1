@@ -4506,6 +4506,12 @@ export class NumWithUnit < Literal
 
 		if unit == 'ms'
 			val = "{val}"
+		elif unit == 'kb'
+			val = "({val} * 1024)"
+		elif unit == 'mb'
+			val = "({val} * 1024 * 1024)"
+		elif unit == 'gb'
+			val = "({val} * 1024 * 1024 * 1024)"
 		elif unit == 's'
 			val = "({val} * 1000)"
 		elif unit == 'minutes'
