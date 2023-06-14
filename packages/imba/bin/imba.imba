@@ -403,6 +403,7 @@ def common cmd
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("--inspect", "Debug")
+	.option("--memlimit <bytes>", "Set the memory limit of the process")
 	.action(run)
 
 common(cli.command('build [script]').description('Build an imba/js/html entrypoint and their dependencies'))

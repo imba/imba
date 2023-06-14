@@ -70,6 +70,7 @@ class WorkerInstance
 			execArgv: [
 				o.inspect and '--inspect',
 				(o.sourcemap or bundle.sourcemapped?) and '--enable-source-maps'
+				o.memlimit and `--max_old_space_size={o.memlimit}`
 			].filter do $1
 		}
 
