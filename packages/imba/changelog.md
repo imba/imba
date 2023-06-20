@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.230
+
+* `.env` traverse up file tree from file instead of cwd
+
 ## 2.0.0-alpha.229
 
 * Fixed regression with style values inside parenthesis

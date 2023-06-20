@@ -77,6 +77,9 @@ def parseOptions options, extras = []
 
 	let command = options._name
 
+	let file = np.resolve options.args[0]
+	let dir = np.dirname file
+
 	options = options.opts! if options.opts isa Function
 
 	let cwd = options.cwd ||= process.cwd!
@@ -85,9 +88,9 @@ def parseOptions options, extras = []
 	options.extras = extras
 	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
 	options.imbaConfig = await getConfigFilePath("root")
-	options.vite = yes if options.imbaConfig.bundler == 'vite'
+	options.vite = options.imbaConfig.bundler is 'vite'
 	options.package = resolvePackage(cwd) or {}
-	options.dotenv = resolveFile('.env',cwd)
+	options.dotenv = resolveFile('.env',dir)
 	options.nodeModulesPath = resolvePath('node_modules',cwd)
 
 	if options.dotenv

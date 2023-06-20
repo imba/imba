@@ -161,13 +161,11 @@ export def extendObject obj,patch,path = []
 	mergeConfig(obj,patch,...path)
 
 export def resolvePath name, cwd = '.', cb = null
-	# console.log 'resolve path',name,cwd
 	let src = np.resolve(cwd,name)
 	let dir = np.dirname(src)
 	if nfs.existsSync(src)
 		return src
 	let up = np.dirname(dir)
-	# console.log 'reresolve',up,dir
 	up != dir ? resolvePath(name,up) : null
 
 export def resolveFile name,cwd,handler
