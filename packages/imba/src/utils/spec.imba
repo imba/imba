@@ -450,6 +450,7 @@ global def before name, blk do SPEC.before(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
+global def nok actual, o do SPEC.eq(!!actual, false, o)
 
 global def eqcss el, match,sel,o = {}
 	if typeof el == 'string'
