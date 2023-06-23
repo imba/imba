@@ -227,8 +227,8 @@ global class Spec < SpecComponent
 			test.failed ? failed.push(test) : ok.push(test)
 
 		let logs = [
-			"{ok.length} OK".green
-			"{failed.length} FAILED".red
+			"{ok.length} OK"
+			"{failed.length} FAILED"
 			"{tests.length} TOTAL"
 		]
 
@@ -342,7 +342,7 @@ global class SpecExample < SpecComponent
 		console.log "✘ {fullName}".red, state, error
 
 	def pass
-		console.log "✔ {fullName}".blue
+		console.log "✔ {fullName}".green
 
 	get failed
 		error or assertions.some do(ass) ass.critical
