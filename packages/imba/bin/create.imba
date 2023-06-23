@@ -2,7 +2,7 @@ const L = console.log
 const cwd = process.cwd!
 const swd = __dirname
 
-require 'colors'
+require '../src/utils/colors'
 const fs = require 'fs'
 const path = require 'path'
 const prompt = require 'prompts'

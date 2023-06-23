@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars,no-console */
-import c from 'colors'
+import c from '../../utils/colors'
 import debug from 'debug';
 import { ResolvedOptions, Warning } from './options';
 import { ImbaRequest } from './id';

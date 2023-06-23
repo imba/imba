@@ -1,9 +1,8 @@
 import np from 'node:path'
 import nfs from 'node:fs'
 import url from 'node:url'
-import c from 'colors'
+import c from './colors'
 import mergeWith from 'lodash.mergewith'
-# import merge from 'deepmerge'
 
 const _dirname = if typeof __dirname !== 'undefined' then __dirname else np.dirname(url.fileURLToPath(import.meta.url))
 

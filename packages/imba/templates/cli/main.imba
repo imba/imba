@@ -1,7 +1,7 @@
 global.L = console.log
 global.E = do console.error(...$0); process.exit(1)
 
-import 'colors'
+import 'imba/colors'
 import { program } from 'commander'
 import { version } from './package.json'
 

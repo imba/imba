@@ -1,6 +1,6 @@
 let L = console.log
 
-import 'colors'
+import './colors'
 import {performance} from 'perf_hooks'
 
 const notWin = process.platform isnt 'win32' or process.env.CI or process.env.TERM is 'xterm-256color'
