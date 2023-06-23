@@ -22,7 +22,6 @@ const pup = do(ns,...params)
 		puppy(ns,params)
 		return
 
-	# return
 	if puppy
 		await puppy(ns,params)
 
@@ -77,31 +76,6 @@ class PupPage
 	def setViewport o = {}
 		await puppy('setViewport',[o])
 
-const TERMINAL_COLOR_CODES =
-	bold: 1
-	underline: 4
-	reverse: 7
-	black: 30
-	red: 31
-	green: 32
-	yellow: 33
-	blue: 34
-	magenta: 35
-	cyan: 36
-	white: 37
-
-const fmt = do(code,string)
-	return string.toString! if console.group
-	code = TERMINAL_COLOR_CODES[code]
-	let resetStr = "\x1B[0m"
-	let resetRegex = /\x1B\[0m/g
-	let codeRegex = /\x1B\[\d+m/g
-	let tagRegex = /(<\w+>|<A\d+>)|(<\/\w+>|<A\d+>)/i
-	let numRegex = /\d+/
-	let str = ('' + string).replace(resetRegex, "{resetStr}\x1B[{code}m") # allow nesting
-	str = "\x1B[{code}m{str}{resetStr}"
-	return str
-
 class SpecComponent
 
 	def log ...params
@@ -130,7 +104,6 @@ global class Spec < SpecComponent
 			trusted = yes
 
 		if puppy and trusted
-			# console.log "click with puppeteer!!",sel
 			try
 				await puppy('click',[sel,options])
 			catch e
@@ -199,11 +172,6 @@ global class Spec < SpecComponent
 		if inline
 			return blk()
 
-		# if we are currently running - just push it and execute immediately
-		# if stack.length > 1
-		# 	let curr = stack[-1]
-		# 	if curr isa SpecExample
-		# 		console.log "CALLING TEST INSIDE TEST!!!"
 		context.blocks.push new SpecExample(name, blk, context)
 
 	def before name, blk
@@ -259,8 +227,8 @@ global class Spec < SpecComponent
 			test.failed ? failed.push(test) : ok.push(test)
 
 		let logs = [
-			fmt('green',"{ok.length} OK")
-			fmt('red',"{failed.length} FAILED")
+			"{ok.length} OK".green
+			"{failed.length} FAILED".red
 			"{tests.length} TOTAL"
 		]
 
@@ -303,7 +271,7 @@ global class SpecGroup < SpecComponent
 			for pre in blocks.setup
 				await pre()
 
-		block.run! # this is where we wan to await?
+		block.run!
 
 	def start
 		emit('start', [self])
@@ -343,7 +311,6 @@ global class SpecExample < SpecComponent
 
 	def run
 		start!
-		# does a block really need to run here?
 		try
 			let promise = (block ? SPEC.eval(block, self) : Promise.resolve({}))
 			let res = await promise
@@ -372,16 +339,10 @@ global class SpecExample < SpecComponent
 		emit('done',[self])
 
 	def fail
-		# if $node$
-		# 	logger.log("%red", "✘ {fullName}")
-		# else
-		console.log("%c✘ {fullName}", "color:orangered",state,error)
+		console.log "✘ {fullName}".red, state, error
 
 	def pass
-		# if $node$
-		# 	logger.log("%green", "✔ {fullName}")
-		# else
-		console.log("%c✔ {fullName}", "color:forestgreen")
+		console.log "✔ {fullName}".blue
 
 	get failed
 		error or assertions.some do(ass) ass.critical
@@ -422,12 +383,11 @@ global class SpecAssert < SpecComponent
 		failed = yes
 		if options.warn
 			root.warnings.push(self)
-		console.log(toString!,[expected,actual])
+		console.log(toString!.red,[expected,actual])
 		self
 
 	def pass
 		passed = yes
-		console.log(toString!,[expected,actual])
 		self
 
 	def toString
@@ -443,10 +403,8 @@ global class SpecAssert < SpecComponent
 
 global.spec = global.SPEC = new Spec
 
-# global def p do console.log(*arguments)
 global def describe name, blk do SPEC.context.describe(name,blk)
 global def before name, blk do SPEC.before(name,blk)
-# global def test name, blk do SPEC.test(name,blk)
 global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
