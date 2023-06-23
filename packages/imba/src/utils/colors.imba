@@ -52,9 +52,11 @@ for own name, [open, close] of colors
 	String.prototype.__defineGetter__ name, do
 		'\x1b[' + open + 'm' + this + '\x1b[' + close + 'm'
 
-export default c = {}
+let c = {}
 for own name, [open, close] of colors
 	c[name] = do '\x1b[' + open + 'm' + $1 + '\x1b[' + close + 'm'
+
+export default c
 
 # console.log "Hello this is a {"blue".blue} string and a {"red".red} one and a {"green".green} one."
 # console.log "Hello this is a {c.blue("blue")} string and a {c.red("red")} one and a {c.green("green")} one."
