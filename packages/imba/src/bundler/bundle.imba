@@ -600,9 +600,13 @@ export default class Bundle < Component
 				let out = np.resolve(imbaDir,'index.imba')
 				return {path: out, namespace: 'file'}
 
-			# try to resolve imba files here?
+			let map = {
+				'colors': 'src/utils/colors.imba'
+				'spec': 'src/utils/spec.imba'
+			}
+
 			let rel = args.path.slice(args.path.indexOf('/') + 1)
-			let path = np.resolve(imbaDir,rel)
+			let path = np.resolve(imbaDir,map[rel] or rel)
 
 			let exts = ['','.imba']
 			if rel == 'program' or rel == 'compiler'
