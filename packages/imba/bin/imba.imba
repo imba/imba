@@ -329,7 +329,6 @@ def run entry, o, extras
 		if o.command == 'build'
 			# build client
 			let entry-points
-			console.log "::build", o.vite
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
 
@@ -387,10 +386,8 @@ def run entry, o, extras
 		runner.start!
 
 	if o.vite
-		console.log "::running", o.vite
 		run()
 	elif out..main and o.command != 'build'
-		console.log "::running 2", o
 		run()
 	elif o.watch
 		bundle.once('built',run)
