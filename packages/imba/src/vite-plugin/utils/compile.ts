@@ -87,7 +87,10 @@ const _createCompileImba = (makeHot?: Function) =>
 		}else if(q.web){
 			finalCompileOptions.platform = "browser"
 		}
-
+		
+		if(options.server?.config?.mode == "test" && options.server?.config?.test?.environment == 'node'){
+			finalCompileOptions.platform = "node"
+		}
 		const compiled = compile(code, finalCompileOptions);
 		if (compiled["erroredΦ"]){
 			throw compiled

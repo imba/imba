@@ -6,7 +6,8 @@
     "info": "imba info",
     "test:serve": "vitest run -c vitest.config.e2e.ts --watch false",
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
-    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build",
+    "test:imba": "imba test imba.test.imba -- --run",
+    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba",
     "sync": "git pull && npm --prefix ../imba install && npm --prefix ../imba run build && npm install",
     "synctest": "npm run sync && npm run test"
   },
@@ -20,6 +21,11 @@
     "node-fetch": "^3.2.10",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
-    "vitest": "^0.29.2"
+    "vitest": "^0.32.2"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^9.3.1",
+    "@testing-library/jest-dom": "^5.16.5",
+    "jsdom": "^22.1.0"
   }
 }

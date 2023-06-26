@@ -8,7 +8,7 @@ import np from 'node:path'
 import url from 'node:url'
 
 # import moduleGraph from "./server.moduleGraph.json"
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const _dirname = url.fileURLToPath(new URL('.', import.meta.url));
 # We need to load SSR styles manually in order to prevent FOUC
 # We leverage vite-node to create a module graph from the server entry point
 # And we load all the tags CSS in separate files and concatenate them  here
@@ -33,7 +33,7 @@ def createServer(root = process.cwd(), isDev = import.meta.env.MODE === "develop
 	if !isDev
 		manifest = (await import("./dist_client/manifest.json")).default
 	const app = express()
-	const configFile = np.join(__dirname, "vite.config.mjs")
+	const configFile = np.join(_dirname, "vite.config.mjs")
 	let vite
 	if isDev
 		vite = await Vite.createServer

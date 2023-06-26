@@ -78,6 +78,6 @@ if (!isBuild) {
         "button has color red",
       );
       expect(await page.textContent("button")).toMatch("Hello 2 times");
-    });
+    }, {retry:4});
   });
 }

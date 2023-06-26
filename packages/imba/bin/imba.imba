@@ -77,21 +77,25 @@ def parseOptions options, extras = []
 
 	let command = options._name
 
-	let file = np.resolve options.args[0]
-	let dir = np.dirname file
 
 	options = options.opts! if options.opts isa Function
 
-	let cwd = options.cwd ||= process.cwd!
+	let dir = options.cwd ||= process.cwd!
+
+	if options.args and options.args[0]
+		let file = np.resolve options.args[0]
+		dir = np.dirname file
+
 	options.imbaPath ||= np.resolve(__dirname,'..')
 	options.command = command
 	options.extras = extras
-	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
+	options.config = await resolveConfig(options.cwd,options.config or 'imbaconfig.json')
 	options.imbaConfig = await getConfigFilePath("root")
-	options.vite = options.imbaConfig.bundler is 'vite'
-	options.package = resolvePackage(cwd) or {}
+	# only overwrite if vite is present in the config file
+	options.vite = yes if options.imbaConfig.bundler == 'vite'
+	options.package = resolvePackage(options.cwd) or {}
 	options.dotenv = resolveFile('.env',dir)
-	options.nodeModulesPath = resolvePath('node_modules',cwd)
+	options.nodeModulesPath = resolvePath('node_modules',options.cwd)
 
 	if options.dotenv
 		options.dotvars = dotenv.parse(options.dotenv.body)
@@ -161,11 +165,17 @@ def parseOptions options, extras = []
 	return options
 
 
-def test o
-	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+def test o	
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
+	await ensurePackagesInstalled(['vitest'], process.cwd!)
+
 	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
-	
+	try
+		let userTestConfig = (await import(String(url.pathToFileURL(testConfigPath)))).default
+
+		if userTestConfig.test.environment == 'jsdom'
+			await ensurePackagesInstalled(['@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+		
 	let configFile = testConfigPath
 
 	# create a temporary file and put the config there
@@ -177,7 +187,12 @@ def test o
 		`
 	nfs.writeFileSync(configFile, content)
 
-	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
+	let params = ["--config", configFile, "--root", process.cwd()]
+
+	if !o.args.includes('--dir')
+		params.push "--dir", process.cwd()
+
+	params.push(...o.args)
 	const options =
 		cwd: process.cwd()
 		env: {
@@ -314,7 +329,6 @@ def run entry, o, extras
 		if o.command == 'build'
 			# build client
 			let entry-points
-
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
 

@@ -11,7 +11,7 @@ let envPrefix = ['_']
     .concat([...Array(26).keys()].map(n=> String.fromCharCode(97 + n)))
 
 const extensions = ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-const setupFiles = ['node_modules/imba/bin/test-setup.mjs']
+const setupFiles = ['node_modules/imba/bin/test-setup.all.mjs']
 
 let userTestConfig = {}
 
@@ -28,18 +28,20 @@ export default defineConfig(async ({mode, command})=>{
 			globals: true,
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-			environment: "jsdom",
+			environment: "node",
 			setupFiles,
-        	exclude: ['node_modules']
-			// define: {
-			// 	'import.meta.vitest': undefined,
-			// },
+			exclude: ['**/node_modules']
 	}}
     if(mode == "test"){
 
         /** REPLACE_ME */
 
 		const Vite = await import('vite')
+		if(userTestConfig?.test?.environment == 'node' || userTestConfig?.environment == 'node'){
+			// specific stuff to testing in node?
+		}else{
+			setupFiles.unshift('node_modules/imba/bin/test-setup.browser.mjs')
+		}
         finalTest = Vite.mergeConfig(finalTest, userTestConfig)
     }
 	return ({
