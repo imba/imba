@@ -30,7 +30,7 @@ export default defineConfig(async ({mode, command})=>{
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 			environment: "node",
 			setupFiles,
-			exclude: ['**/node_modules']
+			exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*']
 	}}
     if(mode == "test"){
 
