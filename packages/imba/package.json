@@ -60,6 +60,7 @@
     "./colors": {
       "imba": "./src/utils/colors.imba",
       "default": "./dist/colors.mjs",
+      "browser": "./dist/colors.mjs",
       "require": "./dist/colors.cjs"
     },
     "./program": {

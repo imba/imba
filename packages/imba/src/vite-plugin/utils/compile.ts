@@ -86,10 +86,11 @@ const _createCompileImba = (makeHot?: Function) =>
 			finalCompileOptions.platform = "worker"
 		}else if(q.web){
 			finalCompileOptions.platform = "browser"
-		}else{
+		}
+		
+		if(options.server?.config?.mode == "test" && options.server?.config?.test?.environment == 'node'){
 			finalCompileOptions.platform = "node"
 		}
-
 		const compiled = compile(code, finalCompileOptions);
 		if (compiled["erroredΦ"]){
 			throw compiled

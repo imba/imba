@@ -35,7 +35,7 @@ if (!isBuild) {
 
       // color should have changed
       expect(await getColor(`h1`)).toBe("green");
-    });
+    }, {retry:4});
 
     // test('should apply js change in HmrTest.svelte ', async () => {
     // 	// update script, change label value

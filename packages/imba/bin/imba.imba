@@ -77,21 +77,25 @@ def parseOptions options, extras = []
 
 	let command = options._name
 
-	let file = np.resolve options.args[0]
-	let dir = np.dirname file
 
 	options = options.opts! if options.opts isa Function
 
-	let cwd = options.cwd ||= process.cwd!
+	let dir = options.cwd ||= process.cwd!
+
+	if options.args and options.args[0]
+		let file = np.resolve options.args[0]
+		dir = np.dirname file
+
 	options.imbaPath ||= np.resolve(__dirname,'..')
 	options.command = command
 	options.extras = extras
-	options.config = await resolveConfig(cwd,options.config or 'imbaconfig.json')
+	options.config = await resolveConfig(options.cwd,options.config or 'imbaconfig.json')
 	options.imbaConfig = await getConfigFilePath("root")
-	options.vite = options.imbaConfig.bundler is 'vite'
-	options.package = resolvePackage(cwd) or {}
+	# only overwrite if vite is present in the config file
+	options.vite = yes if options.imbaConfig.bundler == 'vite'
+	options.package = resolvePackage(options.cwd) or {}
 	options.dotenv = resolveFile('.env',dir)
-	options.nodeModulesPath = resolvePath('node_modules',cwd)
+	options.nodeModulesPath = resolvePath('node_modules',options.cwd)
 
 	if options.dotenv
 		options.dotvars = dotenv.parse(options.dotenv.body)
@@ -314,7 +318,7 @@ def run entry, o, extras
 		if o.command == 'build'
 			# build client
 			let entry-points
-
+			console.log "::build", o.vite
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
 
@@ -372,8 +376,10 @@ def run entry, o, extras
 		runner.start!
 
 	if o.vite
+		console.log "::running", o.vite
 		run()
 	elif out..main and o.command != 'build'
+		console.log "::running 2", o
 		run()
 	elif o.watch
 		bundle.once('built',run)
