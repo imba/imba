@@ -28,7 +28,7 @@ export default defineConfig(async ({mode, command})=>{
 			globals: true,
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-			environment: "jsdom",
+			environment: "node",
 			setupFiles,
 			exclude: ['**/node_modules']
 	}}
