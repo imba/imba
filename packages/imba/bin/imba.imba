@@ -318,7 +318,7 @@ def run entry, o, extras
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
 
-			if entry.endsWith "html"
+			if entry.endsWith "html" or o.web
 				entry-points = entry
 				await Vite.build({
 					...clientConfig,
