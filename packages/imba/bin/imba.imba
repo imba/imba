@@ -165,11 +165,17 @@ def parseOptions options, extras = []
 	return options
 
 
-def test o
-	await ensurePackagesInstalled(['vitest', '@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+def test o	
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
+	await ensurePackagesInstalled(['vitest'], process.cwd!)
+
 	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
-	
+	try
+		let userTestConfig = (await import(String(url.pathToFileURL(testConfigPath)))).default
+
+		if userTestConfig.test.environment == 'jsdom'
+			await ensurePackagesInstalled(['@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
+		
 	let configFile = testConfigPath
 
 	# create a temporary file and put the config there
@@ -181,7 +187,12 @@ def test o
 		`
 	nfs.writeFileSync(configFile, content)
 
-	const params = ["--config", configFile, "--root", process.cwd(), "--dir", process.cwd(), ...o.args]
+	let params = ["--config", configFile, "--root", process.cwd()]
+
+	if !o.args.includes('--dir')
+		params.push "--dir", process.cwd()
+
+	params.push(...o.args)
 	const options =
 		cwd: process.cwd()
 		env: {
