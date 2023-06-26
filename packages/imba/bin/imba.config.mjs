@@ -30,10 +30,7 @@ export default defineConfig(async ({mode, command})=>{
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 			environment: "jsdom",
 			setupFiles,
-        	exclude: ['node_modules']
-			// define: {
-			// 	'import.meta.vitest': undefined,
-			// },
+			exclude: ['**/node_modules']
 	}}
     if(mode == "test"){
 
