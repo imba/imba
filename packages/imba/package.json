@@ -58,7 +58,9 @@
       "imba": "./src/utils/spec.imba"
     },
     "./colors": {
-      "imba": "./src/utils/colors.imba"
+      "imba": "./src/utils/colors.imba",
+      "default": "./dist/colors.mjs",
+      "require": "./dist/colors.cjs"
     },
     "./program": {
       "browser": "./program.browser.imba.js",

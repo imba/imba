@@ -282,5 +282,25 @@ let bundles = [
 		format: "cjs",
 		platform: "node",
 	},
+	{
+		entryPoints: [
+			"src/utils/colors.imba"
+		],
+		outExtension: { ".js": ".mjs" },
+		minify: true,
+		outdir: "dist",
+		format: "esm",
+		platform: "browser",
+	},
+	{
+		entryPoints: [
+			"src/utils/colors.imba"
+		],
+		outExtension: { ".js": ".cjs" },
+		minify: true,
+		outdir: "dist",
+		format: "cjs",
+		platform: "node",
+	},
 ];
 bundle(bundles)

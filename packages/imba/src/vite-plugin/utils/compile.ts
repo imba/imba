@@ -86,6 +86,8 @@ const _createCompileImba = (makeHot?: Function) =>
 			finalCompileOptions.platform = "worker"
 		}else if(q.web){
 			finalCompileOptions.platform = "browser"
+		}else{
+			finalCompileOptions.platform = "node"
 		}
 
 		const compiled = compile(code, finalCompileOptions);
