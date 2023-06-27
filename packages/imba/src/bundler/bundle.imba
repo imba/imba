@@ -361,6 +361,7 @@ export default class Bundle < Component
 			defines["global"]="globalThis"
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
+			defines["process.env.NODE_ENV"]="'{env}'"
 
 			# FIXME Buffer is no longer tree-shaken if not used
 			esoptions.inject = [
@@ -390,9 +391,9 @@ export default class Bundle < Component
 			elif main?
 				esoptions.banner.js += '\nrequire("dotenv").config();'
 
-			if webish?
-				# process.env should return an empty object when compiled to web
-				defines["process.env"] = '{}'
+		if webish?
+			# process.env should return an empty object when compiled to web
+			defines["process.env"] = '{}'
 
 		if o.bundle == false
 			esoptions.bundle = false
