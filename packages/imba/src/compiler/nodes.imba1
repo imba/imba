@@ -7935,8 +7935,17 @@ export class Range < Op
 	def inclusive
 		op == '..'
 
+	def end
+		right.value
+
+	def start
+		left.value
+
+	def length
+		end - start + inclusive
+
 	def c
-		"range"
+		"Array.from(\{length: {length}}, (_, i) => i + {start})"
 
 export class Splat < ValueNode
 
