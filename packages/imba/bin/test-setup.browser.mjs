@@ -2,7 +2,8 @@ import '@testing-library/jest-dom'
 import {vi} from "vitest"
 import * as domHelpers from '@testing-library/dom'
 
-vi.stubGlobal('eq', assert.equal)
+vi.stubGlobal('eq', assert.deepStrictEqual)
+vi.stubGlobal('neq', assert.notDeepStrictEqual)
 vi.stubGlobal('ok', assert.ok)
 vi.stubGlobal('nok', (b) => assert.ok(!b))
 
