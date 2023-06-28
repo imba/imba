@@ -93,7 +93,12 @@ class WorkerInstance
 			args.env = Object.assign({},process.env,env)
 			fork = cp.fork(np.resolve(path),args.args,args)
 			# setup-vite fork
-			fork.on('exit') do(code) process.exit(code)
+			process.on('SIGINT') do
+				fork.kill('SIGINT')
+			
+			fork.on('exit') do(code)
+				process.exit(code)
+			
 			return fork
 
 		cluster.setupMaster(args)
