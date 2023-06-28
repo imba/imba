@@ -94,7 +94,7 @@ def parseOptions options, extras = []
 	# only overwrite if vite is present in the config file
 	options.vite = yes if options.imbaConfig.bundler == 'vite'
 	options.package = resolvePackage(options.cwd) or {}
-	options.dotenv = resolveFile('.env',dir)
+	options.dotenv = nfs.existsSync(np.resolve(options.cwd,'.env')) ? resolveFile('.env',options.cwd) : null
 	options.nodeModulesPath = resolvePath('node_modules',options.cwd)
 
 	if options.dotenv
