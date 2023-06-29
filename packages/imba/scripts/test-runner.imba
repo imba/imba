@@ -204,10 +204,8 @@ def run page
 
 			'spec:start': do(e)
 				yes
-				# console.log "starting tests!"
 
 			'spec:done': do(e)
-				# console.log 'spec done'
 				test.results = e
 				setTimeout(&,0) do releaseRunner(runner,page)
 				resolve(test)
@@ -226,8 +224,6 @@ def run page
 		runner.meta.push(page.path)
 		try
 			await runner.goto(src, waitUntil: 'domcontentloaded', timeout: 5000)
-			# console.log 'went to!'
-			# await runner.waitFor(0)
 		catch e
 			console.log 'timed out for',page.path,e
 			page.error ||= e
@@ -245,13 +241,14 @@ def serve
 
 	let cmpjs = {body: fs.readFileSync(path.resolve(__dirname,'..','dist','compiler.mjs'),'utf-8')}
 	let specraw = import.text('../src/utils/spec.imba')
+	let std = import.text('../dist/std.mjs')
 
 	statics["/compiler.js"] = cmpjs.body
 	statics["/imba.js"] = import.web('../index.imba').body
 	statics["/spec.js"] = compiler.compile(specraw,Object.assign({sourcePath: 'spec'},copts)).js
+	statics["/std.js"] = std
 
 	server = http.createServer do(req,res)
-		# console.log "responding",req.url
 		if let file = statics[req.url]
 			res.setHeader("Content-Type", "application/javascript")
 			res.write(file)
@@ -269,6 +266,7 @@ def serve
 					'imba': '/imba.js',
 					'imba/compiler': '/compiler.js',
 					'imba/spec': '/spec.js'
+					'imba/std': '/std.js'
 				}
 			}
 			let html = """
@@ -277,6 +275,7 @@ def serve
 				<script type='importmap'>{JSON.stringify(importmap)}</script>
 				<script src='/imba.js' type='module'></script>
 				<script src='/spec.js' type='module'></script>
+				<script src='/std.js' type='module'></script>
 				</head><body>
 				<script src='./{barename}.imba' type='module'></script>
 				<script type='module'>SPEC.run();</script>
@@ -291,7 +290,6 @@ def serve
 		if entry
 
 			let body = entry.body
-			# console.log 'found page'			
 
 			# look for expected crashes
 			let expect = []
@@ -332,7 +330,6 @@ def serve
 
 			catch e
 				js += inlineTest("compile",false,"file did not compile")
-				# console.log "compiler failed!!",expect,e,src
 
 			res.write js
 		else

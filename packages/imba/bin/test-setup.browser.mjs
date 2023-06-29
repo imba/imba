@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import {vi} from "vitest"
 import * as domHelpers from '@testing-library/dom'
+import 'imba/std'
 
 vi.stubGlobal('eq', assert.deepStrictEqual)
 vi.stubGlobal('neq', assert.notDeepStrictEqual)

@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
     "test-cli": "cd test/cli && node ../../bin/imba index.imba",
+    "test:std": "imba test run -- --dir ./test/std",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "watch": "node scripts/build.js -w",
     "dev": "npm run watch",
@@ -110,6 +111,7 @@
     }
   },
   "devDependencies": {
+    "imba": ".",
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
     "fdir": "^4.1.0",

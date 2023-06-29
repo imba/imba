@@ -34,7 +34,7 @@ extend class Array
 
 	def sorted key, reverse = no
 		let items = slice!
-		let cb
+		let cb = key
 
 		if typeof key is "string"
 			cb = do $1[key]
@@ -48,6 +48,6 @@ extend class Array
 		items.sort do
 			let a = cb($1)
 			let b = cb($2)
-			a > b ? 1 : a < b ? -1 : 0
+			a > b ? 1 : (a < b ? -1 : 0)
 
 		reverse ? items.reversed : items
