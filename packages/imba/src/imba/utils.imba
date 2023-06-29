@@ -95,6 +95,7 @@ export def once obj, event, listener
 
 # remove a listener
 export def unlisten obj, event, cb, meth
+	return unless cb
 	let node
 	let prev
 	let meta = obj.#__listeners__
