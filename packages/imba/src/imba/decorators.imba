@@ -20,3 +20,50 @@ export def @bound target, key, desc
 		delete desc.value
 		delete desc.writable
 	return desc
+
+
+const thenables = new WeakMap
+
+export def @thenable target, key, desc
+
+	let val = desc.value
+	let sym = Symbol!
+	let meta = thenables.get(target)
+	meta || thenables.set(target,meta = [])
+
+	if meta.length
+		throw new Error(`@thenable {key} not allowed - @thenable {meta[0][0]} already defined`)
+
+	const warn = do
+		console.warn `@thenable {key} takes long - make sure method does not return self`
+
+	meta.push([key,sym])
+
+	if val isa Function
+		if val.length > 0
+			throw new Error(`@thenable methods cannot be called with arguments ({key})`)
+
+		Object.defineProperty(target,'then',{
+			enumerable: no,
+			value: do(ok,err)
+				let that = this
+				let promise = new Promise do(resolve)
+					# TODO should only happen in debug
+					let timeout = setTimeout(warn,2s)
+					await that[key]()
+					clearTimeout(timeout)
+					Object.defineProperty(that,'then',{value: null, writable: yes, configurable: yes})
+					resolve(that)
+				promise.then(ok,err)
+		})
+
+		desc.value = do(value)
+			this[sym] ||= Promise.resolve(val.call(this))
+
+		# You can reset thenables explicitly by calling instance.myfunction.reset(instance)
+		desc.value.reset = do(target)
+			if target and target[sym]
+				delete target[sym]
+				delete target.then
+
+	return desc
