@@ -150,6 +150,12 @@ extend class Event
 		if handler and handler.#self
 			return !handler.#self.parentNode.contains(target)
 
+	def @post url, o = {}
+		await global.fetch url, { method:'POST', ...o }
+
+	def @fetch url, o = {}
+		await global.fetch url, o
+
 export const events = {}
 
 export def use_events
