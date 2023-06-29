@@ -63,6 +63,12 @@
       "browser": "./dist/colors.mjs",
       "require": "./dist/colors.cjs"
     },
+    "./std": {
+      "imba": "./src/utils/std/std.imba",
+      "default": "./dist/std.mjs",
+      "browser": "./dist/std.mjs",
+      "require": "./dist/std.cjs"
+    },
     "./program": {
       "browser": "./program.browser.imba.js",
       "require": "./program.imba.js"

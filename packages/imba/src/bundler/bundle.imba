@@ -603,6 +603,7 @@ export default class Bundle < Component
 
 			let map = {
 				'colors': 'src/utils/colors.imba'
+				'std': 'src/utils/std/std.imba'
 				'spec': 'src/utils/spec.imba'
 			}
 
