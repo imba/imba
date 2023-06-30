@@ -6977,17 +6977,11 @@ export class Call < Node
 
 		if callee isa Identifier and callee.value == 'L'
 			let src = STACK.SOURCECODE
-			let loc = @args.startLoc
-			let end = @args.endLoc
-
-			if src[loc] is '(' and src[end - 1] is ')'
-				loc++
-				end--
-
-			let line = src.slice(loc,end)
+			let start = @args.startLoc
+			let end = src.indexOf('\n', start)
+			let line = src.slice(start,end)
 			callee = LIT("console.log")
-			args.unshift LIT("\"<{JSON.stringify(line).slice(1,-1)}>\"")
-			args.unshift "'(devlog)'"
+			args.unshift LIT("\"\x1b[90m::\x1b[44m\x1b[97m{JSON.stringify(line).slice(1,-1)}\x1b[0m\"")
 
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
