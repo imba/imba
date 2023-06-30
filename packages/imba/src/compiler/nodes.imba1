@@ -1464,6 +1464,12 @@ export class Newline < Terminator
 # weird place?
 export class Index < ValueNode
 
+	def startLoc
+		@startLoc or @value?.startLoc
+
+	def endLoc
+		@endLoc or @value?.endLoc
+
 	def cache o = {}
 		@value.cache(o)
 
@@ -6973,9 +6979,11 @@ export class Call < Node
 			let src = STACK.SOURCECODE
 			let loc = @args.startLoc
 			let end = @args.endLoc
+
 			if src[loc] is '(' and src[end - 1] is ')'
 				loc++
 				end--
+
 			let line = src.slice(loc,end)
 			callee = LIT("console.log")
 			args.unshift LIT("\"<{JSON.stringify(line).slice(1,-1)}>\"")
