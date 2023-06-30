@@ -685,7 +685,12 @@ export default class Bundle < Component
 
 				let res = await esb.resolve(args.path,opts)
 
-				if res.path
+				if res.path					
+					# if it resolve to an imba file - we don't want to make it external?
+					if res.path.match(/\.imba$/)
+						return null
+
+
 					let base = res.path.split('node_modules')[0]
 					let inpath = np.relative(base,outdir)
 					reachable? = yes if inpath.indexOf('../') != 0
