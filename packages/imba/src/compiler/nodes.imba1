@@ -3093,6 +3093,7 @@ export class Root < Code
 	def compile o, script = {}
 		STACK.reset # -- nested compilation does not work now
 		@scope.options = OPTS = STACK.@options = @options = o or {}
+		STACK.SOURCECODE = script:sourceCode
 		STACK.root = @scope
 		@scope.@imba.configure(o)
 		traverse
@@ -6815,10 +6816,6 @@ export class Call < Node
 
 		if callee isa VarOrAccess
 			var str = callee.value.symbol
-			if str == 'new'
-				console.log 'calling'
-			# if str == '__pure__'
-			#	console.log 'PUREPRERE'
 			if str == 'extern'
 				callee.value.value.@type = 'EXTERN'
 				return ExternDeclaration.new(args)
@@ -6974,6 +6971,15 @@ export class Call < Node
 			# console.log "Special assert call!! {arg.c}",arg isa Op
 
 			# rewrite a.len(..) to len$(a)
+		if callee isa Identifier and callee.value == 'LLL'
+			let src = STACK.SOURCECODE
+			let loc = @args.startLoc # callee.@value.startLoc + 2
+			let end = @args.endLoc
+			let line = src.slice(loc,end)
+			callee = LIT("console.log")
+			args.unshift(LIT(JSON.stringify(line)))
+
+			# return "LOGGING!"
 
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
