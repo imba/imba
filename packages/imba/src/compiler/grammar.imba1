@@ -1039,7 +1039,7 @@ var grammar =
 	# The array literal.
 	Array: [
 		o '[ ]' do Arr.new(ArgList.new([])).setEnds(A1,A2)
-		o '[ ArgList OptComma ]' do Arr.new(A2).setEnds(A1,A2)
+		o '[ ArgList OptComma ]' do Arr.new(A2).setEnds(A1,A4)
 		o 'Array Type' do A1.set(datatype: A2)
 	]
 
@@ -1259,7 +1259,7 @@ var grammar =
 	# rules are necessary.
 	Operation: [
 		o 'NEW Expression' do AST.Instantiation.for(A2,A1)
-		o 'UNARY Expression' do AST.OP A1, A2
+		o 'UNARY Expression' do AST.OP(A1, A2).setEnds(A1,A2)
 		o 'SQRT Expression' do AST.OP A1, A2
 		o '--- Expression' do AST.OP A1, A2
 		o '+++ Expression' do AST.OP A1, A2
@@ -1270,7 +1270,7 @@ var grammar =
 		o 'SimpleAssignable --' do UnaryOp.new(A2, A1, null, true)
 		o 'SimpleAssignable ++' do UnaryOp.new(A2, A1, null, true)
 
-		o 'Expression +  Expression' do Op.new(A2,A1,A3)
+		o 'Expression +  Expression' do Op.new(A2,A1,A3).setEnds(A1,A3)
 		o 'Expression -  Expression' do Op.new(A2,A1,A3)
 
 		o 'Expression EXP      Expression' do AST.OP A2, A1, A3
@@ -1286,7 +1286,7 @@ var grammar =
 			AST.OP(A3, A1, A4).invert(A2)
 
 		o 'Expression RELATION Expression' do
-			AST.OP A2, A1, A3
+			AST.OP(A2, A1, A3).setEnds(A1,A3)
 
 		o 'SimpleAssignable COMPOUND_ASSIGN Expression' do AST.OP(A2,A1,A3)
 		o 'SimpleAssignable COMPOUND_ASSIGN INDENT Expression Outdent' do AST.OP(A2,A1,A4.indented(A3,A5))

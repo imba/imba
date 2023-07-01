@@ -6976,12 +6976,28 @@ export class Call < Node
 			args.@nodes[0] = AssertionNode.new(arg)
 
 		if callee isa Identifier and callee.value == 'L'
-			let src = STACK.SOURCECODE
-			let start = @args.startLoc
-			let end = src.indexOf('\n', start)
-			let line = src.slice(start,end)
+			let dim = '\x1b[90m'
+			let blue = '\x1b[44m'
+			let white = '\x1b[97m'
+			let reset = '\x1b[0m'
+
 			callee = LIT("console.log")
-			args.unshift LIT("\"\x1b[90m::\x1b[44m\x1b[97m{JSON.stringify(line).slice(1,-1)}\x1b[0m\"")
+			let src = STACK.SOURCECODE
+
+			let result = [LIT("\'{dim}::{reset}\'")]
+			for arg in args
+				let [start, end] = arg.loc
+				let s = src.slice(start,end)
+					.replace(/\\/g, '\\\\')
+					.replace(/"/g, '\\"')
+					.replace(/'/g, "\\'")
+					.replace(/\n/g, "\\n")
+					.replace(/\r/g, "\\r")
+					.replace(/\t/g, "\\t")
+				result.push LIT("'{blue}{white}{s}{reset}'")
+				result.push arg
+
+			args.@nodes = result
 
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
