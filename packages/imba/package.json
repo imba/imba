@@ -200,5 +200,5 @@
     "imba",
     "compiler"
   ],
-  "sideEffects": false
+  "sideEffects": ["src/utils/colors.imba"]
 }
