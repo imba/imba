@@ -1,7 +1,9 @@
 let L = console.log
 
-import './colors'
+import {setupColors} from './colors'
 import {performance} from 'perf_hooks'
+
+setupColors!
 
 const notWin = process.platform isnt 'win32' or process.env.CI or process.env.TERM is 'xterm-256color'
 const logSymbols =
