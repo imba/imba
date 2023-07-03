@@ -174,12 +174,6 @@ export var OP = do |op, l, r|
 		when '+=','-=','*=','/=','^=','%=','**='
 			CompoundAssign.new(op,l,r)
 
-		# when '?.'
-		# 	if r isa VarOrAccess
-		# 		r = r.value
-		# 	# depends on the right side - this is wrong
-		# 	PropertyAccess.new(op,l,r)
-
 		when 'instanceof','isa'
 			InstanceOf.new(op,l,r)
 		when 'in'
@@ -1294,12 +1288,6 @@ export class Node
 export class ValueNode < Node
 
 	prop value
-
-	def startLoc
-		@value?.startLoc
-
-	def endLoc
-		@value?.endLoc
 
 	def initialize value
 		setup
@@ -5070,10 +5058,6 @@ export class Op < Node
 		# what if right is a string?!?
 		!right || right.isExpressable
 
-	def startLoc
-		let l = @left
-		l and l:startLoc ? l.startLoc : super
-
 	def js o
 		var out = null
 
@@ -5206,10 +5190,6 @@ export class UnaryOp < Op
 	def isTruthy
 		var val = AST.truthy(left)
 		return val !== undefined ? (!val) : (undefined)
-
-	def startLoc
-		let l = (@left or @op)
-		l and l:startLoc ? l.startLoc : @startLoc
 
 	def js o
 		var l = @left
@@ -6801,10 +6781,6 @@ export class Call < Node
 	prop args
 	prop block
 
-	# def m
-	# 	console.log "called Call.m {@callee} ({startLoc} - {@callee.startLoc}) [{endLoc}]"
-	# 	super
-
 	def initialize callee, args, opexists
 		@traversed = no
 		@expression = no
@@ -6900,8 +6876,6 @@ export class Call < Node
 		if self isa BangCall and (@args.count == 0) and option(:keyword)
 			let bang = option(:keyword)
 			@args.setEnds(bang,bang)
-			# @args.@startLoc = option(:keyword).startLoc
-			# @args.@endLoc = option(:keyword).endLoc
 		self
 
 	def addBlock block
@@ -7046,18 +7020,9 @@ export class Instantiation < ValueNode
 
 export class New < Call
 
-	# def startLoc
-	# 	keyword ? keyword.startLoc : super
-
 	def visit
 		keyword.warn 'Value.new is deprecated - use new Value'
 		super
-
-	def endLoc
-		keyword and keyword.endLoc or super
-
-	def startLoc
-		null
 
 	def js o
 		var target = callee

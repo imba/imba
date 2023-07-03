@@ -238,8 +238,6 @@ var grammar =
 	# them somewhat circular.
 	Expression: [
 		o 'Await'
-		# o 'FieldDescriptor'
-		# o 'FieldDescriptor = Expression' do A1.set(default: A3)
 		o 'Value'
 		o 'Code'
 		o 'Operation'
@@ -251,7 +249,7 @@ var grammar =
 		o 'For'
 		o 'Switch'
 		o 'ExtendObject'
-		o 'Class' # statement, no?
+		o 'Class'
 		o 'TagDeclaration'
 		o 'Tag'
 	]
@@ -583,7 +581,7 @@ var grammar =
 	# Assignment of a variable, property, or index to a value.
 	Assign: [
 		o 'VarAssign'
-		o 'Assignable = Expression' do Assign.new A2, A1, A3
+		o 'Assignable = Expression' do Assign.new(A2, A1, A3).setEnds(A1,A3)
 		o 'Assignable = INDENT Expression Outdent' do Assign.new A2, A1, A4.indented(A3,A5)
 	]
 
@@ -993,7 +991,6 @@ var grammar =
 
 	ClassField: [
 		o 'ClassFieldIdentifier' do ClassField.new(A1)
-		# o 'SymbolIdentifier' do ClassField.new(A1)
 		o 'PROP ClassFieldIdentifier' do ClassProperty.new(A2).set(keyword: A1)
 		o 'ATTR ClassFieldIdentifier' do ClassAttribute.new(A2).set(keyword: A1)
 		o 'ClassField Type' do A1.set(datatype: A2)
@@ -1258,29 +1255,25 @@ var grammar =
 	# -type rule, but in order to make the precedence binding possible, separate
 	# rules are necessary.
 	Operation: [
-		o 'NEW Expression' do AST.Instantiation.for(A2,A1)
+		o 'NEW Expression' do AST.Instantiation.for(A2,A1).setEnds(A1,A2)
 		o 'UNARY Expression' do AST.OP(A1, A2).setEnds(A1,A2)
-		o 'SQRT Expression' do AST.OP A1, A2
-		o '--- Expression' do AST.OP A1, A2
-		o '+++ Expression' do AST.OP A1, A2
-		o('-     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # Op.new '-', A2
-		o('+     Expression', &, prec: 'UNARY') do AST.OP(A1,A2) # do Op.new '+', A2
-		o '-- SimpleAssignable' do UnaryOp.new(A1, null, A2)
-		o '++ SimpleAssignable' do UnaryOp.new(A1, null, A2)
-		o 'SimpleAssignable --' do UnaryOp.new(A2, A1, null, true)
-		o 'SimpleAssignable ++' do UnaryOp.new(A2, A1, null, true)
+		o '--- Expression' do AST.OP(A1,A2).setEnds(A1,A2)
+		o '+++ Expression' do AST.OP(A1,A2).setEnds(A1,A2)
+		o('- Expression', &, prec: 'UNARY') do AST.OP(A1,A2).setEnds(A1,A2)
+		o('+ Expression', &, prec: 'UNARY') do AST.OP(A1,A2).setEnds(A1,A2)
+		o '-- SimpleAssignable' do UnaryOp.new(A1, null, A2).setEnds(A1,A2)
+		o '++ SimpleAssignable' do UnaryOp.new(A1, null, A2).setEnds(A1,A2)
+		o 'SimpleAssignable --' do UnaryOp.new(A2, A1, null, true).setEnds(A1,A2)
+		o 'SimpleAssignable ++' do UnaryOp.new(A2, A1, null, true).setEnds(A1,A2)
 
-		o 'Expression +  Expression' do Op.new(A2,A1,A3).setEnds(A1,A3)
-		o 'Expression -  Expression' do Op.new(A2,A1,A3)
+		o 'Expression + Expression' do Op.new(A2,A1,A3).setEnds(A1,A3)
+		o 'Expression - Expression' do Op.new(A2,A1,A3).setEnds(A1,A3)
 
-		o 'Expression EXP      Expression' do AST.OP A2, A1, A3
-		o 'Expression MATH     Expression' do AST.OP A2, A1, A3
-		o 'Expression SHIFT    Expression' do AST.OP A2, A1, A3
-		o 'Expression COMPARE  Expression' do AST.OP A2, A1, A3
-		o 'Expression LOGIC    Expression' do AST.OP A2, A1, A3
-		# o 'Expression ?.    Expression' do AST.OP A2, A1, A3
-
-		# o 'Expression UNIT' do AST.OP A2, A1
+		o 'Expression EXP      Expression' do AST.OP(A2, A1, A3).setEnds(A1,A3)
+		o 'Expression MATH     Expression' do AST.OP(A2, A1, A3).setEnds(A1,A3)
+		o 'Expression SHIFT    Expression' do AST.OP(A2, A1, A3).setEnds(A1,A3)
+		o 'Expression COMPARE  Expression' do AST.OP(A2, A1, A3).setEnds(A1,A3)
+		o 'Expression LOGIC    Expression' do AST.OP(A2, A1, A3).setEnds(A1,A3)
 
 		o 'Expression NOT RELATION Expression' do
 			AST.OP(A3, A1, A4).invert(A2)
@@ -1301,7 +1294,7 @@ var operators = [
 	# ['left',      '{{', '}}']
 	# ['left', 'STRING_START','STRING_END']
 	['nonassoc',  '++', '--']
-	['right',     'UNARY','NEW','THROW','SQRT','NOT']
+	['right',     'UNARY','NEW','THROW','NOT']
 	['right','AWAIT']
 	['right',     'EXP']
 	['left',      'MATH']
