@@ -6963,7 +6963,9 @@ export class Call < Node
 			callee = LIT("console.log")
 			let src = STACK.SOURCECODE
 
+			let fmts = ["%s"]
 			let result = [LIT("\'{dim}::{reset}\'")]
+
 			for arg in args
 				let [start, end] = arg.loc
 				let s = src.slice(start,end)
@@ -6974,12 +6976,15 @@ export class Call < Node
 					.replace(/\r/g, "\\r")
 					.replace(/\t/g, "\\t")
 				if arg isa Str
-					result.push LIT("'{bg-grey}{green}{s}{reset}'")
+					fmts.push "%s"
+					result.push LIT("'{bg-black}{green}{s}{reset}'")
 				else
+					fmts.push "%s"
+					fmts.push "%O"
 					result.push LIT("'{bg-blue}{white}{s}{reset}'")
 					result.push arg
 
-			args.@nodes = result
+			args.@nodes = ["\"{fmts.join(' ')}\"", *result]
 
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
