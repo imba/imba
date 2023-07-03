@@ -49,7 +49,11 @@ export default defineConfig(async ({mode, command})=>{
 			type: "",
 			envPrefix,
 			plugins: [imbaPlugin()],
-			resolve: { extensions: ['.web.imba', ...extensions], dedupe: ['imba']  },
+			resolve: {
+				conditions: ['imba'],
+				extensions: ['.web.imba', ...extensions],
+				dedupe: ['imba'],
+			},
 			build: {
 				outDir: "dist/public",
 				manifest: true,
@@ -69,7 +73,7 @@ export default defineConfig(async ({mode, command})=>{
 			appType: "custom",
 			envPrefix,
 			plugins: [imbaPlugin({ ssr: true })],
-			resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba']  },
+			resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba'], conditions: ['imba']  },
 			esbuild: {
 				target: "node16",
 				platform: "node"

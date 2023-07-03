@@ -332,14 +332,13 @@ def run entry, o, extras
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
 
-			if entry.endsWith "html" or o.web
+			if entry.endsWith("html") or o.web
 				entry-points = entry
 				await Vite.build({
 					...clientConfig,
 					build: {
 						...clientConfig.build,
-						outDir: "dist",
-						ssrManifest: no,
+						outDir: o.outdir,
 						rollupOptions: {
 							...clientConfig.build.rollupOptions,
 							input: entry-points
@@ -356,6 +355,7 @@ def run entry, o, extras
 					configFile: no,
 					build: {
 						...serverConfig.build,
+						outDir: o.outdir,
 						rollupOptions: {
 							...serverConfig.build.rollupOptions,
 							input: np.join(process.cwd(), entry),
@@ -371,6 +371,7 @@ def run entry, o, extras
 				...clientConfig,
 				build: {
 					...clientConfig.build,
+					outDir: o.outdir
 					rollupOptions: {
 						...clientConfig.build.rollupOptions,
 						input: entry-points

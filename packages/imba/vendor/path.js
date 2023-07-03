@@ -524,6 +524,5 @@ var posix = {
   posix: null
 };
 
-posix.posix = posix;
-
-module.exports = posix;
+export default posix;
+export {posix}

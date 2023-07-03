@@ -50,14 +50,12 @@ var NumberIsNaN = Number.isNaN || function NumberIsNaN(value) {
   return value !== value;
 }
 
-function EventEmitter() {
+export default function EventEmitter() {
   EventEmitter.init.call(this);
 }
-module.exports = EventEmitter;
-module.exports.once = once;
 
-// Backwards-compat with node 0.10.x
 EventEmitter.EventEmitter = EventEmitter;
+export {EventEmitter, once}
 
 EventEmitter.prototype._events = undefined;
 EventEmitter.prototype._eventsCount = 0;

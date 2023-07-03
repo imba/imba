@@ -17,7 +17,7 @@ const convert = {
 	gray: {channels: 1, labels: ['gray']}
 };
 
-module.exports = {conv: convert};
+export const conv = convert
 
 // Hide .channels and .labels properties
 for (const model of Object.keys(convert)) {

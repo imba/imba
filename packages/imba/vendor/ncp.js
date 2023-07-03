@@ -25,8 +25,8 @@ THE SOFTWARE.
 var fs = require('fs'),
     path = require('path');
 
-module.exports = ncp;
-ncp.ncp = ncp;
+export default ncp;
+export {ncp}
 
 function ncp (source, dest, options, callback) {
   var cback = callback;
