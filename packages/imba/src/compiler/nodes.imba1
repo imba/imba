@@ -6951,8 +6951,13 @@ export class Call < Node
 
 		if callee isa Identifier and callee.value == 'L'
 			let dim = '\x1b[90m'
-			let blue = '\x1b[44m'
+			let bg-blue = '\x1b[44m'
+			let bg-green = '\x1b[42m'
+			let bg-grey = '\x1b[100m'
+			let bg-black = '\x1b[40m'
 			let white = '\x1b[97m'
+			let green = '\x1b[32m'
+			let black = '\x1b[30m'
 			let reset = '\x1b[0m'
 
 			callee = LIT("console.log")
@@ -6968,8 +6973,11 @@ export class Call < Node
 					.replace(/\n/g, "\\n")
 					.replace(/\r/g, "\\r")
 					.replace(/\t/g, "\\t")
-				result.push LIT("'{blue}{white}{s}{reset}'")
-				result.push arg
+				if arg isa Str
+					result.push LIT("'{bg-grey}{green}{s}{reset}'")
+				else
+					result.push LIT("'{bg-blue}{white}{s}{reset}'")
+					result.push arg
 
 			args.@nodes = result
 
