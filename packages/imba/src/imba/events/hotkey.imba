@@ -3,6 +3,7 @@ import {Event,CustomEvent,Element} from '../dom/core'
 let isApple = try (global.navigator.platform or '').match(/iPhone|iPod|iPad|Mac/)
 
 export def use_events_hotkey
+	global.imba.uses_events_hotkey = yes
 	yes
 
 import {humanize,htmlify} from './hotkey.shared'

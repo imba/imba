@@ -1,6 +1,7 @@
 import {Event,CustomEvent,Element} from '../dom/core'
 
 export def use_events_selection
+	global.imba.uses_events_selection = yes
 	yes
 
 let selHandler

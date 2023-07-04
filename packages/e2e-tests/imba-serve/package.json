@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "imba serve",
     "build": "imba build",
-    "preview": "vite preview"
+    "preview": "imba preview"
   },
   "devDependencies": {
     "imba": "../../imba",

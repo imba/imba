@@ -38,7 +38,7 @@ export def setupVite(srv, options, cb)
 
 		vite = await Vite.createServer vite-options
 
-	const dist = np.join(vite.config.root, vite.config.build.outDir)
+	const dist = np.join(vite.config.root, options.publicDir or "dist/public")
 	if prod?
 		vite.close().then do vite = null
 		global.__vite_manifest__ ||= JSON.parse nfs.readFileSync("{dist}/manifest.json", 'utf-8')

@@ -47,7 +47,6 @@ const colors = {
 	bg-bright-cyan: [106, 49]
 	bg-bright-white: [107, 49]
 }
-
 let c = {}
 for own name, [open, close] of colors
 	c[name] = do '\x1b[' + open + 'm' + $1 + '\x1b[' + close + 'm'

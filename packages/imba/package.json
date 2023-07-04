@@ -199,6 +199,5 @@
     "language",
     "imba",
     "compiler"
-  ],
-  "sideEffects": ["src/utils/colors.imba"]
+  ]
 }

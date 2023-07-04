@@ -1,6 +1,7 @@
 import {KeyboardEvent} from '../dom/core'
 
 export def use_events_keyboard
+	global.imba.uses_events_keyboard = yes
 	yes
 
 extend class KeyboardEvent

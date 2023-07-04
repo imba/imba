@@ -337,6 +337,7 @@ def run entry, o, extras
 				await Vite.build({
 					...clientConfig,
 					build: {
+						ssrManifest: yes, # not yet leveraged in SSR
 						...clientConfig.build,
 						outDir: o.outdir,
 						rollupOptions: {
@@ -371,9 +372,12 @@ def run entry, o, extras
 				...clientConfig,
 				build: {
 					...clientConfig.build,
-					outDir: o.outdir
 					rollupOptions: {
 						...clientConfig.build.rollupOptions,
+						output: {
+							...clientConfig.build.rollupOptions.output,
+							dir: np.join(o.outdir, "public")
+						}
 						input: entry-points
 					}
 				}

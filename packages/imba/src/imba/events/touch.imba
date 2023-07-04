@@ -6,6 +6,7 @@ import {listen,once,emit,unlisten} from '../utils'
 import * as helpers from './helpers'
 
 export def use_events_touch
+	global.imba.uses_events_touch = yes
 	yes
 
 let iosMoveIframeFix = null

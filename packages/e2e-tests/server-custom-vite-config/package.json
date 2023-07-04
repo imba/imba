@@ -9,7 +9,7 @@
     "build:client": "vite build -c vite.config.client.js --outDir dist",
     "build:server": "vite build -c vite.config.server.js",
     "preview": "cross-env NODE_ENV=production node dist_server/entry.js",
-    "debug": "node --inspect-brk dist/server/server",
+    "debug": "node --inspect-brk dist/server",
     "test": "imba test"
   },
   "dependencies": {

@@ -173,6 +173,7 @@ export const styles = new Styles
 export const colors = Object.keys(CSS_COLORS)
 
 export def use_styles
+	global.imba.uses_styles = yes
 	yes
 
 extend class Element

@@ -55,6 +55,7 @@ export def get_document
 	global.document
 
 export def use_window
+	global.imba.uses_window = yes
 	yes
 
 # Basic node extensions

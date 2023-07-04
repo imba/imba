@@ -1,6 +1,7 @@
 import {humanize,htmlify} from './hotkey.shared'
 
 export def use_events_hotkey
+	global.imba.uses_events_hotkey = yes
 	yes
 
 export const hotkeys = new class HotKeyManager

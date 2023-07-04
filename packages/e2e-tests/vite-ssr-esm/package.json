@@ -9,7 +9,7 @@
     "build:client": "vite build -c vite.config.mjs",
     "build:server": "imba build --vite server.imba --esm",
     "preview": "cross-env NODE_ENV=production node dist/server.mjs",
-    "debug": "node --inspect-brk dist/server/server",
+    "debug": "node --inspect-brk dist/server",
     "test": "imba test run src"
   },
   "dependencies": {

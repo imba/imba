@@ -15,6 +15,7 @@ extend class Document
 		#router ||= new Router(self)
 
 export def use_router
+	global.imba.use_router = yes
 	yes
 
 export const router = proxy do
