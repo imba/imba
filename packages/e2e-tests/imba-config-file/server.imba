@@ -1,11 +1,9 @@
-import path from "path"
 import {setupVite} from 'imba/plugin'
 import express from "express"
 import compression from "compression"
 import serveStatic from "serve-static"
 import App from './src/App.imba'
-import np from 'node:path'
-import url from 'node:url'
+import entry from './src/App.imba?url&entry'
 
 let port = 3000
 const args = process.argv.slice(2)
@@ -21,6 +19,7 @@ def createServer()
 
 	await setupVite app, options, do(dist)
 		app.use compression()
+		L dist
 		app.use serveStatic(dist, index: false)
 
 	app.use "/", do(req, res)
@@ -29,7 +28,7 @@ def createServer()
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 				<title> "Imba App {__APP_VERSION__}"
-				<script type="module" src="./src/main.js">
+				<script type="module" src=entry>
 			<body>
 				<h1> "Imba App {__APP_VERSION__}"
 				<#root>

@@ -1,6 +1,7 @@
 import { defineConfig } from 'imba'
 
 export default defineConfig({
+	bundler: 'vite',
 	imba: {
 		"theme": {
 			"colors": {
