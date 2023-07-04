@@ -7,7 +7,6 @@ export const hooks = {
 }
 
 export def use_hooks
-	global.imba.uses_hooks = yes
 	yes
 
 # let instance = global.imba ||= {}
