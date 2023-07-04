@@ -1,8 +1,31 @@
+/* MIT License
+
+Copyright (c) 2021-Present Anthony Fu <https://github.com/antfu>
+Copyright (c) 2021-Present Matias Capeletto <https://github.com/patak-dev>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
 import { builtinModules, createRequire } from "node:module";
-import path, { dirname } from "node:path";
+import { dirname } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import vm from "node:vm";
-import fs, { existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import assert from "node:assert";
 import process$1 from "node:process";
 import v8 from "node:v8";
@@ -5325,12 +5348,12 @@ const resolve = function(...arguments_) {
   let resolvedPath = "";
   let resolvedAbsolute = false;
   for (let index = arguments_.length - 1; index >= -1 && !resolvedAbsolute; index--) {
-    const path2 = index >= 0 ? arguments_[index] : cwd();
-    if (!path2 || path2.length === 0) {
+    const path = index >= 0 ? arguments_[index] : cwd();
+    if (!path || path.length === 0) {
       continue;
     }
-    resolvedPath = `${path2}/${resolvedPath}`;
-    resolvedAbsolute = isAbsolute(path2);
+    resolvedPath = `${path}/${resolvedPath}`;
+    resolvedAbsolute = isAbsolute(path);
   }
   resolvedPath = normalizeString(resolvedPath, !resolvedAbsolute);
   if (resolvedAbsolute && !isAbsolute(resolvedPath)) {
@@ -5338,15 +5361,15 @@ const resolve = function(...arguments_) {
   }
   return resolvedPath.length > 0 ? resolvedPath : ".";
 };
-function normalizeString(path2, allowAboveRoot) {
+function normalizeString(path, allowAboveRoot) {
   let res = "";
   let lastSegmentLength = 0;
   let lastSlash = -1;
   let dots = 0;
   let char = null;
-  for (let index = 0; index <= path2.length; ++index) {
-    if (index < path2.length) {
-      char = path2[index];
+  for (let index = 0; index <= path.length; ++index) {
+    if (index < path.length) {
+      char = path[index];
     } else if (char === "/") {
       break;
     } else {
@@ -5383,9 +5406,9 @@ function normalizeString(path2, allowAboveRoot) {
         }
       } else {
         if (res.length > 0) {
-          res += `/${path2.slice(lastSlash + 1, index)}`;
+          res += `/${path.slice(lastSlash + 1, index)}`;
         } else {
-          res = path2.slice(lastSlash + 1, index);
+          res = path.slice(lastSlash + 1, index);
         }
         lastSegmentLength = index - lastSlash - 1;
       }
@@ -5517,8 +5540,8 @@ createError(
    * @param {string} [base]
    * @param {string} [message]
    */
-  (path2, base, message) => {
-    return `Invalid package config ${path2}${base ? ` while importing ${base}` : ""}${message ? `. ${message}` : ""}`;
+  (path, base, message) => {
+    return `Invalid package config ${path}${base ? ` while importing ${base}` : ""}${message ? `. ${message}` : ""}`;
   },
   Error
 );
@@ -5550,8 +5573,8 @@ createError(
    * @param {string} base
    * @param {string} [type]
    */
-  (path2, base, type = "package") => {
-    return `Cannot find ${type} '${path2}' imported from ${base}`;
+  (path, base, type = "package") => {
+    return `Cannot find ${type} '${path}' imported from ${base}`;
   },
   Error
 );
@@ -5597,8 +5620,8 @@ createError(
    * @param {string} ext
    * @param {string} path
    */
-  (ext, path2) => {
-    return `Unknown file extension "${ext}" for ${path2}`;
+  (ext, path) => {
+    return `Unknown file extension "${ext}" for ${path}`;
   },
   TypeError
 );
@@ -5761,15 +5784,10 @@ function isNodeBuiltin(id = "") {
   return BUILTIN_MODULES.has(id);
 }
 pathToFileURL(process.cwd());
-var browserExports = {};
-var browser = {
-  get exports() {
-    return browserExports;
-  },
-  set exports(v) {
-    browserExports = v;
-  }
-};
+function getDefaultExportFromCjs(x) {
+  return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
+}
+var browser = { exports: {} };
 var ms;
 var hasRequiredMs;
 function requireMs() {
@@ -5922,7 +5940,7 @@ function setup(env) {
         return;
       }
       const self = debug;
-      const curr = Number(new Date());
+      const curr = Number(/* @__PURE__ */ new Date());
       const ms2 = curr - (prevTime || curr);
       self.diff = ms2;
       self.prev = prevTime;
@@ -6209,8 +6227,9 @@ var common = setup;
       return "[UnexpectedJSONParseError]: " + error.message;
     }
   };
-})(browser, browserExports);
-const createDebug = browserExports;
+})(browser, browser.exports);
+var browserExports = browser.exports;
+const createDebug = /* @__PURE__ */ getDefaultExportFromCjs(browserExports);
 const isWindows = process.platform === "win32";
 function slash(str) {
   return str.replace(/\\/g, "/");
@@ -6240,9 +6259,6 @@ function isPrimitive(v) {
 }
 function toFilePath(id, root) {
   let { absolute, exists } = (() => {
-	if(Array.isArray(root) && root.length){ 
-		root = root[0]
-	}
     if (id.startsWith("/@fs/"))
       return { absolute: id.slice(4), exists: true };
     if (!id.startsWith(root) && id.startsWith("/")) {
@@ -6279,85 +6295,6 @@ var UrlType;
   UrlType2[UrlType2["SchemeRelative"] = 6] = "SchemeRelative";
   UrlType2[UrlType2["Absolute"] = 7] = "Absolute";
 })(UrlType || (UrlType = {}));
-let fileContentsCache = {};
-const reSourceMap = /^data:application\/json[^,]+base64,/;
-let retrieveFileHandlers = [];
-let retrieveMapHandlers = [];
-function handlerExec(list) {
-  return function(arg) {
-    for (let i = 0; i < list.length; i++) {
-      const ret = list[i](arg);
-      if (ret)
-        return ret;
-    }
-    return null;
-  };
-}
-let retrieveFile = handlerExec(retrieveFileHandlers);
-retrieveFileHandlers.push((path2) => {
-  path2 = path2.trim();
-  if (path2.startsWith("file:")) {
-    path2 = path2.replace(/file:\/\/\/(\w:)?/, (protocol, drive) => {
-      return drive ? "" : "/";
-    });
-  }
-  if (path2 in fileContentsCache)
-    return fileContentsCache[path2];
-  let contents = "";
-  try {
-    if (fs.existsSync(path2))
-      contents = fs.readFileSync(path2, "utf8");
-  } catch (er) {
-  }
-  return fileContentsCache[path2] = contents;
-});
-function supportRelativeURL(file, url) {
-  if (!file)
-    return url;
-  const dir = path.dirname(file);
-  const match = /^\w+:\/\/[^\/]*/.exec(dir);
-  let protocol = match ? match[0] : "";
-  const startPath = dir.slice(protocol.length);
-  if (protocol && /^\/\w\:/.test(startPath)) {
-    protocol += "/";
-    return protocol + path.resolve(dir.slice(protocol.length), url).replace(/\\/g, "/");
-  }
-  return protocol + path.resolve(dir.slice(protocol.length), url);
-}
-function retrieveSourceMapURL(source) {
-  const fileData = retrieveFile(source);
-  if (!fileData)
-    return null;
-  const re = /(?:\/\/[@#][\s]*sourceMappingURL=([^\s'"]+)[\s]*$)|(?:\/\*[@#][\s]*sourceMappingURL=([^\s*'"]+)[\s]*(?:\*\/)[\s]*$)/mg;
-  let lastMatch, match;
-  while (match = re.exec(fileData))
-    lastMatch = match;
-  if (!lastMatch)
-    return null;
-  return lastMatch[1];
-}
-retrieveMapHandlers.push((source) => {
-  let sourceMappingURL = retrieveSourceMapURL(source);
-  if (!sourceMappingURL)
-    return null;
-  let sourceMapData;
-  if (reSourceMap.test(sourceMappingURL)) {
-    const rawData = sourceMappingURL.slice(sourceMappingURL.indexOf(",") + 1);
-    sourceMapData = Buffer.from(rawData, "base64").toString();
-    sourceMappingURL = source;
-  } else {
-    sourceMappingURL = supportRelativeURL(source, sourceMappingURL);
-    sourceMapData = retrieveFile(sourceMappingURL);
-  }
-  if (!sourceMapData)
-    return null;
-  return {
-    url: sourceMappingURL,
-    map: sourceMapData
-  };
-});
-retrieveFileHandlers.slice(0);
-retrieveMapHandlers.slice(0);
 let SOURCEMAPPING_URL = "sourceMa";
 SOURCEMAPPING_URL += "ppingURL";
 const VITE_NODE_SOURCEMAPPING_URL = `${SOURCEMAPPING_URL}=data:application/json;charset=utf-8`;
@@ -6530,12 +6467,12 @@ class ViteNodeRunner {
     id = normalizeRequestId(id, this.options.base);
     if (!this.shouldResolveId(id))
       return [id, id];
-    const { path: path2, exists } = toFilePath(id, this.root);
+    const { path, exists } = toFilePath(id, this.root);
     if (!this.options.resolveId || exists)
-      return [id, path2];
+      return [id, path];
     const resolved = await this.options.resolveId(id, importer);
     const resolvedId = resolved ? normalizeRequestId(resolved.id, this.options.base) : id;
-    const fsPath = resolved ? resolvedId : path2;
+    const fsPath = resolved ? resolvedId : path;
     return [resolvedId, fsPath];
   }
   async resolveUrl(id, importee) {
@@ -6678,14 +6615,14 @@ ${getStack()}`), 2e3);
   prepareContext(context) {
     return context;
   }
-  shouldInterop(path2, mod) {
+  shouldInterop(path, mod) {
     if (this.options.interopDefault === false)
       return false;
-    return !path2.endsWith(".mjs") && "default" in mod;
+    return !path.endsWith(".mjs") && "default" in mod;
   }
-  async interopedImport(path2) {
-    const importedModule = await import(path2);
-    if (!this.shouldInterop(path2, importedModule))
+  async interopedImport(path) {
+    const importedModule = await import(path);
+    if (!this.shouldInterop(path, importedModule))
       return importedModule;
     const { mod, defaultExport } = interopModule(importedModule);
     return new Proxy(mod, {

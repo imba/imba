@@ -123,9 +123,9 @@
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
-    "vite": "^4.1.4",
-    "vite-node": "^0.29.7",
-    "vitest": "^0.32.2",
+    "vite": "^4.3.9",
+    "vite-node": "^0.32.4",
+    "vitest": "^0.32.4",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
