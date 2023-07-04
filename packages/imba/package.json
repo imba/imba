@@ -199,44 +199,5 @@
     "language",
     "imba",
     "compiler"
-  ],
-  "sideEffects": [
-	"src/imba/events/core.imba",
-	"src/imba/events/hotkey.imba",
-	"src/imba/events/intersect.imba",
-	"src/imba/events/keyboard.imba",
-	"src/imba/events/mouse.imba",
-	"src/imba/events/mutate.imba",
-	"src/imba/events/pointer.imba",
-	"src/imba/events/resize.imba",
-	"src/imba/events/selection.imba",
-	"src/imba/events/touch.imba",
-
-	"src/imba/dom/bind.imba",
-	"src/imba/dom/core",
-	"src/imba/dom/core.imba",
-	"src/imba/dom/core.web.imba",
-	"src/imba/dom/fragment.imba",
-	"src/imba/dom/mount.imba",
-	"src/imba/dom/styles.imba",
-	"src/imba/dom/teleport.imba",
-	"src/imba/dom/transitions.imba",
-
-	"src/imba/router/index.imba",
-
-	"src/imba/hmr.imba",
-	"src/imba/reactivity.imba",
-	"src/imba/scheduler.imba",
-	"src/imba/storage.imba",
-
-	"src/utils/std/array.imba",
-	"src/utils/std/global.imba",
-	"src/utils/std/math.imba",
-	"src/utils/std/number.imba",
-	"src/utils/std/set.imba",
-	"src/utils/std/string.imba",
-
-	"src/utils/spec.imba",
-	"src/utils/colors.imba"
   ]
 }
