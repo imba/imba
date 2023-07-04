@@ -47,6 +47,9 @@ export default defineConfig(async ({mode, command})=>{
 	return ({
 		client: {
 			type: "",
+			worker: {
+				plugins: [imbaPlugin()]
+			},
 			envPrefix,
 			plugins: [imbaPlugin()],
 			resolve: {
@@ -106,10 +109,16 @@ export default defineConfig(async ({mode, command})=>{
 			define: {
 				'import.meta.vitest': undefined,
 			},
+			worker: {
+				plugins: [imbaPlugin({ssr:true})]
+			},
 		},
 		// we duplicate the plugins and resolve config here for the tests
 		plugins: [imbaPlugin({ssr: true})],
 		envPrefix,
+		worker: {
+			plugins: [imbaPlugin({ssr:true})]
+		},
 		resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] },
 		test: finalTest.test
 	})
