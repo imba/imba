@@ -55,13 +55,13 @@ export default defineConfig(async ({mode, command})=>{
 				dedupe: ['imba'],
 			},
 			build: {
-				outDir: "dist/public",
 				manifest: true,
 				target: ["chrome88", "edge79", "safari15"],
 				ssrManifest: true,
 				rollupOptions:{
 					output:{
 						manualChunks: undefined,
+						dir: "dist"
 					}
 				}
 			},
@@ -95,8 +95,8 @@ export default defineConfig(async ({mode, command})=>{
 					external: ['imba', 'imba/plugin', new RegExp("/[^\.]^{entry}.*/")],
 					output: {
 						format: 'esm',
-						dir: "dist",
-						entryFileNames: "[name].mjs"
+						entryFileNames: "[name].mjs",
+						dir: "dist"
 					},
 					input: {
 						//eject entry: "server.imba",
