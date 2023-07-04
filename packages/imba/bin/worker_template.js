@@ -5,8 +5,8 @@ function handleError(msg, error) {
 	process.send("exit")
 }
 const runner = new ViteNodeRunner({
-	root: ["__ROOT__"],
-	base: ["__BASE__"],
+	root: "__ROOT__",
+	base: "__BASE__",
 	// debug: true,
 	fetchModule: async function (id) {
 		return new Promise((resolve) => {

@@ -238,6 +238,7 @@ export default class Runner < Component
 			.replace("__BASE__", viteServer.config.base)
 			.replace("__FILE__", fileToRun)
 		# start uncommend to upgrade vite-node-client
+		# debugger
 		# const output = await Vite.build
 		# 	# configFile: no
 		# 	optimizeDeps: {disabled: yes}
@@ -250,7 +251,7 @@ export default class Runner < Component
 		# 	build:
 		# 		minify: no
 		# 		rollupOptions:
-		# 			external: builtinModules
+		# 			external: [...builtinModules, ...builtinModules.map(do "node:{$1}")]
 		# 		target: "node18"
 		# 		lib:
 		# 			formats: ["es"]

@@ -78,9 +78,9 @@ export default defineConfig(async ({mode, command})=>{
 				target: "node16",
 				platform: "node"
 			},
-			optimizeDeps:{
-				disabled: true
-			},
+			// optimizeDeps:{
+			// 	disabled: true
+			// },
 			ssr: {
 				target: "node",
 				transformMode: { ssr: [new RegExp(builtinModules.join("|"), 'gi')] },
