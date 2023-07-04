@@ -2,6 +2,7 @@ import {Text,createComment,createTextNode,Comment,Node} from './core'
 import {Flags} from './flags'
 
 export def use_slots
+	global.imba.uses_slots = yes
 	yes
 
 export class Fragment

@@ -12,6 +12,7 @@ import {commit} from '../scheduler'
 # TODO use meta properties for $$value, ##bound etc
 
 export def use_dom_bind
+	global.imba.uses_dom_bind = yes
 	yes
 
 const toBind = {

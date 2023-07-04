@@ -4,6 +4,7 @@ import {Event,CustomEvent,Element,Document} from '../dom/core'
 import * as helpers from './helpers'
 
 export def use_events_intersect
+	global.imba.uses_events_intersect = yes
 	yes
 
 const observers = new (global.WeakMap || Map)

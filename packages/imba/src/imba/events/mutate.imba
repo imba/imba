@@ -3,6 +3,7 @@ import {Event,CustomEvent,Element} from '../dom/core'
 import * as helpers from './helpers'
 
 export def use_events_mutate
+	global.imba.uses_events_mutate = yes
 	yes
 
 class MutationEvent < CustomEvent

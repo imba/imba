@@ -9,6 +9,7 @@ use_events_mouse!
 import * as helpers from './helpers'
 
 export def use_events_pointer
+	global.imba.uses_events_pointer = yes
 	yes
 
 # Adding the pointerevent modifiers

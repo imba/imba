@@ -311,4 +311,5 @@ extend class Element
 		ease.enable(value)
 
 export def use_dom_transitions
+	global.imba.uses_dom_transitions = yes
 	yes

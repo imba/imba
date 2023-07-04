@@ -1,6 +1,7 @@
 import {MouseEvent} from '../dom/core'
 
 export def use_events_mouse
+	global.imba.uses_events_mouse = yes
 	yes
 
 extend class MouseEvent

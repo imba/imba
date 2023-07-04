@@ -97,4 +97,5 @@ if global.customElements
 	global.customElements.define('i-global',GlobalHook)
 
 export def use_dom_teleport
+	global.imba.uses_dom_teleport = yes
 	yes

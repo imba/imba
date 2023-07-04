@@ -159,6 +159,7 @@ extend class Event
 export const events = {}
 
 export def use_events
+	global.imba.uses_events = yes
 	yes
 
 # could cache similar event handlers with the same parts

@@ -26,6 +26,7 @@ export class Window
 		self.document.location
 
 export def use_window
+	global.imba.uses_window = yes
 	yes
 
 const voidElements = {
