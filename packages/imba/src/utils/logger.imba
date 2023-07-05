@@ -5,7 +5,7 @@ import {performance} from 'perf_hooks'
 
 const notWin = process.platform isnt 'win32' or process.env.CI or process.env.TERM is 'xterm-256color'
 const logSymbols =
-	info: (notWin ? 'ℹ' : 'i').brightYellow
+	info: (notWin ? 'ℹ' : 'i').bright-yellow
 	success: (notWin ? '✔' : '√').green
 	warning: (notWin ? '⚠' : '!!').yellow
 	error: (notWin ? '×' : '✖').red
@@ -26,7 +26,7 @@ const logLevels = [
 ]
 
 export def formatMarkdown str
-	str.replace(/https?\:[^\s\n\)\]]+/g, do $1.brightBlue)
+	str.replace(/https?\:[^\s\n\)\]]+/g, do $1.bright-blue)
 		.replace(/^[\t\s]*\>[^\n]+/gm, do $1.bold)
 		.replace(/\t/g,'  ')
 		.replace(/^/gm,'  ')
@@ -37,19 +37,19 @@ export def format str,...rest
 		let s = String(part)
 
 		if f is 'red'
-			s.brightRed
+			s.bright-red
 		elif f is 'green'
 			s.green
 		elif f is 'magenta'
-			s.brightMagenta
+			s.bright-magenta
 		elif f is 'cyan'
-			s.brightCyan
+			s.bright-cyan
 		elif f is 'dim'
 			s.dim
 		elif f is 'd'
-			s.brightBlue
+			s.bright-blue
 		elif f is 'yellow' or f is 'imba'
-			s.brightYellow
+			s.bright-yellow
 		elif f is 'path' or f is 'bold'
 			s.bold
 		elif f is 'ms'
@@ -57,7 +57,7 @@ export def format str,...rest
 		elif f is 'kb'
 			"{(part / 1000).toFixed(1)}kb".dim
 		elif f is 'ref'
-			"#{part.id or part}".brightYellow
+			"#{part.id or part}".bright-yellow
 		elif f is 'markdown'
 			formatMarkdown(part)
 		elif f is 'elapsed'
@@ -71,13 +71,13 @@ export def format str,...rest
 		elif f is 'address'
 			if part.port
 				# what about the protocol?
-				[part.address or "http://localhost",part.port].join(':').brightBlue
+				[part.address or "http://localhost",part.port].join(':').bright-blue
 			else
-				String(addressTypeName[part.addressType]).brightBlue
+				String(addressTypeName[part.addressType]).bright-blue
 		else
 			part
 
-	return [str,*rest]
+	return [str,...rest]
 
 let Spinner = null
 let Instance = null
