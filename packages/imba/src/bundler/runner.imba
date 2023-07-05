@@ -133,10 +133,9 @@ class WorkerInstance
 
 		worker.on 'message' do(message, handle)
 			if message.type == 'exit'
-				if o.watch
-					console.log "Watching not yet implemented. Coming soon!"
-				runner.viteServer.close!
-				process.exit(1)
+				unless o.watch
+					runner.viteServer.close!
+					process.exit(1)
 
 			if message.type == 'fetch'
 				let md
@@ -224,9 +223,11 @@ export default class Runner < Component
 		const builtins = new RegExp(builtinModules.join("|"), 'gi');
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")
+		const {viteNodeHmrPlugin} = await import("./viteNodeHmrPlugin.ts")
 		const config = await getConfigFilePath("server", {command: "serve", mode: "development"})
 		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
 		config.configFile = no
+		config.plugins.push viteNodeHmrPlugin() if o.watch
 		viteServer = await Vite.createServer config
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer, {
 			# deps: 
