@@ -132,6 +132,12 @@ class WorkerInstance
 		# worker.on 'message' do(message, handle)
 
 		worker.on 'message' do(message, handle)
+			if message.type == 'exit'
+				if o.watch
+					console.log "Watching not yet implemented. Coming soon!"
+				runner.viteServer.close!
+				process.exit(1)
+
 			if message.type == 'fetch'
 				let md
 				try md = await runner.fetchModule(message.id) catch error
@@ -222,9 +228,12 @@ export default class Runner < Component
 		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
 		config.configFile = no
 		viteServer = await Vite.createServer config
-		viteNodeServer = new ViteNode.ViteNodeServer viteServer,
+		viteNodeServer = new ViteNode.ViteNodeServer viteServer, {
+			# deps: 
+			# 	external: [/branca/, /uWebSockets\.js/, /sharp/]
 			transformMode:
 				ssr: [/.*/g]
+		}
 		viteServer.watcher.on "change", do(id)
 			id = slash(id)
 			const needsRerun = shouldRerun(id)
