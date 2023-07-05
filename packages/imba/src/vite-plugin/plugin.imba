@@ -146,8 +146,15 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 
 	def load(id, opts)
 		const ssr = !!opts..ssr
+		if id.includes("?external")
+			const path = np.relative(viteConfig.root, id.replace('?external', ''))
+			return """
+			import d from '{normalizePath path}';
+			export * from '{normalizePath path}';
+			export default d;
+			"""
 		if id.includes("?url&entry")
-			const path = np.relative(viteConfig.root, id.replace('?url&entry', ''))			
+			const path = np.relative(viteConfig.root, id.replace('?url&entry', ''))
 			return "export default '{normalizePath path}'"
 		const imbaRequest = requestParser(id, !!ssr)
 		if resolvedAllCssModuleId == id 

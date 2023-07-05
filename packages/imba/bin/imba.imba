@@ -92,7 +92,8 @@ def parseOptions options, extras = []
 	options.config = await resolveConfig(options.cwd,options.config or 'imbaconfig.json')
 	options.imbaConfig = await getConfigFilePath("root")
 	# only overwrite if vite is present in the config file
-	options.vite = yes if options.imbaConfig.bundler == 'vite'
+	options.vite = yes if options.imbaConfig.bundler == 'vite' and !options.esbuild
+	
 	options.package = resolvePackage(options.cwd) or {}
 	options.dotenv = nfs.existsSync(np.resolve(options.cwd,'.env')) ? resolveFile('.env',options.cwd) : null
 	options.nodeModulesPath = resolvePath('node_modules',options.cwd)
@@ -212,6 +213,7 @@ def run entry, o, extras
 
 	unless o._name == 'preview' or o._name == 'serve' or o._name == 'build'
 		return cli.help! if o.args.length == 0
+
 
 	let prog = o = await parseOptions(o,extras)
 
@@ -414,7 +416,8 @@ def common cmd
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
-		.option("--vite", "Use Vite as a bundler for the server")
+		.option("--vite", "Use Vite as a bundler")
+		.option("--esbuild", "Use the built-in bundler")
 		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
