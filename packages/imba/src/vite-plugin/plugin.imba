@@ -153,9 +153,17 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			export * from '{normalizePath path}';
 			export default d;
 			"""
-		if id.includes("?url&entry")
-			const path = np.relative(viteConfig.root, id.replace('?url&entry', ''))
-			return "export default '{normalizePath path}'"
+		if id.startsWith('/')
+			const url = new URL("file://{id}")
+			const params = new URLSearchParams(url.search)
+			if params.has('url') and params.has('entry')
+				params.delete('url')
+				params.delete('entry')
+				url.search = params.toString!
+				let path = normalizePath url.toString!.replace("file://", '')
+				path = np.relative(viteConfig.root, path)
+				return "export default '{path}'"
+
 		const imbaRequest = requestParser(id, !!ssr)
 		if resolvedAllCssModuleId == id 
 			return "export default ''"

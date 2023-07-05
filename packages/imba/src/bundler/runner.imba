@@ -142,9 +142,13 @@ class WorkerInstance
 				try md = await runner.fetchModule(message.id) catch error
 					console.error "Error fetching module {message.id}", error.name, error.message
 					return process.exit 1
-				if message.id.endsWith("?url&entry")
-					try await create-dev-styles! catch error
-						console.log "error creating DEV SSR styles", error
+				if message.id.startsWith('/')
+					const url = new URL("file://{message.id}")
+					const params = new URLSearchParams(url.search)
+					if params.has('url') and params.has('entry')
+						try await create-dev-styles! catch error
+							console.log "error creating DEV SSR styles", error
+
 				worker..send JSON.stringify
 					type: 'fetched'
 					id: message.id
