@@ -32,10 +32,10 @@ export def @thenable target, key, desc
 	meta || thenables.set(target,meta = [])
 
 	if meta.length
-		throw new Error(`@thenable {key} not allowed - @thenable {meta[0][0]} already defined`)
+		throw new Error(`@thenable {target.constructor..name}.{key} not allowed - @thenable {meta[0][0]} already defined`)
 
 	const warn = do
-		console.warn `@thenable {key} takes long - make sure method does not return self`
+		console.trace `@thenable {target.constructor..name}.{key} takes long - make sure method does not return self`
 
 	meta.push([key,sym])
 
@@ -47,13 +47,19 @@ export def @thenable target, key, desc
 			enumerable: no,
 			value: do(ok,err)
 				let that = this
-				let promise = new Promise do(resolve)
+				let promise = new Promise do(resolve,reject)
 					# TODO should only happen in debug
 					let timeout = setTimeout(warn,2s)
-					await that[key]()
-					clearTimeout(timeout)
-					Object.defineProperty(that,'then',{value: null, writable: yes, configurable: yes})
-					resolve(that)
+
+					let err = do(error)
+						clearTimeout(timeout)
+						reject(error)
+
+					that[key]().then(&,err) do
+						clearTimeout(timeout)
+						Object.defineProperty(that,'then',{value: null, writable: yes, configurable: yes})
+						resolve(that)
+
 				promise.then(ok,err)
 		})
 
