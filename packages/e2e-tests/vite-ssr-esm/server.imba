@@ -7,6 +7,7 @@ import * as Vite from "vite"
 import np from 'node:path'
 import url from 'node:url'
 
+let a = 1
 # import moduleGraph from "./server.moduleGraph.json"
 const _dirname = url.fileURLToPath(new URL('.', import.meta.url));
 # We need to load SSR styles manually in order to prevent FOUC
@@ -58,6 +59,8 @@ def createServer(root = process.cwd(), isDev = import.meta.env.MODE === "develop
 		app.use serveStatic("dist_client", index: false)
 	app.use "*", do(req, res)
 		const url = req.originalUrl
+		a++
+		L a
 		try
 			let html = String <html lang="en">
 				<head>

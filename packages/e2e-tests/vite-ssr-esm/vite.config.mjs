@@ -1,8 +1,7 @@
-import { build, defineConfig } from 'vite';
+import { defineConfig } from 'vite';
 import imbaPlugin from 'imba/plugin';
 import { resolve } from 'path'
-import {builtinModules} from 'module'
-import url from 'node:url'
+import url from 'url'
 
 // ENTRY
 const _dirname = url.fileURLToPath(new URL('.', import.meta.url));

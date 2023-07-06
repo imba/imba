@@ -111,7 +111,7 @@
     }
   },
   "devDependencies": {
-    "imba": ".",
+    "@jridgewell/trace-mapping": "^0.3.18",
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
     "fdir": "^4.1.0",

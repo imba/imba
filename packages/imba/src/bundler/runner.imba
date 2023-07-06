@@ -10,6 +10,7 @@ import {createHash, slash} from './utils'
 import mm from 'micromatch'
 import {__served__} from '../imba/utils'
 import { ensurePackagesInstalled, getConfigFilePath } from '../utils/vite'
+# import { installSourcemapsSupport } from './source-map'
 
 class WorkerInstance
 	runner = null
@@ -89,9 +90,12 @@ class WorkerInstance
 		for own k,v of env
 			env[k] = '' if v === false
 
-		if bundle.fork? and !o.vite
+		if bundle.fork?
 			args.env = Object.assign({},process.env,env)
 			fork = cp.fork(np.resolve(path),args.args,args)
+			if o.vite
+				fork.on 'message' do(message, handle)
+					workerMessageHandler(message, handle, fork)
 			# setup-vite fork
 			process.on('SIGINT') do
 				fork.kill('SIGINT')
@@ -114,6 +118,9 @@ class WorkerInstance
 		worker.on 'exit' do(code, signal)
 			if signal
 				log.info "killed by signal: %d",signal
+			elif code == 43
+				# process.exit to reload
+				1
 			elif code != 0
 				log.error "exited with error code: %red",code
 			elif !worker.#next
@@ -125,52 +132,58 @@ class WorkerInstance
 			prev..send(['emit','reloaded'])
 			# now we can kill the reloaded process?
 
-		worker.on 'error' do
-			log.info "%red", "errored" # '
+		worker.on 'error' do(error)
+			log.info "%red", "errored" unless error.message == 'Channel closed'
 
 		# worker.on 'online' do log.info "%green","online"
 		# worker.on 'message' do(message, handle)
 
 		worker.on 'message' do(message, handle)
-			if message.type == 'exit'
-				unless o.watch
-					runner.viteServer.close!
-					process.exit(1)
-
-			if message.type == 'fetch'
-				let md
-				try md = await runner.fetchModule(message.id) catch error
-					console.error "Error fetching module {message.id}", error.name, error.message
-					return process.exit 1
-				if message.id.startsWith('/')
-					const url = new URL("file://{message.id}")
-					const params = new URLSearchParams(url.search)
-					if params.has('url') and params.has('entry')
-						try await create-dev-styles! catch error
-							console.log "error creating DEV SSR styles", error
-
-				worker..send JSON.stringify
-					type: 'fetched'
-					id: message.id
-					md: md
-			elif message.type == 'resolve'
-				# console.log "resolving", message
-				const id = message.payload.id
-				const importer = message.payload.importer
-				const output = await runner.resolveId(id, importer)
-				const response = JSON.stringify
-					type: 'resolved'
-					output: output
-					input: {id, importer}
-				worker.send response
-			if message == 'exit'
-				console.log "exit"
-				process.exit!
-			if message == 'reload'
-				console.log "RELOAD MESSAGE"
-				reload!
+			workerMessageHandler(message, handle, worker)
 
 		current = worker
+
+	def workerMessageHandler(message, handle, worker)
+		if message.type == 'exit'
+			await runner.viteServer.close!
+
+		if message.type == 'fetch'
+			let md
+			try md = await runner.fetchModule(message.id) catch error
+				console.error "Error fetching module {message.id}", error.name, error.message
+				return process.exit 1
+
+			if message.id.startsWith('/')
+				const url = new URL("file://{message.id}")
+				const params = new URLSearchParams(url.search)
+				if params.has('url') and params.has('entry')
+					try await create-dev-styles! catch error
+						console.log "error creating DEV SSR styles", error
+
+			worker..send JSON.stringify
+				type: 'fetched'
+				id: message.id
+				md: md
+
+		elif message.type == 'resolve'
+			# console.log "resolving", message
+			const id = message.payload.id
+			const importer = message.payload.importer
+			const output = await runner.resolveId(id, importer)
+			const response = JSON.stringify
+				type: 'resolved'
+				output: output
+				input: {id, importer}
+			worker.send response
+
+		if message == 'exit'
+			console.log "exit"
+			process.exit!
+
+		if message == 'reload'
+			console.log "RELOAD MESSAGE"
+			reload!
+
 
 	def broadcast event
 		current..send(event)
@@ -213,13 +226,14 @@ export default class Runner < Component
 	# TODO: static variables
 	_rerunTimer
 	restartsCount = 0
-	watcher-debounce = 100
-	def schedule-reload()
+	watcher-debounce = 20
+	def schedule-reload
 		const currentCount = restartsCount
 		clearTimeout _rerunTimer
 		return if restartsCount !== currentCount
 		_rerunTimer = setTimeout(&, watcher-debounce) do
 			return if restartsCount !== currentCount
+			viteServer.reloadModule(viteServer.moduleGraph.urlToModuleMap.get fileToRun)
 			reload!
 
 	def initVite
@@ -231,14 +245,17 @@ export default class Runner < Component
 		const config = await getConfigFilePath("server", {command: "serve", mode: "development"})
 		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
 		config.configFile = no
-		config.plugins.push viteNodeHmrPlugin() if o.watch
 		viteServer = await Vite.createServer config
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer, {
-			# deps: 
-			# 	external: [/branca/, /uWebSockets\.js/, /sharp/]
+			deps: 
+				moduleDirectories: ['vite']
 			transformMode:
 				ssr: [/.*/g]
 		}
+
+		# installSourcemapsSupport({
+		# 	getSourceMap: do(source) viteNodeServer.getSourceMap(source)
+		# })
 		viteServer.watcher.on "change", do(id)
 			id = slash(id)
 			const needsRerun = shouldRerun(id)
@@ -251,6 +268,7 @@ export default class Runner < Component
 			.replace("__ROOT__", viteServer.config.root)
 			.replace("__BASE__", viteServer.config.base)
 			.replace("__FILE__", fileToRun)
+			.replace("__WATCH__", o.watch)
 		# start uncommend to upgrade vite-node-client
 		# debugger
 		# const output = await Vite.build
@@ -289,8 +307,9 @@ export default class Runner < Component
 		nfs.writeFileSync(fpath, body)
 		# this is need to initialize the plugins
 		await viteServer.pluginContainer.buildStart({})
+
 		bundle =
-			fork?: no
+			fork?: !o.watch
 			result:
 				main: fpath
 				hash: hash
@@ -313,7 +332,6 @@ export default class Runner < Component
 			worker.start!
 		if o.watch
 			#hash = bundle.result.hash
-
 			# running with vite, we use a thinner bundle
 			bundle..on('built') do(result)
 				# console.log "got manifest?"

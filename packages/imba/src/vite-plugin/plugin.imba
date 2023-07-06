@@ -153,6 +153,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			export * from '{normalizePath path}';
 			export default d;
 			"""
+
 		if id.startsWith('/')
 			const url = new URL("file://{id}")
 			const params = new URLSearchParams(url.search)

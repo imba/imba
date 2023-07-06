@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "imba server.imba --esm --skipReloadingFor src/**/*.imba --",
+    "dev": "imba server.imba --watch --esm --skipReloadingFor src/**/*.imba --",
     "build": "imba build server.imba",
     "build:client": "vite build -c vite.config.client.js --outDir dist",
     "build:server": "imba build server.imba",

@@ -330,7 +330,7 @@ def run entry, o, extras
 			return viteServer.printUrls!
 		if o.command == 'build'
 			# build client
-			let entry-points = []
+			let entry-points
 			const options = {command: "build", mode: "production"}
 			let clientConfig = await getConfigFilePath("client", options)
 
@@ -366,6 +366,7 @@ def run entry, o, extras
 					}
 				})
 
+				entry-points = []
 				for path in Object.keys(serverBuild.output[0].modules) when path.startsWith('/')
 					const url = new URL("file://{path}")
 					const params = new URLSearchParams(url.search)

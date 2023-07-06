@@ -43,7 +43,20 @@ const runner = new ViteNodeRunner({
 }
 );
 const file = '__FILE__'
+const watch = __WATCH__
 await runner.executeFile(file).catch(function (error) {
 	handleError(`Error executing file ${file}`, error)
 });
-// process.send({ type: 'exit' })
+
+
+if(watch){
+	process.on("message", (msg)=>{
+		if(msg && msg[1] == 'reloading'){
+			const EXIT_CODE_RESTART = 43
+			process.exit(EXIT_CODE_RESTART)
+		}
+	})
+}else{
+	process.send({ type: 'exit' })
+}
+	
