@@ -4,6 +4,7 @@ import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
 import print-info from '../src/utils/print-info'
+import imba-fmt from '../src/utils/fmt'
 import {program as cli} from 'commander'
 import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
@@ -468,8 +469,15 @@ cli
 	.action(do create($1, $2.opts!))
 
 cli
-	.command('info').description('Print helpful information')
+	.command('info')
+	.description('Print helpful information')
 	.action(do print-info!)
+
+cli
+	.command('fmt')
+	.description('Removes extra whitespace, debug logs, and commented logs from **/*.imba')
+	.option('-f, --force', 'Format without checking git status')
+	.action(do imba-fmt($1.opts!))
 
 log.ts 'parse options'
 
