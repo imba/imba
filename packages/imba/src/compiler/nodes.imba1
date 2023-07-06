@@ -6984,7 +6984,7 @@ export class Call < Node
 					result.push LIT("'{bg-blue}{white}{s}{reset}'")
 					result.push arg
 
-			args.@nodes = ["\"{fmts.join(' ')}\"", *result]
+			args = ArgList.new ["\"{fmts.join(' ')}\"", *result]
 
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
