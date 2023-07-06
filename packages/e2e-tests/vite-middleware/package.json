@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "imba server.imba --watch --esm --skipReloadingFor src/**/*.imba --",
-    "build": "imba build server.imba",
+    "build": "imba build server.imba -o dist2",
     "build:client": "vite build -c vite.config.client.js --outDir dist",
     "build:server": "imba build server.imba",
-    "preview": "cross-env NODE_ENV=production node dist_server/server.mjs",
+    "preview": "cross-env NODE_ENV=production node dist2/server.mjs",
     "debug": "node --inspect-brk dist_server/server/server",
     "test": "imba test run src"
   },

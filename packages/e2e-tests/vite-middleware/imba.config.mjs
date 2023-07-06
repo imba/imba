@@ -12,19 +12,6 @@ export default defineConfig(({ command, mode }) => {
 	return {
       bundler: "vite",
       server:{
-		build: {
-			manifest: true,
-			minify: true,
-			rollupOptions: {
-				output: {
-					dir: "./dist_server",
-					name: "main",
-				},
-				input:{
-					entry,
-				},
-			}
-		},
 		server: {
 			watch: {
 				// During tests we edit the files too fast and sometimes chokidar

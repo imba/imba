@@ -38,10 +38,7 @@ export def setupVite(srv, options, cb)
 
 		vite = await Vite.createServer vite-options
 
-	let clientDist = np.join(vite.config.root, 'dist', 'public')
-	
-	if options.publicDir
-		clientDist = np.join(vite.config.root, options.publicDir)
+	let clientDist = np.join(vite.config.root, options.outDir or 'dist', 'public')
 
 	if prod?
 		vite.close().then do vite = null
