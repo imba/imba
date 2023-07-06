@@ -11,7 +11,6 @@ const portArgPos = args.indexOf("--port") + 1
 if portArgPos > 0
 	port = parseInt(args[portArgPos], 10)
 
-let manifest
 def createServer()
 	const app = express()
 	const options = 
