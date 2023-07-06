@@ -1,16 +1,11 @@
 import {
-  browserLogs,
-  e2eServer,
   editFileAndWaitForHmrComplete,
   fetchPageText,
   getColor,
-  getEl,
-  getText,
   isBuild,
   page,
   untilMatches,
-  editFile,
-  sleep,
+  editFileAndWaitForServerAndReload,
 } from "~utils";
 
 test("SSR and hydration works", async () => {
@@ -86,23 +81,14 @@ if (!isBuild) {
     );
 
     test("Reloading servers work", async () => {
-      const updateApp = editFile.bind(null, "server.imba");
 
-      await updateApp((content) => content.replace("<App>", "<h1> 'RELOADED'"));
-      await sleep(700);
-      await page.reload();
+	  await editFileAndWaitForServerAndReload("server.imba", (content) => content.replace("<App>",  "<h1> 'RELOADED'"))
       expect(await page.textContent("h1")).toBe("RELOADED");
 
-      await updateApp((content) => content.replace("RELOADED", "RELOADED again"))
-      await sleep(700);
-      await page.reload();
+      await editFileAndWaitForServerAndReload("server.imba", (content) => content.replace("RELOADED", "RELOADED again"))
       expect(await page.textContent("h1")).toBe("RELOADED again");
 
-      await updateApp((content) =>
-        content.replace("RELOADED again", "RELOADED again 2!")
-      );
-      await sleep(700);
-      await page.reload();
+	  await editFileAndWaitForServerAndReload("server.imba", (content) => content.replace("RELOADED again", "RELOADED again 2!"))
       expect(await page.textContent("h1")).toBe("RELOADED again 2!");
     }, {retry: 4});
 
