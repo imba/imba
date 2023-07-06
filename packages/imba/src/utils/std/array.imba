@@ -51,3 +51,8 @@ extend class Array
 			a > b ? 1 : (a < b ? -1 : 0)
 
 		reverse ? items.reversed : items
+
+	def delete item
+		let idx = indexOf(item)
+		return unless idx >= 0
+		splice(idx,1)
