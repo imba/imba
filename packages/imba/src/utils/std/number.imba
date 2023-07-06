@@ -16,7 +16,12 @@ extend class Number
 		Math.round self
 
 	def clamp min, max
-		Math.min Math.max(self,min), max
+		if typeof max isnt 'number'
+			Math.max self, min
+		elif typeof min isnt 'number'
+			Math.min self, max
+		else
+			Math.min Math.max(self,min), max
 
 	def lerp imin, imax, omin, omax
 		let normal = (self - imin) / (imax - imin)
