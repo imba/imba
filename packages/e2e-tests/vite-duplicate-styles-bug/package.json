@@ -9,8 +9,8 @@
   },
   "devDependencies": {
     "imba": "../../imba",
-    "vite": "^4.1.4",
-    "vite-node": "^0.29.2",
+    "vite": "^4.3.9",
+    "vite-node": "^0.32.4",
     "vite-tsconfig-paths-silent": "^4.0.5"
   },
   "type": "module"

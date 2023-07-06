@@ -1,0 +1,1 @@
+console.log "I should log this message and exit (why shouldn't I?!)"

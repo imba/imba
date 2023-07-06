@@ -8,7 +8,7 @@
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
     "test:imba": "imba test imba.test.imba -- --run",
     "test:exec:close": "imba a.imba --vite",
-    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba && test:exec:close",
+    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba && npm run test:exec:close",
     "sync": "git pull && npm --prefix ../imba install && npm --prefix ../imba run build && npm install",
     "synctest": "npm run sync && npm run test"
   },
@@ -22,7 +22,7 @@
     "node-fetch": "^3.2.10",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
-    "vitest": "^0.32.2"
+    "vitest": "^0.32.4"
   },
   "devDependencies": {
     "@testing-library/dom": "^9.3.1",

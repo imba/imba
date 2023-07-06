@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "imba": "file:../../imba",
-    "vite": "^4.1.4"
+    "vite": "^4.3.9"
   },
   "type": "module"
 }
