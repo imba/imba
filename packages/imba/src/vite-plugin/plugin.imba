@@ -21,7 +21,7 @@ import { VitePluginImbaCache } from "./utils/vite-plugin-imba-cache";
 import { resolveViaPackageJsonImba } from "./utils/resolve";
 import { ensureWatchedFile, setupWatchers } from "./utils/watch";
 import { handleImbaHotUpdate } from './handle-imba-hot-update';
-import url from 'node:url'
+import url, {pathToFileURL, fileURLToPath} from 'node:url'
 import np from 'node:path'
 export { setupVite } from './setupVite'
 
@@ -154,7 +154,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			export default d;
 			"""
 
-		if id.startsWith('/')
+		if np.isAbsolute id
 			const url = new URL("file://{id}")
 			const params = new URLSearchParams(url.search)
 			if params.has('url') and params.has('entry')
