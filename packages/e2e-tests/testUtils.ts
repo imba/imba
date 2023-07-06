@@ -152,6 +152,32 @@ export async function hmrUpdateComplete(file, timeout) {
 	});
 }
 
+export async function editFileAndWaitForServerAndReload(file, replacer, fileUpdateToWaitFor?) {
+	editFile(file, replacer);
+	if (!fileUpdateToWaitFor) {
+		fileUpdateToWaitFor = file;
+	}
+
+	
+	await sleep(1000);
+      try {
+		await page.reload();
+	  } catch(error){
+		const maxTries = isCI && isWin ? 3 : 1;
+		let lastErr;
+		for (let i = 1; i <= maxTries; i++) {
+			try {
+				await sleep(1000);
+				await page.reload();
+				return
+			  } catch(e){
+				lastErr = e
+			  }
+		}
+
+		throw lastErr;
+	  }
+}
 export async function editFileAndWaitForHmrComplete(file, replacer, fileUpdateToWaitFor?) {
 	const newContent = editFile(file, replacer);
 	if (!fileUpdateToWaitFor) {

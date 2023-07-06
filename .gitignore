@@ -11,8 +11,7 @@ packages/imba/test/cli/examples/dist
 packages/imba/test/apps/**/*.js
 packages/imba/bin/temp-config.vite.js
 packages/e2e-tests/**/node_modules
-packages/e2e-tests/**/package-lock.json
-packages/e2e-tests/**/dist
+packages/e2e-tests/**/dist*
 packages/e2e-tests/**/dist_server
 packages/e2e-tests/**/.dev-ssr
 packages/e2e-tests/**/dist_client

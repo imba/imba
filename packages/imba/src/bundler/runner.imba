@@ -153,7 +153,7 @@ class WorkerInstance
 				console.error "Error fetching module {message.id}", error.name, error.message
 				return process.exit 1
 
-			if message.id.startsWith('/')
+			if np.isAbsolute message.id
 				const url = new URL("file://{message.id}")
 				const params = new URLSearchParams(url.search)
 				if params.has('url') and params.has('entry')

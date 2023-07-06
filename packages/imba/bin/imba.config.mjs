@@ -61,12 +61,7 @@ export default defineConfig(async ({mode, command})=>{
 				manifest: true,
 				target: ["chrome88", "edge79", "safari15"],
 				ssrManifest: true,
-				rollupOptions:{
-					output:{
-						manualChunks: undefined,
-						dir: "dist"
-					}
-				}
+				rollupOptions:{}
 			},
 			define: {
 				'import.meta.vitest': undefined,
@@ -99,7 +94,6 @@ export default defineConfig(async ({mode, command})=>{
 					output: {
 						format: 'esm',
 						entryFileNames: "[name].mjs",
-						dir: "dist"
 					},
 					input: {
 						//eject entry: "server.imba",

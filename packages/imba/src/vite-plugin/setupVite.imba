@@ -38,12 +38,13 @@ export def setupVite(srv, options, cb)
 
 		vite = await Vite.createServer vite-options
 
-	const dist = np.join(vite.config.root, options.publicDir or "dist/public")
+	let clientDist = np.join(vite.config.root, options.outDir or 'dist', 'public')
+
 	if prod?
 		vite.close().then do vite = null
-		global.__vite_manifest__ ||= JSON.parse nfs.readFileSync("{dist}/manifest.json", 'utf-8')
-		cb(dist) if cb
-		return dist
+		global.__vite_manifest__ ||= JSON.parse nfs.readFileSync(np.join(clientDist, 'manifest.json'), 'utf-8')
+		cb(clientDist) if cb
+		return clientDist
 	else
 		srv.use do(req, res, next)
 			__served__.add req.url
@@ -52,4 +53,4 @@ export def setupVite(srv, options, cb)
 		srv.use do(req, res, next)
 			__served__.delete req.url
 			next()
-	return dist
+	return clientDist
