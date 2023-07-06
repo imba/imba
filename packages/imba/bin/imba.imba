@@ -367,6 +367,7 @@ def run entry, o, extras
 				})
 
 				entry-points = []
+				console.log("::keys", Object.keys(serverBuild.output[0].modules))
 				for path in Object.keys(serverBuild.output[0].modules) when np.isAbsolute(path)
 					const url = new URL("file://{path}")
 					const params = new URLSearchParams(url.search)
