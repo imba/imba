@@ -90,7 +90,7 @@ if (!isBuild) {
 
 	  await editFileAndWaitForServerAndReload("server.imba", (content) => content.replace("RELOADED again", "RELOADED again 2!"))
       expect(await page.textContent("h1")).toBe("RELOADED again 2!");
-    }, {retry: 4});
+    });
 
   });
 }
