@@ -124,18 +124,18 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 					log.debug "resolved imba to imba/server"
 					return imbaSSR
 			return resolvedImbaSSR
-		if test?
-			const req = parseRequest(id, ssr)
-			if req..external !== undefined
-				let keys = []
-				for k,v in Object.keys(req)
-					keys.push "{k}={v}" unless k == 'external'
-				if keys.length
-					id = id.split("?")[0] + "?{keys.join('&')}"
-				else
-					id = id.split("?")[0]
-				return id
-
+		# if test?
+		const req = parseRequest(id, ssr)
+		if req..external !== undefined
+			let keys = []
+			for k,v in Object.keys(req)
+				keys.push "{k}={v}" unless k == 'external'
+			if keys.length
+				id = id.split("?")[0] + "?{keys.join('&')}"
+			else
+				id = id.split("?")[0]
+			const resolution = await this.resolve(id, importer, {skipSelf: yes, ...opts})
+			return {...resolution, external: yes}
 		try
 			const resolved = resolveViaPackageJsonImba(id, importer, cache)
 			if resolved
@@ -146,13 +146,6 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 
 	def load(id, opts)
 		const ssr = !!opts..ssr
-		if id.includes("?external")
-			const path = np.relative(viteConfig.root, id.replace('?external', ''))
-			return """
-			import d from '{normalizePath path}';
-			export * from '{normalizePath path}';
-			export default d;
-			"""
 
 		if np.isAbsolute id
 			const url = new URL("file://{id}")
