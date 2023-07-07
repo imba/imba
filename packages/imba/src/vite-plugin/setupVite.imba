@@ -43,6 +43,7 @@ export def setupVite(srv, options, cb)
 	if prod?
 		vite.close().then do vite = null
 		global.__vite_manifest__ ||= JSON.parse nfs.readFileSync(np.join(clientDist, 'manifest.json'), 'utf-8')
+		global.IMBA_PUBDIR = clientDist
 		cb(clientDist) if cb
 		return clientDist
 	else
