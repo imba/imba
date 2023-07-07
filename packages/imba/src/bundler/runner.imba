@@ -149,7 +149,7 @@ class WorkerInstance
 
 		if message.type == 'fetch'
 			let md
-			try md = await runner.fetchModule(message.id) catch error
+			try md = await runner.viteNodeServer.fetchModule(message.id) catch error
 				console.error "Error fetching module {message.id}", error.name, error.message
 				return process.exit 1
 
@@ -169,7 +169,7 @@ class WorkerInstance
 			# console.log "resolving", message
 			const id = message.payload.id
 			const importer = message.payload.importer
-			const output = await runner.resolveId(id, importer)
+			const output = await runner.viteNodeServer.resolveId(id, importer)
 			const response = JSON.stringify
 				type: 'resolved'
 				output: output
@@ -203,9 +203,6 @@ export default class Runner < Component
 		bundle = bundle
 		workers = new Set
 		fileToRun = np.resolve bundle.cwd, o.name
-
-	def fetchModule do viteNodeServer.fetchModule $1
-	def resolveId do viteNodeServer.resolveId $1
 
 	def shouldRerun(id)
 		return yes if id == fileToRun
@@ -248,7 +245,7 @@ export default class Runner < Component
 		viteServer = await Vite.createServer config
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer, {
 			deps: 
-				moduleDirectories: ['vite']
+				moduleDirectories: ['node_modules']
 			transformMode:
 				ssr: [/.*/g]
 		}
