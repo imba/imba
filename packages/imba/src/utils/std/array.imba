@@ -12,6 +12,9 @@ extend class Array
 	get random
 		self[Math.floor(Math.random! * length)]
 
+	def clear
+		length = 0
+
 	def resolve
 		await Promise.all self
 
