@@ -24,6 +24,9 @@ export default defineConfig(async ({mode, command})=>{
 			setupFiles.push(path)
 		}
 	})
+	let rootPlugins = [imbaPlugin({ssr: true})]
+	let rootResolve = { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] }
+
     let finalTest = {test:{
 			globals: true,
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
@@ -41,6 +44,21 @@ export default defineConfig(async ({mode, command})=>{
 			// specific stuff to testing in node?
 		}else{
 			setupFiles.unshift('node_modules/imba/bin/test-setup.browser.mjs')
+		}
+		if (typeof userTestConfig == "function"){
+			userTestConfig = userTestConfig({mode, command})
+		}
+
+		console.log(userTestConfig)
+		if(userTestConfig?.test?.environment != "node" || userTestConfig?.test?.environment == "happy-dom" ){
+			console.log("JSDOM")
+			rootPlugins = [imbaPlugin()]
+			rootResolve.extensions = ['.web.imba', ...extensions]
+		}
+		if(userTestConfig.plugins){
+			const d = Vite.mergeConfig({plugins: rootPlugins}, {plugins: userTestConfig.plugins})
+			rootPlugins = d.plugins
+			delete userTestConfig.plugins;
 		}
         finalTest = Vite.mergeConfig(finalTest, userTestConfig)
     }
@@ -108,8 +126,8 @@ export default defineConfig(async ({mode, command})=>{
 			},
 		},
 		// we duplicate the plugins and resolve config here for the tests
-		plugins: [imbaPlugin({ssr: true})],
 		envPrefix,
+		plugins: rootPlugins,
 		worker: {
 			plugins: [imbaPlugin({ssr:true})]
 		},

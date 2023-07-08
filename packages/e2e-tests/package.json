@@ -8,7 +8,8 @@
     "test:build": "cross-env TEST_BUILD=1 vitest run -c vitest.config.e2e.ts",
     "test:imba": "imba test imba.test.imba -- --run",
     "test:exec:close": "imba a.imba --vite",
-    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba && npm run test:exec:close",
+    "test:component-tests": "cd imba-config-file && npm i && npm test",
+    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba && npm run test:exec:close && npm run test:component-tests",
     "sync": "git pull && npm --prefix ../imba install && npm --prefix ../imba run build && npm install",
     "synctest": "npm run sync && npm run test"
   },

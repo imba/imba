@@ -118,9 +118,12 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				return imbaRequest.cssId
 			log.debug "resolveId resolved {id}"
 			return id
-		if ssr and id === "imba"
+		if id === "imba"
 			if !resolvedImbaSSR
-				resolvedImbaSSR = this.resolve("imba/server", undefined, skipSelf: true).then do(imbaSSR)
+				# handle imba resolving here
+				# this is useful in test environment where we should (if env == 'jsdom')
+				# set ssr to false even though tests run in node
+				resolvedImbaSSR = this.resolve("imba/{ssr ? 'server': 'client'}", undefined, skipSelf: true).then do(imbaSSR)
 					log.debug "resolved imba to imba/server"
 					return imbaSSR
 			return resolvedImbaSSR
