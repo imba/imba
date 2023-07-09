@@ -1,14 +1,11 @@
 import { builtinModules } from 'module'
-import imbaPlugin from 'imba/plugin'
+import imbaPlugin, {vitePluginEnvironment} from 'imba/plugin'
 import np from 'node:path'
 import nfs from 'node:fs'
 // do not remove
 import url from 'node:url'
-// import inject from '@rollup/plugin-inject'
 import { createRequire } from 'node:module'
 import { defineConfig } from 'vite'
-// const require = createRequire(import.meta.url);
-// const esbuildShim = require.resolve('node-stdlib-browser/helpers/esbuild/shim');
 
 // uppercase letters + _
 let envPrefix = ['_']
@@ -33,14 +30,14 @@ export default async function({mode, command}){
 	let rootPlugins = [imbaPlugin({ssr: true})]
 	let rootResolve = { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] }
 
-    let finalTest = defineConfig({test:{
+	let finalTest = {test:{
 			globals: true,
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 			environment: "node",
 			setupFiles,
 			exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*']
-	}})
+	}}
     if(mode == "test"){
 
         /** REPLACE_ME */
@@ -72,15 +69,7 @@ export default async function({mode, command}){
 				plugins: [imbaPlugin()]
 			},
 			envPrefix,
-			plugins: [imbaPlugin(),
-			// 	{
-			// 	...inject({
-			// 		global: [esbuildShim, 'global'],
-			// 		process: [esbuildShim, 'process'],
-			// 	}),
-			// 	enforce: 'post'
-			// }
-		],
+			plugins: [imbaPlugin(), vitePluginEnvironment("all")],
 			resolve: {
 				conditions: ['imba'],
 				extensions: ['.web.imba', ...extensions],
