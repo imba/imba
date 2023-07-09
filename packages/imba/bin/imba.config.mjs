@@ -1,9 +1,14 @@
-import {defineConfig} from 'imba'
 import { builtinModules } from 'module'
 import imbaPlugin from 'imba/plugin'
 import np from 'node:path'
 import nfs from 'node:fs'
+// do not remove
 import url from 'node:url'
+// import inject from '@rollup/plugin-inject'
+import { createRequire } from 'node:module'
+import { defineConfig } from 'vite'
+// const require = createRequire(import.meta.url);
+// const esbuildShim = require.resolve('node-stdlib-browser/helpers/esbuild/shim');
 
 // uppercase letters + _
 let envPrefix = ['_']
@@ -15,8 +20,9 @@ const setupFiles = ['node_modules/imba/bin/test-setup.all.mjs']
 
 let userTestConfig = {}
 
-export default defineConfig(async ({mode, command})=>{
+export default async function({mode, command}){
 
+	// const { default: stdLibBrowser } = await import('node-stdlib-browser');
 	extensions.forEach((ext)=>{
 		const name = `test-setup${ext}`
 		const path = np.join(process.cwd(), name)
@@ -27,53 +33,59 @@ export default defineConfig(async ({mode, command})=>{
 	let rootPlugins = [imbaPlugin({ssr: true})]
 	let rootResolve = { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] }
 
-    let finalTest = {test:{
+    let finalTest = defineConfig({test:{
 			globals: true,
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 			environment: "node",
 			setupFiles,
 			exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*']
-	}}
+	}})
     if(mode == "test"){
 
         /** REPLACE_ME */
 
 		const Vite = await import('vite')
-		if(userTestConfig?.test?.environment == 'node' || userTestConfig?.environment == 'node'){
-			// specific stuff to testing in node?
-		}else{
+		const env = userTestConfig?.test?.environment || userTestConfig?.environment
+		if(env =='jsdom' || env == 'happy-dom'){
+			console.log("JSDOM")
+			rootPlugins = [imbaPlugin()]
+			rootResolve.extensions = ['.web.imba', ...extensions]
 			setupFiles.unshift('node_modules/imba/bin/test-setup.browser.mjs')
+		}else{
+			// specific stuff to testing in node?
 		}
 		if (typeof userTestConfig == "function"){
 			userTestConfig = userTestConfig({mode, command})
 		}
 
-		console.log(userTestConfig)
-		if(userTestConfig?.test?.environment != "node" || userTestConfig?.test?.environment == "happy-dom" ){
-			console.log("JSDOM")
-			rootPlugins = [imbaPlugin()]
-			rootResolve.extensions = ['.web.imba', ...extensions]
-		}
 		if(userTestConfig.plugins){
 			const d = Vite.mergeConfig({plugins: rootPlugins}, {plugins: userTestConfig.plugins})
 			rootPlugins = d.plugins
 			delete userTestConfig.plugins;
 		}
         finalTest = Vite.mergeConfig(finalTest, userTestConfig)
-    }
+	}
 	return ({
-		client: {
-			type: "",
+		client: defineConfig({
 			worker: {
 				plugins: [imbaPlugin()]
 			},
 			envPrefix,
-			plugins: [imbaPlugin()],
+			plugins: [imbaPlugin(),
+			// 	{
+			// 	...inject({
+			// 		global: [esbuildShim, 'global'],
+			// 		process: [esbuildShim, 'process'],
+			// 	}),
+			// 	enforce: 'post'
+			// }
+		],
 			resolve: {
 				conditions: ['imba'],
 				extensions: ['.web.imba', ...extensions],
 				dedupe: ['imba'],
+				// alias: stdLibBrowser
 			},
 			build: {
 				manifest: true,
@@ -84,8 +96,8 @@ export default defineConfig(async ({mode, command})=>{
 			define: {
 				'import.meta.vitest': undefined,
 			},
-		},
-		server: {
+		}),
+		server: defineConfig({
 			appType: "custom",
 			envPrefix,
 			plugins: [imbaPlugin({ ssr: true })],
@@ -99,7 +111,6 @@ export default defineConfig(async ({mode, command})=>{
 			// },
 			ssr: {
 				target: "node",
-				transformMode: { ssr: [new RegExp(builtinModules.join("|"), 'gi')] },
 				external: ["imba", "imba/plugin"]
 			},
 			build: {
@@ -124,7 +135,7 @@ export default defineConfig(async ({mode, command})=>{
 			worker: {
 				plugins: [imbaPlugin({ssr:true})]
 			},
-		},
+		}),
 		// we duplicate the plugins and resolve config here for the tests
 		envPrefix,
 		plugins: rootPlugins,
@@ -132,6 +143,6 @@ export default defineConfig(async ({mode, command})=>{
 			plugins: [imbaPlugin({ssr:true})]
 		},
 		resolve: { extensions: ['.node.imba', ...extensions], dedupe: ['imba'] },
-		test: finalTest.test
+		test: defineConfig(finalTest.test)
 	})
-})
+}

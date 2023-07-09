@@ -109,7 +109,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	
 	def resolveId(id, importer, opts)
 		let ssr = !!opts..ssr or options.ssr
-		ssr = no if test?
+		# ssr = no if test?
 		const imbaRequest = requestParser(id, ssr)
 		return resolvedAllCssModuleId if id == allCssModuleId or id == "*?css" or id == "*"
 		if imbaRequest..query.imba
