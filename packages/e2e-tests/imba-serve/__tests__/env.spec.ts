@@ -8,6 +8,6 @@ test('should render the svg and pass props', async () => {
 	expect(title).toBe('imba is cool')
 });
 
-test("supports process.env", async()=>{
+test("supports process.env and overriding envPrefix", async()=>{
 	expect(await getText('h1')).toBe("version 1.2")
 })

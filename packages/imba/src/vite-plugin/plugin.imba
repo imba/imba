@@ -18,12 +18,12 @@ import {
 import type  {Options, ResolvedOptions } from './utils/options'
 import { toRollupError } from "./utils/error";
 import { VitePluginImbaCache } from "./utils/vite-plugin-imba-cache";
-import { resolveViaPackageJsonImba } from "./utils/resolve";
 import { ensureWatchedFile, setupWatchers } from "./utils/watch";
 import { handleImbaHotUpdate } from './handle-imba-hot-update';
 import url, {pathToFileURL, fileURLToPath} from 'node:url'
 import np from 'node:path'
 import vitePluginEnvironment from './vite-plugin-environment.ts'
+
 export {vitePluginEnvironment}
 export { setupVite } from './setupVite'
 
@@ -120,16 +120,6 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				return imbaRequest.cssId
 			log.debug "resolveId resolved {id}"
 			return id
-		if id === "imba"
-			if !resolvedImbaSSR
-				# handle imba resolving here
-				# this is useful in test environment where we should (if env == 'jsdom')
-				# set ssr to false even though tests run in node
-				resolvedImbaSSR = this.resolve("imba/{ssr ? 'server': 'client'}", undefined, skipSelf: true).then do(imbaSSR)
-					log.debug "resolved imba to imba/server"
-					return imbaSSR
-			return resolvedImbaSSR
-		# if test?
 		const req = parseRequest(id, ssr)
 		if req..external !== undefined
 			let keys = []
@@ -141,14 +131,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				id = id.split("?")[0]
 			const resolution = await this.resolve(id, importer, {skipSelf: yes, ...opts})
 			return {...resolution, external: yes}
-		try
-			const resolved = resolveViaPackageJsonImba(id, importer, cache)
-			if resolved
-				log.debug "resolveId resolved ${resolved} via package.json imba field of {id}"
-				return resolved
-		catch e
-			log.debug.once "error trying to resolve {id} from {importer} via package.json imba field ", e
-
+		
 	def load(id, opts)
 		const ssr = !!opts..ssr
 
@@ -212,7 +195,6 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		resolveId: resolveId
 		configureServer: configureServer
 		handleHotUpdate: handleHotUpdate
-	# plugins.push iifePlugin!
 
 	plugins
 		

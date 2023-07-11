@@ -49,8 +49,6 @@
   ],
   "exports": {
     "./preflight.css": "./preflight.css",
-    "./server": "./dist/imba.node.mjs",
-    "./client": "./dist/imba.mjs",
     ".": {
       "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",
