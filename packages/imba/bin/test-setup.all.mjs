@@ -13,16 +13,12 @@ const ok = (nook = false) => (...args) => {
 				return expect(args[0]).toBeTruthy()
 			}
 		} else {
-			let i = 0
-			while (i < args.length - 1) {
-				if (nook) {
-					expect(args[i]).not.toStrictEqual(args[i + 1])
-				} else {
-					expect(args[i]).toStrictEqual(args[i + 1])
-				}
-				i++
-			};
-
+			const [a, b] = args
+			if (nook) {
+				expect(a).not.toStrictEqual(b)
+			} else {
+				expect(a).toStrictEqual(b)
+			}
 		}
 	} catch (error) {
 		if (args[2]) console.error(args[2])
