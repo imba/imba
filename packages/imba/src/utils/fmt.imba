@@ -1,6 +1,7 @@
 import { fdir } from 'fdir'
 import fs from 'fs'
 import cp from 'child_process'
+import np from 'path'
 import 'imba/colors'
 
 const E = do
@@ -13,7 +14,7 @@ const extra-lines = /\n\n\n+/gm
 const commented-logs = /^\s*#\s+(console\.|L)\b.*\n/gm
 const empty-comments = /^\s*#\s*\n/gm
 
-def remove-debug-logs contents
+def remove-debug-logs contents, filename
 
 	let result = []
 	let lines = contents.split('\n')
@@ -40,7 +41,10 @@ def remove-debug-logs contents
 		let nt = next-line..match(/^\t*/)[0]
 
 		continue if !debug-log.test(prev-line) and (pt is ct or ct is nt)
-		result.push line.replace /(?<=^\t*)\bL\b.*/, null
+
+		console.warn "Unable to remove devlog in '{np.relative(process.cwd!,filename)}' due to indent".yellow
+		result.push "{'\t'.repeat(ct.length)}# DEVLOG"
+		result.push line
 
 	result.join("\n")
 
@@ -59,17 +63,17 @@ export default def fmt opts
 		.crawl(".")
 		.sync!
 
-	for file\string of files
-		continue if file.endsWith 'fmt.imba'
-		continue if file.includes 'node_modules'
+	for filename\string of files
+		continue if filename.endsWith 'fmt.imba'
+		continue if filename.includes 'node_modules'
 
-		let contents = fs.readFileSync file, 'utf8'
+		let contents = fs.readFileSync filename, 'utf8'
 		let prev = contents
-		contents = remove-debug-logs contents
+		contents = remove-debug-logs contents, filename
 		contents = contents.replaceAll commented-logs, ''
 		contents = contents.replaceAll trailing-whitespace, ''
 		contents = contents.replaceAll extra-lines, '\n\n'
 		contents = contents.replaceAll empty-comments, ''
 		continue if prev is contents
 
-		fs.writeFileSync file, contents
+		fs.writeFileSync filename, contents
