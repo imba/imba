@@ -26,7 +26,7 @@ export default async function({mode, command}){
 		test:{
 			globals: true,
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-			includeSource: ['**/*.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+			includeSource: ['**/*.{imba}'],
 			environment: "node",
 			setupFiles,
 			exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*']
@@ -42,10 +42,10 @@ export default async function({mode, command}){
 		const env = userTestConfig?.test?.environment || userTestConfig?.environment
 		if(env =='jsdom' || env == 'happy-dom'){
 			rootPlugins = [imbaPlugin({ssr: false})]
-			rootResolve.extensions = ['.web.imba', ...extensions]
+			rootResolve.extensions = ['.vitest.node.imba','.web.imba', '.vitest.imba', ...extensions]
 			setupFiles.unshift('node_modules/imba/bin/test-setup.browser.mjs')
 		}else{
-			rootResolve.extensions = ['.node.imba', ...extensions]
+			rootResolve.extensions = ['.vitest.node.imba','.node.imba', '.vitest.imba', ...extensions]
 			// specific stuff to testing in node?
 		}
 
