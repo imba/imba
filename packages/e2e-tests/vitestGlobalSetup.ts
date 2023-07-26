@@ -31,7 +31,7 @@ const syncNodeModules = async () => {
 	);
 	console.log('install dependencies in all subfolders');
 	let testDirs = await fs.readdir("./", { withFileTypes: true });
-	testDirs = testDirs.filter(dir=> dir.isDirectory() && dir.name !== "node_modules")
+	testDirs = testDirs.filter(dir=> dir.isDirectory() && dir.name !== "node_modules" && dir.name !== "features")
 	await Promise.all(
 		testDirs
 			.map(dir=>execa('npm', ['install', '--no-audit'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))

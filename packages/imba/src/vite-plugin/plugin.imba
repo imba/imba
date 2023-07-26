@@ -1,5 +1,6 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
+import cucumberPlugin from "./cucumber-plugin";
 import type { Plugin, HmrContext } from "vite";
 import {normalizePath} from 'vite'
 import * as esbuild from 'esbuild'
@@ -195,6 +196,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		resolveId: resolveId
 		configureServer: configureServer
 		handleHotUpdate: handleHotUpdate
+	plugins.push cucumberPlugin!
 
 	plugins
 		
