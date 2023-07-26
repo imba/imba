@@ -147,7 +147,7 @@ async function universalise(result, o) {
 async function bundle(o) {
 	if (o instanceof Array) {
 		for (let config of o) {
-			bundle(config);
+			await bundle(config)
 		}
 		return;
 	}
@@ -236,7 +236,6 @@ let bundles = [
 		external: [ "vite", 'local-pkg', 'get-port'],
 		platform: "node",
 	},
-	// bin/imba.imba depends on colors
 	{
 		entryPoints: [
 			"src/utils/colors.imba"
