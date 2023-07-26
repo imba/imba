@@ -236,6 +236,27 @@ let bundles = [
 		external: [ "vite", 'local-pkg', 'get-port'],
 		platform: "node",
 	},
+	// bin/imba.imba depends on colors
+	{
+		entryPoints: [
+			"src/utils/colors.imba"
+		],
+		outExtension: { ".js": ".mjs" },
+		minify: true,
+		outdir: "dist",
+		format: "esm",
+		platform: "browser",
+	},
+	{
+		entryPoints: [
+			"src/utils/colors.imba"
+		],
+		outExtension: { ".js": ".cjs" },
+		minify: true,
+		outdir: "dist",
+		format: "cjs",
+		platform: "node",
+	},
 	{
 		entryPoints: [
 			"bin/imba.imba",
@@ -278,26 +299,6 @@ let bundles = [
 		outExtension: { ".js": ".cjs" },
 		minify: true,
 		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
-		outdir: "dist",
-		format: "cjs",
-		platform: "node",
-	},
-	{
-		entryPoints: [
-			"src/utils/colors.imba"
-		],
-		outExtension: { ".js": ".mjs" },
-		minify: true,
-		outdir: "dist",
-		format: "esm",
-		platform: "browser",
-	},
-	{
-		entryPoints: [
-			"src/utils/colors.imba"
-		],
-		outExtension: { ".js": ".cjs" },
-		minify: true,
 		outdir: "dist",
 		format: "cjs",
 		platform: "node",
