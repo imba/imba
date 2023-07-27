@@ -28,6 +28,8 @@ export def @thenable target, key, desc
 
 	let val = desc.value
 	let sym = Symbol!
+	let thensym = Symbol!
+
 	let meta = thenables.get(target)
 	meta || thenables.set(target,meta = [])
 
@@ -47,7 +49,8 @@ export def @thenable target, key, desc
 			enumerable: no,
 			value: do(ok,err)
 				let that = this
-				let promise = new Promise do(resolve,reject)
+
+				let promise = this[thensym] ||= new Promise do(resolve,reject)
 					# TODO should only happen in debug
 					let timeout = setTimeout(warn,2s)
 
@@ -59,7 +62,7 @@ export def @thenable target, key, desc
 						clearTimeout(timeout)
 						Object.defineProperty(that,'then',{value: null, writable: yes, configurable: yes})
 						resolve(that)
-
+				
 				promise.then(ok,err)
 		})
 
@@ -69,7 +72,8 @@ export def @thenable target, key, desc
 		# You can reset thenables explicitly by calling instance.myfunction.reset(instance)
 		desc.value.reset = do(target)
 			if target and target[sym]
-				delete target[sym]
+				target[sym] = null
+				target[thensym] = null
 				delete target.then
 
 	return desc
