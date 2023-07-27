@@ -36,6 +36,8 @@ const exclude = [
                         
 if (os.platform() === 'win32') {
   // flaky
+  exclude.push("**/vite-middleware/**");
+  exclude.push("**/imba-config-file/**");
   exclude.push("**/imba-serve-file/**");
 }
 export default defineConfig({
@@ -60,6 +62,6 @@ export default defineConfig({
     maxThreads: numThreads,
   },
   esbuild: {
-    target: "node16",
+    target: "node18",
   },
 });

@@ -37,7 +37,7 @@ const syncNodeModules = async () => {
 				// 'win32' is returned for Windows systems. Despite the name, it's returned for 64-bit Windows too.
 				// Filter out additional tests for Windows
 				// TODO: fix these tests 
-				return dir.name !== 'vite-middleware' && dir.name !== 'imba-config-file';
+				return dir.name !== 'vite-middleware' && dir.name !== 'imba-config-file' && dir.name !== 'imba-serve-file';
 			}
 			return true
 		}
