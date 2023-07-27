@@ -147,7 +147,7 @@ async function universalise(result, o) {
 async function bundle(o) {
 	if (o instanceof Array) {
 		for (let config of o) {
-			bundle(config);
+			await bundle(config)
 		}
 		return;
 	}
@@ -238,6 +238,26 @@ let bundles = [
 	},
 	{
 		entryPoints: [
+			"src/utils/colors.imba"
+		],
+		outExtension: { ".js": ".mjs" },
+		minify: true,
+		outdir: "dist",
+		format: "esm",
+		platform: "browser",
+	},
+	{
+		entryPoints: [
+			"src/utils/colors.imba"
+		],
+		outExtension: { ".js": ".cjs" },
+		minify: true,
+		outdir: "dist",
+		format: "cjs",
+		platform: "node",
+	},
+	{
+		entryPoints: [
 			"bin/imba.imba",
 			"program.imba",
 			"workers.imba"
@@ -278,26 +298,6 @@ let bundles = [
 		outExtension: { ".js": ".cjs" },
 		minify: true,
 		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
-		outdir: "dist",
-		format: "cjs",
-		platform: "node",
-	},
-	{
-		entryPoints: [
-			"src/utils/colors.imba"
-		],
-		outExtension: { ".js": ".mjs" },
-		minify: true,
-		outdir: "dist",
-		format: "esm",
-		platform: "browser",
-	},
-	{
-		entryPoints: [
-			"src/utils/colors.imba"
-		],
-		outExtension: { ".js": ".cjs" },
-		minify: true,
 		outdir: "dist",
 		format: "cjs",
 		platform: "node",

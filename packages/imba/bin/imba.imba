@@ -202,8 +202,9 @@ def test o
 			FORCE_COLOR: yes
 		}
 		stdio: "inherit"
-	const vitest = spawn vitest-path, params, options
-
+	const vitest = spawn(vitest-path, params, options)
+	vitest.on('exit') do process.exit $1
+	
 def run entry, o, extras
 	if entry.._name == 'preview' or entry.._name == 'serve'
 		# no args

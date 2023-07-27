@@ -6975,7 +6975,7 @@ export class Call < Node
 					.replace(/\n/g, "\\n")
 					.replace(/\r/g, "\\r")
 					.replace(/\t/g, "\\t")
-				if arg isa Literal
+				if arg isa Literal and !(arg isa Self or arg isa This)
 					fmts.push "%s"
 					result.push LIT("'{bg-black}{green}{s}{reset}'")
 				else
