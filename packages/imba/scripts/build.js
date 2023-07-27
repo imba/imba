@@ -104,7 +104,7 @@ function plugin(build) {
 		}
 	})
 
-	build.onLoad({ filter: /\.(js|ts)/ }, async (args) => {
+	build.onLoad({ filter: /\.(js|ts|txt)/ }, async (args) => {
 		// console.log('loading js',args);
 		if (watcher) watcher.add(args.path);
 		return;

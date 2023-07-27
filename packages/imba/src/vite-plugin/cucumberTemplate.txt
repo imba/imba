@@ -1,0 +1,44 @@
+const modules = import.meta.glob('{{stepDefsGlob}}', {eager: yes})
+
+let s
+let c
+let contexts = {}
+beforeEach do(suite)
+	{{#each feature.elements}}
+	contexts.c{{ this._id }} = {
+		context: global.__ccContext()
+		name: '{{ this.keyword }}: {{ this.name }}'
+	}
+	{{/each}}
+
+	{{#if backgroundEl}}
+	   {{#each backgroundEl.steps}}
+	s = global.Steps.find('{{ this.text }}', '{{ this.keyword}}').stepDefinition
+	# find the context for the current test this beforeEach hook is running before
+	c = Object.keys(contexts).find(do contexts[$1].name == suite.meta.name)
+	# apply the step
+	await s.target[s.fname].apply(
+		contexts[c].context,
+		[s.cucumberExpression.match('{{ this.text }}').map(do $1.getValue!)]
+	)
+
+	   {{/each}}
+	{{/if}}
+
+describe "Feature: {{ feature.name }}" do
+	{{#each feature.elements}}
+	   {{#if (isRuleOrScenario this.keyword)}}
+
+	test('{{ this.keyword }}: {{ this.name }}')	do
+		{{#each this.steps}}
+		s = global.Steps.find('{{ this.text }}', '{{ this.keyword }}').stepDefinition
+		await s.target[s.fname]
+			.apply(
+				contexts.c{{ ../this._id }}.context,
+				# variables
+				[s.cucumberExpression.match('{{this.text}}').map(do $1.getValue!)]
+			)
+		{{/each}}
+
+	   {{/if}}
+	{{/each}}
