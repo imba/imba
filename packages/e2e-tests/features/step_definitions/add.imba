@@ -11,3 +11,7 @@ new class
 	def step([initial])
 		# Write code here that turns the phrase above into concrete actions
 		result = initial
+	
+	@then('The {string} in context is {string}')
+	def step2([variable, value])
+		ok self[variable], value

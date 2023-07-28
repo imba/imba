@@ -3,9 +3,15 @@ import { vi } from "vitest"
 
 const expressionFactory = new ExpressionFactory(new ParameterTypeRegistry())
 
-def __ccContext
-	new Proxy({},{
-		get: do(target, prop) target[prop] or global[prop]
+def __ccContext(klass, meta)
+	const base = klass ? new klass : new Object
+	base.meta = meta
+	new Proxy(base,{
+		get: do(target, prop)
+			if target[prop] == undefined
+				global[prop]
+			else
+				target[prop]
 		set: do(target, prop, value)
 			target[prop] = value
 			true

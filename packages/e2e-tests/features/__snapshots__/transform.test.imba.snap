@@ -1,0 +1,339 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Cucumber plugin  > Add.feature 1`] = `
+"const modules = import.meta.glob('./step_definitions/**/*.imba', {eager: yes})
+const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
+let s
+let c
+let elName
+let contexts = {}
+const decorators = {
+}
+
+
+beforeAll do(suite)
+beforeEach do(suite)
+
+	let contextName = 'BaseContext'
+	const baseContext = Object.values(baseContexts).find(do $1[contextName])..[contextName]
+	elName = 'Background: Sets initial value for the sum'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c0 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario: Adding two numbers works with background'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c1 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario: Supports multiple scenarios'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c2 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+
+	s = global.Steps.find('the initial value is 10', 'Given').stepDefinition
+	# find the context for the current test this beforeEach hook is running before
+	c = Object.keys(contexts).find(do 
+		contexts[$1].name == suite.meta.name or contexts[$1].name == suite.meta.suite..suite..name 
+	)
+	# apply the step
+	await s.target[s.fname].apply(
+		contexts[c].context,
+		[s.cucumberExpression.match('the initial value is 10').map(do $1.getValue!)]
+	)
+
+
+describe 'Feature: Addition' do
+	test('Scenario: Adding two numbers works with background')	do
+
+		s = global.Steps.find('I add 12 and 4', 'Given').stepDefinition
+		await s.target[s.fname]
+			.apply(
+				contexts.c1.context,
+				# variables
+				[s.cucumberExpression.match('I add 12 and 4').map(do $1.getValue!)]
+			)
+
+		s = global.Steps.find('I should obtain 26', 'Then').stepDefinition
+		await s.target[s.fname]
+			.apply(
+				contexts.c1.context,
+				# variables
+				[s.cucumberExpression.match('I should obtain 26').map(do $1.getValue!)]
+			)
+	test('Scenario: Supports multiple scenarios')	do
+
+		s = global.Steps.find('I add 12 and 10', 'Given').stepDefinition
+		await s.target[s.fname]
+			.apply(
+				contexts.c2.context,
+				# variables
+				[s.cucumberExpression.match('I add 12 and 10').map(do $1.getValue!)]
+			)
+
+		s = global.Steps.find('I should obtain 32', 'Then').stepDefinition
+		await s.target[s.fname]
+			.apply(
+				contexts.c2.context,
+				# variables
+				[s.cucumberExpression.match('I should obtain 32').map(do $1.getValue!)]
+			)
+"
+`;
+
+exports[`Cucumber plugin  > scenario-outline feature 1`] = `
+"const modules = import.meta.glob('./step_definitions/**/*.imba', {eager: yes})
+const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
+let s
+let c
+let elName
+let contexts = {}
+const decorators = {
+}
+
+
+beforeAll do(suite)
+beforeEach do(suite)
+
+	let contextName = 'BaseContext'
+	const baseContext = Object.values(baseContexts).find(do $1[contextName])..[contextName]
+	elName = 'Background: '
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c0 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario Outline: Adding two numbers works on many cases'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c1 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+
+	s = global.Steps.find('the initial value is 0', 'Given').stepDefinition
+	# find the context for the current test this beforeEach hook is running before
+	c = Object.keys(contexts).find(do 
+		contexts[$1].name == suite.meta.name or contexts[$1].name == suite.meta.suite..suite..name 
+	)
+	# apply the step
+	await s.target[s.fname].apply(
+		contexts[c].context,
+		[s.cucumberExpression.match('the initial value is 0').map(do $1.getValue!)]
+	)
+
+
+describe 'Feature: Scenario outline' do
+	describe 'Scenario Outline: Adding two numbers works on many cases' do
+		describe 'Examples group 0: Basic examples' do
+			let text
+			test 'Example 0: 1, 2, 3' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 1)
+				text = text.replace('<b>', 2)
+				text = text.replace('<result>', 3)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 1)
+				text = text.replace('<b>', 2)
+				text = text.replace('<result>', 3)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 1: 12, 2, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 12)
+				text = text.replace('<b>', 2)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 12)
+				text = text.replace('<b>', 2)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 2: 13, 1, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 13)
+				text = text.replace('<b>', 1)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 13)
+				text = text.replace('<b>', 1)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 3: 14, 0, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 14)
+				text = text.replace('<b>', 0)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 14)
+				text = text.replace('<b>', 0)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 4: 15, -1, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 15)
+				text = text.replace('<b>', -1)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 15)
+				text = text.replace('<b>', -1)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 5: 16, -2, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 16)
+				text = text.replace('<b>', -2)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 16)
+				text = text.replace('<b>', -2)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 6: 17, -3, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 17)
+				text = text.replace('<b>', -3)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 17)
+				text = text.replace('<b>', -3)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+			test 'Example 7: 18, -4, 14' do
+				text = 'I add <a> and <b>'
+				text = text.replace('<a>', 18)
+				text = text.replace('<b>', -4)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Given').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+				text = 'I should obtain <result>'
+				text = text.replace('<a>', 18)
+				text = text.replace('<b>', -4)
+				text = text.replace('<result>', 14)
+				s = global.Steps.find(text, 'Then').stepDefinition
+				await s.target[s.fname]
+					.apply(
+						contexts.c1.context,
+						# variables
+						[s.cucumberExpression.match(text).map(do $1.getValue!)]
+					)
+				   
+"
+`;
