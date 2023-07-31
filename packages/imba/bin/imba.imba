@@ -191,7 +191,7 @@ def test(o, otherOptions)
 
 	let params = ["--config", configFile, "--root", process.cwd()]
 	
-	params.unshift 'bench' if otherOptions.bench?
+	params.unshift 'bench' if otherOptions..bench?
 	
 	if !o.args.includes('--dir')
 		params.push "--dir", process.cwd()
