@@ -137,7 +137,7 @@
     "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
     "get-port": "^5.1.1",
-    "gherking": "^2.3.0",
+    "gherkin-io": "^1.2.0",
     "handlebars": "^4.7.7",
     "local-pkg": "^0.4.2",
     "lodash.mergewith": "^4.6.2",

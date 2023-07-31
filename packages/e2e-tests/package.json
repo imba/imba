@@ -24,7 +24,7 @@
     "node-fetch": "^3.2.10",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
-    "vitest": "^0.32.4"
+    "vitest": "^0.33.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^9.3.1",

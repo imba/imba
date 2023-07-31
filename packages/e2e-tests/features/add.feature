@@ -4,7 +4,7 @@ Feature: Addition
 	Background: Sets initial value for the sum
 		Given the initial value is 10
 
-	Scenario: Adding two numbers works with background
+	Example: Adding two numbers works with background
 
 		Given I add 12 and 4
 		Then I should obtain 26

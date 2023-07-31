@@ -1,15 +1,38 @@
+import {parseFeatureIntoSteps} from "imba/plugin"
+
 const modules = import.meta.glob('{{stepDefsGlob}}', {eager: yes})
 const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
 let s
 let c
 let elName
 let contexts = {}
-const decorators = {
-}
+let text
+let stepRes
+let keyword
+let currentContext
+
+const decorators = {}
 
 {{#if hasNoTimeout}}
-vi.setConfig(testTimeout: 50000000)
+vi.setConfig 
+	testTimeout: 50000000
+	hookTimeout: 50000000
 {{/if}}
+
+def executeStep(text, keyword, context)
+	let s = global.Steps.find(text, keyword).stepDefinition
+	let res = await s.target[s.fname]
+		.apply(
+			context,
+			# variables
+			[s.cucumberExpression.match(text).map(do $1.getValue!)]
+		)
+	return unless const features = res..features
+	await Promise.all features.map do(feature)
+		const steps = await parseFeatureIntoSteps(feature)
+		await Promise.all steps.map do(step)
+			executeStep(step.text, step.keyword, context)
+
 
 beforeAll do(suite)
 	{{#each feature.tags}}
@@ -47,45 +70,37 @@ beforeEach do(suite)
 		contexts[c].context,
 		[s.cucumberExpression.match('{{{this.text}}}').map(do $1.getValue!)]
 	)
-	{{!-- L "applyed background on {c}", contexts[c].context.result --}}
 
 	   {{/each}}
 	{{/if}}
 
-describe 'Feature: {{ feature.name }}' do
+{{decoratedSuite 'describe' this}} 'Feature: {{ feature.name }}' do
 {{#each feature.elements}}
 	{{#if (isScenarioOutline this.keyword)}}
-	describe '{{ this.keyword }}: {{ this.name }}' do
+	{{decoratedSuite 'describe' this}} '{{ this.keyword }}: {{ this.name }}' do
 		{{#each this.examples}}
-		describe 'Examples group {{ @index }}: {{ this.name}}' do
-			let text
+		{{decoratedSuite 'describe' this}} 'Examples group {{ @index }}: {{ this.name}}' do
 			{{#each this.body}}
-			test 'Example {{ @index }}: {{getDescriptionFromCells this.cells}}' do
+			{{decoratedSuite 'test' this}} 'Example {{ @index }}: {{getDescriptionFromCells this.cells}}' do(suite)
 				{{#each ../../this.steps}}
 				text = '{{{ this.text }}}'
-				{{#each ../this.cells}}
-				text = text.replace('<{{getCellValue ../../../this.header @index}}>', {{this.value}})
-				{{/each}}
-				s = global.Steps.find(text, '{{ this.keyword }}').stepDefinition
-				{{!-- L "running step definition for example {{ @../index }}: {text}"
-				L contexts
-				L '{{ @../index}}, {{ @../../index}}, {{ @../../../index}}, {{ @../../../../index}}'
-				L contexts.c{{ @../../../index}}.result --}}
-				await s.target[s.fname]
-					.apply(
-						contexts.c{{ @../../../index}}.context,
-						# variables
-						[s.cucumberExpression.match(text).map(do $1.getValue!)]
-					)
-				   
+					{{#each ../this.cells}}
+				text = text.replaceAll('<{{getCellValue ../../../this.header @index}}>', {{{getOriginalValue this.value}}})
+					{{/each}}
+				keyword = '{{{ this.keyword }}}'
+				currentContext = contexts.c{{ @../../../index }}.context
+				await executeStep(text, keyword, currentContext)
 				{{/each}}
 			{{/each}}
 		{{/each}}
 	{{/if}}
-	{{#if (isRuleOrScenario this.keyword)}}
-	test('{{ this.keyword }}: {{ this.name }}')	do
+	{{#if (isScenario this.keyword)}}
+	{{decoratedSuite 'test' this}} '{{ this.keyword }}: {{ this.name }}' do
 		{{#each this.steps}}
-{{> step step=. parentIndex=@../index }}
+		text = '{{{ this.text }}}'
+		keyword = '{{{ this.keyword }}}'
+		currentContext = contexts.c{{ @../index }}.context
+		await executeStep(text, keyword, currentContext)
 		{{/each}}
 	{{/if}}
 {{/each}}

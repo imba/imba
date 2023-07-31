@@ -1,6 +1,6 @@
 import type { CompileData } from './utils/compile.ts'
 import svgPlugin from "./svg-plugin";
-import cucumberPlugin from "./cucumber-plugin";
+import cucumberPlugin, {parseFeatureIntoSteps} from "./cucumber-plugin";
 import type { Plugin, HmrContext } from "vite";
 import {normalizePath} from 'vite'
 import * as esbuild from 'esbuild'
@@ -25,7 +25,7 @@ import url, {pathToFileURL, fileURLToPath} from 'node:url'
 import np from 'node:path'
 import vitePluginEnvironment from './vite-plugin-environment.ts'
 
-export {vitePluginEnvironment}
+export {vitePluginEnvironment, parseFeatureIntoSteps}
 export { setupVite } from './setupVite'
 
 const allCssModuleId = 'virtual:imba/*?css'

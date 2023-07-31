@@ -20,3 +20,12 @@ Feature: Scenario outline
 			| 16 | -2 | 14     |
 			| 17 | -3 | 14     |
 			| 18 | -4 | 14     |
+
+	Scenario Outline: Adding two numbers works on many cases
+		Given I concatenate <a> and <b>
+		Then The "str" in context is <result>
+
+		Examples: Basic examples for concat
+			| a | b | result |
+			| al  | pha  | alpha  |
+			| ab  | dellah  | abdellah  |

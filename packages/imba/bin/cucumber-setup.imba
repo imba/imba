@@ -36,7 +36,7 @@ class __Step
 		const stepDefinitionMatches = findStepDefinitionMatches(step)
 		if !stepDefinitionMatches or stepDefinitionMatches.length == 0
 			throw new Error("""
-	Undefined.  Implement with the following snippet:
+	Undefined.  Implement with the following snippet (Check case):
 		@{keyword.toLowerCase!}('{step}')
 		def step(params,data)
 			# Write code here that turns the phrase above into concrete actions
