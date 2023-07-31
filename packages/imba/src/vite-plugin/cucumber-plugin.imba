@@ -13,6 +13,7 @@ Handlebars.registerHelper('decoratedSuite') do(keyword, item)
 		"{keyword}.only"
 	else
 		keyword
+
 Handlebars.registerHelper('isScenario') do(a) a == 'Scenario' or a == 'Example'
 Handlebars.registerHelper('isScenarioOutline') do(a) a == 'Scenario Outline' or a == 'Scenario Template'
 Handlebars.registerHelper('getOriginalValue') do(val)
@@ -23,9 +24,7 @@ Handlebars.registerHelper('getDescriptionFromCells') do(cells)
 	cells.map(do $1.value).join(', ')
 Handlebars.registerHelper('getCellValue') do(header, index)
 	header.cells[index].value
-###
-{{> scenario item=. parentId=../this.id }}
-###
+
 def indent(str, times = 1)
 	let indentation = ""
 	indentation += "\t" for i in [0 ... times]
@@ -33,6 +32,7 @@ def indent(str, times = 1)
 		.split('\n')
 		.map(do "{indentation}{$1}")
 		.join('\n')
+
 const scenarioText = '''
 s = global.Steps.find(text, keyword).stepDefinition
 stepRes = await s.target[s.fname]
@@ -47,16 +47,14 @@ if stepRes..features
 
 Handlebars.registerPartial('step', "\n{indent(scenarioText, 2)}\n")
 Handlebars.registerPartial('step4', "\n{indent(scenarioText, 4)}\n")
+
 const L = console.log
 
 const testTemplate = Handlebars.compile(rawTestTemplate)
 
 export def generateImbaCode(id, content)
 	let doc = await parse(content, id)
-	# ast = await compiler.process(ast)
 	const feature = doc.feature
-	# L feature
-	# debugger
 	const stepDefsGlob = './step_definitions/**/*.imba'
 	const backgroundEl = feature.elements.filter(do $1.keyword == 'Background')[0]
 	const baseContextPath = './context.imba'
@@ -121,7 +119,6 @@ export default def cucumberPlugin(inlineOptions = {})
 
 	def configResolved(config)
 		options = resolveOptions(options, config);
-		# patchResolvedViteConfig(config, options);
 		compileImba = createCompileImba(options);
 		
 	def transform(content, id)
