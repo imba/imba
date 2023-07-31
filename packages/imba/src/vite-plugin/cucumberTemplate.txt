@@ -27,11 +27,14 @@ def executeStep(text, keyword, context)
 			# variables
 			[s.cucumberExpression.match(text).map(do $1.getValue!)]
 		)
-	return unless const features = res..features
+
+	# Assertions throw an error if accessed (they use a proxy)
+	return if res..__flags
+	return unless const features = res..__features
 	await Promise.all features.map do(feature)
 		const steps = await parseFeatureIntoSteps(feature)
 		await Promise.all steps.map do(step)
-			executeStep(step.text, step.keyword, context)
+			await executeStep(step.text, step.keyword, context)
 
 
 beforeAll do(suite)

@@ -10,9 +10,17 @@ import rawTestTemplate from './cucumberTemplate.txt?raw'
 let parse
 Handlebars.registerHelper('decoratedSuite') do(keyword, item)
 	if item.tags..find(do $1.name == 'only')
-		"{keyword}.only"
-	else
-		keyword
+		keyword += ".only"
+	
+	if item.tags..find(do $1.name == 'fails')
+		keyword += ".fails"
+
+	if item.tags..find(do $1.name == 'todo')
+		keyword += ".todo"
+
+	if item.tags..find(do $1.name == 'todo')
+		keyword += ".todo"
+	keyword
 
 Handlebars.registerHelper('isScenario') do(a) a == 'Scenario' or a == 'Example'
 Handlebars.registerHelper('isScenarioOutline') do(a) a == 'Scenario Outline' or a == 'Scenario Template'
@@ -24,29 +32,6 @@ Handlebars.registerHelper('getDescriptionFromCells') do(cells)
 	cells.map(do $1.value).join(', ')
 Handlebars.registerHelper('getCellValue') do(header, index)
 	header.cells[index].value
-
-def indent(str, times = 1)
-	let indentation = ""
-	indentation += "\t" for i in [0 ... times]
-	str
-		.split('\n')
-		.map(do "{indentation}{$1}")
-		.join('\n')
-
-const scenarioText = '''
-s = global.Steps.find(text, keyword).stepDefinition
-stepRes = await s.target[s.fname]
-	.apply(
-		context,
-		# variables
-		[s.cucumberExpression.match(text).map(do $1.getValue!)]
-	)
-if stepRes..features
-	L stepRes
-'''
-
-Handlebars.registerPartial('step', "\n{indent(scenarioText, 2)}\n")
-Handlebars.registerPartial('step4', "\n{indent(scenarioText, 4)}\n")
 
 const L = console.log
 
@@ -72,7 +57,7 @@ export def generateImbaCode(id, content)
 		backgroundEl
 		stepDefsGlob
 		baseContextPath
-		hasNoTimeout: hasDecoractor(feature, ['notimeout', 'debug'])
+		hasNoTimeout: hasDecoractor(feature, ['notimeout', 'debug', 'noTimeout'])
 	})
 
 def _transform(id, content, compileImba, options)
@@ -88,8 +73,12 @@ def _transform(id, content, compileImba, options)
 		throw toRollupError(e, options);
 	return compiledData.compiled.js
 
-export def parseFeatureIntoSteps(feature, id = "dynamic.feature")
+export def parseFeatureIntoSteps(feature)
 	parse ||= (await import('gherkin-io')).parse
+	let id = "dynamic.feature"
+	id = feature.file if feature.file
+	feature = feature.content if feature.content
+
 	const doc = await parse(feature, id)	
 	const bgElements = doc.feature.elements
 		.filter(do $1.keyword == 'Background')
