@@ -1,4 +1,3 @@
-import {parse} from "gherkin-io";
 import { toRollupError } from "./utils/error";
 import {
 	preResolveOptions,
@@ -8,6 +7,7 @@ import { createCompileImba } from "./utils/compile";
 import Handlebars from "handlebars";
 import rawTestTemplate from './cucumberTemplate.txt?raw'
 
+let parse
 Handlebars.registerHelper('decoratedSuite') do(keyword, item)
 	if item.tags..find(do $1.name == 'only')
 		"{keyword}.only"
@@ -53,6 +53,7 @@ const L = console.log
 const testTemplate = Handlebars.compile(rawTestTemplate)
 
 export def generateImbaCode(id, content)
+	parse ||= (await import('gherkin-io')).parse
 	let doc = await parse(content, id)
 	const feature = doc.feature
 	const stepDefsGlob = './step_definitions/**/*.imba'
@@ -88,6 +89,7 @@ def _transform(id, content, compileImba, options)
 	return compiledData.compiled.js
 
 export def parseFeatureIntoSteps(feature, id = "dynamic.feature")
+	parse ||= (await import('gherkin-io')).parse
 	const doc = await parse(feature, id)	
 	const bgElements = doc.feature.elements
 		.filter(do $1.keyword == 'Background')
@@ -131,5 +133,3 @@ export default def cucumberPlugin(inlineOptions = {})
 		config: config
 		configResolved: configResolved
 		transform: transform
-
-				
