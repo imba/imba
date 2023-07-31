@@ -167,7 +167,7 @@ def parseOptions options, extras = []
 	return options
 
 
-def test(o, bench?)
+def test(o, otherOptions)
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 	await ensurePackagesInstalled(['vitest'], process.cwd!)
 
@@ -191,7 +191,7 @@ def test(o, bench?)
 
 	let params = ["--config", configFile, "--root", process.cwd()]
 	
-	params.unshift 'bench' if bench?
+	params.unshift 'bench' if otherOptions.bench?
 	
 	if !o.args.includes('--dir')
 		params.push "--dir", process.cwd()
@@ -208,7 +208,7 @@ def test(o, bench?)
 	vitest.on('exit') do process.exit $1
 	
 def bench o
-	test(o, yes)
+	test(o, {bench?: yes})
 
 def run entry, o, extras
 	if entry.._name == 'preview' or entry.._name == 'serve'
