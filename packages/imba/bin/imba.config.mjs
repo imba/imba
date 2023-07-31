@@ -25,6 +25,9 @@ export default async function({mode, command}){
 	let finalTest = {
 		test:{
 			globals: true,
+			benchmark: {
+				include: ["**/*.bench.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+			},
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}", "features/**/*.feature"],
 			includeSource: ['**/*.{imba}'],
 			environment: "node",
