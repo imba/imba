@@ -27,9 +27,10 @@ export default async function({mode, command}){
 			globals: true,
 			benchmark: {
 				include: ["**/*.bench.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+				includeSource: ['**/*.imba'],
 			},
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}", "features/**/*.feature"],
-			includeSource: ['**/*.{imba}'],
+			includeSource: ['**/*.imba'],
 			environment: "node",
 			setupFiles,
 			exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*']
