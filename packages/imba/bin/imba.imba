@@ -167,7 +167,7 @@ def parseOptions options, extras = []
 	return options
 
 
-def test o	
+def test(o, otherOptions)
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 	await ensurePackagesInstalled(['vitest'], process.cwd!)
 
@@ -190,7 +190,9 @@ def test o
 	nfs.writeFileSync(configFile, content)
 
 	let params = ["--config", configFile, "--root", process.cwd()]
-
+	
+	params.unshift 'bench' if otherOptions..bench?
+	
 	if !o.args.includes('--dir')
 		params.push "--dir", process.cwd()
 
@@ -205,6 +207,9 @@ def test o
 	const vitest = spawn(vitest-path, params, options)
 	vitest.on('exit') do process.exit $1
 	
+def bench o
+	test(o, {bench?: yes})
+
 def run entry, o, extras
 	if entry.._name == 'preview' or entry.._name == 'serve'
 		# no args
@@ -461,6 +466,11 @@ cli
 	.command('test').description('Run tests: This is a wrapper on top of vitest')
 	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
 	.action(test)
+
+cli
+	.command('bench').description('Run benchmark tests: This is a wrapper on top of vitest bench')
+	.option("-h, --help", "Display help (Link to https://vitest.dev/guide/features.html#benchmarking-experimental)")
+	.action(bench)
 
 cli
 	.command('create [name]')
