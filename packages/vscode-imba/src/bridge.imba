@@ -26,6 +26,9 @@ export default class Host
 				cb(socket) if cb
 			emit('ready')
 		ipc.server.start!
+
+	def on ev, cb
+		imba.listen(self,ev,cb)
 		
 	def ping
 		emit('ping', ref: reqs++)
@@ -36,7 +39,7 @@ export default class Host
 	def handle e, socket = null
 		let now = Date.now!
 		let elapsed = now - e.ts
-		util.log("ipc.onmessage {JSON.stringify(e).slice(0,20)} transferred in {elapsed}ms")
+		util.log("ipc.onmessage {JSON.stringify(e).slice(0,100)} transferred in {elapsed}ms - ")
 		
 		if e.type == 'response'
 			if let id = e.responseRef
@@ -45,6 +48,10 @@ export default class Host
 				util.log("msg response took {took}ms")
 				request.#resolve(e.body)
 				delete pendingRequests[id]
+		else
+			imba.emit(self,e.type,[e])
+			if e.type == 'event'
+				imba.emit(self,e.event,[e.body,e])
 		self
 	
 	def call method, ...params

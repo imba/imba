@@ -88,10 +88,11 @@ def run
 		let res = completions(file, pos,{all: yes},filter)
 		console.log 'res',res,res.items,pos,filter
 		# debugger
-		res.items[0].resolve!
-		console.log res.items[0].importData
-		console.log res.serialize![0]
-		return res.items[0]
+		if res.items[0]
+			res.items[0].resolve!
+			console.log res.items[0].importData
+			console.log res.serialize![0]
+			return res.items[0]
 
 
 

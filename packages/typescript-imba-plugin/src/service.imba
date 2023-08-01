@@ -44,6 +44,7 @@ export default class Service < EventEmitter
 		
 	def constructor ...params
 		super(...params)
+		tsversion = ts.version.split('.').map do Number($1)
 
 	def i i
 		let d = m.im.doc
@@ -103,13 +104,20 @@ export default class Service < EventEmitter
 		return 
 		
 	def getExternalFiles proj
+		util.log('getExternalFiles')
 		let paths = Object.keys(virtualScripts)
+		# paths.concat()
 		# console.log('got external files?!',paths)
+		# return paths.concat('imba-typings/imba.d.ts')
 		return paths
 		
 	def handleRequest {id,data}
 		# util.log('handleRequest',data)
-		bridge ||= new Bridge(id)
+		unless bridge
+			bridge = new Bridge(id)
+			bridge.emit('hello',[1,2,3])
+			if tsversion[0] < 5
+				bridge.warn(`Imba Tooling requires TS version 5.0 or higher. Current version is {ts.version}. Maybe you need to clear your typescript.tsdk setting?`)
 		bridge.handle(data)
 
 	def createVirtualProjectConfig
@@ -141,7 +149,7 @@ export default class Service < EventEmitter
 		virtualScripts[path] = script
 		return script
 
-		
+		x
 	def resolveImbaDirForProject proj
 		let imbadir = ts.resolveImportPath('imba',proj.getConfigFilePath!,proj)
 		if imbadir and imbadir.resolvedModule
@@ -186,11 +194,15 @@ export default class Service < EventEmitter
 
 
 	def prepareProjectForImba proj
+
 		let inferred = proj isa ts.server.InferredProject
 		let opts = proj.getCompilerOptions!
+		let custom = {}
 		let libs = opts.lib or ["esnext","dom","dom.iterable"]
 		let imbalib = null
 		let imbadir = !inferred && resolveImbaDirForProject(proj)
+		
+		util.log `imbadir`,imbadir
 
 		if imbadir
 			let src = np.resolve(imbadir,'typings','imba.d.ts')
@@ -204,15 +216,17 @@ export default class Service < EventEmitter
 		imbalib ||= 'imba-typings/imba.d.ts'
 
 		util.log("using imba lib",imbalib,proj)
-		opts.lib = libs.concat([imbalib])
+		# return proj
+
+		custom.lib = libs.concat([imbalib])
 
 		if inferred
-			opts.checkJs = true
+			custom.checkJs = true
 
-		for lib,i in opts.lib
+		for lib,i in custom.lib
 			let mapped = ts.libMap.get(lib)
 			if mapped
-				opts.lib[i] = mapped
+				custom.lib[i] = mapped
 				
 		# if we can resolve an imba installation for the project
 		# we should use the typings from that
@@ -220,13 +234,17 @@ export default class Service < EventEmitter
 		# console.warn "LIBS!!",opts.lib
 		# proj.setCompilerOptions(opts)
 		# console.log "PREPARING IMBA FOR PROJECT",opts
-		opts.target = DefaultConfig.compilerOptions.target
-		util.log('compilerOptions',proj,opts)
+		custom.target = DefaultConfig.compilerOptions.target
+		# util.log('compilerOptions',proj,opts)
 
 		# at least if not defined
 		let copts = DefaultRichConfig.compilerOptions
+		let upd = {}
 		for own k,v of copts
-			opts[k] = v
+			custom[k] = v
+		util.log('setCompilerOptions??',opts,custom)
+		# proj.setCompilerOptions(opts)
+		proj.#imbaconfig = custom
 		return proj
 
 	def create info
@@ -238,13 +256,55 @@ export default class Service < EventEmitter
 
 		service.NR ||= ++counter
 		proj.NR ||= ++counter
+
 		# console.log 'creating project?!',#cwd,proj.currentDirectory,inferred,service.currentDirectory,service.NR
-		util.log('create',info)
+		# L `create`,info.languageServiceHost
+
+
+
+
+		util.log('create',info,proj.#inited)
 		setups.push(info)
+
+
+		# could be called with an existing project if configuration cha nges
 
 		self.ps = service
 		self.project = proj
 		self.info = info
+
+		if proj.#inited =? yes
+			util.log(`init project for first time`)
+
+		let lsh = info.languageServiceHost
+
+		if lsh.#patchedResolver =? yes
+			let resolveModuleNameLiterals = lsh.resolveModuleNameLiterals..bind(lsh)
+
+			# L service.host
+			lsh.resolveModuleNameLiterals = do(...params)
+				# L 'resolveModuleNameLiterals',params[0][0].text # ,params[3]
+				let res = resolveModuleNameLiterals(...params)
+
+				for item in res
+					let hit = item..resolvedModule
+					let name = hit..resolvedFileName
+					# L `resolveModuleNameLiterals`,res
+
+					if name..match(/\.imba\.ts$/)
+						hit.resolvedFileName = name.replace(/\.ts$/,'')
+						hit.extension = '.js'
+						# util.log('resolved',name)
+						# L `resolved`,name
+					
+					elif name..match(/\._ils\.ts$/)
+						hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
+						hit.extension = '.js'
+
+				return res
+
+		if service.host.#patched =? yes
+			yes
 
 		if ps.#patched =? yes
 			setup!
@@ -257,6 +317,7 @@ export default class Service < EventEmitter
 		let decorated = decorate(info.languageService)
 		emit('create',info) unless inferred
 		createVirtualProjectConfig!
+		util.log('decorated!')
 		return decorated
 		
 	def convertSpan span, ls, filename, kind = null
@@ -451,10 +512,11 @@ export default class Service < EventEmitter
 		
 	def decorate ls
 		if ls.#proxied
-			return ls
+			util.log('already proxied',ls)
+			return ls.#proxied
 
 		let intercept = Object.create(null)
-		ls.#proxied = yes
+		# ls.#proxied = yes
 		# no need to recreate this for every new languageservice?!
 
 		util.log('decorate service')
@@ -471,6 +533,7 @@ export default class Service < EventEmitter
 			return ls.getEncodedSyntacticClassifications(filename,span)
 			
 		intercept.getQuickInfoAtPosition = do(filename,pos)
+			util.log('getQuickInfoAtPosition',filename,pos)
 			let {script,dpos,opos} = getFileContext(filename,pos,ls)
 			if script
 				# let convpos = script.d2o(pos,ls.getProgram!)
@@ -721,7 +784,15 @@ export default class Service < EventEmitter
 						return null
 
 		
-		return new Proxy(ls, {get: do(target,key) return intercept[key] || target[key]})
+		return ls.#proxied = new Proxy(ls, {
+			get: do(target,key)
+				util.log(`ils get`,key)
+				return intercept[key] || target[key]
+			set: do(target,key,value)
+				util.log(`ils set`,target,key)
+				target[key] = value
+				return yes
+		})
 	
 	def rewriteInboundMessage msg
 		msg
@@ -753,6 +824,7 @@ export default class Service < EventEmitter
 		let file = dts = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
 		let changed = file.update(all)
 		imbaGlobals = globals
+		L `syncProjectForImba`,globals
 		if changed and isSemantic and global.session
 			global.session..refreshDiagnostics!
 		self
@@ -761,6 +833,17 @@ export default class Service < EventEmitter
 		let exts = (ps.hostConfiguration.extraFileExtensions ||= [])
 		exts.push('.imba') if exts.indexOf('.imba') == -1
 		setTimeout(&,200) do createVirtualProjectConfig!
+
+		util.log('setup',ps.hostConfiguration)
+
+		true && ps.setHostConfiguration({
+			extraFileExtensions: [{
+				extension: '.imba'
+				isMixedContent: false
+				scriptKind: 1
+			}]
+		})
+		# ps.reloadProjects!
 		self
 	
 	def getScriptInfo src

@@ -6,9 +6,10 @@ import ImbaScript from './script'
 import * as Diagnostics from './diagnostics'
 import np from 'path'
 
+import {DefaultConfig, DefaultRichConfig} from './constants'
+
 let EDITING = no
 global.state = {command: ''}
-
 let TSX_HOOK = no
 let EXTRA_HIT = null
 let EXTRA_EXTENSIONS = ['.imba']
@@ -338,6 +339,7 @@ export class System
 		 
 	def fileExists path
 		# util.log('fileExists',path)
+
 		if path.indexOf('.imba._.d.ts') >= 0
 			if virtualFileMap[path]
 				return true
@@ -351,16 +353,6 @@ export class System
 			elif path.indexOf('.imba') >= 0
 				let ipath = path.replace(/\.ts$/,'')
 				if #fileExists(ipath)
-					return yes
-
-		if (/\.tsx$/).test(path) and TSX_HOOK
-			for ext in EXTRA_EXTENSIONS
-				let ipath = path.replace('.tsx',ext).replace(ext + ext,ext)
-				if #fileExists(ipath)
-					if #fileExists(path.replace('.tsx','.d.ts'))
-						return no
-					util.log "intercepted fileExists",path,ipath
-					EXTRA_HIT = [path,ipath]
 					return yes
 		
 		if path.indexOf('imba-typings') >= 0
@@ -384,7 +376,10 @@ export class System
 	
 	def readFile path,encoding = null
 		if path.indexOf('imba-typings') >= 0 or path.indexOf('.imba._.d.ts') >= 0
-			return readVirtualFile(path)
+			util.log('read imba-typings')
+			let res = readVirtualFile(path)
+			# util.log('read typings file',path,!!res)
+			return res
 
 		if (/[jt]sconfig\.json/).test(path)
 			if let body = readVirtualFile(path)
@@ -399,9 +394,29 @@ export class System
 		return body
 		
 export class Project
+
+	def resolveImbaDir
+		let imbadir = global.ts.resolveImportPath('imba',getConfigFilePath!,self)
+		if imbadir and imbadir.resolvedModule
+			# console.warn "RESOLVED",imbadir.resolvedModule
+			return np.dirname(imbadir.resolvedModule.resolvedFileName)
+		return null
+
 	def setCompilerOptions value
+		# If this project is for imba - ensure that we include this data
+		# let imbadir = resolveImbaDir!
+		value.lib ||= ["esnext","dom","dom.iterable"].map do global.ts.libMap.get($1)
+
+		let imbadts = value.lib.find(do $1.indexOf('imba.d.ts') >= 0)
+		unless imbadts
+			value.lib.push('imba-typings/imba.d.ts')
+		# see if we can resolve imba from config or not
+		# value.lib.push('/Users/sindre/repos/imba/packages/imba/typings/imba.d.ts')
+
+		for own k,v of constants.RequiredCompilerOptions
+			value[k] = v
 		let res = #setCompilerOptions(value)
-		util.log('setCompilerOptions',this,value)
+		util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
 		return
 		
 	def onPluginConfigurationChanged name, data

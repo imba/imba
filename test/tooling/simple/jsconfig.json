@@ -1,0 +1,34 @@
+{
+  "include": [
+      "**/*.imba",
+      "**/*"
+  ],
+  "exclude": [
+      "node_modules/**/*",
+      "node_modules/**/*.imba",
+      "dist/**/*"
+  ],
+  "compilerOptions": {
+      "allowJs": true,
+      "checkJs": false,
+      "noEmit": true,
+      "skipLibCheck": false,
+      "skipDefaultLibCheck": false,
+      "allowUnreachableCode": true,
+      "allowSyntheticDefaultImports": true,
+      "allowUmdGlobalAccess": false,
+      "allowArbitraryExtensions": true,
+      "esModuleInterop": true,
+      "suppressExcessPropertyErrors": false,
+      "suppressImplicitAnyIndexErrors": false,
+      "declaration": false,
+      "strict": false,
+      "resolveJsonModule": true,
+      "noResolve": false,
+      "module": "esnext",
+      "target": "esnext",
+      "newLine": "lf",
+      "baseUrl": ".",
+      "moduleResolution": "bundler"
+  }
+}

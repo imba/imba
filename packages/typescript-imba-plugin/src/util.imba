@@ -126,7 +126,11 @@ export def extend target, klass
 		target[sym] = target[k] # .bind(target)
 		# let prev = Object.getOwnPropertyDescriptor(target,k)
 		# console.log "extend?!",k,v,prev
-		Object.defineProperty(target,k,v)
+		try
+			Object.defineProperty(target,k,v)
+		catch e
+			console.log `could not extend`,target.name,k
+
 		# target[k] = v.value # v.bind(target)
 	return target
 

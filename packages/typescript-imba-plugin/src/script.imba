@@ -20,7 +20,7 @@ export default class ImbaScript
 
 		if info.scriptKind == 0
 			info.scriptKind = 1
-			util.log("had to wake script {fileName}")
+			# util.log("had to wake script {fileName}")
 			
 	get ils
 		global.ils
@@ -150,7 +150,6 @@ export default class ImbaScript
 				# wait for the next version of the program
 				project.markAsDirty!
 				project.updateGraph!
-				syncDts!
 
 			if ils.isSemantic and global.session
 				global.session..refreshDiagnostics!
@@ -164,22 +163,6 @@ export default class ImbaScript
 	def syncDts
 		if lastCompilation..shouldGenerateDts
 			return
-
-			util.log "syncDts"
-			let prog = project.program
-			let script = prog.getSourceFile(fileName)
-			let out = {}
-			let body\string
-			
-			let writer = do(path,b) out[path] = body = b
-			let res = prog.emit(script,writer,null,true,[],true)
-			util.log 'emitted dts',out,res,body
-			# console.log 'emitted!!',res
-			dts.#emitted = res
-			dts.update(body)
-			return dts.#body
-
-		return null
 		
 	def getImbaDiagnostics
 		
@@ -263,7 +246,7 @@ export default class ImbaScript
 			
 			if lastCompilation..input == snap
 				util.log 'saved compilation that was already applied',lastCompilation
-				syncDts!
+				# syncDts!
 
 			ils.syncProjectForImba(project)
 		yes

@@ -132,8 +132,11 @@ export def activate context
 		const tlsapi = try tls.exports.getAPI(0)
 		bridge = new Bridge(tlsapi)	do
 			sendConfiguration!
+			bridge.call('activated')
 		bridge.ping!
-		# bridge.call('setConfiguration',JSON.parse(JSON.stringify(conf)))
+
+		bridge.on('warn') do({message,options})
+			window.showWarningMessage(message)
 
 		if conf.get('debugPort')
 			unless process.env.TSS_DEBUG
