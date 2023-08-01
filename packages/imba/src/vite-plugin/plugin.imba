@@ -196,7 +196,8 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		resolveId: resolveId
 		configureServer: configureServer
 		handleHotUpdate: handleHotUpdate
-	plugins.push cucumberPlugin!
+
+	plugins.push cucumberPlugin! if process.env.VITEST
 
 	plugins
 		
