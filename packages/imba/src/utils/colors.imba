@@ -53,12 +53,15 @@ for own name, [open, close] of colors
 export default c
 
 for own name, [open, close] of colors
+	# @ts-ignore
 	String.prototype.__defineGetter__ name, do
 		'\x1b[' + open + 'm' + this + '\x1b[' + close + 'm'
 
+# @ts-ignore
 String.prototype.f = do(n)
 	"\x1b[38;5;{n}m{this}\x1b[39m"
 
+# @ts-ignore
 String.prototype.b = do(n)
 	"\x1b[48;5;{n}m{this}\x1b[49m"
 
