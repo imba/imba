@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.5.0
+
+* Updated to work with TypeScript 5.x. Basic tooling now works with latest versions of vscode and TypeScript. Some functionality may still be broken / less functional than before but this allows us to ship more new versions in the future. For those who worked around the issue by pointing vscode to an older version of TypeScript: **Remove your `typescript.tsdk` setting from vscode**
+
+* Improved completions when typing fast. Completions should now show up in more cases where it was previously not working.
+
+* Imba typings are clickable and will lead to the actual imba typings file.
+
+* Better typing for global classes and class extensions.
+
+### Known Issues
+
+* Many smaller regressions due to TS 5.x update.
+* Incorrect underlined regions when cmd+hovering tokens.
+* Workspaces with multiple js/tsconfig.json files are buggy.
+* Semantic colors sometimes get out of sync. Can only be fixed by running "Developer: Reload Window" command in vscode or restarting vscode. 
+* Imba typings will always use the version shipped with the plugin.
+
 ## 3.4.6
 
 * Removed default `tabSize: 4` config for imba. Now defaulting to your global tabSize. If you want to override this for imba, you can still set `"[imba]": {"editor.tabSize": 4}` in your `.vscode/settings.json` file or globally in the settings UI.
