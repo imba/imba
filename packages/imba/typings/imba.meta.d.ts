@@ -108,5 +108,20 @@ declare namespace imbameta {
      * Pixels
      */
     "unit px": string;
+
+     /**
+         * Bytes in n kilobytes
+         */
+     "unit kb": number;
+
+     /**
+      * Bytes in n megabytes
+      */
+     "unit mb": number;
+
+     /**
+      * Bytes in n gigabytes
+      */
+     "unit gb": number;
   }
 }
