@@ -500,6 +500,8 @@ export default class ImbaScriptInfo
 			...meta,
 			token: tok
 			offset: offset
+			line: lineInfo..oneBasedLine
+			column: lineInfo..zeroBasedColumn
 			scope: scope
 			indent: indent
 			group: ctx
