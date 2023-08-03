@@ -1,16 +1,13 @@
 {
-  "include": [
-      "**/*.imba",
-      "**/*"
-  ],
-  "exclude": [
-      "node_modules/**/*",
-      "node_modules/**/*.imba",
+  "include": ["main.imba"],
+  "excludez": [
+      "node_modulesz/**/*",
+      "node_modulesz/**/*.imba",
       "dist/**/*"
   ],
   "compilerOptions": {
       "allowJs": true,
-      "checkJs": false,
+      "checkJs": true,
       "noEmit": true,
       "skipLibCheck": false,
       "skipDefaultLibCheck": false,
@@ -26,9 +23,10 @@
       "resolveJsonModule": true,
       "noResolve": false,
       "module": "esnext",
-      "target": "esnext",
+      "target": "es2022",
       "newLine": "lf",
       "baseUrl": ".",
+      "customConditions": ["imba"],
       "moduleResolution": "bundler"
   }
 }

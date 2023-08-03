@@ -1,4 +1,4 @@
 extend class Number
 
-	def clamp min,max
+	def clamp2 min,max
 		Math.max( Math.min(Number(this),max), min )

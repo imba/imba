@@ -25,7 +25,7 @@ def run
 	for f in ils.cp.rootFiles
 		console.log f.fileName
 	console.log "found {errors.length} errors",took
-	process.exit(0)
+	process.exit(0) unless process.env.WATCH
 
 run!
 
