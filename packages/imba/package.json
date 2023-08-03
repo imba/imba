@@ -58,16 +58,21 @@
       "imba": "./src/utils/spec.imba"
     },
     "./colors": {
+      "tsimba": "./src/utils/colors.imba.ts",
       "imba": "./src/utils/colors.imba",
       "default": "./dist/colors.mjs",
       "browser": "./dist/colors.mjs",
       "require": "./dist/colors.cjs"
     },
     "./std": {
+      "tsimba": "./src/utils/std/std.imba.ts",
       "imba": "./src/utils/std/std.imba",
       "default": "./dist/std.mjs",
       "browser": "./dist/std.mjs",
       "require": "./dist/std.cjs"
+    },
+    "./std/*": {
+      "tsimba": "./src/utils/std/*.imba.ts"
     },
     "./program": {
       "browser": "./program.browser.imba.js",
