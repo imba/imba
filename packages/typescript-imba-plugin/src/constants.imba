@@ -75,6 +75,8 @@ export const DefaultConfig = {
 
 export const RequiredCompilerOptions = {
 	allowArbitraryExtensions: true
+	skipLibCheck: true
+	skipDefaultLibCheck: true
 	importsNotUsedAsValues: 'preserve'
 	moduleSuffixes: [".imba",""]
 	target: 99
