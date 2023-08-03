@@ -1378,9 +1378,12 @@ export class Comment < Meta
 			var idx = block.indexOf(self) + 1
 			idx += 1 if block.index(idx) isa Terminator
 			if var next = block.index(idx)
-				next.@desc = self
+				next.@desc = self unless toString.indexOf('@overload') >= 0
 
 		self
+
+	def isMultiline
+		@value.type == 'HERECOMMENT'
 
 	def toDoc
 		helpers.normalizeIndentation("" + @value.@value)
@@ -1395,11 +1398,14 @@ export class Comment < Meta
 		return "" if STACK.option(:comments) == false or @skip
 
 		var v = @value.@value
-		if o and o:expression or v.match(/\n/) or @value.type == 'HERECOMMENT' # multiline?
+		if o and o:expression or v.match(/\n/) or isMultiline
 			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
 
-			"/*{out}*/"
-		elif v.match(/\@(type|param)/)
+			v = out
+			v = '*' + v if v.match(/\@(type|param|satisfies|template)/)
+
+			"/*{v}*/"
+		elif v.match(/\@(type|param|satisfies|template)/)
 			"/** {v} */"
 		else
 			"// {v}"
@@ -3946,6 +3952,9 @@ export class Func < Code
 
 		scope.visit
 
+		if @desc
+			@desc.@skip = yes
+
 		@context = scope.parent
 
 		@params.traverse(declaring: 'arg')
@@ -3958,7 +3967,7 @@ export class Func < Code
 
 	def jsdoc
 		let o = []
-		# console.log 'found desc?',@desc
+
 		if @desc
 			@desc.@skip = yes
 			o.push(@desc.toString)
@@ -4126,6 +4135,9 @@ export class MethodDeclaration < Func
 		@type = option(:type) or (option(:def)?.@value or 'def')
 		@decorators = up?.collectDecorators
 
+		if @desc
+			@desc.@skip = yes
+
 		var o = @options
 		scope.visit
 
@@ -4253,7 +4265,6 @@ export class MethodDeclaration < Func
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			out = "{prefix}{M name, null, as: 'field'}({params.c}){code}"
-
 			out = jsdoc() + out
 			# out = @params.jsdoc() + out
 
@@ -6400,22 +6411,16 @@ export class DescriptorPart < Node
 				return OP('=',path,value).c
 
 			let fn = OP('isa',path,LIT('Function'))
-
-			if params
-				# call if a function
-				op = CALL(op,params)
-				# op = OP('=',op,params.@nodes[0])
-			elif value
-				op = OP('=',op,value)
-			else
-				op = OP('=',op,TRUE)
-
 			let pars = params or (value ? [value] : [])
 			let val = params and params.first or value or TRUE
-			let ternary = IF(fn,CALL(path,pars),OP('=',path,val))
-			
-			return ternary.c
-			# return op.c
+			let call = CALL(path,pars)
+			let setter = OP('=',path,val)
+
+			if STACK.tsc
+				pars.push(LIT('true')) if pars:length == 0
+				return call.c
+
+			return IF(fn,call,setter).c
 
 export class Descriptor < Node
 
@@ -6517,13 +6522,12 @@ export class Descriptor < Node
 		if @callback
 			parts.add LIT("{ref.c}.callback = {@callback.c}")
 
-		parts.add(ref)
-
 		if STACK.tsc
-			return "((self,{ref.c}={val.c(mark: yes)})=>({parts.c}))(this)"
+			parts.add(LIT("${ref.c}"))
+			return "((self,${ref.c}={val.c(mark: yes)},{ref.c}=imba.descriptor(${ref.c}))=>({parts.c}))(this)"
 
-		else
-			parts.unshift(OP('=',ref,val))
+		parts.add(ref)
+		parts.unshift(OP('=',ref,val))
 
 		return '(' + parts.c(expression: yes) + ')'
 
