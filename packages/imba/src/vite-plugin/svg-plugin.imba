@@ -1,4 +1,3 @@
-import { createCompileImba } from './utils/compile.ts'
 import {readFileSync} from "fs"
 import {parseAsset} from 'imba/compiler'
 
