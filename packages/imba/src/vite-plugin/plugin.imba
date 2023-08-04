@@ -24,6 +24,7 @@ import url, {pathToFileURL, fileURLToPath} from 'node:url'
 import np from 'node:path'
 import nfs from 'node:fs'
 import crypto from 'node:crypto'
+import {getConfigFilePath} from '../utils/vite.imba'
 
 import vitePluginEnvironment from './vite-plugin-environment.ts'
 
@@ -35,14 +36,27 @@ const resolvedAllCssModuleId = "\0{allCssModuleId}"
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 # from bundler/utils.imba
-export def getCacheDir options
+export def getImbaHash
+	const hash = crypto.createHash('sha256')
+	const files = nfs.readdirSync(__dirname)
+	files.sort()
+	for file of files
+		const filePath = np.join(__dirname, file);
+
+		if np.extname(file) === '.mjs'
+			const data = nfs.readFileSync(filePath);
+			hash.update(data)
+	hash.digest 'hex'
+	
+export def getCacheDir
 	# or just the directory of this binary?
-	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'.imba-cache')  # np.resolve(os.homedir!,'.imba')
+	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'.imba-cache')
 	unless nfs.existsSync(dir)
 		console.log 'cache dir does not exist - create',dir
 		nfs.mkdirSync(dir)
 	return dir
 
+const IMBA_HASH = getImbaHash!
 const CACHE_DIR = getCacheDir!
 
 export default def imbaPlugin(inlineOptions\Partial<Options> = {})
@@ -57,7 +71,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	let test?\boolean
 	let build?\boolean
 	let dev?\boolean
-
+	let imbaConfig
 	validateInlineOptions(inlineOptions)
 	const cache = new VitePluginImbaCache();
 
@@ -68,6 +82,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			log.setLevel("debug")
 		elif config.logLevel
 			log.setLevel(config.logLevel)
+		imbaConfig ||= (await getConfigFilePath("imba")) || {}
 		options = await preResolveOptions(inlineOptions, config, configEnv)
 		const extraViteConfig = buildExtraViteConfig(options, config);
 		log.debug("additional vite config", extraViteConfig);
@@ -80,7 +95,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		options = resolveOptions(options, config);
 		# patchResolvedViteConfig(config, options);
 		requestParser = buildIdParser(options);
-		compileImba = createCompileImba(options);
+		compileImba = createCompileImba(options, imbaConfig);
 		viteConfig = config;
 		# // TODO deep clone to avoid mutability from outside?
 		api.options = options;
@@ -95,7 +110,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		let hash
 		let cacheFile
 		try
-			hash = crypto.createHash('md5').update(code + id + JSON.stringify options).digest('hex')
+			hash = crypto.createHash('md5').update(JSON.stringify(options.server.config) + code + id + IMBA_HASH + JSON.stringify imbaConfig).digest('hex')
 			cacheFile = np.join(CACHE_DIR, hash);
 			const r = await nfs.promises.readFile(cacheFile, 'utf-8');
 			return JSON.parse r
