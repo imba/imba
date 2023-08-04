@@ -33,10 +33,12 @@ export { setupVite } from './setupVite'
 const allCssModuleId = 'virtual:imba/*?css'
 const resolvedAllCssModuleId = "\0{allCssModuleId}"
 
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 # from bundler/utils.imba
 export def getCacheDir options
 	# or just the directory of this binary?
-	let dir = process.env.IMBA_CACHEDIR or np.resolve('node_modules','.imba-cache')  # np.resolve(os.homedir!,'.imba')
+	console.log __dirname
+	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'.imba-cache')  # np.resolve(os.homedir!,'.imba')
 	console.log dir, np.resolve('..','.imba-cache')
 	unless nfs.existsSync(dir)
 		console.log 'cache dir does not exist - create',dir
