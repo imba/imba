@@ -1,7 +1,9 @@
 import np from 'path'
 import * as ts from 'typescript/lib/tsserverlibrary'
 import imba-plugin from '../typescript-imba-plugin/index'
+# import imba-plugin from '../typescript-imba-plugin/dist/index.js'
 
+global.IMBA_TYPINGS = require.resolve('typescript-imba-plugin/typings/imba.d.ts')
 
 class Logger
 	def close
@@ -28,10 +30,13 @@ class Logger
 		
 	def msg str, type = null
 		# return
+		return
 		console.log str
 	
 	def getLogFileName
 		undefined
+
+# imba-plugin(typescript: ts)
 
 const defaults = {
 	host: ts.sys

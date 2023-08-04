@@ -1,6 +1,7 @@
 {
     "include": [
         "**/*.imba",
+        "**/*.imba.ts",
         "**/*"
     ],
     "exclude": [
@@ -15,7 +16,9 @@
         "skipLibCheck": true,
         "skipDefaultLibCheck": true,
         "allowUnreachableCode": true,
+        "allowImportingTsExtensions": true,
         "allowSyntheticDefaultImports": true,
+        "allowArbitraryExtensions": true,
         "allowUmdGlobalAccess": false,
         "esModuleInterop": true,
         "suppressExcessPropertyErrors": false,
@@ -34,7 +37,6 @@
             "dom.iterable",
             "imba"
         ],
-        "moduleResolution": "node",
         "paths": {
             "ui/*": [
                 "./views/shared/*",

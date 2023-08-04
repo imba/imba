@@ -2,7 +2,43 @@
 
 ## 2.0.0-alpha.230
 
+* Improved integration with vite
+
 * `.env` traverse up file tree from file instead of cwd
+
+* Add `@standalone` and `@browser` style modifiers
+
+* Add custom `@mutate` event that wraps `MutationObserver` the same way `@resize` wraps `ResizeObserver` and `@intersect` wraps `IntersectionObserver`
+
+* Add built-in `@bound` decorator. This will bind methods to their class instance.
+
+    ```
+    class Item
+        # method is automatically bound to instance and can be passed around
+        # without changing self when called.
+        @bound def setup
+            yes
+    ```
+
+* Add built-in `@thenable` decorator. Very useful - wait for docs :)
+
+* Add `ease-styles` style property and make the alias `e` a shorthand for `ease-styles` instead of `ease-all`.
+
+    It's quite common to just want smooth generic easing of styles. Previously you could just do `e:200ms` or `e:300ms ease-in-out` etc, but that would add easing to _all_ properties. Many properties like `z-index`, `position`, `display` should usually not be eased, and can cause major performance issues. The default shorthand now only eases the visual properties you would usually want to ease.
+
+* Initial work on stdlib that adds functionality to builtins like String, Number, Array, Set and more. Use via `import 'imba/std'`.
+
+* Add `kb`, `mb` and `gb` units. Including these units after a literal number
+will compile to number of bytes. Ie:
+
+    ```
+    2mb # 2097152
+    1kb # 1024
+    file.size < 500kb # check a filesize
+    new Uint8Array(8mb) # Allocating an 8mb UintArray
+    ```
+
+* Various fixes and quality-of-life improvements.
 
 ## 2.0.0-alpha.229
 

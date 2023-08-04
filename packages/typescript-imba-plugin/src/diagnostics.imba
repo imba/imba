@@ -10,6 +10,9 @@ const Rules = [
 	code: 2322	
 	text: /^\$\d+/
 	---
+	code: 2611
+	message: /./
+	---
 	code: 2612
 	message: /./
 	---
@@ -34,14 +37,17 @@ const Rules = [
 	code: 2551
 	test: do({message},item)
 		return no unless typeof message == 'string'
-		if message.match(/^Property 'Ψ/)
+		# Swallow property not found errors for meta properties
+		# Should be optional
+		return yes if message.match(/^Property 'Ψ/u)
+		if message.match(/^Property 'Ψ/u)
 			item.category = 0
 		return no
 	---
 	code: 2339
 	test: do({message},item)
 		return no unless typeof message == 'string'
-		if message.match(/^Property 'Ψ/)
+		if message.match(/^Property 'Ψ/u)
 			item.category = 0
 			return yes # configurable in plugin?
 		return no
@@ -54,6 +60,9 @@ const Rules = [
 	---
 	code: 2339 # option allow array properties
 	message: /on type 'Window & typeof globalThis'/
+	---
+	code: 2425
+	message: /./
 	---
 	code: 2556
 	text: /\.\.\.arguments/

@@ -175,6 +175,10 @@ declare class Γany extends HTMLElement {
     [key: string]: any;
 }
 
+declare function Γany extends HTMLElement {
+    [key: string]: any;
+}
+
 interface HTMLElementTagNameMap {
     "global": Γglobal,
     "teleport": Γteleport
@@ -337,6 +341,21 @@ declare namespace imba {
          * Pixels
          */
         px: string;
+
+        /**
+         * Bytes in n kilobytes
+         */
+        kb: number;
+
+        /**
+         * Bytes in n megabytes
+         */
+        mb: number;
+
+        /**
+         * Bytes in n gigabytes
+         */
+        gb: number;
     }
 
     namespace hotkeys {
@@ -574,6 +593,11 @@ declare namespace imba {
      */
      function αcomputed(): void;
 
+    /**
+     * Mark function as thenable
+     */
+      function αthenable(): void;
+
      /**
      * Runs the method immediately after instance is initialized
      * and re-runs whenever any of the referenced observables
@@ -664,6 +688,11 @@ declare namespace imba {
     // TODO check if T responds to accessor method - if so, return the result of that type
     function accessor<T>(accessor: T,...rest:any[]): T extends {$accessor: (...args: any[]) => infer X} ? X : T;
 
+    type IsFunction<T> = T extends (...args: any[]) => any ? true : false;
+    type Desc<T> = {[K in keyof T]: IsFunction<T[K]> extends true ? T[K] : (arg?: T[K]) => void};
+    function descriptor<T>(val: T): Desc<T>;
+
+
     interface AccessorGenerator {
         $accessor(target: any, key: symbol, name: string | symbol, slot: symbol, context: any);
     }
@@ -673,8 +702,11 @@ declare namespace imba {
         $set(value: any, target: any, key: string | symbol, name: string | symbol): void;
     }
 
-    interface Storage {
+    interface Storage extends Function {
         [key: string]: any;
+
+        /** Returns a namespaced store where the namespace is the stringified parameter */
+        (ns: any): Storage;
     }
 
     /**

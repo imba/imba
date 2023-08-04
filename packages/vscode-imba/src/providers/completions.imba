@@ -44,7 +44,7 @@ export default class CompletionsProvider
 
 	def provideCompletionItems(doc, pos, token, context)
 		let file = util.toPath(doc)
-		util.log("provideCompletionItems!! {doc} {doc.fsPath} {doc.offsetAt(pos)} {file} {JSON.stringify(context)}",pos)
+		# util.log("provideCompletionItems!! {doc} {doc.fsPath} {doc.offsetAt(pos)} {file} {JSON.stringify(context)}",pos)
 		let range = new Range(pos,pos)
 		if context.triggerKind != 2
 			#cache = {}
@@ -130,7 +130,7 @@ export default class CompletionsProvider
 			return item
 
 		let res = await #bridge.call('resolveCompletionItem',item,item.data)
-		util.log("resolving item {JSON.stringify(item)} {JSON.stringify(item.#raw)} {JSON.stringify(item.data)} {JSON.stringify(res)}")
+		# util.log("resolving item {JSON.stringify(item)} {JSON.stringify(item.#raw)} {JSON.stringify(item.data)} {JSON.stringify(res)}")
 		
 		if res.markdown
 			item.documentation ||= new MarkdownString(res.markdown)

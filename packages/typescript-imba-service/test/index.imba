@@ -1,10 +1,12 @@
 import np from 'path'
 import fs from 'fs'
 
+
 import Service from '../index'
 import * as ts from 'typescript/lib/tsserverlibrary'
 
 def run
+	# process.exit(0)
 	let base = np.resolve(__dirname,'extend')
 	let t0 = Date.now!
 	let s = new Service(base)
@@ -66,6 +68,7 @@ def run
 	def completions file, pos, o = {}, filter = null
 		o.triggerCharacter ??= ''
 		file = findFile(file)
+		let inpos = pos
 		let src = file.fileName or file
 		pos = findPos(file,pos)
 		let ctx = file.doc.getContextAtOffset(pos)
@@ -73,8 +76,9 @@ def run
 		let completions = file.getCompletions(pos,o)
 		completions.items = completions.filter(filter) if filter
 		let plain = completions.serialize!.map do $1.label..name or $1.label
-		console.log 'ctx',src
-		console.log plain
+
+		console.log inpos,plain,src + `:{ctx.line}:{ctx.column + 1}`
+		# console.log plain
 		return completions
 
 	def check doc, pos
@@ -86,13 +90,13 @@ def run
 
 	def completion file, filter = null, pos = "~\n# eof", o = {}
 		let res = completions(file, pos,{all: yes},filter)
-		console.log 'res',res,res.items,pos,filter
+		# console.log 'res',res,res.items,pos,filter
 		# debugger
-		res.items[0].resolve!
-		console.log res.items[0].importData
-		console.log res.serialize![0]
-		return res.items[0]
-
+		if res.items[0]
+			res.items[0].resolve!
+			# console.log res.items[0].importData
+			# console.log res.serialize![0]
+			return res.items[0]
 
 
 	if false
@@ -102,14 +106,6 @@ def run
 		completions('ns.imba','~# setup')
 		completions(doc,"import '~'")
 		completions(doc,"from './views/~")
-		# getinfo(doc,'def ti~c')
-
-	
-	
-
-	# console.log s.file('accessors.imba').js
-	# return
-	# return process.exit(0)
 
 	if false
 		let dts = ils.dts.content
@@ -117,7 +113,7 @@ def run
 		jsdts = jsdts.replace(/extend\//g,'extendjs/').replace(/\.imba/g,'.js')
 		fs.writeFileSync('./extendjs/global.d.ts',jsdts)
 
-	if true
+	if false
 		let Value = ts.SymbolFlags.Value
 		let api = doc.checker.autoImports
 		let res = api.search('PrimaryB',Value)
@@ -129,7 +125,7 @@ def run
 		p resolved
 		console.log 8192 & Value
 
-	if 1
+	if 0
 		completion(doc,/PrimaryButt/)
 		completion(doc,/PrimaryDef/)
 		let but = completion(doc,/AppButt/)
@@ -138,7 +134,7 @@ def run
 	
 	if 1
 		completions(doc,"import './~'")
-		p completions(doc,"let m14\\~",{},/AppSt/).serialize!
+		# p completions(doc,"let m14\\~",{},/AppSt/).serialize!
 		
 
 	if 0
@@ -155,8 +151,12 @@ def run
 	# console.log x.cp.rootFiles
 	for f in x.cp.rootFiles
 		console.log f.fileName
+
+	if 1
+		completions(s.file('overload.imba'),').~completion')
+		# completions(s.file('overload.imba'),'car.~completion')
 	console.log "found {errors.length} errors",took
-	process.exit(0)
+	process.exit(0) unless process.env.LIVE
 
 run!
 

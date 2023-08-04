@@ -6,25 +6,13 @@ import ImbaScript from './script'
 import * as Diagnostics from './diagnostics'
 import np from 'path'
 
+import {DefaultConfig, DefaultRichConfig} from './constants'
+
 let EDITING = no
 global.state = {command: ''}
-
 let TSX_HOOK = no
 let EXTRA_HIT = null
 let EXTRA_EXTENSIONS = ['.imba']
-
-const typings = {
-	"imba.d.ts": import("../../imba/typings/imba.d.ts?text")
-	"imba.dom.d.ts": import("../../imba/typings/imba.dom.d.ts?text")
-	"imba.events.d.ts": import("../../imba/typings/imba.events.d.ts?text")
-	"imba.router.d.ts": import("../../imba/typings/imba.router.d.ts?text")
-	"imba.snippets.d.ts": import("../../imba/typings/imba.snippets.d.ts?text")
-	"imba.types.d.ts": import("../../imba/typings/imba.types.d.ts?text")
-	"imba.meta.d.ts": import("../../imba/typings/imba.meta.d.ts?text")
-	"styles.d.ts": import("../../imba/typings/styles.d.ts?text")
-	"styles.generated.d.ts": import("../../imba/typings/styles.generated.d.ts?text")
-	"styles.modifiers.d.ts": import("../../imba/typings/styles.modifiers.d.ts?text")
-}
 
 def isEditing
 	global.state.command == 'updateOpen'
@@ -338,6 +326,7 @@ export class System
 		 
 	def fileExists path
 		# util.log('fileExists',path)
+
 		if path.indexOf('.imba._.d.ts') >= 0
 			if virtualFileMap[path]
 				return true
@@ -351,39 +340,31 @@ export class System
 			elif path.indexOf('.imba') >= 0
 				let ipath = path.replace(/\.ts$/,'')
 				if #fileExists(ipath)
+					# console.log `fileExists {path} -> {ipath}`
 					return yes
 
-		if (/\.tsx$/).test(path) and TSX_HOOK
-			for ext in EXTRA_EXTENSIONS
-				let ipath = path.replace('.tsx',ext).replace(ext + ext,ext)
-				if #fileExists(ipath)
-					if #fileExists(path.replace('.tsx','.d.ts'))
-						return no
-					util.log "intercepted fileExists",path,ipath
-					EXTRA_HIT = [path,ipath]
-					return yes
-		
-		if path.indexOf('imba-typings') >= 0
-			let name = np.basename(path)
-			virtualFileMap[path] ||= typings[name]
-			return true
-		
 		if (/[jt]sconfig\.json/).test(path)
 			util.log('fileExists',path,#fileExists(path),!!readVirtualFile(path))
 
 			if readVirtualFile(path) !== undefined
 				return true
+
+		
 				
 		return #fileExists(path)
 	
 	# readDirectory?(path: string, extensions?: readonly string[], exclude?: readonly string[], include?: readonly string[], depth?: number): string[];
 	def readDirectory path, extensions, exclude, include,depth
 		let res = #readDirectory(path,extensions, exclude, include,depth)
-		util.log('readDirectory',arguments,res)
+		if false
+			for name,i in res
+				if name.endsWith('.imba')
+					res[i] = name + '.ts'
+		# console.log('readDirectory',arguments,res)
 		return res
 	
 	def readFile path,encoding = null
-		if path.indexOf('imba-typings') >= 0 or path.indexOf('.imba._.d.ts') >= 0
+		if path.indexOf('.imba._.d.ts') >= 0
 			return readVirtualFile(path)
 
 		if (/[jt]sconfig\.json/).test(path)
@@ -399,9 +380,57 @@ export class System
 		return body
 		
 export class Project
+
+	###
+	Crucial monkey-patch for Imba. To allow extension-less imports etc
+	to work with ts service we override the resolver and rewrite the filenames
+	back to the real ones (.imba.ts -> .imba).
+	###
+	def resolveModuleNameLiterals ...params
+		let res = #resolveModuleNameLiterals(...params)
+
+		for item,i in res
+			let hit = item..resolvedModule
+			let name = hit..resolvedFileName
+
+			if name..match(/\.imba\.ts$/)
+				hit.resolvedFileName = name.replace(/\.ts$/,'')
+				hit.extension = '.js'
+				# util.log('resolved',name)
+				# L `resolved`,name
+			
+			elif name..match(/\._ils\.ts$/)
+				# Unclear if still used?
+				hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
+				hit.extension = '.js'
+
+		return res
+
 	def setCompilerOptions value
+		# TODO should only be for a project that uses Imba for sure
+		# If this project is for imba - ensure that we include this data
+		# let imbadir = resolveImbaDir!
+		value.lib ||= ["esnext","dom","dom.iterable"].map do global.ts.libMap.get($1)
+		value.ignoreDeprecations = "5.0"
+		value.customConditions = ["tsimba","imba"]
+
+		if true
+			let imbadts = value.lib.find(do $1.indexOf('imba.d.ts') >= 0)
+			unless imbadts
+				let rel = global.IMBA_TYPINGS or "" # __realname.replace('dist/index.js','typings/imba.d.ts')
+				# console.log "set",value,require.resolve('typescript-imba-plugin')
+				if global.IMBA_PATH
+					rel = global.IMBA_PATH + '/typings/imba.d.ts'
+				
+				# rel ||= require.resolve 'typescript-imba-plugin/typings/imba.d.ts'
+				# console.log require.resolve 'typescript-imba-plugin/typings/imba.d.ts'
+				rel ||= __realname.replace('dist/index.js','typings/imba.d.ts')
+				value.lib.push(rel) if rel
+
+		for own k,v of constants.RequiredCompilerOptions
+			value[k] = v
 		let res = #setCompilerOptions(value)
-		util.log('setCompilerOptions',this,value)
+		util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
 		return
 		
 	def onPluginConfigurationChanged name, data
@@ -411,24 +440,11 @@ export class Project
 				global.ils.handleRequest(data)
 		else
 			#onPluginConfigurationChanged(name,data)
-	
-	def reloadForImba
-		let path = canonicalConfigFilePath
-		let cfg = projectService.configFileExistenceInfoCache.get(path)
-		let isLoading = !!sendLoadingProjectFinish
 
-		if isLoading
-			return
-
-		if cfg..config
-			cfg.config.reloadLevel = 1
-			projectService.reloadFileNamesOfConfiguredProject(self)
-		yes
-		
 	def shouldSupportImba
-		return true if global.hasImbaScripts
+		return true if global.hasImbaScripts or #shouldSupportImba
 		let files = projectService.host.readDirectory(currentDirectory,null,['node_modules'],['**/*.imba'],4)
-		return true if files.length > 0
+		return #shouldSupportImba = true if files.length > 0
 		return false
 
 		
@@ -436,29 +452,32 @@ export class ProjectService
 
 	def activateProjectForImba project
 		let isLoading = !!project.sendLoadingProjectFinish
+		return if isLoading
 
-		if isLoading
-			return
-		
 		if project.#patchedForImba =? yes
-			let exts = (hostConfiguration.extraFileExtensions ||= [])
-			exts.push('.imba') if exts.indexOf('.imba') == -1
-
+			
 			if project.shouldSupportImba!
-				util.log('activateProjectForImba',project)
+				util.log('activateProjectForImba',project,hostConfiguration)
 				let path = project.canonicalConfigFilePath
 				let cfg = configFileExistenceInfoCache.get(path)
 				if cfg..config
 					cfg.config.reloadLevel = 1
 					reloadFileNamesOfConfiguredProject(project)
+			
 		self
 		
 	def awakenProjectForImba project
 		util.warn('awakenProjectForImba',project)
+
+	def sendProjectLoadingStartEvent project,reason
+		# Could this be a place to inject the extra file extensions?
+		let conf = hostConfiguration
+		#sendProjectLoadingStartEvent(project,reason)
+
 		
 	
 	def sendProjectLoadingFinishEvent project
-		util.log('sendProjectLoadingFinishEvent',project,!!project.#patchedForImba)
+		# console.log('sendProjectLoadingFinishEvent',!!project.#patchedForImba,project.rootFiles.length,project.compilerOptions,project.NR,project.rootFilesMap.keys())
 		#sendProjectLoadingFinishEvent(project)
 		try
 			if !project.#patchedForImba
@@ -467,11 +486,10 @@ export class ProjectService
 				project.#awakenedForImba = yes
 				global.ils.awakenProjectForImba(project)
 				global..LOADED_PROJECT(project)
+
 		catch e
 			util.log('error',e,project)
-	
 
-		
 	def getOrCreateOpenScriptInfo(fileName, fileContent, scriptKind, hasMixedContent, projectRootPath)
 		let origFileContent = fileContent
 		if util.isImba(fileName)
@@ -487,29 +505,6 @@ export class ProjectService
 			script.#imba.openedWithContent(origFileContent)
 			
 		return script
-		
-	def ensureConfiguredImbaProjects
-		let configs = []
-		# @ts-ignore
-		for [configFile,project] of configuredProjects
-			if !project.#imba
-				# @ts-ignore
-				let imbafiles = host.readDirectory(project.currentDirectory,null,['node_modules'],['*.imba'],4)
-				util.log('ensureImba',project,imbafiles,project.isInitialLoadPending!)
-
-				if imbafiles.length
-					project.#imba = yes
-					configs.push(configFile)
-					setTimeout(&,50) do
-						# @ts-ignore
-						delayUpdateProjectsFromParsedConfigOnConfigFileChange(configFile,1)
-		
-		
-		# for cfg in configs
-		# 	delayUpdateProjectsFromParsedConfigOnConfigFileChange(cfg,1)
-		self
-				
-		# delayUpdateProjectsFromParsedConfigOnConfigFileChange
 		
 export class ScriptVersionCache
 	
@@ -761,7 +756,7 @@ export default def patcher ts
 			return null
 			
 		get isInternal
-			(/^__@|$\d+$|^\$\$\w+\$\$|_\$INTERNAL\$_/).test(escapedName)
+			(/^__@|\$\d+$|^\$\$\w+\$\$|_\$INTERNAL\$_/).test(escapedName)
 			
 		get isTag
 			self.exports..has('$$TAG$$')

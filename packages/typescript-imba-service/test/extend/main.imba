@@ -11,6 +11,7 @@ import tool from './assets/tool.svg'
 import stuff from './ns?text'
 
 import './'
+import './overload'
 
 const entries = {
 	view: import.iife('./view')

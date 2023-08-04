@@ -18,6 +18,9 @@ export default class Client
 			
 	get ils
 		global.ils
+
+	def warn message, o = {}
+		emit('warn',message: message, options: o)
 	
 	def emit event, data = {}
 		let payload = {

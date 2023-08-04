@@ -1,6 +1,7 @@
 extend class Number
 
 	def to num
+		# TODO Rename this to upto?
 		Array.from {length: num - self + 1}, do self + $2
 
 	def floor
@@ -15,7 +16,8 @@ extend class Number
 			return Math.round(self * inv) / inv
 		Math.round self
 
-	def clamp min, max
+	def clamp\number min\number, max\number
+		# TODO Makes little sense to support these? Better to define .min and .max functions on nr?
 		if typeof max isnt 'number'
 			Math.max self, min
 		elif typeof min isnt 'number'
@@ -23,6 +25,6 @@ extend class Number
 		else
 			Math.min Math.max(self,min), max
 
-	def lerp imin, imax, omin, omax
+	def lerp\number imin\number, imax\number, omin = 0, omax = 1
 		let normal = (self - imin) / (imax - imin)
 		return omin + normal * (omax - omin)

@@ -2,7 +2,7 @@
 	"name": "vsimba",
 	"displayName": "Imba",
 	"description": "Language support for Imba",
-	"version": "3.4.8",
+	"version": "3.5.0",
 	"publisher": "scrimba",
 	"main": "./dist/index.js",
 	"icon": "assets/imba.png",
@@ -14,7 +14,7 @@
 		"directory": "packages/vsimba"
 	},
 	"engines": {
-		"vscode": "^1.64.0"
+		"vscode": "^1.77.0"
 	},
 	"categories": [
 		"Programming Languages"

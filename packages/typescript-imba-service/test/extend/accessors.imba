@@ -4,8 +4,11 @@ class Field
 	lazy = no
 	stuff = yes
 
-	def $set target
-		yes
+	def $set value,target,name,key
+		target[key] = value
+
+	def $get target,key,name
+		target[key]
 
 class @test < Field
 	static stuff = yes
@@ -26,7 +29,7 @@ class Hello
 		new Field
 
 	title @num.lazy.required
-	description @test.required.name['hello'].stuff.name
+	description @test.required.name('hello').stuff
 	score as @num(100).required
 	other as @num.lazy.required.stuff
 

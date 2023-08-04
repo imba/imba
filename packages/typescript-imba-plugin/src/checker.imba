@@ -86,17 +86,14 @@ export default class ImbaTypeChecker
 	get allGlobals
 		#allGlobals ||= props('globalThis').slice(0)
 
-	get newGlobals
-
 
 	get globals
 		#globals ||= allGlobals.filter do
 			($1.pascal? or Globals.indexOf($1.escapedName) >= 0) and !$1.isWebComponent
 
 	def getResultTypeAtLocation node
-		let match = {209: yes, 208: yes}
 		while node
-			if match[node.kind]
+			if node.kind == ts.SyntaxKind.CallExpression or node.kind == ts.SyntaxKind.NewExpression
 				let typ = checker.getTypeAtLocation(node)
 				return typ if typ
 			node = node.parent
@@ -104,14 +101,27 @@ export default class ImbaTypeChecker
 		# NewExpression = 209,
 		return null
 
-	def getTypeAtLocation node
+	###
+	Function for finding the ts type at a specific Token.
+	Since we don't always map our tokens correctly to compiled
+	tokens we use this function to apply some additional logic
+	###
+	def getTypeAtLocation node, via
 		return unless node
-		if node.kind == 24 # Dot
-			node = node.parent.expression
-		if node.kind == 21 # CloseParenToken
-			node = node.parent.parent.expression
+		const sk = ts.SyntaxKind
 
-		checker.getTypeAtLocation(node)
+		if node.kind == sk.DotToken # Dot
+			yes
+			# node = node.parent.expression
+
+		if node.kind == sk.CloseParenToken
+			# should rewrite this method to call itself recursively with a context instead
+			if node.parent..parent..expression
+				node = node.parent.parent.expression
+			elif node.parent..expression
+				node = node.parent.expression
+
+		node and checker.getTypeAtLocation(node)
 
 	def getMappedLocation dpos
 		let res = {dpos: dpos}
@@ -783,7 +793,9 @@ export default class ImbaTypeChecker
 		return sym
 
 	def inferType tok, doc, loc = null
-		util.log('infer',tok)
+
+		util.log('inferType',tok)
+
 		if tok isa Array
 			return tok.map do inferType($1,doc)
 		
@@ -821,6 +833,7 @@ export default class ImbaTypeChecker
 				# move away from this hack - prioritize compiled inference
 				if node.start.next.match('keyword.new')
 					typ = [typ,'prototype']
+				
 				return typ
 			
 				
@@ -847,7 +860,7 @@ export default class ImbaTypeChecker
 
 			try
 				# must be the same type of item and the pos should not have moved?
-				typ = checker.getTypeAtLocation(otoken)
+				typ = getTypeAtLocation(otoken)
 				tok.node.#otyp = typ
 				return typ if typ
 		
@@ -909,7 +922,7 @@ export default class ImbaTypeChecker
 			unless typ
 				let otok = findExactLocationForToken(tok.prev)
 				if otok
-					return tok.#otyp = checker.getTypeAtLocation(otok)
+					return tok.#otyp = getTypeAtLocation(otok)
 
 			return typ
 
@@ -919,7 +932,7 @@ export default class ImbaTypeChecker
 		
 		if tok.match('identifier.special')
 			let argIndex = tok.value.match(/^\$\d+$/) and parseInt(tok.value.slice(1)) - 1
-			let container = getThisContainer(tok)
+			let container = ts.getThisContainer(tok)
 			# console.warn "found arg index!!!",argIndex,container
 			if argIndex == -1
 				return resolve('arguments',container)
@@ -936,10 +949,10 @@ export default class ImbaTypeChecker
 			if (!sym or !sym.desc..datatype) and !tok.value.match(/\!$/)
 				# check if sym and sym has datatype(!)
 				let otok = tok.#otok = findExactLocationForToken(tok)
-				# util.log('found exact token for identifier?!',tok,otok)
+				util.log('found exact token for identifier?!',tok,otok)
 				
 				if otok
-					return tok.#otyp = checker.getTypeAtLocation(otok)
+					return tok.#otyp = getTypeAtLocation(otok)
 
 			if !sym
 				let scope = tok.context.selfScope
@@ -954,18 +967,21 @@ export default class ImbaTypeChecker
 					return [scope.selfPath,tok.value]
 				else
 					# need to resolve locally though
+					util.log('resolve as local?!',tok)
 					return type(self.local(tok.value))
 			
 			# type should be resolved at the location it is in(!)
-			
+			# tok has a symbol
+			util.log('resolveType for',sym,tok)
 			return resolveType(sym,doc,tok)
 
 		if tok.match('accessor')
-			# let lft = tok.prev.prev
+			# let lft = tok.prev.prev			
 			return [inferType(tok.prev,doc),tok.value]
 
 	def resolveType tok, doc, ctx = null
 		let paths = inferType(tok,doc || script.doc,ctx)
+		util.log('resolvedType',tok,paths)
 		return type(paths)
 
 	def findExactLocationForToken token

@@ -47,13 +47,19 @@ export default async function({mode, command}){
 		const env = userTestConfig?.test?.environment || userTestConfig?.environment
 		if(env =='jsdom' || env == 'happy-dom'){
 			rootPlugins = [imbaPlugin({ssr: false})]
-			rootResolve.extensions = ['.vitest.node.imba','.web.imba', '.vitest.imba', ...extensions]
+			rootResolve.extensions = ['.vitest.web.imba', '.vitest.imba', '.web.imba', ...extensions]
+			if(process.env.CI){
+				rootResolve.extensions.unshift(...['.ci.vitest.web.imba', '.ci.vitest.imba'])
+			}
 			setupFiles.unshift('node_modules/imba/bin/test-setup.browser.mjs')
 		}else{
-			rootResolve.extensions = ['.vitest.node.imba','.node.imba', '.vitest.imba', ...extensions]
+			rootResolve.extensions = ['.vitest.node.imba', '.vitest.imba', '.node.imba', ...extensions]
+			if(process.env.CI){
+				rootResolve.extensions.unshift(...['.ci.vitest.node.imba', '.ci.vitest.imba'])
+			}
 			// specific stuff to testing in node?
 		}
-
+		
 		if(userTestConfig.plugins){
 			const d = Vite.mergeConfig({plugins: rootPlugins}, {plugins: userTestConfig.plugins})
 			rootPlugins = d.plugins
