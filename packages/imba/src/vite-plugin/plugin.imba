@@ -37,9 +37,7 @@ const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 # from bundler/utils.imba
 export def getCacheDir options
 	# or just the directory of this binary?
-	console.log __dirname
 	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'.imba-cache')  # np.resolve(os.homedir!,'.imba')
-	console.log dir, np.resolve('..','.imba-cache')
 	unless nfs.existsSync(dir)
 		console.log 'cache dir does not exist - create',dir
 		nfs.mkdirSync(dir)
@@ -97,7 +95,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		let hash
 		let cacheFile
 		try
-			hash = crypto.createHash('md5').update(code).digest('hex')
+			hash = crypto.createHash('md5').update(code + id + JSON.stringify options).digest('hex')
 			cacheFile = np.join(CACHE_DIR, hash);
 			const r = await nfs.promises.readFile(cacheFile, 'utf-8');
 			return JSON.parse r
