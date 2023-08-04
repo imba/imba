@@ -13,6 +13,10 @@ let currentContext
 
 const decorators = {}
 
+{{#if retry}}
+vi.setConfig
+	retry: {{retry}}
+{{/if}}
 {{#if hasNoTimeout}}
 vi.setConfig 
 	testTimeout: 50000000
@@ -21,6 +25,8 @@ vi.setConfig
 
 def executeStep(text, keyword, context)
 	let s = global.Steps.find(text, keyword).stepDefinition
+	if const ext = s.target.extendContext
+		await ext(context)
 	let res = await s.target[s.fname]
 		.apply(
 			context,
@@ -31,9 +37,11 @@ def executeStep(text, keyword, context)
 	# Assertions throw an error if accessed (they use a proxy)
 	return if res..__flags
 	return unless const features = res..__features
-	await Promise.all features.map do(feature)
+	await features.reduce(&, do 1) do(acc, feature)
+		await acc
 		const steps = await parseFeatureIntoSteps(feature)
-		await Promise.all steps.map do(step)
+		await steps.reduce(&, do 1) do(acc, step)
+			await acc
 			await executeStep(step.text, step.keyword, context)
 
 
@@ -63,16 +71,11 @@ beforeEach do(suite)
 
 	{{#if backgroundEl}}
 	   {{#each backgroundEl.steps}}
-	s = global.Steps.find('{{{this.text}}}', '{{ this.keyword}}').stepDefinition
 	# find the context for the current test this beforeEach hook is running before
 	c = Object.keys(contexts).find(do 
 		contexts[$1].name == suite.meta.name or contexts[$1].name == suite.meta.suite..suite..name 
 	)
-	# apply the step
-	await s.target[s.fname].apply(
-		contexts[c].context,
-		[s.cucumberExpression.match('{{{this.text}}}').map(do $1.getValue!)]
-	)
+	await executeStep('{{{escape this.text}}}', '{{this.keyword}}', contexts[c].context)
 
 	   {{/each}}
 	{{/if}}
@@ -80,13 +83,13 @@ beforeEach do(suite)
 {{decoratedSuite 'describe' this}} 'Feature: {{ feature.name }}' do
 {{#each feature.elements}}
 	{{#if (isScenarioOutline this.keyword)}}
-	{{decoratedSuite 'describe' this}} '{{ this.keyword }}: {{ this.name }}' do
+	{{decoratedSuite 'describe' this}} '{{ this.keyword }}: {{ escape this.name }}' do
 		{{#each this.examples}}
-		{{decoratedSuite 'describe' this}} 'Examples group {{ @index }}: {{ this.name}}' do
+		{{decoratedSuite 'describe' this}} 'Examples group {{ @index }}: {{ escape this.name}}' do
 			{{#each this.body}}
 			{{decoratedSuite 'test' this}} 'Example {{ @index }}: {{getDescriptionFromCells this.cells}}' do(suite)
 				{{#each ../../this.steps}}
-				text = '{{{ this.text }}}'
+				text = '{{{ escape this.text }}}'
 					{{#each ../this.cells}}
 				text = text.replaceAll('<{{getCellValue ../../../this.header @index}}>', {{{getOriginalValue this.value}}})
 					{{/each}}
@@ -98,9 +101,9 @@ beforeEach do(suite)
 		{{/each}}
 	{{/if}}
 	{{#if (isScenario this.keyword)}}
-	{{decoratedSuite 'test' this}} '{{ this.keyword }}: {{ this.name }}' do
+	{{decoratedSuite 'test' this}} '{{ this.keyword }}: {{ escape this.name }}' do
 		{{#each this.steps}}
-		text = '{{{ this.text }}}'
+		text = '{{{ escape this.text }}}'
 		keyword = '{{{ this.keyword }}}'
 		currentContext = contexts.c{{ @../index }}.context
 		await executeStep(text, keyword, currentContext)

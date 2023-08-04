@@ -20,8 +20,10 @@ Handlebars.registerHelper('decoratedSuite') do(keyword, item)
 
 	if item.tags..find(do $1.name == 'todo')
 		keyword += ".todo"
+
 	keyword
 
+Handlebars.registerHelper('escape') do $1.replaceAll("'", "\\'")
 Handlebars.registerHelper('isScenario') do(a) a == 'Scenario' or a == 'Example'
 Handlebars.registerHelper('isScenarioOutline') do(a) a == 'Scenario Outline' or a == 'Scenario Template'
 Handlebars.registerHelper('getOriginalValue') do(val)
@@ -48,16 +50,18 @@ export def generateImbaCode(id, content)
 	def hasDecoractor(item, val)
 		val = [val] unless Array.isArray(val)
 
-		return yes if item.tags..find(do val.indexOf($1.name) != -1)
+		return item.tags..find(do val.indexOf($1.name) != -1)
 		for el in item.elements or []
 			return hasDecoractor(el)
 		no
+
 	const code = testTemplate({
 		feature
 		backgroundEl
 		stepDefsGlob
 		baseContextPath
-		hasNoTimeout: hasDecoractor(feature, ['notimeout', 'debug', 'noTimeout'])
+		retry: hasDecoractor(feature, ['retry'])..value
+		hasNoTimeout: !!hasDecoractor(feature, ['notimeout', 'debug', 'noTimeout'])
 	})
 
 def _transform(id, content, compileImba, options)

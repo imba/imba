@@ -14,6 +14,10 @@ describe "Cucumber plugin " do
 		const code = await transform("add.feature")
 		expect(code).toMatchSnapshot!
 
+	test "Tags.feature" do
+		const code = await transform("tags.feature")
+		expect(code).toMatchSnapshot!
+
 	test "scenario-outline feature" do
 		const code = await transform("scenario-outline.feature")
 		expect(code).toMatchSnapshot!

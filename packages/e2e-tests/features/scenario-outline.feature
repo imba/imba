@@ -5,6 +5,10 @@ Feature: Scenario outline
 	Background:
 		Given the initial value is 0
 
+	Scenario: Concat weird strings
+		Given I concatenate "(scrim-toggler[sref='browserbutton']" and ")"
+		Then The "str" in context is "(scrim-toggler[sref='browserbutton'])"
+
 	Scenario Outline: Adding two numbers works on many cases
 
 		Given I add <a> and <b>
