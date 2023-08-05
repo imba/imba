@@ -82,7 +82,7 @@ beforeEach do(suite)
 
 {{decoratedSuite 'describe' this}} 'Feature: {{ feature.name }}' do
 {{#each feature.elements}}
-	{{#if (isScenarioOutline this.keyword)}}
+	{{#if (isScenarioOutline this.keyword ../feature.language)}}
 	{{decoratedSuite 'describe' this}} '{{ this.keyword }}: {{ escape this.name }}' do
 		{{#each this.examples}}
 		{{decoratedSuite 'describe' this}} 'Examples group {{ @index }}: {{ escape this.name}}' do
@@ -100,7 +100,7 @@ beforeEach do(suite)
 			{{/each}}
 		{{/each}}
 	{{/if}}
-	{{#if (isScenario this.keyword)}}
+	{{#if (isScenario this.keyword ../feature.language)}}
 	{{decoratedSuite 'test' this}} '{{ this.keyword }}: {{ escape this.name }}' do
 		{{#each this.steps}}
 		text = '{{{ escape this.text }}}'

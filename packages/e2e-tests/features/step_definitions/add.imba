@@ -4,6 +4,9 @@ new class
 		result += a + b
 		
 
+	@when('أبدأ البرنامج')
+	def start
+		ok 1
 	@given('I run a failing feature file')
 	def fail
 		const feature = """

@@ -6,8 +6,18 @@ import {
 import { createCompileImba } from "./utils/compile";
 import Handlebars from "handlebars";
 import rawTestTemplate from './cucumberTemplate.txt?raw'
+import {parse} from 'gherkin-io'
+import Gherkin from '@cucumber/gherkin'
 
-let parse
+def convertToEnglishKeyword(keyword, language = 'en')
+	if language == 'en'
+		return keyword.toLowerCase!.trim!
+	const dialect = Gherkin.dialects[language]
+	for own key, values of dialect
+		if values..map(do $1.trim!).includes(keyword)
+			return key.toLowerCase!.trim!
+	null
+
 Handlebars.registerHelper('decoratedSuite') do(keyword, item)
 	if item.tags..find(do $1.name == 'only')
 		keyword += ".only"
@@ -24,14 +34,20 @@ Handlebars.registerHelper('decoratedSuite') do(keyword, item)
 	keyword
 
 Handlebars.registerHelper('escape') do $1.replaceAll("'", "\\'")
-Handlebars.registerHelper('isScenario') do(a) a == 'Scenario' or a == 'Example'
-Handlebars.registerHelper('isScenarioOutline') do(a) a == 'Scenario Outline' or a == 'Scenario Template'
+
+Handlebars.registerHelper('isScenario') do(a, lang) 
+	convertToEnglishKeyword(a, lang) == 'scenario' or convertToEnglishKeyword(a, lang) == 'example'
+
+Handlebars.registerHelper('isScenarioOutline') do(a, lang)
+	convertToEnglishKeyword(a, lang) == 'scenario outline' or convertToEnglishKeyword(a, lang) == 'scenario template'
+
 Handlebars.registerHelper('getOriginalValue') do(val)
 	if isNaN(val)
 		`'"{val}"'`
 	else val 
 Handlebars.registerHelper('getDescriptionFromCells') do(cells)
 	cells.map(do $1.value).join(', ')
+
 Handlebars.registerHelper('getCellValue') do(header, index)
 	header.cells[index].value
 
@@ -40,11 +56,11 @@ const L = console.log
 const testTemplate = Handlebars.compile(rawTestTemplate)
 
 export def generateImbaCode(id, content)
-	parse ||= (await import('gherkin-io')).parse
 	let doc = await parse(content, id)
 	const feature = doc.feature
+	const lang = feature.language
 	const stepDefsGlob = './step_definitions/**/*.imba'
-	const backgroundEl = feature.elements.filter(do $1.keyword == 'Background')[0]
+	const backgroundEl = feature.elements.filter(do convertToEnglishKeyword($1.keyword, lang) == 'background')[0]
 	const baseContextPath = './context.imba'
 
 	def hasDecoractor(item, val)
@@ -78,23 +94,22 @@ def _transform(id, content, compileImba, options)
 	return compiledData.compiled.js
 
 export def parseFeatureIntoSteps(feature)
-	parse ||= (await import('gherkin-io')).parse
 	let id = "dynamic.feature"
 	id = feature.file if feature.file
 	feature = feature.content if feature.content
-
+	const lang = feature.language
 	const doc = await parse(feature, id)	
 	const bgElements = doc.feature.elements
-		.filter(do $1.keyword == 'Background')
+		.filter(do convertToEnglishKeyword($1.keyword, lang) == 'background')
 		.flatMap do $1.steps
 
 	doc.feature.elements.flatMap do(element)
-		let k = element.keyword
-		if k == 'Scenario'
+		let k = convertToEnglishKeyword(element.keyword, lang)
+		if k == 'scenario'
 			bgElements.concat element.steps
-		elif k == 'Background' 
+		elif k == 'background' 
 			[]
-		elif k == 'Scenario Outline' or k == 'Scenario Template'
+		elif k == 'scenario outline' or k == 'scenario template'
 			element.examples.flatMap do(example)
 				example.body.flatMap do({cells})
 					bgElements.concat element.steps.map do(step)

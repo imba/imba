@@ -21,3 +21,7 @@ describe "Cucumber plugin " do
 	test "scenario-outline feature" do
 		const code = await transform("scenario-outline.feature")
 		expect(code).toMatchSnapshot!
+
+	test "support other languages" do
+		const code = await transform("ar.feature")
+		expect(code).toMatchSnapshot!

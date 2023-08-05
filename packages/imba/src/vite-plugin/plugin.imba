@@ -35,14 +35,14 @@ export { setupVite } from './setupVite'
 const allCssModuleId = 'virtual:imba/*?css'
 const resolvedAllCssModuleId = "\0{allCssModuleId}"
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const dirname = import.meta.url ? url.fileURLToPath(new URL('.', import.meta.url)) : __dirname
 # from bundler/utils.imba
 export def getImbaHash
 	const hash = crypto.createHash('sha256')
-	const files = nfs.readdirSync(__dirname)
+	const files = nfs.readdirSync(dirname)
 	files.sort()
 	for file of files
-		const filePath = np.join(__dirname, file);
+		const filePath = np.join(dirname, file);
 
 		if np.extname(file) === '.mjs'
 			const data = nfs.readFileSync(filePath);
@@ -51,7 +51,7 @@ export def getImbaHash
 	
 export def getCacheDir
 	# or just the directory of this binary?
-	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'.imba-cache')
+	let dir = process.env.IMBA_CACHEDIR or np.resolve(dirname,'.imba-cache')
 	unless nfs.existsSync(dir)
 		console.log 'cache dir does not exist - create',dir
 		nfs.mkdirSync(dir)
