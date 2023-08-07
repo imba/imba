@@ -11,13 +11,24 @@ export const imbaConfigPath = np.join(_dirname, "..", "bin", "./imba.config.mjs"
 
 let extensions = ['imba', 'ts', 'mts', 'js', 'mjs', 'cjs']
 
-export def getConfigFilePath(type, opts)
-	opts ||= {command: "serve", mode: "development"}
+export def getConfigFilePath(type, opts\Object)
+	opts.command ||= "serve"
+	opts.mode ||= "development"
 
 	const types = ["client", "server", "test", "testSetup", "imba", "root"]
 	
 	unless types.includes type
 		throw new Error("Unrecognized config type {type}. Should be one of {types}")
+
+	let configPath
+	for ext in extensions
+		const name = "imba.config.{ext}"
+		const path = np.join process.cwd!, name
+		if nfs.existsSync path
+			configPath = path
+
+	# debugger
+	return {} unless opts.vite or configPath
 
 	if type == 'test'
 		# priority for tests is vitest config file
@@ -56,13 +67,6 @@ export def getConfigFilePath(type, opts)
 	# add a configFile property to client: { configFile: } im imba.config.js
 	
 	# search in current working dir
-	
-	let configPath
-	for ext in extensions
-		const name = "imba.config.{ext}"
-		const path = np.join process.cwd!, name
-		if nfs.existsSync path
-			configPath = path
 
 	configPath ||= imbaConfigPath
 

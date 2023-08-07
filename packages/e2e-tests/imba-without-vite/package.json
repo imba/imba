@@ -1,0 +1,16 @@
+{
+  "name": "imba-without-vite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "imba index.imba"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "imba": "file:../../imba",
+    "vite": "^4.4.9"
+  }
+}

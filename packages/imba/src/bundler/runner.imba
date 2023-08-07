@@ -239,7 +239,7 @@ export default class Runner < Component
 		let Vite = await import("vite")
 		let ViteNode = await import("vite-node/server")
 		const {viteNodeHmrPlugin} = await import("./viteNodeHmrPlugin.ts")
-		const config = await getConfigFilePath("server", {command: "serve", mode: "development"})
+		const config = await getConfigFilePath("server", {command: "serve", mode: "development", vite: yes})
 		# vite automatically picks up the config file if present. And thus we end up with duplicated plugins
 		config.configFile = no
 		viteServer = await Vite.createServer config

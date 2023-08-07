@@ -23,7 +23,7 @@ export def setupVite(srv, options, cb)
 
 		let serverOptions = options.serverOptions or { server: { hmr: {port} } }
 
-		let clientConfig = await getConfigFilePath "client", {mode}
+		let clientConfig = await getConfigFilePath "client", {mode, vite:yes}
 
 		const vite-options = {
 			...clientConfig
