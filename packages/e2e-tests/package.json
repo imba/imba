@@ -9,7 +9,8 @@
     "test:imba": "imba test imba.test.imba -- --run",
     "test:exec:close": "imba a.imba --vite",
     "test:component-tests": "cd imba-config-file && npm i && npm test",
-    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba && npm run test:exec:close && npm run test:component-tests",
+    "test:imba-without-vite": "cd imba-without-vite && npm i && npm test",
+    "test": "rm -rf ../../temp && npm run test:serve && npm run test:build && npm run test:imba && npm run test:exec:close && npm run test:component-tests && npm run test:imba-without-vite",
     "sync": "git pull && npm --prefix ../imba install && npm --prefix ../imba run build && npm install",
     "synctest": "npm run sync && npm run test"
   },
@@ -19,10 +20,11 @@
     "css-color-names": "^1.0.1",
     "execa": "^6.1.0",
     "fs-extra": "^10.1.0",
-    "imba": "../imba",
+    "imba": "file:../imba",
     "node-fetch": "^3.2.10",
     "playwright-core": "^1.25.1",
     "tree-kill": "^1.2.2",
+    "vite": "^4.4.8",
     "vitest": "^0.32.4"
   },
   "devDependencies": {

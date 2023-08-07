@@ -90,8 +90,8 @@ def parseOptions options, extras = []
 	options.imbaPath ||= np.resolve(__dirname,'..')
 	options.command = command
 	options.extras = extras
-	options.config = await resolveConfig(options.cwd,options.config or 'imbaconfig.json')
-	options.imbaConfig = await getConfigFilePath("root")
+	options.config = await resolveConfig(options)
+	options.imbaConfig = await getConfigFilePath("root", {vite: options.vite})
 	# only overwrite if vite is present in the config file
 	options.vite = yes if options.imbaConfig.bundler == 'vite' and !options.esbuild
 	
@@ -171,7 +171,7 @@ def test(o, otherOptions)
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 	await ensurePackagesInstalled(['vitest'], process.cwd!)
 
-	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test"})
+	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test", vite: yes})
 	try
 		let userTestConfig = (await import(String(url.pathToFileURL(testConfigPath)))).default
 
@@ -287,7 +287,7 @@ def run entry, o, extras
 
 		if o.command == 'serve'
 
-			const config = await getConfigFilePath("client", {command: "serve", mode: "development"})
+			const config = await getConfigFilePath("client", {command: "serve", mode: "development", vite: yes})
 			let plugins = config.plugins
 
 			if !entry.endsWith ".html"
@@ -338,7 +338,7 @@ def run entry, o, extras
 		if o.command == 'build'
 			# build client
 			let entry-points
-			const options = {command: "build", mode: "production"}
+			const options = {command: "build", mode: "production", vite: yes}
 			let clientConfig = await getConfigFilePath("client", options)
 
 			if entry.endsWith("html") or o.web

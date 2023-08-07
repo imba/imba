@@ -36,10 +36,20 @@ const syncNodeModules = async () => {
 		testDirs
 			.map(dir=>execa('npm', ['install', '--no-audit'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
 	)
-	await Promise.all(
-		testDirs
-			.map(dir=>execa('npm', ['link', 'imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
-	)
+	if(process.env.PUBLISHED){
+		try {
+			await execa('rm', ['-rf', path.join('node_modules', 'vite')], { stdio: 'inherit', cwd: path.join('..', 'imba') })
+		} catch(error){}
+		await Promise.all(
+			testDirs
+				.map(dir=>execa('npm', ['i', 'imba@vite', '--no-save'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+		)
+	}else{
+		await Promise.all(
+			testDirs
+				.map(dir=>execa('npm', ['link', 'imba'], { stdio: 'inherit', cwd: path.join('./', dir.name) }))
+		)
+	}
 };
 
 const startPlaywrightServer = async () => {

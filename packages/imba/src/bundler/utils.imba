@@ -146,7 +146,9 @@ export def pluck array, cb
 			return item
 	return null
 
-export def resolveConfig cwd, name
+export def resolveConfig options
+	const cwd = options.cwd
+	const name = options.config or 'imbaconfig.json'
 	try
 		let src = np.resolve(cwd or '.',name or 'imbaconfig.json')
 		let config = JSON.parse(nfs.readFileSync(src,'utf8'))
@@ -154,7 +156,7 @@ export def resolveConfig cwd, name
 		config.#path = src
 		return parseConfig(config)
 	catch e
-		const config = await getConfigFilePath("imba")
+		const config = await getConfigFilePath("imba", {vite: options.vite})
 		return parseConfig(config or {})
 
 export def extendObject obj,patch,path = []
