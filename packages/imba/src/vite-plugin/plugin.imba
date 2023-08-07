@@ -82,7 +82,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			log.setLevel("debug")
 		elif config.logLevel
 			log.setLevel(config.logLevel)
-		imbaConfig ||= (await getConfigFilePath("imba")) || {}
+		imbaConfig ||= (await getConfigFilePath("imba", {vite: yes})) || {}
 		options = await preResolveOptions(inlineOptions, config, configEnv)
 		const extraViteConfig = buildExtraViteConfig(options, config);
 		log.debug("additional vite config", extraViteConfig);
