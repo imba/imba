@@ -87,6 +87,21 @@ class SpecComponent
 	get root
 		parent ? parent.root : self
 
+
+def createChainable keys,fn
+	let create
+	create = do(ctx)
+		const chain = do(...args) fn.apply(ctx,args)
+		Object.assign(chain,fn)
+		for key in keys
+			Object.defineProperty(chain,key,{
+				get: do create({...ctx, [key]: true})
+			})
+		return chain
+	let chain = create({})
+	chain.fn = fn
+	return chain
+
 global class Spec < SpecComponent
 
 	get keyboard
@@ -135,6 +150,9 @@ global class Spec < SpecComponent
 			observer = new MutationObserver do(muts)
 				context.state.mutations.push(...muts)
 
+		test = test.bind(self)
+
+		test = createChainable(['skip','todo','only','client','node','web'],test)
 		self
 
 	get fullName
@@ -163,16 +181,18 @@ global class Spec < SpecComponent
 		blocks.push new SpecGroup(name, blk, self)
 
 	def test name, blk
-		let inline = stack[-1] isa SpecExample
+		let options = this
+		let that = SPEC
+		let inline = that.stack[-1] isa SpecExample
 
 		if name isa Function
 			blk = name
-			name = inline ? "" : (context.blocks.length + 1)
+			name = inline ? "" : (that.blocks.length + 1)
 
 		if inline
 			return blk()
 
-		context.blocks.push new SpecExample(name, blk, context)
+		that.context.blocks.push new SpecExample(name, blk, that.context,options)
 
 	def before name, blk
 		if name isa Function
@@ -272,10 +292,16 @@ global class SpecGroup < SpecComponent
 				await pre()
 
 		block.run!
+	
+	def traverse
+		if #traversed =? yes
+			SPEC.eval(blk,self) if blk
+		self
 
 	def start
 		emit('start', [self])
-		SPEC.eval(blk,self) if blk
+		traverse!
+		# SPEC.eval(blk,self) if blk
 
 		if console.group
 			console.group(name)
@@ -295,10 +321,11 @@ global class SpecGroup < SpecComponent
 
 global class SpecExample < SpecComponent
 
-	def constructor name, block, parent
+	def constructor name, block, parent, options
 		super()
 		parent = parent
 		evaluated = no
+		options = options
 		name = name
 		block = block
 		assertions = []
@@ -337,6 +364,14 @@ global class SpecExample < SpecComponent
 					pup("spec:fail",message: ass.toString!)
 		console.groupEnd(fullName)
 		emit('done',[self])
+		return self
+
+	def toJSON
+		{
+			failed: failed
+			messages: assertions.filter(do $1.critical).map(do $1.toString!)
+			error: error && error.message
+		}
 
 	def fail
 		console.log "✘ {fullName}".red, state, error
@@ -369,6 +404,7 @@ global class SpecAssert < SpecComponent
 	def compare a,b
 		if a === b
 			return true
+
 		if a isa Array and b isa Array
 			return false if a.length != b.length
 			for item,i in a
@@ -402,10 +438,10 @@ global class SpecAssert < SpecComponent
 			"ok"
 
 global.spec = global.SPEC = new Spec
+global.test = global.spec.test
 
 global def describe name, blk do SPEC.context.describe(name,blk)
 global def before name, blk do SPEC.before(name,blk)
-global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
 global def nok actual, o do SPEC.eq(!!actual, false, o)
