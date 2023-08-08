@@ -22,6 +22,10 @@ import { ensureWatchedFile, setupWatchers } from "./utils/watch";
 import { handleImbaHotUpdate } from './handle-imba-hot-update';
 import url, {pathToFileURL, fileURLToPath} from 'node:url'
 import np from 'node:path'
+import nfs from 'node:fs'
+import crypto from 'node:crypto'
+import {getConfigFilePath} from '../utils/vite.imba'
+
 import vitePluginEnvironment from './vite-plugin-environment.ts'
 
 export {vitePluginEnvironment}
@@ -29,6 +33,31 @@ export { setupVite } from './setupVite'
 
 const allCssModuleId = 'virtual:imba/*?css'
 const resolvedAllCssModuleId = "\0{allCssModuleId}"
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+# from bundler/utils.imba
+export def getImbaHash
+	const hash = crypto.createHash('sha256')
+	const files = nfs.readdirSync(__dirname)
+	files.sort()
+	for file of files
+		const filePath = np.join(__dirname, file);
+
+		if np.extname(file) === '.mjs'
+			const data = nfs.readFileSync(filePath);
+			hash.update(data)
+	hash.digest 'hex'
+	
+export def getCacheDir
+	# or just the directory of this binary?
+	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'.imba-cache')
+	unless nfs.existsSync(dir)
+		console.log 'cache dir does not exist - create',dir
+		nfs.mkdirSync(dir)
+	return dir
+
+const IMBA_HASH = getImbaHash!
+const CACHE_DIR = getCacheDir!
 
 export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	let name = "vite-plugin-imba"
@@ -42,7 +71,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	let test?\boolean
 	let build?\boolean
 	let dev?\boolean
-
+	let imbaConfig
 	validateInlineOptions(inlineOptions)
 	const cache = new VitePluginImbaCache();
 
@@ -53,6 +82,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			log.setLevel("debug")
 		elif config.logLevel
 			log.setLevel(config.logLevel)
+		imbaConfig ||= (await getConfigFilePath("imba", {vite: yes})) || {}
 		options = await preResolveOptions(inlineOptions, config, configEnv)
 		const extraViteConfig = buildExtraViteConfig(options, config);
 		log.debug("additional vite config", extraViteConfig);
@@ -65,7 +95,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		options = resolveOptions(options, config);
 		# patchResolvedViteConfig(config, options);
 		requestParser = buildIdParser(options);
-		compileImba = createCompileImba(options);
+		compileImba = createCompileImba(options, imbaConfig);
 		viteConfig = config;
 		# // TODO deep clone to avoid mutability from outside?
 		api.options = options;
@@ -76,6 +106,14 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 		const imbaRequest = requestParser(id, ssr);
 		
 		return if !imbaRequest or imbaRequest.query.imba
+
+		let hash
+		let cacheFile
+		try
+			hash = crypto.createHash('md5').update(JSON.stringify(options.server.config) + code + id + IMBA_HASH + JSON.stringify imbaConfig).digest('hex')
+			cacheFile = np.join(CACHE_DIR, hash);
+			const r = await nfs.promises.readFile(cacheFile, 'utf-8');
+			return JSON.parse r
 
 		let compiledData\CompileData
 		try compiledData = await compileImba(imbaRequest, code, options) catch e
@@ -102,12 +140,14 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			const newCode =  res.outputFiles[0].text
 			compiledData.compiled.js = code: "const body = {JSON.stringify newCode}; export default \{body: body\}; export \{body\}"
 
-		return {
+		const result = {
 			...compiledData.compiled.js,
 			meta: 
 				vite:
 					lang: compiledData.lang
 		}
+		try nfs.writeFile(cacheFile, JSON.stringify(result), do 1)
+		return result
 	
 	def resolveId(id, importer, opts)
 		let ssr = !!opts..ssr or options.ssr

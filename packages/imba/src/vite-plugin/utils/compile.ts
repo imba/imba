@@ -1,6 +1,5 @@
 import { CompileOptions, ResolvedOptions } from './options';
 import {compile} from 'imba/compiler'
-import {getConfigFilePath} from '../../utils/vite.imba'
 
 // @ts-ignore
 import { createMakeHot } from 'imba-hmr';
@@ -10,7 +9,7 @@ import { log } from './log';
 
 const scriptLangRE = /<script [^>]*lang=["']?([^"' >]+)["']?[^>]*>/;
 
-const _createCompileImba = (makeHot?: Function) =>
+const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 	async function compileImba(
 		imbaRequest: ImbaRequest,
 		code: string,
@@ -20,7 +19,6 @@ const _createCompileImba = (makeHot?: Function) =>
 		const { emitCss = true } = options;
 		const dependencies = [];
 		// todo maybe: generate unique short references for all unique paths, cache them between runs, and send those in via sourceId
-		const configFromFile = (await getConfigFilePath("imba")) || {}
 		const compileOptions: CompileOptions = {
 			...options.compilerOptions,
 			filename,
@@ -29,7 +27,7 @@ const _createCompileImba = (makeHot?: Function) =>
 			resolveColors: true,
 			sourcePath: filename,
 			sourcemap: options.compilerOptions.sourcemap ?? "extern",
-			...configFromFile
+			...imbaConfig
 		};
 
 		if (options.hot && options.emitCss) {
@@ -144,9 +142,9 @@ const _createCompileImba = (makeHot?: Function) =>
 // 	}
 // }
 
-export function createCompileImba(options: ResolvedOptions) {
+export function createCompileImba(options: ResolvedOptions, imbaConfig) {
 	// const makeHot = buildMakeHot(options);
-	return _createCompileImba();
+	return _createCompileImba(imbaConfig);
 }
 
 export interface Code {
