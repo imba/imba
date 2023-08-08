@@ -257,8 +257,14 @@
 		"prepublish": "npm run build"
 	},
 	"__metadata": {
-		"id": "c0926dfb-bf29-4689-849e-63ca645e2c1c",
+		"id": "ba4eb175-f037-43f0-8c9a-aa92adaabdce",
 		"publisherDisplayName": "Scrimba",
-		"publisherId": "d9260c1d-7c6a-483e-ae32-9e6d2314dff0"
+		"publisherId": "d9260c1d-7c6a-483e-ae32-9e6d2314dff0",
+		"targetPlatform": "undefined",
+		"isApplicationScoped": false,
+		"updated": true,
+		"isPreReleaseVersion": false,
+		"installedTimestamp": 1691143173202,
+		"preRelease": false
 	}
 }
