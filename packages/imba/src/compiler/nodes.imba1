@@ -733,6 +733,9 @@ export class Stack
 	def isNode
 		platform == 'node'
 
+	def isVite
+		!!@options:vite
+
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
@@ -745,7 +748,11 @@ export class Stack
 		if @options[lowercased] != undefined
 			return @options[lowercased]
 
-		if key == 'WEB' or key == 'BROWSER'
+		if key == 'VITE'
+			@meta:universal = no
+			return isVite
+
+		elif key == 'WEB' or key == 'BROWSER'
 			@meta:universal = no
 			return isWeb
 		elif key == 'NODE'
