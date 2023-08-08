@@ -269,6 +269,7 @@ export default class Bundle < Component
 			treeShaking: o.treeShaking or true
 			supported: {
 				"for-await": true
+				"top-level-await": true
 			}
 			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
