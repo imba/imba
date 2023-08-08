@@ -1,7 +1,7 @@
 {
   "name": "tooling-tests",
   "scripts": {
-    "start": "imba -w server.imba",
+    "start": "imba watch server.imba",
     "build": "imba build server.imba"
   },
   "dependencies": {

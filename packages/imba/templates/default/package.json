@@ -1,7 +1,7 @@
 {
   "name": "imba-project",
   "scripts": {
-    "dev": "imba -w index.html",
+    "dev": "imba watch index.html",
     "build": "imba build index.html",
     "preview": "npx vite preview"
   },

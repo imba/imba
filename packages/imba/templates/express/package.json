@@ -1,7 +1,7 @@
 {
   "name": "imba-project",
   "scripts": {
-    "dev": "imba -w server.imba",
+    "dev": "imba watch server.imba",
     "build": "imba build server.imba",
     "preview": "node dist/server.js",
     "prod": "npx pm2 start dist/server.js"
