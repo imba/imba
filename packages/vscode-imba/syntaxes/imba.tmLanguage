@@ -324,7 +324,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|throw|as|continue|break|extend|augment)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|rescue|throw|as|continue|break|extend|augment)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
