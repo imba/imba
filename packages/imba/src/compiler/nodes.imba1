@@ -346,6 +346,10 @@ var CALL = do |callee,pars = []|
 	# possibly return instead(!)
 	Call.new(callee,pars)
 
+var IIFE = do |body|
+	# possibly return instead(!)
+	IifeFunc.new([],body)
+
 var GET = do |left,right| OP('.',left,right)
 
 var CALLSELF = do |name,pars = []|
@@ -4055,6 +4059,37 @@ export class IsolatedFunc < Func
 				shadow.@proxy = @params.at(@params.count,yes)
 				@leaks.push(source)
 		self
+
+export class IifeFunc < Func
+
+	def js s,o
+		body.consume(ImplicitReturn.new) unless option(:noreturn)
+		var ind = body.@indentation
+		var out = body.c(braces: yes)
+		return "(()=>{out})()"
+
+export class RescueFunc < Func
+
+	def visit o
+		@scope = null
+		body.traverse
+
+		if option(:async)
+			var fnscope = o.up(Func)
+			fnscope && fnscope.set(async: yes)
+
+		self
+
+	def js s,o
+		body = body.consume(ImplicitReturn.new)
+
+		var out = body.c(braces: no)
+		let fn = '()=>{ try { ' + out + ' } catch(e) { return e; } }'
+
+		if option('async')
+			return "await (async {fn})()"
+		else
+			return "({fn})()"
 
 export class Lambda < Func
 	def scopetype
