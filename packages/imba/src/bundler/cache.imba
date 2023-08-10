@@ -126,7 +126,6 @@ export default class Cache
 
 		if index >= 0
 			# unless index % 40 == 0
-			#	console.log "key not correctly aligned in file",index,key
 			#	throw "error"
 			return aliascache[key] = idFaucet(index) # idFaucet(index / 40)
 		else
@@ -158,7 +157,6 @@ export default class Cache
 		# check for file on disk
 		# let file = program.fs.lookup(np.resolve(dir,key))
 		# let mtime = file.mtimesync
-		# console.log 'memo',dir,key,keytime,cached && cached.exists
 
 		if keytime > time
 			cached = cache[key] = {

@@ -25,7 +25,6 @@ def classify types
 
 export def highlight tokens, {verbose = no}
 	let parts = []
-	# console.log(tokens)
 	let depth = 0
 	let counter = 0
 	let ids = []

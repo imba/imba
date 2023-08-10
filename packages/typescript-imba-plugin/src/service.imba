@@ -107,7 +107,6 @@ export default class Service < EventEmitter
 		util.log('getExternalFiles')
 		let paths = Object.keys(virtualScripts)
 		# paths.concat()
-		# console.log('got external files?!',paths)
 		# return paths.concat('imba-typings/imba.d.ts')
 		return paths
 
@@ -151,7 +150,6 @@ export default class Service < EventEmitter
 	def resolveImbaDirForProject proj
 		let imbadir = ts.resolveImportPath('imba',proj.getConfigFilePath!,proj)
 		if imbadir and imbadir.resolvedModule
-			# console.warn "RESOLVED",imbadir.resolvedModule
 			return np.dirname(imbadir.resolvedModule.resolvedFileName)
 		return null
 
@@ -264,7 +262,6 @@ export default class Service < EventEmitter
 			let path = "{item.containerName}.prototype.{item.name}"
 			let token = script.doc.findPath(util.toImbaIdentifier(path))
 			# util.log "converting path!?",item,path,token
-			# console.log "convertImbaDtsDefinition",file
 			if token
 				item.textSpan = token.span
 				item.contextSpan = token.body ? script.doc.expandSpanToLines(token.body.contextSpan) : token.span
@@ -430,14 +427,11 @@ export default class Service < EventEmitter
 				return out if out..definitions
 
 			let res = ls.getDefinitionAndBoundSpan(filename,opos)
-			# console.log 'got defs',filename,opos,res
 			res = convertLocationsToImba(res,ls,filename)
 
 			if out and out.textSpan and res and false
 				res.textSpan = out.textSpan
 				delete res.textSpan
-
-			# console.log("out?!",res)
 
 			let defs = res..definitions
 			if script and defs
@@ -537,7 +531,6 @@ export default class Service < EventEmitter
 
 			# "Add 'TextField' to existing import declaration from "./tags/field""
 			# "Import 'TextField' from module "./tags/field.imba""
-			#
 			for fix in res
 				let m
 				# rewrite import codefix
@@ -672,7 +665,6 @@ export default class Service < EventEmitter
 			let dts = item.doc.getGeneratedDTS({},globals)
 			if dts
 				all += '\n' + dts
-		# console.log 'got here?!'
 		for own k,v of globals
 			all = all.replaceAll("&&{k}&&","module '{v.doc.fileName}'")
 

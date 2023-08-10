@@ -384,7 +384,6 @@ export class Node
 	def #placeChild item, f, prev
 
 		let type = typeof item
-		# console.log '#inserting!',item,f,prev,type
 
 		if type === 'undefined' or item === null
 			# what if the prev value was the same?
@@ -524,7 +523,6 @@ export class Element < Node
 		self.setAttribute(ns + ':' + key,value)
 
 	def getAttribute key
-		# console.log "getAttribute not implemented on server"
 		self.attributes ? self.attributes[key] : undefined
 
 	def getAttributeNS ns, key
@@ -714,11 +712,9 @@ export class HTMLHtmlElement < HTMLElement
 
 	get outerHTML
 		# watch for assets that are collected etc
-		# console.log "compiling outerhtml!"
 		let prev = HtmlContext
 		HtmlContext = self
 		let html = super.outerHTML
-		# console.log 'has scripts',self.scripts.length
 		# automatically include stylesheets?
 		# add data-hmr yes or inject hmr script if hmr?
 		let sheets = new Set

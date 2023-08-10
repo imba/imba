@@ -120,7 +120,6 @@ class VirtualFragment < Fragment
 		return newnode
 
 	def #insertInto parent, before
-		# console.log 'frag #insertInto',parent,before,#children
 		let prev = parentNode
 
 		if parentNode =? parent
@@ -147,7 +146,6 @@ class VirtualFragment < Fragment
 
 		if refnode
 			let idx = childNodes.indexOf(refnode)
-			# console.log 'vfragment #insertChild',node,refnode,refnode == #end,idx,#children
 			if idx >= 0
 				childNodes.splice(idx,0,node)
 		else

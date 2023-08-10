@@ -12,7 +12,6 @@ export class Converter
 				if matcher(rule[0],value)
 					return value[1]
 			# if type.indexOf(strtest) >= 0 and (modtest == 0 or mods & modtest)
-			#	console.log 'found?',strtest
 			#	return flags
 		return 0
 

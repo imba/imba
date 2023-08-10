@@ -1126,7 +1126,6 @@ def rewrite-token raw
 	raw = raw.replace('$T','$S2')
 
 	# if orig != raw
-	#	console.log 'rewriting token',orig,raw
 	return raw
 
 def rewrite-actions actions,add
@@ -1147,7 +1146,6 @@ def rewrite-actions actions,add
 			actions.switchTo = rewrite-state(actions.switchTo)
 
 	elif actions and actions.cases
-		# console.log 'found cases to transform!!'
 		let cases = {}
 		for own k,v of actions.cases
 			let newkey = rewrite-token(k)

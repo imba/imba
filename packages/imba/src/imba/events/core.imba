@@ -221,8 +221,6 @@ export class EventHandler
 			aborted: no
 		}
 
-		# console.log 'handling event',event.target,event.currentTarget
-
 		state.current = state
 
 		if event.handle$mod

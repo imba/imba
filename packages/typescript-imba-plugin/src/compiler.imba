@@ -113,7 +113,6 @@ export class Compilation
 		if let span = spans[0]
 			let into = (o - span[0]) / (span[1] - span[0])
 			let offset = Math.floor(into * (span[3] - span[2]))
-			# console.log 'found originalLocFor',jsloc,spans
 			if span[0] == o
 				val = span[2]
 			elif span[1] == o
@@ -243,8 +242,6 @@ export class Compilation
 				res = await workers.compile_imba(ibody,ioptions)
 
 			self.result = res
-			# console.log()
-			# console.log 'compiled async ',file.relName,Date.now! - t
 			resolve(self)
 
 	set result res

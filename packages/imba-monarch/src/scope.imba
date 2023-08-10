@@ -242,8 +242,6 @@ export class Scope < Node
 			# need to start at the beginning of the line?
 			let kw = prevToken(start,"keyword.class keyword.tag",10000,2)
 			keyword = kw
-
-			# console.log "found start?!",kw
 			if class? and kw
 				token = kw.next..next
 				if token..match('push.assignable')
@@ -600,7 +598,6 @@ export class BracketsNode < Group
 	static def build doc,tok,scope,typ,types
 		let cls = self
 		let chr = doc.getText(tok.offset - 1,tok.offset) # tok.prev.value # .slice(-1)
-		# console.log 'build brackets',tok,chr
 		if !chr or ' [{(|=&-;\n\t:/*%+-'.indexOf(chr) >= 0 # chr.match(/[\s\[\,\(\n\,]/)
 			typ = 'array'
 			cls = ArrayNode

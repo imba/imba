@@ -58,14 +58,12 @@ export default class ImbaScript
 
 	def setup
 		let orig = info.textStorage.text
-		# console.log 'setup',fileName,!!orig
 		if orig == undefined
 			# if this was already being edited?!
 			orig = getFromDisk!
 			# util.log("setup {fileName} - read from disk",orig.length)
 		# else
 		# 	util.log("setup {fileName} from existing source",orig.length,info)
-		# console.log 'setup....',fileName
 		svc = global.ts.server.ScriptVersionCache.fromString(orig or '')
 		svc.currentVersionToIndex = do this.currentVersion
 		svc.versionToIndex = do(number) number

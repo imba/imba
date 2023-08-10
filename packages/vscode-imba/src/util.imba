@@ -103,5 +103,4 @@ export def fastExtractSymbols text, filename = ''
 			symbols.push(symbol)
 
 	root.all = symbols
-	# console.log 'fast outline',text.length,Date.now! - t0
 	return root

@@ -384,7 +384,6 @@ class Touch
 				#pinTarget = box
 				box.flags.incr('_touch_')
 				once(self,'end') do box.flags.decr('_touch_')
-			# console.log 'pinning',o,box
 
 		x -= o.x
 		y -= o.y
@@ -446,7 +445,6 @@ def Event.touch$handle
 	let sym = Symbol!
 
 	let onclick = do(e)
-		# console.debug "ONCLICK!",e,e.pointerId,t.clientX,t.clientY,e.clientX,e.clientY
 		let tx = t.clientX
 		let ty = t.clientY
 		let ex = e.clientX
@@ -464,14 +462,12 @@ def Event.touch$handle
 	let ontouch = do(e)
 		if t.type == 'touchmove' and e.changedTouches[0].identifier != id
 			return
-		# console.debug 'ontouch',e.type,t.defaultPrevented,e.changedTouches
 		if t.defaultPrevented or t.#locked
 			e.preventDefault!
 
 	let listener = do(e)
 		let typ = e.type
 		let ph = t.phase
-		# console.debug "listen",e.type,e.pointerId
 		return if e.pointerId and t.pointerId != e.pointerId
 
 		if e[sym]

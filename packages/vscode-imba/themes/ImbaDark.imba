@@ -373,7 +373,6 @@ export let scopes = [
 	['entity.other.tag-ref.imba',`#ffc799`]
 	['entity.other.tag-mixin.imba',`#ffc799`]
 	# ['entity.other.tag.class-name',colors.yellow200]
-	#
 	# ['entity.other.tag.event-modifier',colors.event-modifier]
 
 	['support.class',colors.pascal]

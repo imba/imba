@@ -797,7 +797,6 @@ export default class Completions
 			if host
 				let dirs = host.getDirectories(dir)
 				let files = host.readDirectory(dir,['.imba',''],['.DS_Store'],[],1)
-				# console.log 'items!!',files,dirs,[pre]
 
 				sources = []
 

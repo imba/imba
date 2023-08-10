@@ -36,7 +36,6 @@ let consoleMapping = {
 let parseRemoteObject = do(obj)
 	let result = obj.value or obj
 	if obj.type == 'object'
-		# console.log("object",obj,obj.preview)
 		if obj.value
 			return obj.value
 		result = {}
@@ -112,7 +111,6 @@ export default def page url
 			return
 
 		if rpc[meth]
-			# console.log 'called puppy',meth # ,params
 			rpc[meth].apply(runner.page,params)
 			return
 
@@ -131,7 +129,6 @@ export default def page url
 			parseRemoteObject(x._remoteObject)
 
 		let str = String(params[0]) # .replace(':','')
-		# console.log 'page on console',str
 		if page.HANDLERS and page.HANDLERS[str]
 			page.HANDLERS[str](*params.slice(1))
 

@@ -27,8 +27,6 @@ class ImbaMappedLocation
 		opos = opos
 		context = context
 		otoken = global.ts.findPrecedingToken(opos,context.sourceFile)
-		#
-
 	get thisType
 		return #thisType if #thisType
 		let node = global.ts.getThisContainer(otoken)
@@ -517,7 +515,6 @@ export default class ImbaTypeChecker
 			return #typecache[string] = ast.resolved
 		catch e
 			yes
-			# console.log 'parseType error',e,ast
 
 	def collectLocalExports
 		let exports = {}
@@ -541,7 +538,6 @@ export default class ImbaTypeChecker
 
 		if expr.types
 			let types = expr.types.map do resolveTypeExpression($1,source,ctx)
-			# console.log 'type unions',types
 			return checker.getUnionType(types)
 		if expr.typeName
 			let typ = local(expr.typeName.escapedText,#file,'Type')
@@ -625,7 +621,6 @@ export default class ImbaTypeChecker
 			item = base
 
 		if item isa SymbolObject
-			# console.log 'get the declared type of the symbol',item,item.flags
 			if (item.flags & ts.SymbolFlags.Interface) or (item.flags & ts.SymbolFlags.Class)
 
 				let itype = #caches.instanceType.get(item)
@@ -737,9 +732,6 @@ export default class ImbaTypeChecker
 			name = String(name)
 
 		# if name isa Array
-		#	console.log 'access the signature of this type!!',item,name
-
-		# console.log 'member',item,name
 		let key = name.replace(/\!$/,'')
 		let jskey = util.toJSIdentifier(key)
 		let typ = type(item)
@@ -757,7 +749,6 @@ export default class ImbaTypeChecker
 			sym = typ.getProperty(jskey)
 
 		if key == '__@iterable'
-			# console.log "CHECK TYPE",item,name
 
 			let resolvedType = checker.getApparentType(typ)
 			util.log('get type of iterable',typ,resolvedType)
@@ -822,14 +813,11 @@ export default class ImbaTypeChecker
 				# end = end.prev if end.match('br')
 				tok = end
 				let typ = inferType(tok,doc,tok)
-				# console.log 'resolved type',typ
 				# move away from this hack - prioritize compiled inference
 				if node.start.next.match('keyword.new')
 					typ = [typ,'prototype']
 
 				return typ
-
-			# console.log 'checking imba node!!!',tok
 
 		let sym = tok.symbol
 		let typ = tok.type
@@ -873,7 +861,6 @@ export default class ImbaTypeChecker
 				return res
 
 			if value.match('array')
-				# console.log 'found array!!!',tok.pops
 				return arraytype(basetypes.any)
 
 			if value.match('parens')
@@ -925,7 +912,6 @@ export default class ImbaTypeChecker
 		if tok.match('identifier.special')
 			let argIndex = tok.value.match(/^\$\d+$/) and parseInt(tok.value.slice(1)) - 1
 			let container = ts.getThisContainer(tok)
-			# console.warn "found arg index!!!",argIndex,container
 			if argIndex == -1
 				return resolve('arguments',container)
 

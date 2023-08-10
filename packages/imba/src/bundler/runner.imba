@@ -166,7 +166,6 @@ class WorkerInstance
 				md: md
 
 		elif message.type == 'resolve'
-			# console.log "resolving", message
 			const id = message.payload.id
 			const importer = message.payload.importer
 			const output = await runner.viteNodeServer.resolveId(id, importer)
@@ -330,7 +329,6 @@ export default class Runner < Component
 			#hash = bundle.result.hash
 			# running with vite, we use a thinner bundle
 			bundle..on('built') do(result)
-				# console.log "got manifest?"
 				# let hash = result.manifest.hash
 				if #hash =? result.hash
 					reload!

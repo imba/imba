@@ -31,5 +31,4 @@ for child in app.children
 	# describe(child.title) do
 	for item,i in items
 		test("{child.title} {i + 1}") do
-			# console.log 'running for',item,item.eq,!!item.parentNode,window.getComputedStyle(item)
 			eqcss item, item.eq

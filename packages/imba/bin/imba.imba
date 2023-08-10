@@ -132,7 +132,6 @@ def parseOptions options, extras = []
 
 	if options.web and command != 'build'
 		command = options.command = 'serve'
-		# console.log 'changing to serve!!'
 
 	if options.web and command != 'serve'
 		# if we are serving - the entrypoint will be redirected to a server-script

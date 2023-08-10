@@ -181,7 +181,6 @@ export default class ImbaScriptInfo
 
 			# jump through scopes
 			if tok.end and tok.end.offset < offset
-				# console.log 'jumping',tok.offset,tok.end.offset
 				tok = tok.end
 			elif next
 				tok = next
@@ -220,7 +219,6 @@ export default class ImbaScriptInfo
 			span.start = span.start - start.zeroBasedColumn
 			span.length = span.length + start.zeroBasedColumn
 		catch e
-			# console.error e
 			let text = content
 			let chr
 			while true
@@ -248,7 +246,6 @@ export default class ImbaScriptInfo
 
 		let ctx = tok.context
 		let content = index.getText(0,index.getLength!)
-		# console.log 'context',offset,tok
 
 		const before = {
 			character: lineText[col - 1] or ''
@@ -274,7 +271,6 @@ export default class ImbaScriptInfo
 		if tok.next
 			if tok.next.value == null and tok.next.scope and !after.token and tok.match('operator.assign')
 				ctx = tok.next.scope
-				# console.log 'changed scope!!!',ctx,ctx.scope
 
 		let tabs = prevToken(tok,"white.tabs")
 		let indent = tabs ? tabs.value.length : 0
@@ -678,7 +674,6 @@ export default class ImbaScriptInfo
 			# delete item.parent
 			# delete item.end
 			# delete item.token
-		# console.log 'outline took',Date.now! - t
 		return root
 
 	def getContextAtOffset offset, forwardLooking = no
@@ -746,7 +741,6 @@ export default class ImbaScriptInfo
 					lexed = match.clone(lineOffset)
 
 			unless lexed
-				# console.log 'need to reparse line',[str,startState],match
 				let run = lexer.tokenize(str,startState,lineOffset)
 				lexed = new LexedLine(
 					offset: lineOffset,
@@ -764,7 +758,6 @@ export default class ImbaScriptInfo
 
 		if nextState..stack..state != 'root'
 			try
-				# console.log 'nextstate',nextState
 				let offset = tokens[-1].endOffset
 				let run = lexer.tokenize("\n",nextState,offset)
 				# let last = run.tokens
@@ -886,7 +879,6 @@ export default class ImbaScriptInfo
 
 				scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
 				# if subtyp == '('
-				#	console.log 'paren!!!',typ,subtyp,ScopeTypeMap[typ],tok
 			elif ltyp == 'open' and (scopeType = ScopeTypeMap[styp])
 				scope = tok.scope = scopeType.build(self,tok,scope,styp,types)
 
@@ -935,12 +927,10 @@ export default class ImbaScriptInfo
 							sym.dereference(lft)
 
 			# if currScope != scope and currScope.parent == scope
-			# 	console.log 'popped scope!!',currScope,lastDecl,scope.lastDecl
 			prev = tok
 
 		while scope != root
 			scope = scope.pop(eof)
-		# console.log 'astified',Date.now! - t0
 		self
 
 	def parse
@@ -997,12 +987,9 @@ export default class ImbaScriptInfo
 					res = tokens[0]
 
 				# for tok in tokens when tok.context
-				#	console.log tok.value, tok.type, tok.context..path,toImbaIdentifier(tok.context.name),name
 				#	# if this is a tag
 				#	# if tok.context.name
-				# console.log "found multiple hits",tokens,symbols
 				# for sym in symbols
-				# 	console.log sym.name,sym.body.path,sym.body.scope..path
 
 		# if !res and tokens[0]
 		#	res = tokens[0]
@@ -1018,7 +1005,6 @@ export default class ImbaScriptInfo
 
 		for sym in getSymbols!
 			if sym.name == name
-				# console.log "found!",sym,sym.body.path
 				if sym.body and sym.body.path == path
 					return sym.node
 		return
@@ -1199,7 +1185,6 @@ export default class ImbaScriptInfo
 		for cls in classes
 
 			continue unless cls.exportForDts?
-			# console.log 'do something with',cls.ident.value,cls.exportForDts?,!!cls.namespace,cls.global?,cls.component?
 			exists = yes
 			let parts = cls.ident..value..split('.')
 			let dtsname = 'Ω' + parts.join('__')
@@ -1256,7 +1241,6 @@ export default class ImbaScriptInfo
 					# blk.w "var {ident.value}: typeof {srcid}.{dtsname};"
 
 			elif cls.extends? and ident.symbol..importSource
-				# console.log ident.symbol..exportName
 				jsname = ident.symbol..exportName or jsname
 				let rel = src.replace(/\/[^\/]+?$/,'/' + ident.symbol..importSource)
 				let blk = mods[rel] ||= dts.curly("declare module '{rel}'")

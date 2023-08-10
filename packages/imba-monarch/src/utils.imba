@@ -12,7 +12,6 @@ export class Converter
 				if matcher(rule[0],value)
 					return value[1]
 			# if type.indexOf(strtest) >= 0 and (modtest == 0 or mods & modtest)
-			#	console.log 'found?',strtest
 			#	return flags
 		return 0
 
@@ -175,7 +174,6 @@ export def fastExtractSymbols text
 			symbols.push(symbol)
 
 	root.all = symbols
-	# console.log 'fast outline',text.length,Date.now! - t0
 	return root
 
 # To avoid collisions etc with symbols we are using
@@ -568,9 +566,6 @@ for own name,ref of TAG_NAMES
 export def tagNameToClassName name
 	let ref = toImbaIdentifier(name)
 	let hit = TAG_NAMES[ref]
-	# console.log 'hit?!',ref
 	return hit
 	# fromJSIdentifier(global.ts.displayPartsToString(parts))
-
-# console.log tagNameToClassName('element')
 

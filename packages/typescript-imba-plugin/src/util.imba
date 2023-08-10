@@ -107,7 +107,6 @@ export def trace cb
 
 # export def fromJSIdentifier str
 # 	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
-#
 # export def toJSIdentifier str
 # 	str.replace(/[-\?]/g,'$')
 
@@ -124,7 +123,6 @@ export def extend target, klass
 		let sym = Symbol.for("#{k}")
 		target[sym] = target[k] # .bind(target)
 		# let prev = Object.getOwnPropertyDescriptor(target,k)
-		# console.log "extend?!",k,v,prev
 		try
 			Object.defineProperty(target,k,v)
 		catch e

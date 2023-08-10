@@ -39,7 +39,6 @@ tag app-root
 				<button.throw @click=throw-promise> "Throw"
 
 # global.onerror = do(e)
-# 	console.log "window.onerror",e
 
 imba.mount <app-root>
 

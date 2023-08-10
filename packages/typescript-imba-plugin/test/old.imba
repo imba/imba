@@ -33,14 +33,11 @@
 
 			if m and m[5] and !realname[0].match(/\w/)
 				realname = m[5]
-
-			# console.log "NESTED",nested
 			let info = mappings[name] ||= {
 				name: realname
 			}
 
 			unless exists
-				# console.log 'could not find?!',name,realname
 				let source = imports.find do $1[0].match(realname)
 				if source
 					info.ns ||= source[1]
@@ -51,7 +48,6 @@
 			# 		if let ext = m[1].match(/typeof (?:import\("([^"]+)"\)\.)?([^;]+)/)
 			# 			info.ns = ext[1]
 			# 			info.name = ext[2]
-			#
 			# 			let source = imports.find do $1[0].match(ext[2])
 			# 			if source
 			# 				info.ns ||= source[1]
@@ -65,7 +61,6 @@
 
 		# find imports
 		body = body.replace(/export class (\Ω([^\Ω\s]+)(?:\Ω(\w+))?)\s(extends ([^\s]+)\s)?\{/g) do(m,full,name,mod)
-			# console.log 'replacing',m,mod,name
 
 			# if mod == 'import'
 			let mapping = mappings[full]
@@ -86,7 +81,6 @@
 
 			let reg = new RegExp(" {name}[, ]")
 			let source = imports.find do $1[0].match(reg)
-			# console.log 'found source?',source,reg
 			if source
 				return "declare module \"{source[1]}\" \{\ninterface {name} \{"
 			# let path = body.replace()

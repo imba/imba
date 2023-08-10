@@ -51,9 +51,6 @@ def matchToRegex str
 				"\\."
 		new RegExp(str)
 
-# console.log matchToRegex("*.imba$")
-# console.log matchToRegex("*.(imba|js|cjs)$")
-
 # special list with optimizations for filtering etc
 export class FSTree < Array
 
@@ -156,7 +153,6 @@ export class FSNode
 
 	def deregister
 		if flags ~=? FLAGS.REGISTERED
-			# console.log 'now deregistering node',rel
 			root.#tree.remove(self)
 
 	def touch
@@ -167,7 +163,6 @@ export class FSNode
 	def existsSync
 		return true if registered?
 		# return false if deregistered I presume
-		# console.log 'check nodefs.existsSync',abs
 		let real = nodefs.existsSync(abs)
 		if real
 			register!
@@ -180,9 +175,6 @@ export class FSNode
 		if #watched and #watchers.size == 0
 			#watched = no
 			program.watcher.unwatch(abs)
-			# console.log 'unwatch',abs
-
-#
 export class FSProxyNode
 
 export class DirNode < FSNode
@@ -274,7 +266,6 @@ export class ImbaFile < FileNode
 
 	def compile o,context = program
 		# hmr / production true or false
-		# console.log "compile {o.platform} {o.hmr} {o.mode} {rel}"
 		let key = "{o.platform}-{o.hmr}"
 		memo(key) do
 			o = Object.assign({
@@ -442,7 +433,6 @@ export default class FileSystem < Component
 		else
 			# return false
 			# if the filesystem is live
-			# console.log 'checking node',src
 			if existsCache[src] != undefined
 				return existsCache[src]
 			return existsCache[src] = nodefs.existsSync(resolve(src))
@@ -631,7 +621,6 @@ export default class FileSystem < Component
 				for f in entry.files
 					let rel = reldir ? (reldir + '/' + f) : f
 					let abs = absdir + np.sep + f
-					# console.log '!!!',absdir,reldir,rel,abs
 					let file = nodemap[rel] ||= FSNode.create(self,rel,abs)
 					file.register!
 					paths.push(rel)

@@ -79,9 +79,7 @@ export default class Service
 
 		locals.map do
 			console.log $1.code,$1.messageText,$1.category,$1.file..fileName
-		# console.log x.cp.rootFiles
 		# for f in global.ils.cp.rootFiles
-		#	console.log f.fileName
 		console.log "found {locals.length} errors ({errors.length} including dependencies)"
 
 	get ils

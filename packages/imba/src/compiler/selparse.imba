@@ -5,7 +5,6 @@ def addClass rule, name
 	# TODO check for negs as well?
 	rule.push({flag: name})
 	# rule.classNames ||= []
-	#
 	# if rule.classNames.indexOf(name) == -1
 	# 	rule.classNames.push(name)
 	return rule
@@ -91,8 +90,6 @@ export def rewrite rule,ctx,o = {}
 	let hasOffStates = no
 	let importance = 0
 
-	# console.log 'separse',rule,o.type
-
 	# only if we are scoped in somewhere
 	if parts[0]..tagName == '*' # and o.scope
 		parts[0].nestingOperator = '>>>'
@@ -126,7 +123,6 @@ export def rewrite rule,ctx,o = {}
 			part.op = '>>>'
 
 		if i == 0 and !name and !op and (part[0]..pseudo or part[0]..implicitScope)
-			# console.log 'implicit scope?',part
 			part.implicitScope = yes
 
 		if op == '>>'
@@ -212,7 +208,6 @@ export def rewrite rule,ctx,o = {}
 				Object.assign(mod,meta)
 
 	# Now inject scope class names etc
-	# console.log "got here!!!",parts
 	let last = parts[parts.length - 1]
 	let scope = parts.find(do $1.isScope)
 
@@ -232,7 +227,6 @@ export def rewrite rule,ctx,o = {}
 			addScopeClass(part,ns)
 
 	if scope and o.scope
-		# console.log 'checking the scope?!',scope
 		if !scope.length and scope != last and scope == parts[0] and !o.id and (!scope.rule or !scope.rule.op)
 			yes # no need to scope this?
 		else
@@ -312,8 +306,6 @@ export def render root, content, options = {}
 
 	return out.join('\n').replace(/\$CONTENT\$/g,content)
 
-	# console.log selparser.render(out)
-
 export def unwrap parent, subsel
 	let pars = parent.split(',')
 	let subs = subsel.split(',')
@@ -324,7 +316,6 @@ export def unwrap parent, subsel
 		for par in pars
 			let sel = sub
 			if sel.indexOf('&') >= 0
-				# console.log "REPLACE & WITH",par
 				sel = sel.replace('&',par)
 			else
 				sel = par + ' ' + sel

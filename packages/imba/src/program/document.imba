@@ -149,14 +149,11 @@ export class ImbaDocument
 			let startOffset = offsetAt(range.start)
 			let endOffset = offsetAt(range.end)
 
-			# console.log 'update with changes',change.text,startOffset,endOffset
-
 			change.range = range
 			change.offset = startOffset
 			change.length = endOffset - startOffset
 			range.start.offset = startOffset
 			range.end.offset = endOffset
-			# console.log 'update',startOffset,endOffset,change.text,JSON.stringify(content)
 			# content = content.substring(0, startOffset) + change.text + content.substring(endOffset, content.length)
 
 			let remLength = endOffset - startOffset
@@ -205,7 +202,6 @@ export class ImbaDocument
 				edits.#body = content
 
 		# see if it is significant
-		# console.log 'updated',edits,history.length - 1,version # startOffset,endOffset,change.text,JSON.stringify(content)
 		versionToHistoryMap[version] = history.length - 1
 		updated(changes,version)
 
@@ -424,7 +420,6 @@ export class ImbaDocument
 
 			# jump through scopes
 			if tok.end and tok.end.offset < offset
-				# console.log 'jumping',tok.offset,tok.end.offset
 				tok = tok.end
 			elif next
 				tok = next
@@ -462,7 +457,6 @@ export class ImbaDocument
 		let pos = positionAt(offset)
 		let tok = tokenAtOffset(offset)
 		let linePos = lineOffsets[pos.line]
-		# console.log 'get token at offset',offset,tok,linePos,pos
 		let tokPos = offset - tok.offset
 
 		let ctx = tok.context
@@ -487,7 +481,6 @@ export class ImbaDocument
 		if tok.next
 			if tok.next.value == null and tok.next.scope and !after.token and tok.match('operator.assign')
 				ctx = tok.next.scope
-				# console.log 'changed scope!!!',ctx,ctx.scope
 
 		let tabs = util.prevToken(tok,"white.tabs")
 		let indent = tabs ? tabs.value.length : 0
@@ -743,7 +736,6 @@ export class ImbaDocument
 			delete item.parent
 			delete item.end
 			delete item.token
-		# console.log 'outline took',Date.now! - t
 		return root
 
 	def getContextAtOffset offset, forwardLooking = no
@@ -819,7 +811,6 @@ export class ImbaDocument
 					lexed = match.clone(lineOffset)
 
 			unless lexed
-				# console.log 'need to reparse line',[str,startState],match
 				let run = lexer.tokenize(str,startState,lineOffset)
 				lexed = new LexedLine(
 					offset: lineOffset,
@@ -939,7 +930,6 @@ export class ImbaDocument
 
 				scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
 				# if subtyp == '('
-				#	console.log 'paren!!!',typ,subtyp,ScopeTypeMap[typ],tok
 			elif ltyp == 'open' and (scopeType = ScopeTypeMap[styp])
 				scope = tok.scope = scopeType.build(self,tok,scope,styp,types)
 
@@ -982,8 +972,6 @@ export class ImbaDocument
 						elif !nextToken or nextToken.match('br')
 							sym.dereference(lft)
 			prev = tok
-
-		# console.log 'astified',Date.now! - t0
 		self
 
 	def parse

@@ -145,7 +145,6 @@ def deepImports src, links = [], depth = 0
 
 		for item in asset..imports
 			# if links.indexOf(item) >= 0 and depth > 10
-			#	console.warn "already found import!!",item,links
 			#	return links
 			links.push(item)
 			deepImports(item, links, depth + 1)
@@ -312,7 +311,6 @@ class Server
 			# create full url
 			let headers = req.headers
 			let base
-			# console.log 'protocol',req.protocol
 			if ishttp2
 				base = headers[':scheme'] + '://' + headers[':authority']
 			else

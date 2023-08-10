@@ -337,7 +337,6 @@ export class System
 			elif path.indexOf('.imba') >= 0
 				let ipath = path.replace(/\.ts$/,'')
 				if #fileExists(ipath)
-					# console.log `fileExists {path} -> {ipath}`
 					return yes
 
 		if (/[jt]sconfig\.json/).test(path)
@@ -355,7 +354,6 @@ export class System
 			for name,i in res
 				if name.endsWith('.imba')
 					res[i] = name + '.ts'
-		# console.log('readDirectory',arguments,res)
 		return res
 
 	def readFile path,encoding = null
@@ -411,12 +409,10 @@ export class Project
 			let imbadts = value.lib.find(do $1.indexOf('imba.d.ts') >= 0)
 			unless imbadts
 				let rel = global.IMBA_TYPINGS or "" # __realname.replace('dist/index.js','typings/imba.d.ts')
-				# console.log "set",value,require.resolve('typescript-imba-plugin')
 				if global.IMBA_PATH
 					rel = global.IMBA_PATH + '/typings/imba.d.ts'
 
 				# rel ||= require.resolve 'typescript-imba-plugin/typings/imba.d.ts'
-				# console.log require.resolve 'typescript-imba-plugin/typings/imba.d.ts'
 				rel ||= __realname.replace('dist/index.js','typings/imba.d.ts')
 				value.lib.push(rel) if rel
 
@@ -467,7 +463,6 @@ export class ProjectService
 		#sendProjectLoadingStartEvent(project,reason)
 
 	def sendProjectLoadingFinishEvent project
-		# console.log('sendProjectLoadingFinishEvent',!!project.#patchedForImba,project.rootFiles.length,project.compilerOptions,project.NR,project.rootFilesMap.keys())
 		#sendProjectLoadingFinishEvent(project)
 		try
 			if !project.#patchedForImba
@@ -535,7 +530,6 @@ export class ScriptVersionCache
 			return fromOffset
 
 		let edits = getRawChangesBetweenVersions(minVersion,maxVersion)
-		# console.log 'edits!!',edits,from,to
 
 		if edits.length == 0
 			return fromOffset

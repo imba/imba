@@ -110,7 +110,6 @@ export default class CodeGen
 #		let ext = path.split('.').pop!
 #		let curr = try fs.readFileSync(path,'utf8')
 #		let out = String(self)
-#
 #		let regex = splitters[ext]
 #		if curr and regex
 #			let parts = curr.split(regex)
@@ -119,6 +118,5 @@ export default class CodeGen
 #				out = parts.join('')
 #				fs.writeFileSync(path,out)
 #			else
-#				console.log "COULD NOT FIND FILE TO REPLACE IN",path
 #		else
 #			console.log "File at {path} does not exist"

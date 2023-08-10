@@ -72,7 +72,6 @@ export class Location
 	def #setQueryParam target, name, value
 		let curr = #getQueryParam(target,name)
 		if curr != value
-			# console.log 'should set param',name,value,curr
 			if (value == null or value == '')
 				searchParams.delete(name)
 			else

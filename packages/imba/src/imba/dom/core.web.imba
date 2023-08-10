@@ -189,7 +189,6 @@ extend class Node
 	def #placeChild item, f, prev
 
 		let type = typeof item
-		# console.log '#inserting!',item,f,prev,type
 
 		if type === 'undefined' or item === null
 			# what if the prev value was the same?
