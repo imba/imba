@@ -485,10 +485,10 @@ cli
 	.action(do print-info!)
 
 cli
-	.command('fmt')
+	.command('fmt [formatters...]')
 	.description('Removes extra whitespace, debug logs, and commented logs from **/*.imba')
 	.option('-f, --force', 'Format without checking git status')
-	.action(do imba-fmt($1.opts!))
+	.action(do imba-fmt($1,$2.opts!))
 
 log.ts 'parse options'
 

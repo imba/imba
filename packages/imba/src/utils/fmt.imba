@@ -48,7 +48,7 @@ def remove-devlogs contents, filename
 
 	result.join("\n")
 
-export default def fmt opts
+export default def fmt args, opts
 
 	unless opts.force
 		try
@@ -70,15 +70,38 @@ export default def fmt opts
 
 		let contents = fs.readFileSync filename, 'utf8'
 		let prev = contents
-		contents = remove-devlogs contents, filename
-		contents = contents.replaceAll commented-log, ''
-		contents = contents.replaceAll trailing-whitespace, ''
-		contents = contents.replaceAll extra-lines, '\n\n'
-		contents = contents.replaceAll empty-comment, ''
 
-		for line,i in contents.split('\n')
-			if devlog.test line
-				console.warn "Unable to remove devlog in {np.relative(process.cwd!,filename)}:{i+1}:{line.indexOf('L')+1} due to indent".yellow
+		if args.length
+			if args.includes 'devlogs'
+				contents = remove-devlogs contents, filename
+
+			if args.includes 'empty-comments'
+				contents = contents.replaceAll empty-comment, ''
+
+			if args.includes 'commented-logs'
+				contents = contents.replaceAll commented-log, ''
+
+			if args.includes 'whitespace'
+				contents = contents.replaceAll trailing-whitespace, ''
+				contents = contents.replaceAll extra-lines, '\n\n'
+
+			if args.includes 'trailing-whitespace'
+				contents = contents.replaceAll trailing-whitespace, ''
+
+			if args.includes 'extra-lines'
+				contents = contents.replaceAll extra-lines, '\n\n'
+
+		else
+			contents = remove-devlogs contents, filename
+			contents = contents.replaceAll empty-comment, ''
+			contents = contents.replaceAll commented-log, ''
+			contents = contents.replaceAll trailing-whitespace, ''
+			contents = contents.replaceAll extra-lines, '\n\n'
+
+		if args.includes('devlogs') or !args.length
+			for line,i in contents.split('\n')
+				if devlog.test line
+					console.warn "Unable to remove devlog in {np.relative(process.cwd!,filename)}:{i+1}:{line.indexOf('L')+1} due to indent".yellow
 
 		continue if prev is contents
 		fs.writeFileSync filename, contents
