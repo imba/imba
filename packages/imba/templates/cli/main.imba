@@ -1,4 +1,3 @@
-global.L = console.log
 global.E = do console.error(...$0); process.exit(1)
 
 import 'imba/colors'
@@ -18,6 +17,6 @@ def main
 	let opts = program.opts!
 	let args = program.args
 	let s = args[0]
-	L s[opts.color] or s
+	console.log s[opts.color] or s
 
 main!

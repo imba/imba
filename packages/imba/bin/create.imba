@@ -1,4 +1,3 @@
-const L = console.log
 const cwd = process.cwd!
 const swd = __dirname
 
@@ -79,13 +78,13 @@ def main name, opts
 	try
 		throw 1 unless parseInt(process.version.slice(1).split('.',1)[0]) >= 16
 	catch
-		L "Detected Node {process.version}, v16 or higher is recommended.".yellow
+		console.log "Detected Node {process.version}, v16 or higher is recommended.".yellow
 
 	const promptOpts = onCancel: do quit!
 
 	let projectName =
 		try toValidRepoName name
-		catch e L(e.red)
+		catch e console.log(e.red)
 
 	projectName ??= (await prompt {
 		type: 'text'
@@ -101,7 +100,7 @@ def main name, opts
 	assertCleanGit! if projectName is '.'
 
 	let template = templates[opts.template]
-	L('Template not found'.red) if opts.template and not template
+	console.log('Template not found'.red) if opts.template and not template
 
 	template ??= (await prompt {
 		type: 'select'
@@ -133,20 +132,20 @@ def main name, opts
 
 	try
 		copy src, dest
-		L "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
+		console.log "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
-	L '\nInstalling dependencies'.bold
+	console.log '\nInstalling dependencies'.bold
 
 	try
 		process.chdir(dest) unless projectName is '.'
 		spawn.sync 'npm', ['pkg', 'set', "name={packageName}"]
 		spawn.sync 'npm', ['up', '-S'], stdio:'inherit'
 	catch e
-		L "\nFailed to install dependencies:\n\n{e}".red
+		console.log "\nFailed to install dependencies:\n\n{e}".red
 
-	L """
+	console.log """
 
 		Install the vscode extension for an optimal experience:
 		  {'https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba'.blue}

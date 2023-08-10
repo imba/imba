@@ -1,4 +1,3 @@
-global.L = console.log
 global.E = do
 	process.stderr.write "\x1b[31m"
 	console.error(...$0)
@@ -1575,7 +1574,7 @@ export default class Bundle < Component
 			# is this only really needed for hmr?
 			await mfile.write(JSON.stringify(entryManifest,null,2),manifest.hash)
 
-			L("\x1bc") if program.clear
+			console.log("\x1bc") if program.clear
 
 			if program.#listening
 				log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening

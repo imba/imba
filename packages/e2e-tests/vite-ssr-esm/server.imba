@@ -60,7 +60,6 @@ def createServer(root = process.cwd(), isDev = import.meta.env.MODE === "develop
 	app.use "*", do(req, res)
 		const url = req.originalUrl
 		a++
-		L a
 		try
 			let html = String <html lang="en">
 				<head>

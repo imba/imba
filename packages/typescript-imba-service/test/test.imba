@@ -7,8 +7,6 @@ import * as ts from 'typescript/lib/tsserverlibrary'
 def run
 	let name = process.argv[2]
 	let file = process.argv[3] or 'main.imba'
-	L name
-	L ts.version
 	let base = np.resolve(__dirname,name)
 	let t0 = Date.now!
 	let s = new Service(base,{})

@@ -18,7 +18,6 @@ def createServer()
 
 	await setupVite app, options, do(dist)
 		app.use compression()
-		L dist
 		app.use serveStatic(dist, index: false)
 
 	app.use "/", do(req, res)

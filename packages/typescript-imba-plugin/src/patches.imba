@@ -396,8 +396,6 @@ export class Project
 			if name..match(/\.imba\.ts$/)
 				hit.resolvedFileName = name.replace(/\.ts$/,'')
 				hit.extension = '.js'
-				# util.log('resolved',name)
-				# L `resolved`,name
 			
 			elif name..match(/\._ils\.ts$/)
 				# Unclear if still used?

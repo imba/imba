@@ -1,5 +1,3 @@
-let L = console.log
-
 import fs from 'fs'
 
 import { aliases as imba-to-css } from 'imba/compiler'
@@ -70,4 +68,4 @@ for own key, val of styles
 
 out.push temp.join(' ')
 
-L out.join("\n\t").trim!
+console.log out.join("\n\t").trim!
