@@ -75,6 +75,10 @@ export default def fmt args, opts
 			if args.includes 'devlogs'
 				contents = remove-devlogs contents, filename
 
+			if args.includes 'comments'
+				contents = contents.replaceAll empty-comment, ''
+				contents = contents.replaceAll commented-log, ''
+
 			if args.includes 'empty-comments'
 				contents = contents.replaceAll empty-comment, ''
 
