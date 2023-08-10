@@ -28,7 +28,7 @@ const defaultHeaders = {
 	avif: {'Content-Type': 'image/avif'}
 	gif: {'Content-Type': 'image/gif'}
 	png: {'Content-Type': 'image/png'}
-	apng: {'Content-Type': 'image/apng'}	
+	apng: {'Content-Type': 'image/apng'}
 	webp: {'Content-Type': 'image/webp'}
 	jpg: {'Content-Type': 'image/jpeg'}
 	jpeg: {'Content-Type': 'image/jpeg'}
@@ -61,11 +61,11 @@ class Servers < Set
 		for server of self
 			server[name](...params)
 
-	def close o = {}	
+	def close o = {}
 		for server of self
 			server.close(o)
 
-	def reload o = {}	
+	def reload o = {}
 		for server of self
 			server.reload(o)
 
@@ -214,7 +214,7 @@ class Server
 			if !res and staticDir
 				path = np.resolve(staticDir,'.' + src)
 				res = nfs.existsSync(path) and path
-			res	
+			res
 
 	def headersForAsset path
 		let ext = np.extname(path)

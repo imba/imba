@@ -1109,7 +1109,7 @@ export class ImbaDocument
 				else
 					out = alias
 					if ns or members
-						out += ', '						
+						out += ', '
 
 			elif name == '*'
 				continue if members

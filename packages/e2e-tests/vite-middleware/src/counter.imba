@@ -1,7 +1,7 @@
 tag my-counter
 	count = 0
 	<self>
-		<button[bg:amber8 c:warm3 p:8] @click=count++> "external counter {count}" 
+		<button[bg:amber8 c:warm3 p:8] @click=count++> "external counter {count}"
 
 if import.meta.vitest
 	it "should be a good counter", do

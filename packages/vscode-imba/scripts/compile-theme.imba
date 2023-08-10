@@ -23,11 +23,11 @@ def exportTmTheme
 		if scope[2]
 			item.font_style = scope[2]
 		scheme.rules.push(item)
-	
+
 	let text = JSON.stringify(scheme,null,2)
 	let dest = path.join(__dirname,'..','Imba2.sublime-color-scheme')
 	fs.writeFileSync(dest,text)
-	
+
 def exportVSCodeTheme
 	let scheme = {
 		name: "Imba Dark"
@@ -36,7 +36,7 @@ def exportVSCodeTheme
 		inherit: false
 		semanticHighlighting: true
 		semanticTokenColors: semanticColors
-		
+
 		tokenColors: []
 		colors: vstheme
 	}
@@ -48,7 +48,7 @@ def exportVSCodeTheme
 			scope: scope[0]
 			settings: {}
 		}
-	
+
 		if typeof style == 'string'
 			style = {foreground: style}
 
@@ -58,7 +58,7 @@ def exportVSCodeTheme
 			item.settings.fontStyle = scope[2]
 
 		rules.push(item)
-	
+
 	let text = JSON.stringify(scheme,null,2)
 	let dest = path.resolve(__dirname,'..','themes','ImbaDark.json')
 	console.log "write to",dest,__filename,__dirname

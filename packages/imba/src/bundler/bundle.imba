@@ -294,7 +294,7 @@ export default class Bundle < Component
 			esoptions.outbase = fs.cwd
 
 		if o.esbuild
-			extendObject(esoptions,o.esbuild,'esbuild')			
+			extendObject(esoptions,o.esbuild,'esbuild')
 
 		imbaoptions = {
 			platform: o.platform
@@ -685,11 +685,10 @@ export default class Bundle < Component
 
 				let res = await esb.resolve(args.path,opts)
 
-				if res.path					
+				if res.path
 					# if it resolve to an imba file - we don't want to make it external?
 					if res.path.match(/\.imba$/)
 						return null
-
 
 					let base = res.path.split('node_modules')[0]
 					let inpath = np.relative(base,outdir)
@@ -777,7 +776,7 @@ export default class Bundle < Component
 				importerFile: file.rel
 			}}
 
-		esb.onLoad(namespace: 'file', filter: /\.html$/) do(args)	
+		esb.onLoad(namespace: 'file', filter: /\.html$/) do(args)
 			# console.log "load html file",args,o.format
 
 			# when this is in a html

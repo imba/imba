@@ -21,7 +21,6 @@ export def @bound target, key, desc
 		delete desc.writable
 	return desc
 
-
 const thenables = new WeakMap
 
 export def @thenable target, key, desc
@@ -62,7 +61,7 @@ export def @thenable target, key, desc
 						clearTimeout(timeout)
 						Object.defineProperty(that,'then',{value: null, writable: yes, configurable: yes})
 						resolve(that)
-				
+
 				promise.then(ok,err)
 		})
 

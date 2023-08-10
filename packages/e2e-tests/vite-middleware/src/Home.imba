@@ -9,4 +9,3 @@ export default tag Home
 		<h1> "Home is cool 1"
 		<my-timer>
 		<button @click=count++> "Click me {count}"
-		

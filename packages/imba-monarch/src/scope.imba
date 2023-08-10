@@ -53,10 +53,10 @@ export class Node
 		start.end = end
 		visit!
 		return parent
-	
+
 	def find pattern
 		findChildren(pattern,yes)[0]
-		
+
 	get childNodes
 		doc.getNodesInScope(self,yes,yes)
 
@@ -71,7 +71,7 @@ export class Node
 			break if tok == end
 			tok = tok.next
 		return all
-	
+
 	get parents
 		[parent].concat(parent.parents)
 
@@ -79,7 +79,7 @@ export class Node
 		let starts = start.startOffset
 		let ends = end ? end.endOffset : doc.content.length
 		{start: starts, length: (ends - starts)}
-	
+
 	get contextSpan
 		span
 
@@ -114,7 +114,7 @@ export class Node
 
 	get top?
 		no
-		
+
 	get scope?
 		no
 
@@ -123,7 +123,7 @@ export class Node
 
 	get name
 		$name or ''
-	
+
 	get value
 		doc.content.slice(start.offset,end ? end.endOffset : -1)
 
@@ -151,13 +151,13 @@ export class Node
 
 	get endOffset
 		end.endOffset
-		
+
 	get outlineText
 		"item"
-		
+
 	get outlineKind
 		symbol ? symbol.outlineKind : type
-		
+
 	def toOutline
 		{
 			text: outlineText
@@ -185,18 +185,15 @@ export class Group < Node
 		let m = val.match(/\s\#\s([^\n]+)\n/)
 		if m
 			return m[1]
-		
+
 		let prev = start.prev
 		if prev and prev.match('white.tabs')
 			prev = prev.prev
-		
+
 		if prev..match('comment')
 			return prev.value.replace(/(^\#\s)|(\n+$)/g,'')
 
 		return null
-
-
-
 
 export class ValueNode < Group
 
@@ -206,7 +203,6 @@ export class StyleNode < Group
 
 	get properties
 		findChildren('styleprop')
-
 
 export class StyleRuleNode < Group
 
@@ -227,7 +223,7 @@ export class Scope < Node
 		indent = (parts[3] && parts[3][0] == '\t') ? parts[3].length : 0
 		setup!
 		return self
-		
+
 	get outlineText
 		ident ? ident.value : 'something'
 
@@ -262,21 +258,19 @@ export class Scope < Node
 				if ident.symbol
 					ident.symbol.name = 'render'
 
-		
-	
 	get selfPath
 		let path = self.path
 		if property?
 			return path.slice(0,path.lastIndexOf('.'))
 		return path
-	
+
 	get path
 		let par = parent ? parent.path : ''
-		
+
 		if property?
 			let sep = static? ? '.' : '.prototype.'
 			return parent ? "{parent.path}{sep}{name}" : name
-		
+
 		if component?
 			if name[0] == name[0].toLowerCase!
 				let hit = tagNameToClassName(name)
@@ -304,19 +298,19 @@ export class Scope < Node
 
 	get root?
 		self isa Root
-	
+
 	get top?
 		self isa Root
-		
+
 	get scope?
 		yes
-		
+
 	get class?
 		!!type.match(/^class/) or component?
 
 	get exportForDts?
 		class? and !!(extends? or global? or (namespaced? and (!namespace..symbol or namespace.symbol.importSource)))
-	
+
 	get namespace
 		return null unless namespaced?
 		let first = ident # keyword.next.next
@@ -342,19 +336,19 @@ export class Scope < Node
 
 	get static?
 		!!(ident && ident.mods & M.Static)
-	
+
 	get handler?
 		!!type.match(/handler|spy/)
 
 	get member?
 		!!type.match(/def|get|set/)
-	
+
 	get property?
 		!!type.match(/def|get|set|field/)
 
 	get flow?
 		!!type.match(/if|else|elif|unless|for|while|until/)
-	
+
 	get closure?
 		!!type.match(/class|component|def|get|set|do/)
 
@@ -363,7 +357,7 @@ export class Scope < Node
 
 	get name
 		$name or (ident ? ident.value : '')
-		
+
 	get span
 		let starts = start.startOffset
 		if ident
@@ -391,20 +385,19 @@ export class Scope < Node
 			if self.root?
 				symbol.flags |= SymbolFlags.IsRoot
 		return symbol
-		
+
 	def lookup token, kind = SymbolFlags.Scoped
 		let name = token.value
 		if name[name.length - 1] == '!'
 			name = name.slice(0,-1)
 		if let variable = varmap[name]
 			# variable.reference(token)
-			
+
 			return variable # token.var
 		return null
 
-
 export class GlobalScope < Scope
-	
+
 export class Root < Scope
 	get parents
 		[]
@@ -434,9 +427,9 @@ export class WeakScope < Scope
 
 	def lookup ...params
 		return parent.lookup(...params)
-		
+
 export class FieldScope < Scope
-	
+
 	get selfScope
 		self
 
@@ -462,7 +455,7 @@ export class StylePropKey < Group
 		yes
 
 export class StyleProps < Group
-	
+
 	get properties
 		findChildren('styleprop')
 
@@ -473,7 +466,7 @@ export class StylePropValue < Group
 
 	get propertyName
 		parent.propertyName
-	
+
 	get modifier
 		parent.modifier
 
@@ -487,7 +480,7 @@ export class StylePropNode < Group
 		if start.prev.pops
 			return start.prev.pops
 		return null
-	
+
 	get propertyName
 		key..propertyName
 		# let name = find('stylepropkey')
@@ -499,7 +492,7 @@ export class StylePropNode < Group
 export class StyleInterpolation < Group
 
 export class PathNode < Group
-	
+
 	get innerText
 		value.slice(1,-1)
 
@@ -511,7 +504,7 @@ export class TagNode < Group
 
 		let name = findChildren('tag.name').join('')
 		name == 'self' ? closest('component').name : name
-		
+
 	get nameNode
 		findChildren('tag.name')[0]
 
@@ -523,7 +516,7 @@ export class TagNode < Group
 
 	get parentTag
 		closest('tagcontent')..ownerTag
-	
+
 	get ancestorTags
 		closest('tagcontent')..ownerTags
 
@@ -532,19 +525,18 @@ export class TagNode < Group
 
 	get pathName
 		"<{name}>"
-	
+
 	get outlineText
 		let inner = findChildren(/tag\.(reference|name|id|white|flag|mixin|event(?!\-))/).join('').trim()
 		inner = inner.replace(/\.\s+/g,'')
 		"<{inner}>"
-		
+
 	def toOutline
 		return {
 			text: outlineText
 			kind: 'string'
 			nameSpan: span
 		}
-	
 
 export class TagAttrNode < Group
 	get propertyName
@@ -555,7 +547,6 @@ export class TagAttrNode < Group
 
 	get tagName
 		parent.name
-			
 
 export class TagAttrValueNode < Group
 
@@ -575,7 +566,7 @@ export class TagContent < BlockScope
 
 	get ownerTags
 		let els = [ownerTag]
-		
+
 		while let el = els[0].parentTag
 			els.unshift(el)
 			# curr = parent.closest('tagcontent')
@@ -618,16 +609,16 @@ export class BracketsNode < Group
 			cls = IndexNode
 
 		new cls(doc,tok,scope,typ,types)
-	
+
 export class BracesNode < Group
-	
+
 export class SpecifiersNode < BracesNode
 
 export class ArrayNode < BracketsNode
-	
+
 	get delimiters
 		children.filter do $1.match('delimiter')
-	
+
 	def indexOfNode node
 		let delims = delimiters
 		let index = 0
@@ -643,29 +634,29 @@ export class TypeAnnotationNode < Group
 	def constructor
 		super
 		prev.datatype = self
-		
+
 	def toString
 		value
 
 export class InterpolatedValueNode < Group
 
 export class ObjectNode < BracesNode
-	
+
 export class ImportsNode < Group
-	
+
 	get isTypeOnly
 		!!start.prev.match('keyword.type')
-	
+
 	get sourcePath
 		let path = children.find do $1.match('path')
 		return path..innerText
-		
+
 	get specifiers
 		children.find do $1.match('specifiers')
-		
+
 	get default
 		children.find do $1.match('.default')
-		
+
 	get namespace
 		children.find do $1.match('.ns')
 

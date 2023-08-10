@@ -17,7 +17,7 @@ export default class ImbaScriptInfo
 
 	def constructor owner,svc
 		owner = owner
-		
+
 		if typeof svc == 'string'
 			svc = ScriptVersionCache.fromString(svc)
 
@@ -30,7 +30,7 @@ export default class ImbaScriptInfo
 		history = []
 		#lexed = {lines:[],typeMatchCache:{}}
 		self.lexer = lexer
-		
+
 	def sync
 		yes
 
@@ -39,19 +39,19 @@ export default class ImbaScriptInfo
 
 	def log ...params
 		yes
-		
+
 	get snapshot
 		svc.getSnapshot!
-		
+
 	get index
 		snapshot.index
-		
+
 	get content
 		#lexed.content ||= getText!
 
 	get fileName
 		owner.fileName
-	
+
 	def getText start = 0, end = snapshot.getLength!
 		if typeof start.start == 'number'
 			end = start.start + start.length
@@ -75,13 +75,13 @@ export default class ImbaScriptInfo
 		elif typeof match == 'string'
 			return token.type == match
 		return false
-	
+
 	def before token, match, offset = 0
 		let idx = tokens.indexOf(token) + offset
 		if match
 			while idx > 0
 				let tok = tokens[--idx]
-				
+
 				if matchToken(tok,match)
 					return tok
 			return null
@@ -100,14 +100,14 @@ export default class ImbaScriptInfo
 			else
 				parts.push(tok)
 		return parts
-		
+
 	def getSymbols
 		astify!
 		#lexed.symbols ||= tokens.map(do $1.symbol).filter(do $1).filter(do(sym,i,arr) arr.indexOf(sym) == i)
-		
+
 	def getImportedSymbols
 		getSymbols!.filter do $1.imported?
-			
+
 	def getImportNodes
 		let tokens = tokens.filter do $1.match('push._imports')
 		return tokens.map do $1.scope
@@ -117,13 +117,13 @@ export default class ImbaScriptInfo
 
 	def getRootClasses
 		getNodesInScope(root).filter do $1 isa Scope and $1.class?
-		
+
 	def getNodesInScope scope,includeEnds = no,includeWhitespace = no
 		astify!
 		scope ||= #lexed.root
 		let tok = scope.start
 		let end = scope.end # ? tokens.indexOf(scope.end) : tokens.length
-		
+
 		if includeEnds
 			end &&= end.next
 		else
@@ -161,9 +161,9 @@ export default class ImbaScriptInfo
 			getDestructuredPath(tok.context.start,stack,root)
 			stack.push(tok.context.indexOfNode(tok))
 			return stack
-		
+
 		let key = tok.value
-		
+
 		if tok.prev.match("operator.assign.key-value")
 			key = tok.prev.prev.value
 		if tok.context.type == 'object'
@@ -177,8 +177,8 @@ export default class ImbaScriptInfo
 		while tok
 			let next = tok.next
 			if tok.offset >= offset
-				return tok.prev 
-			
+				return tok.prev
+
 			# jump through scopes
 			if tok.end and tok.end.offset < offset
 				# console.log 'jumping',tok.offset,tok.end.offset
@@ -212,7 +212,7 @@ export default class ImbaScriptInfo
 			num += amount
 			return [start + pre.length,word.length - pre.length - post.length,String(num)]
 		return null
-		
+
 	def expandSpanToLines span
 		try
 			let start = index.positionToColumnAndLineText(span.start)
@@ -228,10 +228,9 @@ export default class ImbaScriptInfo
 				break if !chr or chr == '\n'
 				span.start--
 
-			
 			yes
 		return span
-	
+
 	def contextAtOffset offset
 		ensureParsed!
 
@@ -241,10 +240,10 @@ export default class ImbaScriptInfo
 
 		let lineInfo = index.positionToColumnAndLineText(offset)
 		let lineText = lineInfo.lineText
-		
+
 		if lineText == undefined
 			lineText = index.lineNumberToInfo(lineInfo.oneBasedLine).lineText
-			
+
 		let col = lineInfo.zeroBasedColumn
 
 		let ctx = tok.context
@@ -267,18 +266,16 @@ export default class ImbaScriptInfo
 			group: ''
 		}
 
-		
-
 		# if the token pushes a new scope and we are at the end of the token
 		if tok.scope and !after.token
 			ctx = tok.scope
 			# are we are the beginning of a scope?
-			
+
 		if tok.next
 			if tok.next.value == null and tok.next.scope and !after.token and tok.match('operator.assign')
 				ctx = tok.next.scope
 				# console.log 'changed scope!!!',ctx,ctx.scope
-	
+
 		let tabs = prevToken(tok,"white.tabs")
 		let indent = tabs ? tabs.value.length : 0
 		let group = ctx
@@ -289,7 +286,6 @@ export default class ImbaScriptInfo
 		let t = CompletionTypes
 		let g = null
 		let contextTokens = [tok]
-
 
 		if group
 			if group.start
@@ -304,11 +300,11 @@ export default class ImbaScriptInfo
 
 		if tok == tabs
 			indent = tokPos
-		
+
 		if tok.match('br white.tabs')
 			while scope.indent > indent
 				scope = scope.parent
-		
+
 		try
 			meta.selfScope = tok.context.selfScope
 			meta.selfPath = meta.selfScope.selfPath
@@ -319,29 +315,29 @@ export default class ImbaScriptInfo
 
 		if tok.match('entity string regexp comment style.')
 			flags = 0
-		
+
 		# if we are at a a single #
 		if tok.match('comment') and before.token == '#' and after.line == ''
 			flags = CompletionTypes.Access
 			suggest.prefix = '#'
 			target = null
-			
+
 			if tok.prev and tok.prev.match('operator.access')
 				flags = CompletionTypes.Access
 				target = tok.prev
-		
+
 		# if we are in an accessor
 		if g = group.closest('tag')
 			meta.tagName = g.tagName
 			contextTokens.push(g.nameNode)
-			
+
 		if g = group.closest('tagattr')
 			meta.tagAttrName = g.propertyName
-		
+
 		if g = group.closest('listener')
 			let parens = group.closest('parens')
 			meta.eventName = g.name
-			
+
 			if parens and parens.parent == g
 				let prev = parens.start.prev
 				if prev.match('tag.event-modifier.name')
@@ -349,7 +345,7 @@ export default class ImbaScriptInfo
 				elif prev.match('tag.event.name')
 					meta.eventModifierName = 'options'
 				meta.parens = parens
-		
+
 		if tok.match('decorator.name')
 			flags = CompletionTypes.Decorator
 
@@ -366,15 +362,14 @@ export default class ImbaScriptInfo
 			suggest.paths = 1
 			let path = group.closest('path')
 			before.group = path.value
-			
+
 		if tok.type == 'string'
 			if tok.value.match(/^\.\.?\/|\.(svg|html|jpe?g|gif|a?png|avif|webp)$/)
 				flags |= CompletionTypes.Path
 				suggest.paths = 1
-			
+
 			if meta.tagAttrName == 'src' and meta.tagName..match(/^(script|style|img|svg|link)$/)
 				flags |= CompletionTypes.Path
-				
 
 		if tok.match('identifier tag.operator.equals br white delimiter array operator ( self')
 			flags |= CompletionTypes.Value
@@ -383,26 +378,26 @@ export default class ImbaScriptInfo
 		if tok.match('operator.access')
 			flags |= CompletionTypes.Access
 			target = tok
-			
+
 		if tok.match('accessor')
 			flags |= CompletionTypes.Access
 			target = tok.prev
 
 		if tok.match('style.property.var')
 			flags |= CompletionTypes.StyleVar
-			
+
 		if tok.match('tag.name tag.open')
 			flags |= CompletionTypes.TagName
 		elif tok.match('tag.attr tag.white')
 			flags |= CompletionTypes.TagProp
-			
+
 		elif tok.match('tag.flag')
 			flags |= CompletionTypes.TagFlag
 		elif tok.match('tag.event-modifier')
 			flags |= CompletionTypes.TagEventModifier
 		elif tok.match('tag.event')
 			flags |= CompletionTypes.TagEvent
-		
+
 		elif tok.match('operator.equals.tagop')
 			flags |= CompletionTypes.Value
 
@@ -419,42 +414,42 @@ export default class ImbaScriptInfo
 
 		if tok.match('style.selector.element') and after.line.match(/^\s*$/)
 			flags |= t.StyleProp
-			
+
 		if scope.closest('rule')
 			flags ~= t.Value
-			
+
 			if tok.match('white')
 				flags |= t.StyleProp
-							
+
 		if tok.match('style.selector.class-name')
 			flags |= t.TagFlag
-			
+
 		if tok.match('style.selector.id')
 			flags |= t.TagId
-			
+
 		if tok.match('style.property.operator')
 			flags ~= t.StyleProp
-			
+
 		if group.match('stylevalue') && before.group.indexOf(' ') == -1
 			flags = t.StyleValue
-			
+
 		if tok.match('style.selector.modifier style.property.modifier')
 			flags = t.StyleModifier
 			suggest.stylemodRange = [tok.offset,tok.endOffset]
-			
+
 		if tok.match('style.selector.element')
 			flags |= t.StyleSelector
-		
+
 		if scope.closest('rule') and before.line.match(/^\s*$/)
 			flags |= t.StyleSelector
 			flags ~= t.StyleValue
 
 		if tok.match('style.value') and before.token[0] == '$'
 			flags |= t.StyleVar
-			
+
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
-			
+
 		if group.closest('imports')
 			let g = group.closest('imports')
 			flags ~= t.Value
@@ -464,18 +459,18 @@ export default class ImbaScriptInfo
 
 			if tok.match('identifier.decl-import') and before.lineWithoutToken.match(/import /)
 				flags |= t.ImportStatement
-			
+
 		if mstate.match(/\.decl-(let|var|const|param|for)/) or tok.match(/\.decl-(for|let|var|const|param)/)
 			flags ~= t.Value
 			flags |= t.VarName
-			
+
 		if tok.match("delimiter.type.prefix type") or group.closest('type')
 			flags = CompletionTypes.Type
 
 		let kfilter = scope.allowedKeywordTypes
 		suggest.keywords = for own key,v of Keywords when v & kfilter
 			key
-			
+
 		if group.class? and before.line.match(/^\t*[a-z]*$/)
 			flags ~= t.Value
 			flags |= t.ClassBody
@@ -483,7 +478,7 @@ export default class ImbaScriptInfo
 				flags |= t.ComponentBody
 
 		suggest.flags = flags
-		
+
 		for own k,v of t
 			if flags & v
 				suggest[k] ||= yes
@@ -493,7 +488,7 @@ export default class ImbaScriptInfo
 			token: [before.token,after.token]
 			line: [before.line,after.line]
 			group: [before.group,after.group]
-			
+
 		}
 
 		let out = {
@@ -515,7 +510,7 @@ export default class ImbaScriptInfo
 		}
 
 		return out
-	
+
 	def textBefore offset
 		let before = content.slice(0,offset)
 		let ln = before.lastIndexOf('\n')
@@ -568,7 +563,7 @@ export default class ImbaScriptInfo
 		let symbols = new Set
 		let scopesUsed = new Set
 		let awaitScope = null
-		
+
 		def shrinkSpan span
 			let s = span.start
 			let k = s + span.length - 1
@@ -576,7 +571,6 @@ export default class ImbaScriptInfo
 				--k
 			span.length = (k - s)
 			return span
-				
 
 		def add item,tok
 			if item isa Sym
@@ -594,7 +588,7 @@ export default class ImbaScriptInfo
 			elif item isa Group
 				symbols.add(item)
 				item = item.toOutline()
-			
+
 			elif item isa Scope
 				scopesUsed.add(item)
 				item = item.toOutline()
@@ -614,7 +608,7 @@ export default class ImbaScriptInfo
 			last.#parent ||= curr
 			curr = last
 			curr.#end = end
-			
+
 		def spanEnd span
 			span.start + span.length
 
@@ -633,7 +627,7 @@ export default class ImbaScriptInfo
 				add({kind:'property'},token)
 			elif sym
 				continue if sym.parameter?
-				
+
 				if sym.variable? and sym.node != token
 					continue
 
@@ -648,12 +642,12 @@ export default class ImbaScriptInfo
 					pre += " callback"
 					add({kind:'function',text:pre,kindModifiers: 'null'},token.prev)
 					awaitScope = token
-			
+
 				elif scope.type == 'tag'
 					add(scope,token)
 				elif scope.type == 'tagcontent'
 					push(scope.end)
-				
+
 				elif scope.type == 'class' and token.match('push.class')
 					unless scopesUsed.has(scope)
 						# and scope.extends?
@@ -662,10 +656,10 @@ export default class ImbaScriptInfo
 
 			if token == awaitScope
 				push(token.end)
-			
+
 			if token == curr.#end
 				pop(token)
-				
+
 		while curr and curr != root
 			pop(eof)
 
@@ -676,9 +670,9 @@ export default class ImbaScriptInfo
 			# 	let len = item.span.length
 			# 	# item.span.start = positionAt(item.span.offset)
 			# 	# item.span.end = len ? positionAt(item.span.offset + len) : item.span.start
-			
+
 			# make sure the containing span of all items always encompass their parent?
-			
+
 			if walker
 				walker(item,all)
 			# delete item.parent
@@ -694,12 +688,11 @@ export default class ImbaScriptInfo
 		parse! # if self.head.offset == 0
 		return self
 
-
 	def tokenize force = no
 		# return tokenize! unless #lexed
 		let from = #lexed
 		let snap = svc.getSnapshot!
-		
+
 		if from.snapshot == snap and !force
 			return from
 
@@ -715,32 +708,32 @@ export default class ImbaScriptInfo
 			snapshot: snap
 			typeMatchCache: {}
 		}
-		
+
 		let lineCache = {}
-		
+
 		#lexed.cache = lineCache
-		
+
 		for line in from.lines
 			let item = (lineCache[line.text] ||= [])
 			item.push(line)
 			line
 
 		let lineNr = 0
-		
+
 		while lineNr < lineCount
 
 			let line = index.lineNumberToInfo(++lineNr)
-			
+
 			let str = line.lineText
 			let lineOffset = line.absolutePosition
 			let startState = nextState
-			
+
 			if isLegacy
 				str = str.replace(/\@\w/g) do(m) '¶' + m.slice(1)
 				str = str.replace(/\w\:(?=\w)/g) do(m) m[0] + '.'
 				str = str.replace(/(do)(\s?)\|([^\|]*)\|/g) do(m,a,space,b)
 					a + '(' + (space or '') + b + ')'
-			
+
 			let cached = lineCache[str]
 			let matches = cached and cached.filter do(item) item.startState == startState
 			let match = matches and (matches.find(do $1.offset == lineOffset) or matches[0])
@@ -765,11 +758,10 @@ export default class ImbaScriptInfo
 
 			for tok,ti in lexed.tokens
 				tokens.push(tok)
-			
+
 			#lexed.lines.push(lexed)
 			nextState = lexed.endState
 
-		
 		if nextState..stack..state != 'root'
 			try
 				# console.log 'nextstate',nextState
@@ -781,19 +773,18 @@ export default class ImbaScriptInfo
 				let end = lexer.tokenize("1",run.endState,offset + 1)
 				let last = end.tokens.pop!
 				tokens.push(...end.tokens)
-		
+
 		eof.offset = index.getLength!
 		return #lexed
-	
+
 	get tokens
 		astify!
 		return #lexed.tokens
-		
+
 	get root
 		astify!
 		return #lexed.root
-		
-		
+
 	# This is essentially the tokenizer
 	def getTokens range = null
 		return self.tokens
@@ -803,7 +794,7 @@ export default class ImbaScriptInfo
 		let t0 = Date.now!
 		let lexed = tokenize!
 		return self if lexed.root
-		
+
 		const pairings = {']': '[', ')': '(', '}': '{', '>': '<'}
 		const openers = {'[': ']','(': ')','{': '}','<': '>'}
 		const callAfter = /[\w\$\)\]\?]/
@@ -812,15 +803,14 @@ export default class ImbaScriptInfo
 		let entity = null
 		let scope\any = lexed.root = new Root(self,seed,null,'root')
 		let root = scope
-		
-		
+
 		let log = do yes
 		let lastDecl = null
 		let lastVarKeyword = null
 		let lastVarAssign = null
 		let prev = seed
 		let entityFlags = 0
-		
+
 		for tok,ti in lexed.tokens
 			let types = tok.type.split('.')
 			let value = tok.value
@@ -828,7 +818,7 @@ export default class ImbaScriptInfo
 			let [typ,subtyp,sub2] = types
 			let ltyp = types[types.length - 1]
 			let styp = types[types.length - 2]
-			
+
 			let scopeType = null
 			let decl = 0
 
@@ -837,7 +827,7 @@ export default class ImbaScriptInfo
 
 			if prev
 				prev.next = tok
-				
+
 			tok.prev = prev
 			let currScope = tok.context = scope
 
@@ -856,7 +846,7 @@ export default class ImbaScriptInfo
 				if value == 'let' or value == 'const'
 					lastVarKeyword = tok
 					lastVarAssign = null
-			
+
 			if typ == 'entity'
 				tok.mods |= entityFlags
 				entityFlags = 0
@@ -864,7 +854,7 @@ export default class ImbaScriptInfo
 			if typ == 'push'
 				let scopetype = subtyp
 				let idx = subtyp.lastIndexOf('_')
-				
+
 				let ctor = idx >= 0 ? Group : Scope
 
 				if idx >= 0
@@ -874,7 +864,7 @@ export default class ImbaScriptInfo
 					ctor = ScopeTypeMap[scopetype]
 
 				scope = tok.scope = new ctor(self,tok,scope,scopetype,types)
-				
+
 				let lastDecl = currScope.lastDecl
 				if lastDecl
 					# only for certain types of scopes?
@@ -889,17 +879,17 @@ export default class ImbaScriptInfo
 			elif typ == 'pop'
 				if subtyp == 'value'
 					lastVarAssign = null
-				
+
 				scope = scope.pop(tok)
-			
+
 			elif (subtyp == 'open' or openers[subtyp]) and ScopeTypeMap[typ]
-				
+
 				scope = tok.scope = ScopeTypeMap[typ].build(self,tok,scope,typ,types)
 				# if subtyp == '('
 				#	console.log 'paren!!!',typ,subtyp,ScopeTypeMap[typ],tok
 			elif ltyp == 'open' and (scopeType = ScopeTypeMap[styp])
 				scope = tok.scope = scopeType.build(self,tok,scope,styp,types)
-			
+
 			elif ltyp == 'close' and scope.type == styp
 				scope = scope.pop(tok)
 
@@ -917,7 +907,6 @@ export default class ImbaScriptInfo
 					tok.symbol.keyword = lastVarKeyword
 					scope.register(tok.symbol)
 					scope.lastDecl = lastDecl = tokenSymbol
-					
 
 				tok.mods |= M.Declaration
 
@@ -944,16 +933,16 @@ export default class ImbaScriptInfo
 							sym.dereference(tok)
 						elif !nextToken or nextToken.match('br')
 							sym.dereference(lft)
-							
+
 			# if currScope != scope and currScope.parent == scope
 			# 	console.log 'popped scope!!',currScope,lastDecl,scope.lastDecl
 			prev = tok
-		
+
 		while scope != root
 			scope = scope.pop(eof)
 		# console.log 'astified',Date.now! - t0
 		self
-		
+
 	def parse
 		return tokens
 
@@ -992,7 +981,7 @@ export default class ImbaScriptInfo
 		elif item.kind == 'class'
 			if symbols[0]
 				res = symbols[0].node
-		
+
 		if item.containerName == 'globalThis'
 			res = symbols[0]
 
@@ -1043,14 +1032,14 @@ export default class ImbaScriptInfo
 				edits.push([tok.offset,val.length,val])
 
 		return edits
-	
+
 	def createImportEdit path, name, alias = name, asType = no
-		
+
 		let noext = path.replace(/\.(imba|d\.ts|js|ts)$/,'')
 
 		let nodes = getImportNodes!.filter do
 			($1.sourcePath == path or $1.sourcePath == noext) and $1.isTypeOnly == asType
-		
+
 		if nodes[0]
 			path = nodes[0].sourcePath
 		else
@@ -1058,30 +1047,30 @@ export default class ImbaScriptInfo
 
 		let out = ''
 		let offset = 0
-		
+
 		let changes = []
 		let result = {
 			changes: changes
 		}
-		
+
 		let keyword = asType ? "import type" : "import"
-		
+
 		if true
 			let symbols = getImportedSymbols!.map do $1.importInfo
 			let match = symbols.find do
 				$1.path == path and $1.name == alias and $1.exportName == name
 			if match
 				return result
-		
+
 		if (name != 'default' and name != '*')
 			nodes = nodes.filter do $1.specifiers or !$1.ns
-		
+
 		for node in nodes
-			
+
 			let defaults = node.default
 			let members = node.specifiers
 			let ns = node.namespace
-		
+
 			if name == 'default'
 				offset = node.start.offset + 1
 
@@ -1095,8 +1084,8 @@ export default class ImbaScriptInfo
 				else
 					out = alias
 					if ns or members
-						out += ', '						
-				
+						out += ', '
+
 			elif name == '*'
 				continue if members
 				if defaults
@@ -1112,7 +1101,7 @@ export default class ImbaScriptInfo
 			else
 				let key = name
 				key += " as {alias}" if alias != name
-				
+
 				if members
 					offset = members.start.offset + 1
 					out = " {key},"
@@ -1122,9 +1111,9 @@ export default class ImbaScriptInfo
 				else
 					out = "\{ {key} \}"
 					offset = node.start.offset + 1
-					
+
 			break if out
-		
+
 		if !out
 			if name == 'default'
 				out = "{keyword} {alias} from '{path}'"
@@ -1134,26 +1123,26 @@ export default class ImbaScriptInfo
 				out = "{keyword} \{ {name} as {alias} \} from '{path}'"
 			else
 				out = "{keyword} \{ {name} \} from '{path}'"
-				
+
 			out += '\n'
-			
+
 		if out.match(/^import /) and !content.slice(offset).match(/^(import|#\s)/)
 			out += '\n'
-			
+
 		changes.push({newText: out, start: offset, length: 0})
 		return result
-	
+
 	def getFormattingEdits prefs = {}
 		# run through tokens backwards?
 		let edits = []
 		let i = tokens.length
 		let raw = content
-		
+
 		let spaced = do(tok)
 			return true if raw[tok.endOffset - 1] == ' ' or  raw[tok.endOffset] == ' '
 			# return true if tok.next and tok.next.value and tok.next.value[0] == ' '
 			return false
-		
+
 		while i > 0
 			let tok = tokens[--i]
 			if tok.match('operator.assign operator.declval')
@@ -1161,7 +1150,7 @@ export default class ImbaScriptInfo
 					edits.push([tok.endOffset,0,' '])
 				unless spaced(tok.prev)
 					edits.push([tok.startOffset,0,' '])
-		
+
 		edits
 
 	def findTokensForPattern pat\string
@@ -1178,11 +1167,10 @@ export default class ImbaScriptInfo
 			matches.push({start: tok, after: tokAfter})
 		return matches
 
-
 	def getNavigateToItems o = {}
 		return #lexed.navigateToItems if #lexed.navigateToItems
 		let res = []
-		
+
 		for sym in getSymbols!
 			if let item = sym.asNavigateToItem!
 				continue if item.kind == 'var'
@@ -1209,7 +1197,7 @@ export default class ImbaScriptInfo
 		let classes = getRootClasses()
 
 		for cls in classes
-			
+
 			continue unless cls.exportForDts?
 			# console.log 'do something with',cls.ident.value,cls.exportForDts?,!!cls.namespace,cls.global?,cls.component?
 			exists = yes
@@ -1221,13 +1209,13 @@ export default class ImbaScriptInfo
 			let ident = modul ? modul.next.next : cls.ident
 			if ident isa Assignable
 				ident = ident.start.next
-			
+
 			let name = ident.value or ident
 			let jsname = ident.value or ident
 
 			if cls.component?
 				jsname = cls.path
-				dtsname = cls.path 
+				dtsname = cls.path
 				if cls.extends?
 					dtsname = 'Ω' + dtsname
 
@@ -1254,7 +1242,7 @@ export default class ImbaScriptInfo
 
 				unless cls.extends?
 					globals[cls.path] = cls
-	
+
 				if sym..importSource
 					ns = sym.exportName
 					let rel = src.replace(/\/[^\/]+?$/,'/' + sym.importSource)

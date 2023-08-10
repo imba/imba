@@ -73,7 +73,7 @@ class ArrayPatcher
 
 	def cleanup
 		idx = 0
-		array = null	
+		array = null
 		changes.clear!
 		dirty = no
 
@@ -645,7 +645,7 @@ class Reaction
 			let stale = no
 			for value of checkComputedValues
 				let v0 = cachedComputedVersions.get(value)
-				value.value!	
+				value.value!
 				let v1 = value.version
 				if v0 != v1
 					break stale = yes

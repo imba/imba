@@ -481,7 +481,7 @@ export const states = {
 		[/(@esmIdentifier)/,'identifier.const.export']
 		[/\*/,'operator.star']
 		'comma_'
-		'common_'		
+		'common_'
 	]
 
 	esm_specifiers: [
@@ -944,7 +944,7 @@ export const states = {
 
 	]
 
-	_tag: [		
+	_tag: [
 		[/\/>/,'tag.close','@pop']
 		[/>/,'tag.close',switchTo: '@>tag_content=&-_tagcontent']
 		# '@>css_selector&rule-_sel'
@@ -1139,7 +1139,7 @@ def rewrite-actions actions,add
 		if typeof add == 'string'
 			actions.next = add
 		elif add
-			Object.assign(actions,add)		
+			Object.assign(actions,add)
 
 		if actions.next
 			actions.next = rewrite-state(actions.next)

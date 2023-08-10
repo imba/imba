@@ -60,7 +60,6 @@ if true
 	item.main
 	item.ext
 
-
 let m10\SomeClass
 
 let m12 = new AutoGlobal
@@ -71,7 +70,6 @@ m12.that.main
 let m13\AutoGlobal
 
 m13.main
-
 
 let m14\SomeSubClass
 m14.that.sub.num
@@ -95,7 +93,6 @@ tag app-main
 
 	set test val
 		yes
-
 
 	def mount
 		space
@@ -123,7 +120,5 @@ tag app-main
 		<input$text type='text'>
 		# <svg src='./assets/tool.svg'>
 10
-
-
 
 # eof

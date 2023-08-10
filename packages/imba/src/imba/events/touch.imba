@@ -245,7 +245,7 @@ class Touch
 			let y = o.el.#y = o.y + (y - o.ty)
 
 			o.el.style.setProperty("--x",x + 'px') if xalias
-			o.el.style.setProperty("--y",y + 'px') if yalias			
+			o.el.style.setProperty("--y",y + 'px') if yalias
 		return yes
 
 	def @end
@@ -463,7 +463,7 @@ def Event.touch$handle
 
 	let ontouch = do(e)
 		if t.type == 'touchmove' and e.changedTouches[0].identifier != id
-			return 	
+			return
 		# console.debug 'ontouch',e.type,t.defaultPrevented,e.changedTouches
 		if t.defaultPrevented or t.#locked
 			e.preventDefault!

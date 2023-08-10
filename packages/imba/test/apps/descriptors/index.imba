@@ -8,7 +8,7 @@ describe 'descriptors' do
 
 	test 'basics' do
 		# if you supply no object it will create one
-		let x = @({}).one.two.three	
+		let x = @({}).one.two.three
 		check x, {one: yes, two: yes, three: yes}
 
 	test 'setting non-boolean values' do

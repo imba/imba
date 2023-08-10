@@ -250,7 +250,7 @@ export def rewrite rule,ctx,o = {}
 		s4 += 1 if !mlen and (part.length)
 
 	if s4 > 1
-		s4 = 1	
+		s4 = 1
 
 	s2 = s4
 

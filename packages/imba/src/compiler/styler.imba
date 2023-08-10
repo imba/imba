@@ -1043,7 +1043,7 @@ export class StyleTheme
 			o['align-content'] = o['align-items'] = align
 		return o
 
-	def outline params		
+	def outline params
 		# TODO use :where() selector for 0 specificity outline defaults
 		if params.length == 3 or (params.length == 1 and String(params[0]) == 'none')
 			return {outline: [params]}
@@ -1269,7 +1269,7 @@ export class StyleTheme
 				if typ == '#'
 					return color.toString(a,typ)
 				elif typ == '##'
-					
+
 					return color.toVar(a)
 			return m
 		return text
@@ -1536,7 +1536,7 @@ export class StyleRule
 				continue
 
 			# elif key.match(/^outline-?/)
-			#	# meta.outline = yes 
+			#	# meta.outline = yes
 			#	parts.push "{key}: {value} !important;"
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)

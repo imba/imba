@@ -189,7 +189,7 @@ def run
 		dts.push("interface {id} extends _")
 		if signatures[item.syntax]
 			for s in signatures[item.syntax]
-				dts.w("set({s}): void;\n")		
+				dts.w("set({s}): void;\n")
 		else
 			dts.w("set({sign}): void;\n")
 

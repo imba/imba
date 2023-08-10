@@ -12,15 +12,14 @@ export def log msg, ...rest
 		if rest.length
 			debugChannel.appendLine(JSON.stringify(rest))
 
-
 export def toPath doc
 	let path = np.normalize(doc.fileName or doc.fsPath or doc.uri..fsPath)
 	path.split('\\').join('/')
-	
+
 export def isImba src
 	return false unless src
 	src.substr(src.lastIndexOf(".")) == '.imba'
-	
+
 export def fastExtractSymbols text, filename = ''
 	let lines = text.split(/\n/)
 	let symbols = []
@@ -48,8 +47,7 @@ export def fastExtractSymbols text, filename = ''
 			if last and scope.range
 				scope.range.end = last.range.end
 
-			scope = scope.#parent or root 
-			
+			scope = scope.#parent or root
 
 		m = line.match(/^(\t*((?:export )?(?:static )?(?:extend )?)(class|tag|def|get|set|prop|attr) )(\@?[\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 		# m ||= line.match(/^(.*(def|get|set|prop|attr) )([\w\-\$]+)/)
@@ -65,7 +63,7 @@ export def fastExtractSymbols text, filename = ''
 				start: {line: i, character: m[1].length}
 				end: {line: i, character: m[0].length}
 			}
-			
+
 			let selrange = {
 				start: {line: i, character: m[1].length}
 				end: {line: i, character: m[0].length}
@@ -89,7 +87,7 @@ export def fastExtractSymbols text, filename = ''
 
 			# if symbol.static
 			#	symbol.containerName = 'static'
-			
+
 			symbol.containerName = scope..name
 
 			if kind == 'tag' and m = line.match(/\<\s+([\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
@@ -103,7 +101,7 @@ export def fastExtractSymbols text, filename = ''
 			scope = symbol
 
 			symbols.push(symbol)
-	
+
 	root.all = symbols
 	# console.log 'fast outline',text.length,Date.now! - t0
 	return root

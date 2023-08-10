@@ -3,7 +3,7 @@ const items = [
 	{id: 2, name: 'hello'}
 ]
 
-tag Item	
+tag Item
 	<self> data.name
 
 tag App

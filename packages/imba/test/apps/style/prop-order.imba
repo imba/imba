@@ -9,8 +9,8 @@ tag App
 imba.mount(let a = <App>)
 let style = a.$preview.computedStyleMap!
 
-test do	
+test do
 	eq style.get('margin-bottom').value, 0
 
-test do	
+test do
 	eq style.get('margin-top').value, 1

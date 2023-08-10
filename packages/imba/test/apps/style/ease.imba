@@ -33,7 +33,7 @@ def track cb
 	cb()
 
 	try
-		# let timeout = setTimeout(&,2000) do throw "Timeout!"	
+		# let timeout = setTimeout(&,2000) do throw "Timeout!"
 		await promise
 		await Promise.all(c.queue)
 		clearTimeout(timeout)

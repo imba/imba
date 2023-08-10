@@ -114,7 +114,7 @@ export class Scheduler
 		set.add(item)
 
 		add('raf') if ns == 'raf' and first
-		self	
+		self
 
 	def unlisten ns, item
 		let set = listeners[ns]

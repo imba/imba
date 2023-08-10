@@ -49,7 +49,7 @@ def createServer(root = process.cwd(), isDev = import.meta.env.MODE === "develop
 					port: port + 25000
 		app.use vite.middlewares
 	else
-		const inlineCfg = 
+		const inlineCfg =
 			root: root
 			appType: "custom"
 			server:

@@ -34,7 +34,7 @@ class HotkeyEvent < CustomEvent
 
 import Mousetrap from './mousetrap'
 
-const stopCallback = do |e,el,combo|	
+const stopCallback = do |e,el,combo|
 	if el.tagName == 'INPUT' && (combo == 'down' or combo == 'up')
 		return false
 

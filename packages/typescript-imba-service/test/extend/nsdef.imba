@@ -10,7 +10,7 @@ global class APPCLS
 class APPNS.Main
 	static get main
 		self
-		
+
 	get main
 		self
 
@@ -24,6 +24,6 @@ class APPNS.MainSub < APPNS.Main
 class Local.Main
 	static get main
 		self
-		
+
 	get main
 		self

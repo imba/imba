@@ -15,8 +15,6 @@ global.utils = util
 
 global.ils\Service = null
 
-
-
 export default class Service < EventEmitter
 	setups = []
 	bridge = null
@@ -25,25 +23,25 @@ export default class Service < EventEmitter
 	imbaGlobals = {}
 	ipcid
 	counter = 0
-	
+
 	get ts
 		global.ts
-	
+
 	get configuredProjects
 		ps ? Array.from(ps.configuredProjects.values()) : []
-		
+
 	get cp
 		configuredProjects[0]
-		
+
 	get ip
 		ps.inferredProjects[0]
-	
+
 	get ls
 		cp.languageService
-		
+
 	get isSemantic
 		ps.serverMode == 0
-		
+
 	def constructor ...params
 		super(...params)
 		tsversion = ts.version.split('.').map do Number($1)
@@ -58,17 +56,17 @@ export default class Service < EventEmitter
 			c: d.getContextAtOffset(i)
 			x: t.getMappedLocation(i)
 		}
-		
+
 	def getCompletions file,pos,ctx
 		let script = getImbaScript(file)
 		# util.log('getCompletions',file,pos,ctx,script)
 		let res = #lastCompletions = script.getCompletions(pos,ctx)
 		return res.serialize!
-		
+
 	def setConfiguration opts
 		util.log('setConfiguration',opts)
 		config = opts
-	
+
 	def getConfig key, default = null
 		let cfg = config or {}
 		let path = key.split('.')
@@ -82,7 +80,7 @@ export default class Service < EventEmitter
 				val = default
 			return val
 		return null
-		
+
 	def onDidChangeTextEditorSelection file,opts = {}
 		#lastSelection = [file,opts]
 		# util.log('onDidChangeTextEditorSelection',file,opts)
@@ -90,21 +88,21 @@ export default class Service < EventEmitter
 
 	get f
 		getImbaScript(#lastSelection[0])
-		
+
 	def onDidSaveTextDocument file
 		util.log('onDidSaveTextDocument',file)
 		if let script = getImbaScript(file)
 			script.didSave!
 		return
-			
+
 	def resolveCompletionItem item, data
 		util.log('resolveCompletionItem',item,data)
 		if let ctx = #lastCompletions
 			if let item = ctx.items[data.nr]
 				item.resolve!
 				return item.serialize!
-		return 
-		
+		return
+
 	def getExternalFiles proj
 		util.log('getExternalFiles')
 		let paths = Object.keys(virtualScripts)
@@ -112,7 +110,7 @@ export default class Service < EventEmitter
 		# console.log('got external files?!',paths)
 		# return paths.concat('imba-typings/imba.d.ts')
 		return paths
-		
+
 	def handleRequest {id,data}
 		# util.log('handleRequest',data)
 		unless bridge
@@ -127,14 +125,13 @@ export default class Service < EventEmitter
 		let jspath = resolvePath('jsconfig.json')
 		let tspath = resolvePath('tsconfig.json')
 
-
 		# Still need to inject stuff into the file in this virtual project
 		if ps.host.fileExists(jspath) or virtualFiles[jspath] or ps.host.fileExists(tspath)
 			util.log('found js/tsconfig')
 			return false
-			
+
 		util.log('createVirtualProjectFile')
-		
+
 		# notify about configuring their own tspath
 
 		virtualFiles[jspath] = JSON.stringify(DefaultConfig,null,2)
@@ -167,7 +164,7 @@ export default class Service < EventEmitter
 			return cache[dir]
 
 		let out = ts.resolveModuleName('imba',norm,{moduleResolution: 2},ps.host)
-		
+
 		if out and out.resolvedModule
 			let imbadir = np.dirname(out.resolvedModule.resolvedFileName)
 			let pkg = np.resolve(imbadir,'package.json')
@@ -192,7 +189,6 @@ export default class Service < EventEmitter
 				IMBA.#errored = yes
 				return null
 		return null
-
 
 	def create info
 		#cwd ||= global.IMBASERVER_CWD or info.project.currentDirectory
@@ -221,7 +217,7 @@ export default class Service < EventEmitter
 				isMixedContent: false # Unclear what this entails
 				scriptKind: 1
 			})
-		
+
 		for script in imbaScripts
 			script.wake!
 
@@ -231,7 +227,7 @@ export default class Service < EventEmitter
 		createVirtualProjectConfig!
 		util.log('decorated!')
 		return decorated
-		
+
 	def convertSpan span, ls, filename, kind = null
 		if util.isImba(filename) and span.#ostart == undefined
 			span.#ostart = span.start
@@ -241,7 +237,7 @@ export default class Service < EventEmitter
 			span.start = start
 			span.length = end - start
 		return span
-		
+
 	def convertImbaDtsDefinition item
 		try
 			let file = item.fileName.replace("._.d.ts",'')
@@ -253,7 +249,7 @@ export default class Service < EventEmitter
 			let fullname = "{item.containerName}.{item.name}"
 
 			if gdts
-				
+
 				if found = (imbaGlobals[fullname] or imbaGlobals[item.name] or imbaGlobals[imbaname])
 					# util.log "found definition",found
 					item.textSpan = found.textSpan
@@ -298,13 +294,12 @@ export default class Service < EventEmitter
 			util.log 'error',e
 
 		return item
-		
-		
+
 	def convertLocationsToImba res, ls, filename, kind = null
 		if res isa Array
 			for item in res
 				convertLocationsToImba(item,ls,item.fileName)
-		
+
 		if !res
 			return res
 
@@ -320,7 +315,7 @@ export default class Service < EventEmitter
 				for key in ['text','context','trigger','applicable']
 					if let span = res[key + 'Span']
 						convertSpan(span,ls,filename,key)
-			
+
 			if res.textSpan
 				res.#scope = "{filename}:{res.textSpan.start}"
 
@@ -332,16 +327,16 @@ export default class Service < EventEmitter
 						item.span.#ostart = 0
 					else
 						convertSpan(item.span,ls,res.fileName or filename,'edit')
-		
+
 		if res.changes
 			convertLocationsToImba(res.changes, ls,filename)
-			
+
 		if res.references
 			convertLocationsToImba(res.references, ls)
-		
+
 		if res.defintion
 			convertLocationsToImba(res.defintion, ls,res.fileName)
-			
+
 		if res.definitions
 			for item in res.definitions
 				convertLocationsToImba(item,ls,item.fileName or item.file)
@@ -353,7 +348,7 @@ export default class Service < EventEmitter
 
 		if res.description
 			res.description = util.toImbaString(res.description)
-		
+
 		if res.changes
 			for item in res.changes
 				for tc in item.textChanges
@@ -363,10 +358,10 @@ export default class Service < EventEmitter
 		if util.isImbaDts(res.fileName)
 			if res.containerName != undefined
 				convertImbaDtsDefinition(res)
-				
+
 		if res.fileName and typeof res.name == 'string'
 			res.name = util.toImbaString(res.name)
-			
+
 		if res.displayParts
 			res.displayParts = util.toImbaDisplayParts(res.displayParts)
 			# for dp,i in res.displayParts
@@ -375,12 +370,11 @@ export default class Service < EventEmitter
 			# 		dp.text = util.toImbaString(dp.text,dp,res.displayParts)
 
 		return res
-		
+
 	def getFileContext filename, pos, ls
 		let script = getImbaScript(filename)
 		let opos = script ? script.d2o(pos,ls.getProgram!) : pos
 		return {script: script, filename: filename, dpos: pos, opos: opos}
-
 
 	def decorateLanguageService ls
 		if ls.#proxied
@@ -388,7 +382,7 @@ export default class Service < EventEmitter
 			return ls.#proxied
 
 		let intercept = Object.create(null)
-		
+
 		intercept.getEncodedSemanticClassifications = do(filename,span,format)
 			if util.isImba(filename)
 				let script = getImbaScript(filename)
@@ -396,10 +390,10 @@ export default class Service < EventEmitter
 				return {spans: spans, endOfLineState: ts.EndOfLineState.None}
 
 			return ls.getEncodedSemanticClassifications(filename,span,format)
-		
+
 		intercept.getEncodedSyntacticClassifications = do(filename,span)
 			return ls.getEncodedSyntacticClassifications(filename,span)
-			
+
 		intercept.getQuickInfoAtPosition = do(filename,pos)
 			util.log('getQuickInfoAtPosition',filename,pos)
 			let {script,dpos,opos} = getFileContext(filename,pos,ls)
@@ -411,12 +405,12 @@ export default class Service < EventEmitter
 					return out
 
 			let res
-			
+
 			try
 				res = ls.getQuickInfoAtPosition(filename,opos)
 				util.log 'ls.getQuickInfoAtPosition',res
 				convertLocationsToImba(res,ls,filename)
-			
+
 				if script and res
 					let ctx = script.doc.contextAtOffset(pos)
 					res.textSpan = ctx.token.span
@@ -434,17 +428,17 @@ export default class Service < EventEmitter
 				out = script.getDefinitionAndBoundSpan(dpos,ls)
 				util.log "returned from imba script getDefinitionAndBoundSpan",out
 				return out if out..definitions
-			
+
 			let res = ls.getDefinitionAndBoundSpan(filename,opos)
 			# console.log 'got defs',filename,opos,res
 			res = convertLocationsToImba(res,ls,filename)
-			
+
 			if out and out.textSpan and res and false
 				res.textSpan = out.textSpan
 				delete res.textSpan
 
 			# console.log("out?!",res)
-			
+
 			let defs = res..definitions
 			if script and defs
 				let __new = defs.find do $1.name == '__new'
@@ -457,55 +451,54 @@ export default class Service < EventEmitter
 
 			# for convenience - hide certain definitions
 			util.log('getDefinitionAndBoundSpan',script,dpos,opos,filename,res)
-			
+
 			return res
-			
+
 		intercept.getDocumentHighlights = do(filename,pos,filesToSearch)
 			return if util.isImba(filename)
 			return ls.getDocumentHighlights(filename,pos,filesToSearch)
-			
-			
+
 		intercept.getRenameInfo = do(file, pos, o = {})
 			# { allowRenameOfImportPath: this.getPreferences(file).allowRenameOfImportPath }
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
 			let res = convertLocationsToImba(ls.getRenameInfo(file,opos,o),ls,file)
-			
+
 			return res
-			
+
 		intercept.findRenameLocations = do(file,pos,findInStrings,findInComments,prefs)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
 			let res = ls.findRenameLocations(file,opos,findInStrings,findInComments,prefs)
 			res = convertLocationsToImba(res,ls)
 			return res
 			# (location.fileName, location.pos, findInStrings, findInComments, hostPreferences.providePrefixAndSuffixTextForRename)
-		
+
 		intercept.getEditsForFileRename = do(oldPath, newPath, fmt, prefs)
 			let res = ls.getEditsForFileRename(oldPath, newPath, fmt, prefs)
 			res = convertLocationsToImba(res,ls)
 			return res
-		
+
 		intercept.getSignatureHelpItems = do(file, pos, prefs)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
 			let res = null
-			
+
 			if script
 				res = script.getSignatureHelpItems(pos,prefs,ls)
 				if res
 					util.log('actually returned res from script!',res)
-				
+
 			res ||= ls.getSignatureHelpItems(file,opos,prefs)
 			res = convertLocationsToImba(res,ls,file)
 			return res
-		
+
 		intercept.getCompletionsAtPosition = do(file,pos,prefs)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
-			
+
 			if script
 				let res = script.getCompletionsAtPosition(ls,[dpos,opos],prefs)
 				return res
 
 			let res = ls.getCompletionsAtPosition(file,opos,prefs)
-			
+
 			if res and res.entries
 				res.entries = res.entries.filter do(item)
 					return no if item.source == 'imba_css'
@@ -513,7 +506,7 @@ export default class Service < EventEmitter
 					return yes
 
 			return res
-			
+
 		intercept.getNavigationTree = do(file)
 			if util.isImba(file)
 				let script = getImbaScript(file)
@@ -524,13 +517,13 @@ export default class Service < EventEmitter
 
 			let res = ls.getNavigationTree(file)
 			return res
-			
+
 		intercept.getOutliningSpans = do(file)
 			if util.isImba(file)
 				let script = getImbaScript(file)
 				return null
 			return ls.getOutliningSpans(file)
-		
+
 		intercept.getCompletionEntryDetails = do(file,pos,name,fmt,source,prefs,data)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
 			let res = ls.getCompletionEntryDetails(file,opos,name,fmt,source,prefs,data)
@@ -541,10 +534,10 @@ export default class Service < EventEmitter
 			let {opos: endopos} = getFileContext(file,end,ls)
 
 			let res = ls.getCodeFixesAtPosition(file,opos,endopos,code,fmt,prefs)
-				
+
 			# "Add 'TextField' to existing import declaration from "./tags/field""
 			# "Import 'TextField' from module "./tags/field.imba""
-			# 
+			#
 			for fix in res
 				let m
 				# rewrite import codefix
@@ -560,7 +553,7 @@ export default class Service < EventEmitter
 
 			res = convertLocationsToImba(res,ls,file)
 			return res
-		
+
 		# const res = project.getLanguageService().getCombinedCodeFix({ type: "file", fileName: file }, fixId, this.getFormatOptions(file), this.getPreferences(file));
 		# getCombinedCodeFix(scope: CombinedCodeFixScope, fixId: {}, formatOptions: FormatCodeSettings, preferences: UserPreferences): CombinedCodeActions;
 		intercept.getCombinedCodeFix = do(scope,fixId,fmt,prefs)
@@ -569,12 +562,12 @@ export default class Service < EventEmitter
 				convertLocationsToImba(res.changes,ls)
 				util.log('getCombinedCodeFix',arguments,res)
 			return res
-			
+
 		intercept.getNavigateToItems = do(val\string, max\number, file\string, excludeDtsFiles\boolean)
 			let res = ls.getNavigateToItems(val,max,file,excludeDtsFiles)
 			convertLocationsToImba(res,ls)
 			return res
-		
+
 		# fileName: string, positionOrRange: number | TextRange, preferences: UserPreferences | undefined, triggerReason?: RefactorTriggerReason, kind?: string
 		intercept.getApplicableRefactors = do(file,...args)
 			if util.isImba(file)
@@ -584,7 +577,7 @@ export default class Service < EventEmitter
 
 			let res = ls.getApplicableRefactors(file,...args)
 			return res
-			
+
 		intercept.findReferences = do(file,pos)
 			let {script,dpos,opos} = getFileContext(file,pos,ls)
 
@@ -648,7 +641,6 @@ export default class Service < EventEmitter
 						util.log('error',k,e)
 						return null
 
-		
 		return ls.#proxied = new Proxy(ls, {
 			get: do(target,key)
 				util.log(`ils get`,key)
@@ -658,10 +650,10 @@ export default class Service < EventEmitter
 				target[key] = value
 				return yes
 		})
-	
+
 	def rewriteInboundMessage msg
 		msg
-	
+
 	def awakenProjectForImba proj
 		util.warn "service awakenProjectForImba",proj
 		# what if it happens multiple times?
@@ -695,13 +687,13 @@ export default class Service < EventEmitter
 		if changed and isSemantic and global.session
 			global.session..refreshDiagnostics!
 		self
-		
+
 	def getScriptInfo src
 		ps.getScriptInfo(resolvePath(src))
-		
+
 	def getImbaScript src
 		getScriptInfo(src)..im
-	
+
 	def getSourceFile src
 		let info = getScriptInfo(src)
 		info..cacheSourceFile..sourceFile
@@ -709,10 +701,10 @@ export default class Service < EventEmitter
 	def getDiagnostics
 		let program = cp.program
 		return ts.getPreEmitDiagnostics(program)
-		
+
 	get scripts
 		Array.from(ps.filenameToScriptInfo.values())
-		
+
 	get imbaScripts
 		scripts.map(do $1.#imba).filter(do $1)
 
@@ -725,18 +717,18 @@ export default class Service < EventEmitter
 
 	get cwd
 		#cwd ||= normalizePath(global.IMBASERVER_CWD or process.env.VSCODE_CWD or process.env.IMBASERVER_CWD)
-	
+
 	get m
 		getScriptInfo('main.imba')
-			
+
 	get u
 		getScriptInfo('util.imba')
-	
+
 	def getExt src
 		src.substr(src.lastIndexOf("."))
 
 	def normalizePath src
 		src.split(np.sep).join(np.posix.sep)
-		
+
 	def resolvePath src
 		ps.toPath(normalizePath(np.resolve(cwd,src || '__.js')))

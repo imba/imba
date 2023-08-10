@@ -13,7 +13,7 @@ if portArgPos > 0
 
 def createServer()
 	const app = express()
-	const options = 
+	const options =
 		mode: import.meta.env.MODE
 
 	await setupVite app, options, do(dist)
@@ -46,5 +46,4 @@ const exitProcess = do
 process.once "SIGTERM", exitProcess
 process.once "SIGINT", exitProcess
 process.stdin.on "end", exitProcess
-
 

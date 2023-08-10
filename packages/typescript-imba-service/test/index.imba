@@ -1,7 +1,6 @@
 import np from 'path'
 import fs from 'fs'
 
-
 import Service from '../index'
 import * as ts from 'typescript/lib/tsserverlibrary'
 
@@ -28,7 +27,7 @@ def run
 			p f.dts.#raw, f.fileName + ' dts'
 			p f.dts.#body, f.fileName + ' dts'
 			p f.dts.#mappings, ' mappings'
-	
+
 	def findPos file, pos
 		if typeof pos == 'string'
 			let off = pos.indexOf('~')
@@ -43,13 +42,12 @@ def run
 			file = s.file(file)
 		return file
 
-
 	def getdef file, pos
 		let src = file.fileName or file
 		pos = findPos(file,pos)
 		console.log 'get definition',pos
 		let res = x.ls.getDefinitionAndBoundSpan(src,pos)
-		
+
 		if res
 			p res.textSpan
 			p res.definitions
@@ -98,7 +96,6 @@ def run
 			# console.log res.serialize![0]
 			return res.items[0]
 
-
 	if false
 		getdef(doc,'<ap~p-button ')
 		completions(doc,'data.extthis!.~')
@@ -131,11 +128,10 @@ def run
 		let but = completion(doc,/AppButt/)
 		# console.log but.importInfo.importClauseOrBindingPattern.namedBindings.elements[0]
 		completion(doc,/AppStar/)
-	
+
 	if 1
 		completions(doc,"import './~'")
 		# p completions(doc,"let m14\\~",{},/AppSt/).serialize!
-		
 
 	if 0
 		let res = completions(doc,"~\n# eof",{all: yes},/AppB/)

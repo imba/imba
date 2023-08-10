@@ -87,7 +87,6 @@ class SpecComponent
 	get root
 		parent ? parent.root : self
 
-
 def createChainable keys,fn
 	let create
 	create = do(ctx)
@@ -292,7 +291,7 @@ global class SpecGroup < SpecComponent
 				await pre()
 
 		block.run!
-	
+
 	def traverse
 		if #traversed =? yes
 			SPEC.eval(blk,self) if blk
@@ -452,7 +451,7 @@ global def eqcss el, match,sel,o = {}
 	elif el isa Element and !el.parentNode
 		document.body.appendChild(el)
 	if typeof sel == 'string'
-		el = el.querySelector(sel)	
+		el = el.querySelector(sel)
 	elif typeof sel == 'number'
 		el = el.children[sel]
 

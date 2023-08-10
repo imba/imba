@@ -5,6 +5,6 @@ tag App
 
 imba.mount(let app = <App>)
 
-test do	
+test do
 	eq app.$a.computedStyleMap!.get('position').value, 'relative'
 	eq app.$b.computedStyleMap!.get('position').value, 'absolute'

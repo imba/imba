@@ -421,7 +421,7 @@ export class Node
 					return res
 			else
 				self.appendChild(res = document.createTextNode(txt))
-				return res	
+				return res
 
 		else
 			return prev ? prev.#replaceWith(item,this) : item.#insertInto(this,null)
@@ -727,7 +727,7 @@ export class HTMLHtmlElement < HTMLElement
 
 		if global.IMBA_HMR_PATH and hmr !== false
 			inject.push("<script src='/__hmr__.js'></script>")
-		
+
 		if global.__vite_manifest__
 			# in production
 			for script, i in self.scripts when src = global.__vite_manifest__[script.src]
@@ -947,7 +947,7 @@ export def createComponent name, parent, flags, text, ctx
 			el.nodeName = name.nodeName
 
 		elif name and name.nodeName
-			name = name.nodeName	
+			name = name.nodeName
 
 	el ||= doc.createElement(CustomTagToElementNames[name] or name)
 	el.##parent = parent
@@ -965,7 +965,7 @@ export def createDynamic value, parent, flags, text
 		return createComment('')
 	elif value isa Node
 		# check if node already exists somewhere else in dom
-		return value		
+		return value
 	elif typeof value == 'string' or (value and value.prototype isa Node)
 		return createComponent(value,parent,flags,text)
 

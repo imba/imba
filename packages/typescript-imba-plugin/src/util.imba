@@ -10,27 +10,27 @@ class Logger
 		sent = []
 		received = []
 		state = {}
-		
+
 	get last
 		logs[0]
-	
+
 	def group ...params
 		call('group',...params)
-		
+
 	def groupEnd ...params
 		call('groupEnd',...params)
-		
+
 	def warn ...params
 		return unless DEBUGGING
 		call('warn',...params)
-	
+
 	def call typ, ...params
 		return unless DEBUGGING
-		
+
 		if console.context isa Function
 			console.context![typ](...params)
 			return
-	
+
 	def log ...params
 		return unless DEBUGGING
 
@@ -39,14 +39,14 @@ class Logger
 		let id = ++nr
 		state[ns] ||= []
 		state[ns].unshift([id].concat(params.slice(1)))
-		
+
 		if console.context isa Function
 			console.context!.log(...params)
 			return
 
 		if TRACING
 			TRACING.push(params)
-		
+
 		if false
 			if ns == 'send'
 				if data.type == 'event'
@@ -62,12 +62,12 @@ class Logger
 global.logger = process.env.ILS_DEBUG ? global.console : new Logger
 
 export const state = {
-	
+
 }
 
 export def normalizePath path
 	path.split(np.sep).join('/')
-	
+
 export def pathToImportName path
 	np.basename(path).replace(/\.(d\.ts|tsx?|imba|jsx?)$/,'')
 
@@ -79,7 +79,7 @@ export def dirForPath path
 
 export def extensionForPath path
 	(path.match(/\.(d\.ts|tsx?|imba|jsx?|\w{1,4})$/) or ['',''])[1]
-	
+
 export def normalizeImportPath source, referenced
 	if np.isAbsolute(referenced)
 		let fdir = np.dirname(source)
@@ -104,11 +104,10 @@ export def trace cb
 	let res = cb()
 	TRACING = null
 	return {result: res, logs: t}
-	
 
 # export def fromJSIdentifier str
 # 	str[0] + str.slice(1).replace(/\$$/,'?').replace(/\$/g,'-')
-# 
+#
 # export def toJSIdentifier str
 # 	str.replace(/[-\?]/g,'$')
 
@@ -117,7 +116,7 @@ export def zerofill num, digits = 4
 	let str = String(num)
 	str = "0000000000".slice(0,9 - str.length) + str
 	return fillCache[num] = str.slice(-digits)
-	
+
 export def extend target, klass
 	let descriptors = Object.getOwnPropertyDescriptors(klass.prototype)
 	for own k,v of descriptors
@@ -138,15 +137,15 @@ export def unquote str
 	if str[0] == '"' and str[str.length - 1] == '"'
 		return str.slice(1,-1)
 	return str
-	
+
 export def log ...params
 	return unless DEBUGGING
 	global.logger.log(...params)
-	
+
 export def warn ...params
 	return unless DEBUGGING
 	global.logger.warn(...params)
-	
+
 export def group ...params
 	return unless DEBUGGING
 	global.logger.group(...params)
@@ -154,11 +153,11 @@ export def group ...params
 export def groupEnd ...params
 	return unless DEBUGGING
 	global.logger.groupEnd(...params)
-	
+
 export def isImba src
 	return false unless src
 	src.substr(src.lastIndexOf(".")) == '.imba'
-	
+
 export def isImbaDts src
 	return false unless src
 	return src.indexOf(".imba._.d.ts") > 0
@@ -190,8 +189,6 @@ export def call target,name,params
 export def flush target, name,...params
 	let meta = target.#timeouts ||= {}
 	call(target,name,params) if meta[name]
-	
-	
 
 # To avoid collisions etc with symbols we are using
 # greek characters to convert special imba identifiers
@@ -225,7 +222,7 @@ export def toImbaIdentifier raw
 		raw = raw.split('Ω')[1]
 
 	raw ? raw.replace(toImbaRegex,toImbaReplacer) : raw
-	
+
 export def toImbaString str
 	unless typeof str == 'string'
 		log('cannot convert to imba string',str)
@@ -233,26 +230,25 @@ export def toImbaString str
 
 	str = str.replace(toImbaRegex,toImbaReplacer)
 	return str
-	
+
 export def toImbaMessageText str
 	if typeof str == 'string'
 		return toImbaString(str)
 	if str.messageText
 		str.messageText = toImbaMessageText(str.messageText)
-	
+
 	return str
-	
 
 export def fromJSIdentifier raw
 	toImbaIdentifier(raw)
-	
+
 export def displayPartsToString parts
 	fromJSIdentifier(global.ts.displayPartsToString(parts))
-	
+
 extend class String
 	def toimba
 		toImbaIdentifier(this)
-	
+
 	def tojs
 		toJSIdentifier(this)
 
@@ -262,7 +258,6 @@ export def toImbaDisplayParts parts
 		part.text = toImbaIdentifier(part.text)
 		# part.text.replace(toImbaRegex,toImbaReplacer)
 	return parts
-
 
 export def isPascal str
 	let chr = str.charCodeAt(0)
@@ -318,17 +313,17 @@ export class Component
 
 	def $flush name,...params
 		$call(name,...params) if $timeouts[name]
-		
+
 	def $stamp label = 'time'
 		#prev ||= Date.now!
 		let now = Date.now!
 		console.log "{label}: {now - #prev}"
 		#prev = now
 		self
-		
+
 	def lookupKey key
 		return null
-		
+
 	def lookupRef ids,index = 0
 		if typeof ids == 'string'
 			ids = ids.split('|')
@@ -350,7 +345,7 @@ export class Component
 		if $web$ or config.get('debug')
 			console.log(...params)
 		return
-	
+
 	def inspect object
 		if config.get('verbose')
 			console.dir(object, depth: 10)
@@ -375,10 +370,10 @@ export class Writer
 	stack = []
 	out = ''
 	pre = ''
-	
+
 	def w ln
 		out += pre + ln + '\n'
-	
+
 	def ind wrap,cb
 		push(wrap)
 		cb()
@@ -388,22 +383,22 @@ export class Writer
 		w(wrap + ' {') if wrap
 		stack.unshift(state)
 		pre += '\t'
-	
+
 	def pop wrap
 		pre = pre.slice(0,-1)
 		stack.shift!
 		w('}\n')
-		
+
 	def popAll
 		while stack.length
 			pop!
 		return self
-		
+
 	get state
 		stack[0]
-		
+
 	def save
 		yes
-		
+
 	def toString
 		out

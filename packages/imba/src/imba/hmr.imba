@@ -78,7 +78,7 @@ class DevTools
 				console.error("error in {item.location.file}: {item.location.lineText} ({item.text})")
 			return
 
-		socket.addEventListener("reload") do(e)	
+		socket.addEventListener("reload") do(e)
 			log 'asked to reload by server'
 			global.document.location.reload!
 

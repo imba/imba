@@ -24,7 +24,6 @@ def extractBlock name,text,imports = []
 
 	return info
 
-
 export def rewriteDts code
 	let mappings = {}
 	# console.log 'rewrite',code.length
@@ -61,7 +60,6 @@ export def rewriteDts code
 
 		# if name == 'ImmediateDefJS'
 		#	body = body.replaceAll(': this;',': globalThis.ImmediateDefJS;')
-
 
 		body = body.replace(/\@this \{.+?\}/gs,'')
 		body = body.replace(/\/\*\*?[\r\n\t\s]*\*\//g,'')

@@ -14,16 +14,16 @@ export default class CodeGen
 	sep = '\n'
 	prefix = ''
 	postfix = ''
-	
+
 	def w ...lines
 		for ln in lines
 			out.push(pre + ln) if ln != null and ln != false
 		self
-		
+
 	def br
 		w('')
 		self
-	
+
 	def ind wrap,cb
 		push(wrap)
 		cb()
@@ -47,7 +47,7 @@ export default class CodeGen
 
 	def curly start = '',fn = null
 		block(start + ' {','}','\n',fn)
-	
+
 	def indented fn = null
 		block('','','\n',fn)
 
@@ -69,24 +69,24 @@ export default class CodeGen
 		w('/**')
 		pre += ' * '
 		self
-		
+
 	def undoc
 		pre = pre.slice(0,-3)
 		w('*/')
 		self
-		
+
 	def pop wrap = ''
 		pre = pre.slice(0,-1)
 		w(wrap + (braces ? '}' : '') + '\n')
 		self
-		
+
 	def save
 		yes
-		
+
 	def end
 		pop! while pre.length > 0
 		self
-		
+
 	def toString
 		if out.length == 0
 			return ''
@@ -110,7 +110,7 @@ export default class CodeGen
 #		let ext = path.split('.').pop!
 #		let curr = try fs.readFileSync(path,'utf8')
 #		let out = String(self)
-#		
+#
 #		let regex = splitters[ext]
 #		if curr and regex
 #			let parts = curr.split(regex)

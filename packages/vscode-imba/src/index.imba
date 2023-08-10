@@ -85,7 +85,7 @@ def getStyleBlockLines doc
 			while res === undefined and k < count
 				let next = doc.lineAt(++k)
 				let m2 = next.text.match(/^([\t\s]*)(?=[^\#]|\#\w)/)
-				if m2 
+				if m2
 					let diff = m2[1].length - m[1].length
 					if diff > 0
 						lines.push(i)
@@ -112,16 +112,16 @@ def sendConfiguration
 export def activate context
 	let conf = workspace.getConfiguration('imba')
 	let id = "imba-ipc-{String(Math.random!)}"
-	
+
 	log("activating imba?! {process.env.TSS_DEBUG}")
-	
+
 	commands.registerCommand('imba.autoImportAlert') do(doc,item)
 		let message = "Added auto-import for {item.source}"
 		try
 			let edit = item.additionalTextEdits[0]
 			let line = doc.lineAt(edit.range.start.line).text
 			message = "Added: {line}"
-		
+
 		window.showWarningMessage(message)
 
 	try
@@ -143,24 +143,21 @@ export def activate context
 				process.env['TSS_DEBUG'] = String(conf.get('debugPort'))
 				log("restarting ts server in debug mode {process.env['TSS_DEBUG']}")
 				try await commands.executeCommand("typescript.restartTsServer")
-					
-		# sendConfiguration!
 
+		# sendConfiguration!
 
 	languages.registerCompletionItemProvider({language: 'imba'},new CompletionsProvider(bridge),'.',':', '"', '@','%','\\',"'",'=','<','#','/')
 	util.log('setting up symbol provider')
 	languages.registerDocumentSymbolProvider({language: 'imba1'},new DocumentSymbolProvider)
 
 	workspace.getConfiguration(undefined,null)
-	
-	
-	
+
 	commands.registerCommand('imba.getProgramDiagnostics') do
 		yes
 
 	commands.registerCommand('imba.clearProgramProblems') do
 		yes
-		
+
 	commands.registerCommand('imba.setDefaultSettings') do
 		let settings = {
 			"[imba].editor.insertSpaces": false,
@@ -196,18 +193,17 @@ export def activate context
 		let cmd = bool ? 'unfold' : 'fold'
 		log 'toggle folding',cmd,lines,bool
 		await commands.executeCommand("editor.{cmd}", {selectionLines: lines, direction: 'up'})
-	
+
 	workspace.onDidSaveTextDocument do(e)
 		let path = util.toPath(e.uri)
 		log("ondidsavedoc? {path}")
 		if util.isImba(path)
-			
+
 			bridge.call('onDidSaveTextDocument',util.toPath(e.uri))
-	
+
 	workspace.onDidChangeConfiguration do(e)
 		sendConfiguration!
-		
-	
+
 	window.onDidChangeTextEditorSelection do(e)
 		const doc = e.textEditor.document
 		const uri = doc.uri

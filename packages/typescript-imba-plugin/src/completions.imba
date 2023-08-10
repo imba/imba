@@ -5,7 +5,6 @@ import Context from './context'
 import {Sym as ImbaSymbol,CompletionTypes as CT, Token as ImbaToken} from 'imba-monarch'
 import type ImbaScript from './script'
 
-
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 
 const Keywords = "and await begin break by case catch class const continue css debugger def get set delete do elif else export extend false finally for if import in instanceof is isa isnt let loop module new nil no not null of or require return self static super switch tag then this throw true try typeof undefined unless until when while yes".split(' ')
@@ -41,7 +40,7 @@ CompletionItemKind {
 ###
 
 export class Completion
-	
+
 	data = {}
 	label = {}
 	exportInfo = null
@@ -52,22 +51,22 @@ export class Completion
 		#options = options
 		sym = #symbol = symbol
 		weight = options.weight or 1000
-		
+
 		item = {data: data, label: label, sortText: ""}
 		load(symbol,context,options)
 		kind = options.kind if options.kind
-	
+
 		setup_!
 		triggers options.triggers
 		finalize!
-		
+
 	def load symbol, context, options = {}
 		yes
 		self
-		
+
 	def setup_
 		setup!
-	
+
 	def setup
 		Object.assign(item,sym)
 
@@ -76,62 +75,61 @@ export class Completion
 			return matcher.test(name)
 		return no
 
-
 	def finalize
 		yes
-		
+
 	get id
 		return #nr if #nr >= 0
 		#nr = #context.items.indexOf(self)
-		
+
 	get cat
 		#options.kind or ''
-	
+
 	get checker
 		#context.checker
-		
+
 	get program
 		checker.program
-	
+
 	get script
 		checker.script
 
 	get #type
 		#symbol.type or #symbol.type_
-		
+
 	get weight
 		#weight or #options.weight
-	
+
 	set weight val
 		#weight = val
 
 	get doc
 		#context.doc
-		
+
 	def triggers chars = ''
 		return self unless chars
 		let list = item.commitCharacters ||= []
 		for chr of chars
 			list.push(chr) unless list.indexOf(chr) >= 0
 		return self
-	
+
 	def #resolve
 		if #resolved =? yes
 			resolve!
 		return item
-	
+
 	def resolve
 		self
 
 	get completion
 		self
-		
+
 	get source
 		null
 
 	set kind kind
 		item.kind = kind
-	
+
 	get kind
 		item.kind
 
@@ -140,7 +138,7 @@ export class Completion
 
 	set name val do label.name = val
 	get name do label.name
-		
+
 	set type val do label.type = val
 	get type do label.type
 
@@ -156,24 +154,24 @@ export class Completion
 	set ns val
 		if val isa Array
 			val = val[0]
-		
+
 		if val and val.text
 			val = val.text
 
 		label.qualifier = val
-	
+
 	get ns
 		label.qualifier
-	
+
 	set documentation val
 		item.documentation = val
 
 	get uniqueName
 		#uniqueName or item.insertText or name
-		
+
 	get filterName
 		item.insertText or name
-		
+
 	def shouldBeIncluded stack
 		yes
 
@@ -181,13 +179,13 @@ export class Completion
 		let o = #options
 
 		let key = uniqueName
-		
+
 		if sym.isInternal
 			return null
-			
+
 		unless shouldBeIncluded(stack)
 			return null
-		
+
 		if stack[key]
 			return null
 
@@ -195,7 +193,7 @@ export class Completion
 			return null unless o.matchRegex.test(filterName)
 
 		stack[key] = self
-		
+
 		if o..commitCharacters
 			item.commitCharacters = o.commitCharacters
 		if #weight != undefined
@@ -203,7 +201,7 @@ export class Completion
 			data.nr = id
 		# item.data.id ||= "{#context.file.id}|{#context.id}|{id}"
 		return item
-		
+
 	def resolveImportEdits
 		let ii = importInfo or {}
 
@@ -215,7 +213,7 @@ export class Completion
 			let named = ii.importClauseOrBindingPattern..namedBindings..elements
 			for entry in (named or [])
 				if entry.propertyName..escapedText == importName
-					item.insertText = entry.name.escapedText	
+					item.insertText = entry.name.escapedText
 					return self
 
 		if let ei = exportInfo
@@ -230,7 +228,7 @@ export class Completion
 
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
-		
+
 		elif ii
 			let path = ii.moduleSpecifier
 			let name = importName
@@ -238,11 +236,10 @@ export class Completion
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
 
-
 		self
 
 export class SymbolCompletion < Completion
-	
+
 	get symName
 		sym.imbaName
 
@@ -260,7 +257,7 @@ export class SymbolCompletion < Completion
 
 		try
 			Object.assign(item,checker.getSymbolKind(sym))
-			
+
 		if #options.range
 			item.range = #options.range
 
@@ -270,7 +267,6 @@ export class SymbolCompletion < Completion
 			kind = 10
 			name = o.prefixCompletion + name
 			item.filterText = name
-
 
 		# let pname = sym.parent..escapedName
 		elif cat == 'styleprop'
@@ -290,11 +286,11 @@ export class SymbolCompletion < Completion
 			let desc = sym.getDocumentationComment! or []
 			if desc[0] and desc[0].text
 				ns = desc[0].text
-			
+
 			if tags.color
 				kind = 15
 				let shade = name.slice(-1)
-				
+
 				if shade == '4'
 					item.sortText = "color-0-{name}"
 				else
@@ -306,7 +302,7 @@ export class SymbolCompletion < Completion
 				label.description = tags.color
 			else
 				kind = 'enum'
-				
+
 		elif cat == 'stylemod'
 			ns = tags.detail
 			# name = name.slice(1)
@@ -316,12 +312,12 @@ export class SymbolCompletion < Completion
 		elif cat == 'stylesel'
 			triggers ' [.(@'
 			kind = 'keyword'
-		
+
 		elif cat == 'tagevent'
 			triggers '.=('
 			kind = 'event'
 			name = '@' + name
-		
+
 		elif cat == 'tageventmod'
 			triggers '.='
 			name = name.slice(1)
@@ -347,13 +343,13 @@ export class SymbolCompletion < Completion
 
 		if cat == 'decorator'
 			triggers ' ('
-			
+
 		if cat == 'implicitSelf'
 			# item.insertText = item.filterText = name
 			# name = "self.{name}"
 			# ns = "self"
 			yes
-			
+
 		if tags.snippet
 			let snip = tags.snippet
 			if cat == 'tag'
@@ -362,7 +358,6 @@ export class SymbolCompletion < Completion
 			type = 'snippet'
 			if snip.indexOf('$') >= 0
 				item.commitCharacters = []
-
 
 		if tags.importStar
 			ns = "import from {tags.importStar}"
@@ -373,10 +368,10 @@ export class SymbolCompletion < Completion
 				modulePath: tags.importStar
 				commitCharacters: ['.']
 			}
-				
+
 		if tags.detail
 			ns ||= tags.detail
-		
+
 		# check export info
 		if ei
 			if ei.packageName
@@ -387,7 +382,7 @@ export class SymbolCompletion < Completion
 			item.source = ns.slice(12)
 			if ei.exportName == '*'
 				ns = ns.replace(/^import /,'import * ')
-			
+
 			# dont be trigger-happy with commitCharacters for imports
 			# should still be if the import compes
 			item.commitCharacters = item.commitCharacters.filter do(item)
@@ -401,13 +396,11 @@ export class SymbolCompletion < Completion
 				item.filterText = (item.filterText or name) + "        "
 				item.sortText = name
 
-	
 	def resolve
 		try
 			let details = checker.getSymbolDetails(sym)
-			
-			item.markdown = details.markdown
 
+			item.markdown = details.markdown
 
 			if let docs = details.documentation
 				item.documentation = docs # global.session.mapDisplayParts(docs,checker.project)
@@ -419,9 +412,9 @@ export class SymbolCompletion < Completion
 			util.log 'resolve completion',item
 			resolveImportEdits!
 		self
-		
+
 export class AutoImportCompletion < SymbolCompletion
-	
+
 	def load data, context, options = {}
 		importData = data
 		exportInfo = data
@@ -450,36 +443,36 @@ export class AutoImportCompletion < SymbolCompletion
 				if entry.propertyName..escapedText == importName
 					item.insertText = entry.name.escapedText
 		return self
-		
+
 	def resolve
 		resolveImportEdits! unless item.insertText
 		self
-		
+
 	get symName
 		util.toImbaIdentifier(importData.exportName)
-		
+
 	get importPath
 		exportInfo..packagName or exportInfo..modulePath
 
 	get importName
 		importData..exportName
-		
+
 	get uniqueName
 		symName + importPath
-		
+
 	def shouldBeIncluded stack
 		# if there is a variable or other property with this name
 		if stack[symName]
 			return no
 		return yes
-		
+
 export class ImbaSymbolCompletion < Completion
-	
+
 	def setup
 		name = sym.name
 
 export class ImbaTokenCompletion < Completion
-	
+
 	def setup
 		let o = #options
 		name = sym.value
@@ -494,14 +487,13 @@ export class ImbaTokenCompletion < Completion
 		if cat == 'numberunit'
 			kind = 10
 
-		
 export class KeywordCompletion < Completion
 	def setup
 		name = sym.name
 		triggers ' '
 
 export class PathCompletion < Completion
-	
+
 	def setup
 		let ext = util.extensionForPath(sym.path)
 		# let norm = util.normalizeImportPath(script.fileName,sym)
@@ -516,7 +508,7 @@ export class PathCompletion < Completion
 			triggers '/'
 
 export default class Completions
-	
+
 	constructor script\ImbaScript, pos, prefs
 		self.script = script
 		self.pos = pos
@@ -528,23 +520,23 @@ export default class Completions
 		#prefix = ''
 		#added = {}
 		#uniques = new Map
-		
+
 		items = []
 		resolve!
-		
+
 	get opos
 		#opos ??= script.d2o(pos)
-		
+
 	get checker
 		# should we choose configured project or?
 		#checker ||= script.getTypeChecker!
-	
+
 	get autoimporter
 		checker.autoImports
-		
+
 	get triggerCharacter
 		prefs.triggerCharacter
-			
+
 	def resolve
 		ctx = script.doc.getContextAtOffset(pos)
 		tok = ctx.token
@@ -553,13 +545,13 @@ export default class Completions
 
 		if tok.match('identifier')
 			prefix = ctx.before.token
-			
+
 		if ctx.suggest.prefix
 			prefix = ctx.suggest.prefix
-		
+
 		if prefix
 			prefixRegex = new RegExp("^[\#\_\$\<]*{prefix[0] or ''}")
-		
+
 		util.log('resolveCompletions',self,ctx,tok,prefix)
 
 		if triggerCharacter == '/' and !(flags & CT.Path)
@@ -568,11 +560,11 @@ export default class Completions
 		# suppress completions after / which is used as a trigger in paths
 		if ctx.before.line.match(/\/\w+$/) and !(flags & CT.Path)
 			return
-		
+
 		if triggerCharacter == '=' and !tok.match('operator.equals.tagop')
 			return
-		
-		# only show completions directly after : in styles	
+
+		# only show completions directly after : in styles
 		if triggerCharacter == ':' and !tok.match('style.property.operator')
 			return
 
@@ -583,7 +575,7 @@ export default class Completions
 		elif tok.match('style.value.number')
 			let num = tok.value
 			add('styleunits',kind: 'numberunit', prefixCompletion: num)
-		
+
 		elif tok.match('unit')
 			let num = tok.prev.value
 			add('numberunits',kind: 'numberunit', prefixCompletion: num)
@@ -601,17 +593,17 @@ export default class Completions
 		elif tok.match('number')
 			let num = tok.value
 			add('numberunits',kind: 'numberunit', prefixCompletion: num)
-		
+
 		if flags & CT.TagName
 			util.log('resolveTagNames',ctx)
 			add('tagnames',kind: 'tagname')
-			
+
 		if flags & CT.StyleModifier
 			add checker.stylemods, kind: 'stylemod', range: ctx.suggest.stylemodRange
-			
+
 		if flags & CT.StyleSelector
 			add checker.props('ImbaHTMLTags',yes), kind: 'stylesel'
-		
+
 		if flags & CT.StyleProp
 			let cfg = config.preferAbbreviatedStyleProperties
 			let inline = !ctx.group.closest('rule')
@@ -620,10 +612,10 @@ export default class Completions
 
 		if flags & CT.StyleVar
 			add 'stylevar', kind: 'styleval'
-	
+
 		elif flags & CT.StyleValue
 			add 'stylevalue', kind: 'styleval'
-			
+
 		if flags & CT.Decorator
 			add 'decorators', kind: 'decorator'
 
@@ -633,42 +625,41 @@ export default class Completions
 				if typ
 					let props = checker.valueprops(typ).filter do !$1.isWebComponent
 					add props, kind: 'access', matchRegex: /^[^\#\$\@\_]/
-			
+
 		if flags & CT.TagEvent
 			add checker.props("ImbaEvents"), kind: 'tagevent'
-			
+
 		if flags & CT.TagEventModifier
 			add checker.getEventModifiers(ctx.eventName), kind: 'tageventmod'
-			
+
 		if flags & CT.TagProp
 			add('tagattrs',name: ctx.tagName)
-			
+
 		if flags & CT.Type
 			add('types',kind: 'type')
 
 		if flags & CT.Path
 			add('paths',kind: 'path')
 
-			
 		if flags & CT.Access
 			if ctx.target == null
 				let selfpath = ctx.selfPath
 				let selfprops = checker.valueprops(selfpath)
 				# || checker.props(loc.thisType)
 				add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: prefixRegex)
-			else	
+			else
 				let typ = checker.inferType(ctx.target,script.doc)
 
 				if typ
 					let props = checker.valueprops(typ).filter do !$1.isWebComponent
 					add props, kind: 'access', matchRegex: prefixRegex
-		
+
 		if flags & CT.Value
 			add('values')
-			
+
 		if flags & CT.ClassBody
 			yes
-		
+
 		if triggerCharacter == '<' and ctx.after.character == '>'
 			add completionForItem({
 				commitCharacters: [' ','<','=']
@@ -691,14 +682,14 @@ export default class Completions
 		# 		label: {name: ' '}
 		# 	})
 		self
-		
+
 	def stylevalue o = {}
 		# let node = ctx.group.closest('styleprop')
 		let name = ctx.suggest.styleProperty
 		# let name = node..propertyName
 		let before = ctx..before..group
 		let nr = before ? (before.split(' ').length - 1) : 0
-		
+
 		let symbols = checker.stylevalues(name,nr)
 		add symbols,o
 		self
@@ -706,11 +697,10 @@ export default class Completions
 	def stylevar o = {}
 		let found = checker.getStyleVarTokens()
 		add found,o
-		
+
 	def decorators o = {}
 		# should include both global (auto-import) and local decorators
 		# just do the locals for now?
-
 
 		let vars = script.doc.varsAtOffset(pos).filter do $1.name[0] == '@'
 		add(vars,o)
@@ -719,30 +709,28 @@ export default class Completions
 			let selfpath = ctx.selfPath
 			let selfprops = checker.props(selfpath)
 			add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: /^\@[^\@]/)
-			
 
 		# get decorators from the class body
 
 		# add the defaults from imba
 		let builtins = checker.props('imba').filter do $1.isDecorator
 		add(builtins,o)
-		
+
 		let imports = checker.autoImports.getExportedDecorators!
 		add(imports, o)
 		self
-		
+
 	def tagnames o = {}
 		let html = checker.props('HTMLElementTagNameMap')
 		add(html,o)
-		
+
 		let locals = checker.sourceFile.getLocalTags!
-		
+
 		add(locals,o)
 		# add(checker.getGlobalTags!,o) # nope?
-		
+
 		util.log "local tags",locals
 
-		
 		try
 			let autoTags = autoimporter.getExportedTags!
 			add(autoTags,o)
@@ -761,9 +749,9 @@ export default class Completions
 		# util.log('add default units??',checker.getMetaSymbols('style.value.unit '))
 		add(customUnits,o)
 		add(checker.getMetaSymbols('style.value.unit '),o)
-		
+
 	def types o = {}
-		
+
 		if ctx.before.group.match(/^\\\<[\w-]*$/)
 			add(checker.getGlobalTags!,o)
 		else
@@ -772,7 +760,7 @@ export default class Completions
 			let typesymbols = checker.getSymbols('Type')
 			add(typesymbols,o)
 			add(checker.autoImports.getExportedTypes!,{kind: 'type', weight: 2000})
-		
+
 	def tagattrs o = {}
 		let sym = checker.sym("HTMLElementTagNameMap.{o.name}")
 
@@ -789,7 +777,7 @@ export default class Completions
 				return no if par == "GlobalEventHandlers"
 				return no if item.escapedName.match(/className|(__$)/)
 				return item.isTagAttr
-			
+
 			add(attrs,{...o, commitCharacters: ['=']})
 		yes
 
@@ -848,7 +836,7 @@ export default class Completions
 					kind: 'dir'
 					importPath: util.normalizeImportPath(script.fileName,dir)
 				})
-			
+
 			# use path info from js/tsconfig?
 
 			# drop dts files
@@ -857,18 +845,16 @@ export default class Completions
 
 		add(sources,o)
 
-		
-
 		self
-		
+
 	def values
 		let vars = script.doc.varsAtOffset(pos)
 		let symbols = []
-		
+
 		# find our location - want to walk to find a decent alternative
 		# walk backwards to find the closest location known by typescript
 		# let loc = checker.getLocation(pos,opos)
-	
+
 		for item in vars
 			# hide decorators
 			# not if we are in the right context?
@@ -887,12 +873,11 @@ export default class Completions
 			let selfprops = checker.props(selfpath)
 			# || checker.props(loc.thisType)
 			add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: prefixRegex)
-		
+
 		# add('variables',weight: 70)
 		# could also go from the old shared checker?
 		add(checker.getClassesInScope!,weight: 200,matchRegex: prefixRegex, implicitGlobal: yes)
 		add(checker.globals,weight: 500,matchRegex: prefixRegex, implicitGlobal: yes)
-		
 
 		if prefixRegex or prefs.all
 			let imports1 = checker.autoImports.search(prefixRegex,global.ts.SymbolFlags.Value)
@@ -910,17 +895,17 @@ export default class Completions
 		# add('properties',value: yes, weight: 100, implicitSelf: yes)
 		# add('keywords',weight: 650,startsWith: prefix)
 		# add('autoimports',weight: 700,startsWith: prefix, autoImport: yes)
-		
+
 		if ctx.before.line.match(/^[a-z]*$/)
 			add(checker.snippets('root'),kind: 'snippet')
 
 		add(Keywords.map(do new KeywordCompletion({name: $1},self,kind: 'keyword', weight: 800)))
 		self
-		
+
 	def completionForItem item, opts = {}
 		if item isa Completion
 			return item
-		
+
 		if item.#tsym
 			item = item.#tsym
 
@@ -941,28 +926,27 @@ export default class Completions
 
 		elif opts.kind == 'path'
 			entry = new PathCompletion(item,self,opts)
-			
 
 		#uniques.set(item,entry)
 		return entry
-		
+
 	def add type, options = {}
-		
+
 		if type isa Completion
 			items.push(type) unless items.indexOf(type) >= 0
 			return self
-		
+
 		if type isa Array
 			for item in type
 				add(completionForItem(item,options))
 			return self
 
-		return self if #added[type] 
+		return self if #added[type]
 		#added[type] = []
-		
+
 		let t = Date.now!
 		let results = self[type](options)
-		
+
 		util.log "called {type}",Date.now! - t
 
 		if results isa Array
@@ -989,6 +973,6 @@ export default class Completions
 		if filter isa RegExp
 			fn = do(item) item.match(filter)
 		items.filter(fn)
-		
+
 	def find item
 		items.find do $1.name == item

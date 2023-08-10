@@ -9,7 +9,7 @@ export default tag App
 		innerHTML = ''
 		schedule!
 		imba.commit!
-	
+
 	def render
 		<self>
 			<button[c:liloc6 bg:yellow4] @click.log("st")=(count++)>

@@ -24,7 +24,7 @@ test '||=' do
 	e ||=
 		a: 1
 		b: 2
-	eq e.b, 2	
+	eq e.b, 2
 
 test '??=' do
 	let a = 0

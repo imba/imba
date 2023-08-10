@@ -1,5 +1,5 @@
 class Item
-	
+
 	###
 	@template T
 	@overload
@@ -11,13 +11,12 @@ class Item
 
 	static get stuff\Array<this>
 		[this]
-	
+
 	get stuff\Array<this>
 		[this]
 
 class Car < Item
 
-	
 	def start
 		yes
 
@@ -33,5 +32,5 @@ const arr = [b,b]
 for item of arr
 	let x = Car.test()
 	arr[0].stuff(1)
-	
+
 	yes

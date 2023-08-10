@@ -226,7 +226,7 @@ extend class Node
 					return res
 			else
 				self.appendChild(res = document.createTextNode(txt))
-				return res	
+				return res
 
 		else
 			if global.DEBUG_IMBA

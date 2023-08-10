@@ -11,7 +11,7 @@ let resizeObserver = null
 class ResizeEvent < CustomEvent
 	def @css wunit = '1elw', hunit = '1elh', sel = ''
 		const target = entry..target
-		
+
 		if target and target.offsetParent
 			let wu = helpers.parseDimension(wunit)
 			let hu = helpers.parseDimension(hunit)

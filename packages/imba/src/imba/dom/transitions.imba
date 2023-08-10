@@ -60,7 +60,7 @@ export class Easer < Emitter
 
 	def unflag flags
 		for node in #nodes
-			node.flags.remove(flags)			
+			node.flags.remove(flags)
 		self
 
 	def commit
@@ -272,11 +272,11 @@ export class Easer < Emitter
 
 extend class Element
 
-	# called when element is getting ready to enter	
+	# called when element is getting ready to enter
 	def transition-in-init transition
 		yes
 
-	# called when element is ready to enter	
+	# called when element is ready to enter
 	def transition-in transition
 		yes
 
