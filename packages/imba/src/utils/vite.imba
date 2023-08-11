@@ -52,14 +52,6 @@ export def getConfigFilePath(type, opts\Object)
 		# otherwise use the default test config
 		return imbaConfigPath
 
-	# load default imba config
-	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
-	if typeof defaultImbaConfig == "function"
-		defaultImbaConfig = await defaultImbaConfig({command, mode})
-
-
-	const defaultConfig = defaultImbaConfig[type]
-
 	# client, server, imba or test
 
 	# we only support imba.config.js
@@ -78,7 +70,17 @@ export def getConfigFilePath(type, opts\Object)
 		imbaConfig = await imbaConfig({command, mode})
 
 	return imbaConfig if type == "root"
+	return imbaConfig if configPath == imbaConfigPath
+
 	const configObj = imbaConfig[type]
+
+	# TODO no merging if it is all the same file
+
+	# load default imba config
+	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
+	if typeof defaultImbaConfig == "function"
+		defaultImbaConfig = await defaultImbaConfig({command, mode})
+	const defaultConfig = defaultImbaConfig[type]
 
 	return defaultConfig if !configObj
 	
