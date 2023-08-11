@@ -109,13 +109,15 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 
 		let hash
 		let cacheFile
-		try
-			hash = crypto.createHash('md5').update(JSON.stringify(options.server.config) + code + id + IMBA_HASH + JSON.stringify imbaConfig).digest('hex')
-			cacheFile = np.join(CACHE_DIR, hash);
-			const r = await nfs.promises.readFile(cacheFile, 'utf-8');
-			return JSON.parse r
-
 		let compiledData\CompileData
+
+		if false
+			try
+				hash = crypto.createHash('md5').update(JSON.stringify(options.server.config) + code + id + IMBA_HASH + JSON.stringify imbaConfig).digest('hex')
+				cacheFile = np.join(CACHE_DIR, hash);
+				const r = await nfs.promises.readFile(cacheFile, 'utf-8');
+				return JSON.parse r
+
 		try compiledData = await compileImba(imbaRequest, code, options) catch e
 			cache.setError(imbaRequest, e);
 			throw toRollupError(e, options);
@@ -146,7 +148,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				vite:
 					lang: compiledData.lang
 		}
-		try nfs.writeFile(cacheFile, JSON.stringify(result), do 1)
+		# try nfs.writeFile(cacheFile, JSON.stringify(result), do 1)
 		return result
 	
 	def resolveId(id, importer, opts)
