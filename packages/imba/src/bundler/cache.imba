@@ -18,7 +18,7 @@ export default class Cache
 		#key = Symbol!
 		o = options
 		dir = o.cachedir # or np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
-		nodefs = options.volume or nfs
+		nodefs = o.volume or nfs
 		aliaspath = dir and np.resolve(dir,'.imba-aliases')
 		aliasmap = []
 		aliascache = {}
@@ -86,6 +86,7 @@ export default class Cache
 		keyPathCache[key] ||= np.resolve(dir,key)
 
 	def getKeyTime key
+		key = normalizeKey(key)
 		let cached = cache[key]
 
 		if cached and cached.time
@@ -153,7 +154,7 @@ export default class Cache
 		if cached and cached.time >= time
 			return cached.promise
 
-		let keytime = getKeyTime(key)
+		let keytime = getKeyTime(name)
 
 		# check for file on disk
 		# let file = program.fs.lookup(np.resolve(dir,key))
@@ -171,6 +172,7 @@ export default class Cache
 				promise: cb!
 			}
 
-			cached.promise.then do(val) setKeyValue(key,val)
+			cached.promise.then do(val)
+				setKeyValue(key,val)
 
 		return cached.promise
