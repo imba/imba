@@ -26,6 +26,7 @@ const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 			format: 'esm',
 			resolveColors: true,
 			sourcePath: filename,
+			vite: true,
 			sourcemap: options.compilerOptions.sourcemap ?? "extern",
 			...imbaConfig
 		};
