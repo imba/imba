@@ -9,8 +9,6 @@ tag example-app
 		<self>
 			<input.bool bind=state.bool type='checkbox'>
 			<p> "Boolean is {state.bool}"
-
-			#
 			<input.value bind=state.status value='something' type='checkbox'>
 			<p> "Status is {state.status}"
 

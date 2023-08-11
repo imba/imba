@@ -384,7 +384,6 @@ export class Node
 	def #placeChild item, f, prev
 
 		let type = typeof item
-		# console.log '#inserting!',item,f,prev,type
 
 		if type === 'undefined' or item === null
 			# what if the prev value was the same?
@@ -421,7 +420,7 @@ export class Node
 					return res
 			else
 				self.appendChild(res = document.createTextNode(txt))
-				return res	
+				return res
 
 		else
 			return prev ? prev.#replaceWith(item,this) : item.#insertInto(this,null)
@@ -524,7 +523,6 @@ export class Element < Node
 		self.setAttribute(ns + ':' + key,value)
 
 	def getAttribute key
-		# console.log "getAttribute not implemented on server"
 		self.attributes ? self.attributes[key] : undefined
 
 	def getAttributeNS ns, key
@@ -714,11 +712,9 @@ export class HTMLHtmlElement < HTMLElement
 
 	get outerHTML
 		# watch for assets that are collected etc
-		# console.log "compiling outerhtml!"
 		let prev = HtmlContext
 		HtmlContext = self
 		let html = super.outerHTML
-		# console.log 'has scripts',self.scripts.length
 		# automatically include stylesheets?
 		# add data-hmr yes or inject hmr script if hmr?
 		let sheets = new Set
@@ -727,7 +723,7 @@ export class HTMLHtmlElement < HTMLElement
 
 		if global.IMBA_HMR_PATH and hmr !== false
 			inject.push("<script src='/__hmr__.js'></script>")
-		
+
 		if global.__vite_manifest__
 			# in production
 			for script, i in self.scripts when src = global.__vite_manifest__[script.src]
@@ -947,7 +943,7 @@ export def createComponent name, parent, flags, text, ctx
 			el.nodeName = name.nodeName
 
 		elif name and name.nodeName
-			name = name.nodeName	
+			name = name.nodeName
 
 	el ||= doc.createElement(CustomTagToElementNames[name] or name)
 	el.##parent = parent
@@ -965,7 +961,7 @@ export def createDynamic value, parent, flags, text
 		return createComment('')
 	elif value isa Node
 		# check if node already exists somewhere else in dom
-		return value		
+		return value
 	elif typeof value == 'string' or (value and value.prototype isa Node)
 		return createComponent(value,parent,flags,text)
 

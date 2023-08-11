@@ -108,7 +108,7 @@ export class History
 		cache[index] = state
 		#states[index] = state
 		#states.length = cache.length = Math.max(state.index + 1,0)
-		global.history[significant ? 'pushState' : 'replaceState'](String(state),title or null,state.path)		
+		global.history[significant ? 'pushState' : 'replaceState'](String(state),title or null,state.path)
 		return self
 
 	def replaceState state, title, url

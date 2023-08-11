@@ -67,8 +67,6 @@ class KeyedTagFragment < Fragment
 	def insertChild item, index, prevIndex
 		let par = parentNode
 		return unless par
-
-		# console.log 'insertChild',item,index
 		# log 'insertBefore',index,item,parentNode
 		if index > 0
 			let other = self.array[index - 1]
@@ -96,7 +94,6 @@ class KeyedTagFragment < Fragment
 	#	return
 
 	def #replaceWith rel, parent
-		# console.log 'can replace now?',rel,parent,#end,#end..parentNode
 		let res = rel.#insertInto(parent,#end)
 		#removeFrom(parent)
 		return res
@@ -132,7 +129,6 @@ class KeyedTagFragment < Fragment
 			return
 
 		if self.dirty
-			# console.log 'was dirty!',array,self.changes
 
 			self.changes.forEach do(pos,item)
 				if pos == -1

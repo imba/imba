@@ -12,8 +12,7 @@ export def render blk, ctx = {}
 export def mount mountable, into
 	if $node$
 		console.error "imba.mount not supported on server.\nTo spawn a dev-server for an imba client run:\n  > imba serve my-imba-file.imba"
-		# if mountable isa Function	
-		# console.log String(mountable)
+		# if mountable isa Function
 		return String(mountable)
 
 	let parent = into or global.document.body

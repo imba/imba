@@ -25,7 +25,6 @@ def classify types
 
 export def highlight tokens, {verbose = no}
 	let parts = []
-	# console.log(tokens)
 	let depth = 0
 	let counter = 0
 	let ids = []
@@ -57,7 +56,7 @@ export def highlight tokens, {verbose = no}
 
 		if mods & M.Local
 			types.push('local')
-			
+
 		if token.end and token.end.start == token
 			parts.push("<b>")
 
@@ -73,14 +72,13 @@ export def highlight tokens, {verbose = no}
 			value = String(++depth)
 			let kind = subtyp.indexOf('_') >= 0 ? 'group' : 'scope'
 			let end = token.scope && token.scope.end
-			
+
 			parts.push("<div class='{kind}-{subtyp.split('_').pop!} _{subtyp} l{depth} o{token.offset} e{end && end.offset}'>")
 			continue
 		elif typ == 'pop'
 			value = String(--depth)
 			parts.push("</div>")
 			continue
-			
 
 		if typ != 'white' and typ != 'line'
 			value = "<i class='{classify types} o{token.offset}'>{escape(value or '')}</i>"

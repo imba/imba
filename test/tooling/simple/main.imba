@@ -6,20 +6,16 @@ import 'imba/spec'
 import {hello} from './stuff'
 import './nested/index'
 
-
 Shared.prototype.hello
 
 "tester".upper?
 
 100.ceil!
 
-
-
 100days
 10kb
 
 10mb
-
 
 Stuff
 
@@ -63,10 +59,9 @@ tag app-item
 		yes
 
 	def hell
-		
+
 		self.offsetWidth
 		self.hell
-
 
 	<self>
 		<div>

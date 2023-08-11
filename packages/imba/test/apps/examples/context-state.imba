@@ -6,7 +6,6 @@ let pages = [
 let bool = true
 
 def functional-tag item
-	# console.log 'called functional tag',item,imba.renderContext.context
 	<div> <page-item item=item>
 
 tag page-item

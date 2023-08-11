@@ -240,8 +240,6 @@ export class Router < EventEmitter
 		let target = url.href.slice(url.origin.length)
 		let currpath = realpath.split('#')[0]
 		let newpath = target.split('#')[0]
-
-		# console.log 'clicklink',target,url,currpath,newpath
 		# checking if we are only changing the hash here
 		if currpath == newpath
 			global.document.location.hash = url.hash

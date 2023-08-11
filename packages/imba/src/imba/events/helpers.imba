@@ -54,7 +54,6 @@ export def createScale a0,a1,b0r,b1r,s = 0.1
 	return do(value,fit)
 		let pct = (value - a0) / (a1 - a0)
 		let val = b0 + (b1 - b0) * pct
-		# console.log 'scaling',value,[a0,a1],[b0,b1],s,val
 		val = round(val,sv) if s
 		val = clamp(val,b0,b1) if fit
 		return val

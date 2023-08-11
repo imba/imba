@@ -1,7 +1,6 @@
 import { Monarch } from '../program/monarch'
 
 export def parseAsset raw,name
-	# console.log 'parse asset',name,raw
 	# what if we cannot parse this asset?
 	let text = raw.body
 
@@ -140,5 +139,4 @@ export def parseHTML raw
 		outstr += tok.value
 
 	result.contents = outstr.replace(/<\/link>/g,'')
-	# console.log tags.script
 	return result

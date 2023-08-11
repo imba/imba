@@ -20,7 +20,7 @@ def createServer(root = process.cwd())
 	# 	manifest = (await import("./client/manifest.json")).default
 	const resolve = do(p) path.resolve(root, p)
 	const app = express()
-	const options = 
+	const options =
 		mode: import.meta.env.MODE
 		outDir: "dist2"
 	await setupVite app, options, do(dist)

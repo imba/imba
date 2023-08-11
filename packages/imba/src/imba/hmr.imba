@@ -31,8 +31,6 @@ class DevTools
 			let match = urls.find do $1 and $1.replace(regex,'') == url.replace(regex,'')
 			if match and url != match and urls.indexOf(url) == -1
 				dirty.js.push([url,match])
-
-		# console.log "refreshed",manifest,dirty
 		if dirty.js.length
 			global.document.location.reload!
 		self
@@ -78,7 +76,7 @@ class DevTools
 				console.error("error in {item.location.file}: {item.location.lineText} ({item.text})")
 			return
 
-		socket.addEventListener("reload") do(e)	
+		socket.addEventListener("reload") do(e)
 			log 'asked to reload by server'
 			global.document.location.reload!
 

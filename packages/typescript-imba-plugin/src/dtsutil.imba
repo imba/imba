@@ -24,18 +24,14 @@ def extractBlock name,text,imports = []
 
 	return info
 
-
 export def rewriteDts code
 	let mappings = {}
-	# console.log 'rewrite',code.length
 	let imports = {}
 	code.replace(/^import ([^\;]+)\;/gm) do(m,all)
 		let [names,path] = all.split(' from ')
 		for part in names.replace(/[\{\}\,]/g,' ').trim!.split(/\s+/)
 			imports[part] = path
 		return ''
-
-	# console.log imports
 	# return ""
 	let old = code
 	code = code.replace(CLASS) do(m,extname,body)
@@ -43,7 +39,6 @@ export def rewriteDts code
 		let lines = body.split('\n')
 		let that = (body.match(EXTENDS) or [])
 		let info = extractBlock(name,that[1])
-		# console.log 'match',extname,name,body.length,that,info
 
 		if utils.isTagIdentifier(name)
 			let el = utils.tagNameToClassName(name)
@@ -61,7 +56,6 @@ export def rewriteDts code
 
 		# if name == 'ImmediateDefJS'
 		#	body = body.replaceAll(': this;',': globalThis.ImmediateDefJS;')
-
 
 		body = body.replace(/\@this \{.+?\}/gs,'')
 		body = body.replace(/\/\*\*?[\r\n\t\s]*\*\//g,'')

@@ -17,40 +17,38 @@ let EXTRA_EXTENSIONS = ['.imba']
 def isEditing
 	global.state.command == 'updateOpen'
 
-
 def stack state, cb
 	let prev = global.state
 	global.state = state
 	let res = cb()
 	global.state = prev
-	return res	
+	return res
 
 export class Session
-	
+
 	def onMessage msg
 		global.session = self
 		#onMessage(msg)
-		
+
 	def toEvent name, body
 		#toEvent(name,body)
-		
+
 	def doOutput info, cmdName, reqSeq, success, message
 		#doOutput(info, cmdName, reqSeq, success, message)
 
-	
 	def send msg
 		let log = yes
-		
+
 		if msg.body and msg.body.diagnostics and msg.body.diagnostics.length == 0
 			log = no
-			
+
 		if log
 			util.log("send {msg.type} {msg.event or msg.command}",msg)
-		
+
 		msg = JSON.parse(util.toImbaString(JSON.stringify(msg)))
-		
+
 		#send(msg)
-		
+
 	def refreshDiagnostics
 		# @ts-ignore
 		let files = Array.from(projectService.openFiles.keys!).filter do !util.isImbaDts($1)
@@ -64,19 +62,19 @@ export class Session
 
 	def getFormattingEditsForRange args
 		#getFormattingEditsForRange(args)
-		
+
 	def getFormattingEditsForRangeFull args
 		#getFormattingEditsForRangeFull(args)
-		
+
 	def getFormattingEditsForDocumentFull args
 		#getFormattingEditsForDocumentFull(args)
-		
+
 	def getFormattingEditsAfterKeystroke args
 		#getFormattingEditsAfterKeystroke(args)
-		
+
 	def getFormattingEditsAfterKeystrokeFull args
 		#getFormattingEditsAfterKeystrokeFull(args)
-	
+
 	def getOutliningSpans args, simplified
 		if util.isImba(args.file)
 			return null
@@ -87,10 +85,10 @@ export class Session
 		let data = #parseMessage(msg)
 		if global.ils
 			data = global.ils.rewriteInboundMessage(data)
-			
+
 		unless data.command == 'configurePlugin'
 			util.log("receive {data.type} {data.command}",data)
-		
+
 		if prev and prev.command == 'encodedSemanticClassifications-full'
 			if util.isImba(prev.arguments.file)
 				if data.command == 'geterr'
@@ -98,12 +96,12 @@ export class Session
 					# there will still be the same errors?
 					data.arguments.files = [prev.arguments.file]
 					# data.skip = yes
-		
+
 		#lastReceived = data
 		return data
-		
+
 	def toFileSpan file, span, project
-		
+
 		let res = null
 		if util.isImba(file)
 			let script = project.getScriptInfo(file)
@@ -116,15 +114,15 @@ export class Session
 			}
 		else
 			res = #toFileSpan(file,span,project)
-			
+
 		util.log('toFileSpan',file,span,res)
 		return res
-		
+
 	def executeCommand request
 		# we want to intercept some commands on the syntactic server
 		# if request.command.indexOf('navtree') == 0
 		#	return { responseRequired: false }
-			
+
 		if request.command == 'configurePlugin' and request.arguments.pluginName == 'imba'
 			let data = request.arguments.configuration
 			if global.ils
@@ -137,7 +135,7 @@ export class Session
 
 		let res = stack(request) do #executeCommand(request)
 		return res
-		
+
 	def filterDiagnostics file, project, diagnostics, kind
 		let script = project.getScriptInfoForNormalizedPath(file)
 		let state = {}
@@ -147,14 +145,14 @@ export class Session
 			return []
 
 		# util.log('filterDiagnostics!',diagnostics,project)
-		
+
 		# return diagnostics unless script.#imba
-		
+
 		for item in diagnostics
 			try
 				let mapper = item.#mapper ||= item.file..scriptSnapshot..mapper
 				continue unless mapper
-				
+
 				if item.#converted =? yes
 					# item.messageText = util.toImbaMessageText(item.messageText)
 					let mapper = item.file..scriptSnapshot..mapper
@@ -162,7 +160,7 @@ export class Session
 					item.#otext = mapper.otext(opos[0],opos[1])
 					Diagnostics.filter(item,project,kind)
 					continue if item.#suppress
-					
+
 					# for rel in item.relatedInformation
 					#	rel.messageText = util.toImbaMessageText(rel.messageText)
 
@@ -177,7 +175,7 @@ export class Session
 						# hide the diagnostic if it doesnt map perfectly
 						item.start = item.length = 0
 						item.#suppress = yes
-				
+
 				if item.#ipos
 					item.start = mapper.i2d(item.#ipos[0])
 					item.length = mapper.i2d(item.#ipos[1]) - item.start
@@ -185,19 +183,19 @@ export class Session
 					if text != item.#text
 						# util.log('suppress item',item,item.#text,text)
 						item.#suppress = yes
-				
+
 			catch e
 				util.log('error',e)
-		
+
 		# util.log('filterDiagnostics',file,diagnostics)
 		return diagnostics.filter do !$1.#suppress
-			
+
 	def sendDiagnosticsEvent(file, project, diags, kind)
 		if kind == 'semanticDiag' and diags.length
 			util.log('sendDiagnisticsPrefilter',diags.slice(0))
 
 		diags = filterDiagnostics(file,project,diags,kind)
-		
+
 		if kind == 'semanticDiag' and util.isImba(file) and global.ils
 			let script = global.ils.getImbaScript(file)
 			let add = script.getImbaDiagnostics()
@@ -213,20 +211,20 @@ export class Session
 			start: 284
 			###
 			# for item in script.diagnostics
-		
+
 		# if diags.length
 		#	util.log('sendDiagnosticsEvent',file, project, diags.slice(0,5), kind)
 		#sendDiagnosticsEvent(file,project,diags,kind)
-		
+
 	def convertToDiagnosticsWithLinePosition diagnostics, script
 		# util.log 'convertToDiagnosticsWithLinePosition',diagnostics,script
 		#convertToDiagnosticsWithLinePosition(diagnostics, script)
 
 export class ScriptInfo
-	
+
 	get imbaContent
 		#imba..content
-	
+
 	# mostly used by session to format diagnostics etc for vscode
 	# default to convert to the imba offsets instead. It's important
 	# to make sure diagnostics have converted the start,length props
@@ -239,7 +237,7 @@ export class ScriptInfo
 
 		let res = #positionToLineOffset(pos)
 		return res
-	
+
 	# mostly called by session to convert from positions coming in from
 	# vscode (ie. from the live imba file). Here we usually want the position
 	# in the imba file - and then rather convert that to js when we want to.
@@ -247,17 +245,17 @@ export class ScriptInfo
 		if #imba
 			return #imba.lineOffsetToPosition(line, offset, editable)
 		#lineOffsetToPosition(line,offset, editable)
-		
+
 	def o2d pos, source
 		getMapper(source).o2d(pos)
-			
+
 	def d2o pos, source
 		getMapper(source).d2o(pos)
 
 	def jsPositionToImbaLineOffset pos
 		let dpos = getMapper!.o2d(pos)
 		#imba.svc.positionToLineOffset(dpos)
-		
+
 	def positionToImbaLineOffset offset
 		let snap = getSnapshot!
 		let converted = snap.c.o2i(offset)
@@ -265,7 +263,7 @@ export class ScriptInfo
 		util.log('converted',path,offset,converted)
 		let lo = snap.mapper.input.index.positionToLineOffset(converted)
 		return lo
-		
+
 	def getMapper target
 		# @ts-ignore
 		let snap = target ? target.getSourceFile(path).scriptSnapshot : getSnapshot!
@@ -285,19 +283,18 @@ export class ScriptInfo
 		util.log('editContent',start,end,newText)
 		if #imba
 			#imba.editContent(start,end,newText)
-		else	
+		else
 			#editContent(start,end,newText)
-			
+
 	def getSnapshot
 		# util.log('getSnapshot',self.path)
 		#imba
 		return #getSnapshot!
-		
 
 export class TextStorage
-	
+
 	# ts.server.ScriptVersionCache.fromString
-	
+
 	def getFileTextAndSize tempName
 		# @ts-ignore
 		if util.isImba(info.path)
@@ -307,23 +304,23 @@ export class TextStorage
 			# info.im
 			# should get the compilation connected
 		#getFileTextAndSize(tempName)
-	
+
 	def smartReplaceText text
 		# calculate edits by comparing current snapshot with content
 		self
 
 export class System
-	
+
 	get virtualFileMap
 		global.ils and global.ils.virtualFiles or {}
-	
+
 	def readVirtualFile path
 		let body = virtualFileMap[path]
 		if body == undefined
 			body = virtualFileMap[path.toLowerCase!]
-		
+
 		typeof body == 'string' ? body : undefined
-		 
+
 	def fileExists path
 		# util.log('fileExists',path)
 
@@ -340,7 +337,6 @@ export class System
 			elif path.indexOf('.imba') >= 0
 				let ipath = path.replace(/\.ts$/,'')
 				if #fileExists(ipath)
-					# console.log `fileExists {path} -> {ipath}`
 					return yes
 
 		if (/[jt]sconfig\.json/).test(path)
@@ -349,10 +345,8 @@ export class System
 			if readVirtualFile(path) !== undefined
 				return true
 
-		
-				
 		return #fileExists(path)
-	
+
 	# readDirectory?(path: string, extensions?: readonly string[], exclude?: readonly string[], include?: readonly string[], depth?: number): string[];
 	def readDirectory path, extensions, exclude, include,depth
 		let res = #readDirectory(path,extensions, exclude, include,depth)
@@ -360,9 +354,8 @@ export class System
 			for name,i in res
 				if name.endsWith('.imba')
 					res[i] = name + '.ts'
-		# console.log('readDirectory',arguments,res)
 		return res
-	
+
 	def readFile path,encoding = null
 		if path.indexOf('.imba._.d.ts') >= 0
 			return readVirtualFile(path)
@@ -371,14 +364,14 @@ export class System
 			if let body = readVirtualFile(path)
 				util.log("return virtual file",path,body)
 				return body
-			
+
 		const body = #readFile(...arguments)
-		
+
 		# if this is an imba file we want to compile it on the spot?
 		# if the script doesnt already exist...
 
 		return body
-		
+
 export class Project
 
 	###
@@ -396,9 +389,7 @@ export class Project
 			if name..match(/\.imba\.ts$/)
 				hit.resolvedFileName = name.replace(/\.ts$/,'')
 				hit.extension = '.js'
-				# util.log('resolved',name)
-				# L `resolved`,name
-			
+
 			elif name..match(/\._ils\.ts$/)
 				# Unclear if still used?
 				hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
@@ -418,12 +409,10 @@ export class Project
 			let imbadts = value.lib.find(do $1.indexOf('imba.d.ts') >= 0)
 			unless imbadts
 				let rel = global.IMBA_TYPINGS or "" # __realname.replace('dist/index.js','typings/imba.d.ts')
-				# console.log "set",value,require.resolve('typescript-imba-plugin')
 				if global.IMBA_PATH
 					rel = global.IMBA_PATH + '/typings/imba.d.ts'
-				
+
 				# rel ||= require.resolve 'typescript-imba-plugin/typings/imba.d.ts'
-				# console.log require.resolve 'typescript-imba-plugin/typings/imba.d.ts'
 				rel ||= __realname.replace('dist/index.js','typings/imba.d.ts')
 				value.lib.push(rel) if rel
 
@@ -432,7 +421,7 @@ export class Project
 		let res = #setCompilerOptions(value)
 		util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
 		return
-		
+
 	def onPluginConfigurationChanged name, data
 		util.log('configChanged',name,data)
 		if name == 'imba' and global.ils
@@ -447,7 +436,6 @@ export class Project
 		return #shouldSupportImba = true if files.length > 0
 		return false
 
-		
 export class ProjectService
 
 	def activateProjectForImba project
@@ -455,7 +443,7 @@ export class ProjectService
 		return if isLoading
 
 		if project.#patchedForImba =? yes
-			
+
 			if project.shouldSupportImba!
 				util.log('activateProjectForImba',project,hostConfiguration)
 				let path = project.canonicalConfigFilePath
@@ -463,9 +451,9 @@ export class ProjectService
 				if cfg..config
 					cfg.config.reloadLevel = 1
 					reloadFileNamesOfConfiguredProject(project)
-			
+
 		self
-		
+
 	def awakenProjectForImba project
 		util.warn('awakenProjectForImba',project)
 
@@ -474,10 +462,7 @@ export class ProjectService
 		let conf = hostConfiguration
 		#sendProjectLoadingStartEvent(project,reason)
 
-		
-	
 	def sendProjectLoadingFinishEvent project
-		# console.log('sendProjectLoadingFinishEvent',!!project.#patchedForImba,project.rootFiles.length,project.compilerOptions,project.NR,project.rootFilesMap.keys())
 		#sendProjectLoadingFinishEvent(project)
 		try
 			if !project.#patchedForImba
@@ -498,16 +483,16 @@ export class ProjectService
 			#	fileContent = Compiler.readFile(fileName,fileContent)
 
 		let script = #getOrCreateOpenScriptInfo(fileName, fileContent, scriptKind, hasMixedContent, projectRootPath)
-		
+
 		script.#imba
-		
+
 		if script.#imba and origFileContent !== undefined
 			script.#imba.openedWithContent(origFileContent)
-			
+
 		return script
-		
+
 export class ScriptVersionCache
-	
+
 	def getRawChangesBetweenVersions oldVersion, newVersion
 		let edits = []
 		while oldVersion < newVersion
@@ -515,41 +500,40 @@ export class ScriptVersionCache
 			let snap = this.versions[++oldVersion]
 			for edit of snap.changesSincePreviousVersion
 				edits.push([edit.pos,edit.deleteLen,edit.insertedText or ''])
-		
+
 		return edits
-		
+
 	def smartReplaceText text
 		# calculate edits by comparing current snapshot with content
 		self
-		
+
 	def getRawChangesSince oldVersion = 0
 		# @ts-ignore
 		let snap = getSnapshot!
 		getRawChangesBetweenVersions(oldVersion,snap.version)
-			
+
 	get syncedVersion
 		# @ts-ignore
 		getSnapshot!.version
-			
+
 	def getFullText
 		# @ts-ignore
 		let snap = getSnapshot!
 		snap.getText(0,snap.getLength!)
-		
+
 	def getAdjustedOffset fromOffset, from, to = syncedVersion, stickyStart = no
-		
+
 		let minVersion = Math.min(from,to)
 		let maxVersion = Math.max(from,to)
-		
+
 		if minVersion == maxVersion
 			return fromOffset
-		
+
 		let edits = getRawChangesBetweenVersions(minVersion,maxVersion)
-		# console.log 'edits!!',edits,from,to
-		
+
 		if edits.length == 0
 			return fromOffset
-			
+
 		# this is a range
 		if fromOffset.start != undefined
 			return {
@@ -559,14 +543,14 @@ export class ScriptVersionCache
 
 		let offset = fromOffset
 		let modified = no
-		
+
 		if from < to
 			for [start,len,text] in edits
 				continue if start > offset
 				start -= 1 if stickyStart
 				if offset > start and offset > (start + len)
 					offset += (text.length - len)
-						
+
 		elif to < from
 			for [start,len,text] in edits.slice(0).reverse!
 				continue if start > offset
@@ -574,13 +558,12 @@ export class ScriptVersionCache
 					offset -= (text.length - len)
 
 		return offset
-		
+
 	def rewindOffset offset, version
 		getAdjustedOffset(offset,syncedVersion,version,yes)
-	
+
 	def forwardOffset offset, fromVersion
 		getAdjustedOffset(offset,fromVersion,syncedVersion,yes)
-
 
 export class TS
 
@@ -591,7 +574,7 @@ export class TS
 		let res = resolveModuleName.apply(self,args)
 		EXTRA_EXTENSIONS = ['.imba']
 		return res
-	
+
 	def getSupportedExtensions options, extra
 		let res = #getSupportedExtensions(options,extra)
 		# util.log 'getSupportedExtensions',options,extra,res
@@ -621,27 +604,25 @@ export class TS
 					hit.extension = '.ts'
 
 		return res
-	
+
 	def getScriptKindFromFileName fileName
 		const ext = fileName.substr(fileName.lastIndexOf("."))
 		# @ts-ignore
 		return self.ScriptKind.JS if ext == '.imba'
 		return #getScriptKindFromFileName(fileName)
-		
-		
 
 export def subclasses ts
 	let O = {}
 	class O.ImbaScriptVersionCache < ts.server.ScriptVersionCache
-		
+
 		def currentVersionToIndex
 			currentVersion
-			
+
 		def versionToIndex number
 			number
 
 	return O
-	
+
 export default def patcher ts
 	util.extend(ts.server.Session.prototype,Session)
 	util.extend(ts.server.ScriptInfo.prototype,ScriptInfo)
@@ -652,12 +633,12 @@ export default def patcher ts
 	util.extend(ts.sys,System)
 	ts.sys.readFile = ts.sys.readFile.bind(ts.sys)
 	util.extend(ts,TS)
-	
+
 	let subs = subclasses(ts)
-	
+
 	for own k,v of subs
 		ts[k] = v
-	
+
 	const SymbolObject = global.SymbolObject = ts.objectAllocator.getSymbolConstructor!
 	const TokenObject = global.Token = ts.objectAllocator.getTokenConstructor!
 	const TypeObject   = global.TypeObject = ts.objectAllocator.getTypeConstructor!
@@ -665,8 +646,7 @@ export default def patcher ts
 	const SourceFile   = global.SourceFile = ts.objectAllocator.getSourceFileConstructor!
 	const Signature    = global.Signature = ts.objectAllocator.getSignatureConstructor!
 	const Identifier = global.Identifier = ts.objectAllocator.getIdentifierConstructor!
-	
-	
+
 	extend class TokenObject
 
 		get #primitiveValue
@@ -678,36 +658,32 @@ export default def patcher ts
 				return String(text)
 			return self
 
-
-
 	extend class SourceFile
-			
+
 		def i2o i
 			scriptSnapshot.mapper.i2o(i)
-			
+
 		def d2i i
 			scriptSnapshot.mapper.d2i(i)
-		
+
 		def d2o i
 			scriptSnapshot.mapper.d2o(i)
-			
+
 		def o2d i
 			scriptSnapshot.mapper.o2d(i)
-			
+
 		def getLocalTags
 			for [key,item] of locals
 				if item.exportSymbol and !item.exports
 					item = item.exportSymbol
 				continue unless item..exports..has('$$TAG$$')
 				item
-	
-	
+
 	extend class SymbolObject
-	
+
 		get pascal?
 			util.isPascal(escapedName)
-		
-		
+
 		get imbaName
 			return #imbaName if #imbaName
 			let name = escapedName
@@ -717,7 +693,7 @@ export default def patcher ts
 			#	name = name.split("_$SYM$_").join("#")
 			if name.indexOf('___') == 0
 				name = name.slice(1)
-				
+
 			if name == 'globalThis'
 				name = 'global'
 
@@ -727,7 +703,7 @@ export default def patcher ts
 			name = util.fromJSIdentifier(name)
 
 			#imbaName = name
-			
+
 		get imbaTags
 			return #imbaTags if #imbaTags
 			let tags = #imbaTags = {}
@@ -735,16 +711,16 @@ export default def patcher ts
 				let res = item.text or true
 				if res isa Array and res[0]
 					res = res[0]
-				
+
 				if res and res.kind == 'text'
 					res = res.text
-					
+
 				if typeof res == 'string' and res.indexOf('\\') >= 0
 					res = res.replace(/\\n/g,'\n').replace(/\\t/g,'\t')
-					
+
 				tags[item.name] = res
 			tags
-			
+
 		def doctag name
 			let tags = getJsDocTags!
 			for item in tags
@@ -754,53 +730,52 @@ export default def patcher ts
 						return res[0].text
 					return res
 			return null
-			
+
 		get isInternal
 			(/^__@|\$\d+$|^\$\$\w+\$\$|_\$INTERNAL\$_/).test(escapedName)
-			
+
 		get isTag
 			self.exports..has('$$TAG$$')
-		
+
 		get isHTMLTag
 			parent..escapedName == 'ImbaHTMLTags'
-			
+
 		get isWebComponent
 			(/^[\w\-]+CustomElement$/).test(escapedName)
 
 		get isGlobalTag
 			escapedName[0] == 'Γ'
-			
+
 		get isReadonly
 			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Readonly
 
 		get isDeprecated
 			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Deprecated
-		
+
 		get isPrivate
 			valueDeclaration..modifierFlagsCache & ts.ModifierFlags.Private
-			
+
 		get isDecorator
 			escapedName[0] == 'α'
-		
+
 		get isMetaSymbol
 			parent..parent..escapedName == 'imbameta'
-			
+
 		get isStyleProp
 			parent and parent.escapedName == 'imbacss' and (/^[a-zA-ZΞ]/gu).test(escapedName)
-			
+
 		get isStyleModifier
 			parent and parent.escapedName == 'imbacss' and (/^α/gu).test(escapedName)
-		
+
 		get isStyleType
 			parent and parent.escapedName == 'imbacss' and (/^Ψ/gu).test(escapedName)
 
 		get isTagAttr
 			return no if isDeprecated
 			(flags & (ts.SymbolFlags.Property | ts.SymbolFlags.SetAccessor)) && (flags & ts.SymbolFlags.Function) == 0 && !isReadonly && !escapedName.match(/^on\w/)
-			
+
 		get method?
 			flags & ts.SymbolFlags.Method
 
 	return ts
-	
-	
+

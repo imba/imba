@@ -20,16 +20,14 @@ extend class SomeClass
 	def extthis
 		_this_.main!
 
-	
 	get that
 		self
 
 	get thut
 		method(self)
-	
+
 	get num
 		'10'
-
 
 extend class Local
 
@@ -41,7 +39,7 @@ extend class Local
 
 	get localState
 		global.localState
-		
+
 	get num
 		yes
 
@@ -63,7 +61,7 @@ extend tag element
 
 	get state
 		global.appState
-	
+
 	get other
 		<app-something>
 
@@ -87,7 +85,6 @@ extend tag app-button
 		offsetWidth
 		yes
 
-
 extend tag app-panel
 
 	def ext
@@ -97,7 +94,7 @@ extend class Element
 
 	get button\<app-button>
 		<app-button>
-	
+
 	get that
 		self
 
@@ -112,13 +109,10 @@ extend class Element
 
 	get rect2
 		parentElement
-		
+
 	def ext2
 		parentElement
 		parentElement
-
-		
-
 
 extend class ManualGlobal
 
@@ -129,7 +123,7 @@ extend class AutoGlobal
 
 	get that
 		self
-	
+
 extend class Element
 	get staff
 		1234

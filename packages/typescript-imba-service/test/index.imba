@@ -1,7 +1,6 @@
 import np from 'path'
 import fs from 'fs'
 
-
 import Service from '../index'
 import * as ts from 'typescript/lib/tsserverlibrary'
 
@@ -28,14 +27,13 @@ def run
 			p f.dts.#raw, f.fileName + ' dts'
 			p f.dts.#body, f.fileName + ' dts'
 			p f.dts.#mappings, ' mappings'
-	
+
 	def findPos file, pos
 		if typeof pos == 'string'
 			let off = pos.indexOf('~')
 			let index = file.content.indexOf(pos.replace('~',''))
 			pos = pos.replace(/\#\s.*/,'')
 			pos = index + (off >= 0 ? off : Math.floor(pos.length * 0.5))
-			# console.log 'foundpos?',pos,index
 		return pos
 
 	def findFile file
@@ -43,13 +41,12 @@ def run
 			file = s.file(file)
 		return file
 
-
 	def getdef file, pos
 		let src = file.fileName or file
 		pos = findPos(file,pos)
 		console.log 'get definition',pos
 		let res = x.ls.getDefinitionAndBoundSpan(src,pos)
-		
+
 		if res
 			p res.textSpan
 			p res.definitions
@@ -78,7 +75,6 @@ def run
 		let plain = completions.serialize!.map do $1.label..name or $1.label
 
 		console.log inpos,plain,src + `:{ctx.line}:{ctx.column + 1}`
-		# console.log plain
 		return completions
 
 	def check doc, pos
@@ -90,14 +86,10 @@ def run
 
 	def completion file, filter = null, pos = "~\n# eof", o = {}
 		let res = completions(file, pos,{all: yes},filter)
-		# console.log 'res',res,res.items,pos,filter
 		# debugger
 		if res.items[0]
 			res.items[0].resolve!
-			# console.log res.items[0].importData
-			# console.log res.serialize![0]
 			return res.items[0]
-
 
 	if false
 		getdef(doc,'<ap~p-button ')
@@ -129,13 +121,11 @@ def run
 		completion(doc,/PrimaryButt/)
 		completion(doc,/PrimaryDef/)
 		let but = completion(doc,/AppButt/)
-		# console.log but.importInfo.importClauseOrBindingPattern.namedBindings.elements[0]
 		completion(doc,/AppStar/)
-	
+
 	if 1
 		completions(doc,"import './~'")
 		# p completions(doc,"let m14\\~",{},/AppSt/).serialize!
-		
 
 	if 0
 		let res = completions(doc,"~\n# eof",{all: yes},/AppB/)
@@ -148,7 +138,6 @@ def run
 	let errors = ils.getDiagnostics!
 	errors.map do
 		console.log $1.code,$1.messageText,$1.category,$1.file..fileName
-	# console.log x.cp.rootFiles
 	for f in x.cp.rootFiles
 		console.log f.fileName
 

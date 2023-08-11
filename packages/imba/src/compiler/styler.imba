@@ -104,8 +104,6 @@ for dir,row of 'vh'
 				Object.assign(o,combo)
 				return o
 
-			# console.log "add layout function",name,combo
-
 			# if dir == 'v'
 
 export const validTypes = {
@@ -847,10 +845,8 @@ export class StyleTheme
 		return params
 
 	def box_shadow ...params
-		# console.log params.length # ,a..length
 		let o = {'box-shadow': params}
 		for pair,i in params
-			# console.log par.length,par[0]
 			let tpl = no
 			for par,pi in pair
 				if pi == 0 and pair.length < 3
@@ -866,7 +862,6 @@ export class StyleTheme
 						o["--bxs-{tpl}-alpha"] = par.param.toAlpha!
 
 					par.set(parameterize: yes)
-					# console.log 'dealing with the color',par.option('parameterize')
 					pair[pi] = ''
 					# pair.pop!
 					yes
@@ -1043,7 +1038,7 @@ export class StyleTheme
 			o['align-content'] = o['align-items'] = align
 		return o
 
-	def outline params		
+	def outline params
 		# TODO use :where() selector for 0 specificity outline defaults
 		if params.length == 3 or (params.length == 1 and String(params[0]) == 'none')
 			return {outline: [params]}
@@ -1207,9 +1202,6 @@ export class StyleTheme
 		let fallback = no
 		let result = null
 		let unit = orig._unit
-
-		# console.log 'value',key
-		# console.log 'resolve value',raw
 		if typeof config == 'string'
 			if aliases[config]
 				config = aliases[config]
@@ -1269,7 +1261,7 @@ export class StyleTheme
 				if typ == '#'
 					return color.toString(a,typ)
 				elif typ == '##'
-					
+
 					return color.toVar(a)
 			return m
 		return text
@@ -1368,7 +1360,6 @@ export class StyleSheet
 
 			for item in v
 				for rule in (item.#rules or [])
-					# console.log rule
 					let ns = rule.#media or ''
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
 
@@ -1382,8 +1373,6 @@ export class StyleSheet
 					let group = groups[ns] ||= {}
 					group[sel] = rule
 					all[sel] = yes
-
-			# console.log 'groups',groups
 			if helper
 
 				for own ns,group of groups
@@ -1512,7 +1501,6 @@ export class StyleRule
 				# using :is it should be much, much easier with the nested selectors?
 				# can even just take the whole outer selector as a simple :is on this element
 				let substr = keys.slice(1).join('')
-				# console.log "SUBSTR",substr
 				# do we unwrap, or can we just use :where etc and trust it?
 				let subsel = selparser.unwrap(selector,substr)
 				let obj = {}
@@ -1530,13 +1518,12 @@ export class StyleRule
 			elif key[0] == '['
 				# better to just check if key contains '.'
 				# this is only for a single property
-				# console.warn "DEPRECATED",key,self
 				let o = JSON.parse(key)
 				subrules.push new StyleRule(self,selector,value,options)
 				continue
 
 			# elif key.match(/^outline-?/)
-			#	# meta.outline = yes 
+			#	# meta.outline = yes
 			#	parts.push "{key}: {value} !important;"
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)

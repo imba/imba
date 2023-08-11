@@ -11,7 +11,7 @@ const userPrefs = {
 
 const builtinMap = {
 	fs: {ns: 'fs'}
-	
+
 	'fs/promises': {ns: 'fs'}
 	child_process: {ns: 'cp'}
 	os: {ns: 'os'}
@@ -25,19 +25,19 @@ const builtinMap = {
 }
 
 export default class AutoImportContext
-	
+
 	constructor c
 		checker = c
 		tsc = checker.checker
 		script = c.script
 		self
-		
+
 	get ts
 		global.ts
-		
+
 	get ils
 		global.ils
-		
+
 	get ps
 		global.ils.ps
 
@@ -49,7 +49,7 @@ export default class AutoImportContext
 		res.$get = do res.get(checker.sourceFile.path,$1)
 		res.$find = do(pat)
 			Array.from(res.__cache.keys!).filter do $1.indexOf(pat) >= 0
-		
+
 		res.$resolve = do
 			let item = res.$get($1)
 			let out = resolver.getModuleSpecifierForBestExportInfo(item,$2 or null,$3 or 0,true)
@@ -91,14 +91,14 @@ export default class AutoImportContext
 			let resolved = resolver.getModuleSpecifierForBestExportInfo(item.exportInfo,item.exportName,0,false)
 			item.resolved = resolved
 		return results
-		
+
 	get exportInfoMap
 		unless ts.codefix.getSymbolToExportInfoMap isa Function or ts.getExportInfoMap isa Function
 			return #exportInfoMap ||= new Map()
-		
+
 		# @ts-ignore
 		return #exportInfoMap if #exportInfoMap
-			
+
 		let debugs = ts.Debug.isDebugging
 		ts.Debug.isDebugging = true
 		if ts.getExportInfoMap
@@ -128,18 +128,16 @@ export default class AutoImportContext
 					}
 		return null
 
-	
 	get exportInfoEntries
 		return #exportInfoEntries if #exportInfoEntries
 		let t0 = Date.now!
 
 		let map = exportInfoMap
 		let t1 = Date.now!
-		
-		
+
 		let groups = {}
 		let out = #exportInfoEntries = []
-		
+
 		try
 			if map.releaseSymbols isa Function
 				let nr = 0
@@ -157,7 +155,7 @@ export default class AutoImportContext
 
 					if util.isTagIdentifier(name) or util.isClassExtension(name)
 						return
-					
+
 					let gid = info.packageName or info.modulePath
 					let group = groups[gid] ||= {
 						symbol: info.moduleSymbol
@@ -175,14 +173,11 @@ export default class AutoImportContext
 					if group.exportStar
 						return
 
-					
-
-					
 					group.exports.push(info)
-					
+
 					if info.exportKind == 2 or info.exportKind == 1
 						group.default = info
-						
+
 					if group.exports.length == 2
 						# now we are ready to add a shared export for this whole file
 						let ginfo = {
@@ -195,14 +190,14 @@ export default class AutoImportContext
 							exportedSymbolIsTypeOnly: false
 						}
 						out.push(ginfo)
-					
+
 					let isTag = try info.symbol.exports..has('$$TAG$$')
 					info.isTag = isTag
-					
+
 					info.isDecorator = name and name[0] == 'α'
 
 					out.push(info)
-					
+
 					if info.exportKind == 2
 						info.exportName = util.pathToImportName(info.packageName or info.modulePath)
 
@@ -214,7 +209,7 @@ export default class AutoImportContext
 
 				for [key,[info]] of map
 					let [name,ref,ns] = key.split('|')
-					# continue if ns.match(/^imba_/)	
+					# continue if ns.match(/^imba_/)
 					continue if ns[0] != '/' and !builtinMap[ns]
 					let path = getResolvePathForExportInfo(info) or ns
 					continue if util.isImbaDts(path)
@@ -226,7 +221,7 @@ export default class AutoImportContext
 					info.packageName = getPackageNameForPath(path)
 					info.#key = key
 					info.exportName = name
-					
+
 					let gid = info.packageName or info.modulePath
 					let group = groups[gid] ||= {
 						symbol: info.moduleSymbol
@@ -243,10 +238,10 @@ export default class AutoImportContext
 
 					group.exports.push(info)
 					info.#group = group
-					
+
 					if info.exportKind == 2 or info.exportKind == 1
 						group.default = info
-						
+
 					if group.exports.length == 2
 						# now we are ready to add a shared export for this whole file
 						let ginfo = {
@@ -261,7 +256,7 @@ export default class AutoImportContext
 						group.#entry = ginfo
 						ginfo.#group = group
 						out.push(ginfo)
-					
+
 					let isTag = try info.symbol.exports..has('$$TAG$$')
 					info.isTag = isTag
 					out.push(info)
@@ -273,7 +268,7 @@ export default class AutoImportContext
 			util.log "error in exportInfoEntries",e
 		util.log "exportInfoEntries in {Date.now! - t0}ms {Date.now! - t1}ms"
 		return out
-		
+
 	def getExportedValues
 		let entries = exportInfoEntries.filter do !$1.exportedSymbolIsTypeOnly and !$1.isTypeOnly
 
@@ -283,40 +278,40 @@ export default class AutoImportContext
 
 		entries = entries.filter do(entry)
 			!entry.packageName or packages[entry.packageName]
-			
+
 	def getExportedDecorators
 		exportInfoEntries.filter do $1.isDecorator
-		
+
 	def getExportedTypes
 		let res = search('',ts.SymbolFlags.Type)
 		return res
 		# exportInfoEntries.filter do
 		#	$1.exportedSymbolIsTypeOnly or $1.isTypeOnly or ($1.symbol.flags & ts.SymbolFlags.Type)
-	
+
 	def getExportedTags
 		let named = checker.getTagDeclarationNames!.filter do $1.body..exports?
 		let names = named.map do $1.value
 		let found = search do(name) names.indexOf(name) >= 0
 		return found
 		# exportInfoEntries.filter do $1.isTag
-			
+
 	def getPackageNameForPath path
 		let m
 		if m = path.match(/\@types\/((?:\@\w+\/)?[\w\.\-]+)\/index\.d\.ts/)
 			return m[1]
-			
+
 		if m = path.match(/\/node_modules\/((?:\@\w+\/)?[\w\.\-]+)\//)
 			return m[1]
-		
+
 		# @ts-ignore
 		if !ts.pathIsAbsolute(path)
 			return path
-					
+
 		return null
-		
+
 	def getPackageJsonsVisibleToFile
 		ps.getPackageJsonsVisibleToFile(script.fileName)
-	
+
 	def getVisiblePackages
 		let jsons = getPackageJsonsVisibleToFile(script.fileName)
 		let packages = {}
@@ -325,7 +320,7 @@ export default class AutoImportContext
 			let devDeps = Object.fromEntries(pkg.devDependencies or new Map)
 			Object.assign(packages,deps,devDeps)
 		return packages
-		
+
 	def getResolvePathForExportInfo info
 		if let ms = info.moduleSymbol
 			let path = ms.valueDeclaration..fileName

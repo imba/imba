@@ -12,7 +12,6 @@ export class Converter
 				if matcher(rule[0],value)
 					return value[1]
 			# if type.indexOf(strtest) >= 0 and (modtest == 0 or mods & modtest)
-			#	console.log 'found?',strtest
 			#	return flags
 		return 0
 
@@ -31,7 +30,6 @@ export def prevToken start, pattern, max = 100000,lines = 100000
 		if tok.type == 'br' or tok.value == '\n'
 			lines--
 		tok = tok.prev
-		
 
 	return null
 
@@ -47,7 +45,7 @@ export def isTagIdentifier str
 
 export def isClassExtension str
 	str[0] == 'Ω'
-	
+
 export def computeLineOffsets text, isAtLineStart, textOffset
 	if textOffset === undefined
 		textOffset = 0
@@ -110,7 +108,6 @@ export def editIsFull e
 export def editIsIncremental e
 	return !editIsFull(e) && (e.rangeLength === undefined or typeof e.rangeLength === 'number')
 
-
 export def fastExtractSymbols text
 	let lines = text.split(/\n/)
 	let symbols = []
@@ -127,7 +124,7 @@ export def fastExtractSymbols text
 		let indent = line.match(/^\t*/)[0].length
 
 		while scope.indent >= indent
-			scope = scope.parent or root 
+			scope = scope.parent or root
 
 		m = line.match(/^(\t*((?:export )?(?:static )?(?:extend )?)(class|tag|def|get|set|prop|attr) )(\@?[\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 		# m ||= line.match(/^(.*(def|get|set|prop|attr) )([\w\-\$]+)/)
@@ -161,10 +158,9 @@ export def fastExtractSymbols text
 
 			if symbol.static
 				symbol.containerName = 'static'
-			
+
 			symbol.containerName = m[2] + m[3]
-				
-			
+
 			if kind == 'tag' and m = line.match(/\<\s+([\w\-\$\:]+(?:\.[\w\-\$]+)?)/)
 				symbol.superclass = m[1]
 
@@ -176,11 +172,10 @@ export def fastExtractSymbols text
 			scope = symbol
 
 			symbols.push(symbol)
-	
+
 	root.all = symbols
-	# console.log 'fast outline',text.length,Date.now! - t0
 	return root
-	
+
 # To avoid collisions etc with symbols we are using
 # greek characters to convert special imba identifiers
 # to valid js identifiers.
@@ -210,7 +205,7 @@ const toImbaReplacer = do(m) ToImbaMap[m]
 
 export def toImbaIdentifier raw
 	raw ? raw.replace(toImbaRegex,toImbaReplacer) : raw
-	
+
 export def toImbaString str
 	unless typeof str == 'string'
 		# log('cannot convert to imba string',str)
@@ -218,22 +213,20 @@ export def toImbaString str
 
 	str = str.replace(toImbaRegex,toImbaReplacer)
 	return str
-	
+
 export def toImbaMessageText str
 	if typeof str == 'string'
 		return toImbaString(str)
 	if str.messageText
 		str.messageText = toImbaMessageText(str.messageText)
-	
+
 	return str
-	
 
 export def fromJSIdentifier raw
 	toImbaIdentifier(raw)
-	
+
 export def displayPartsToString parts
 	fromJSIdentifier(global.ts.displayPartsToString(parts))
-
 
 const TAG_TYPES = {
 	"": [-1,{id: 1,className: 'class',slot: 1,part: 1,elementTiming: 'elementtiming'}]
@@ -573,9 +566,6 @@ for own name,ref of TAG_NAMES
 export def tagNameToClassName name
 	let ref = toImbaIdentifier(name)
 	let hit = TAG_NAMES[ref]
-	# console.log 'hit?!',ref
 	return hit
 	# fromJSIdentifier(global.ts.displayPartsToString(parts))
-
-# console.log tagNameToClassName('element')
 

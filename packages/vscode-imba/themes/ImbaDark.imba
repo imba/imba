@@ -94,7 +94,7 @@ export let colors = {
 
 def dim color, amount = 0.2
 	chroma(color).saturate(-amount).hex()
-	
+
 def darken color, amount = 0.2
 	chroma(color).darken(amount).hex()
 
@@ -228,7 +228,7 @@ export let vstheme = {
 	"titleBar.activeForeground": "#9da5b4",
 	"titleBar.inactiveBackground": colors.bgdark,
 	"titleBar.inactiveForeground": "#6b717d"
-	
+
 	# customizations
 	"activityBar.background": colors.chromebg,
 	"editor.rangeHighlightBorder": "#40577a",
@@ -328,11 +328,11 @@ export let scopes = [
 	['constant.language.super',colors.keyword]
 	['entity.name.type',colors.prop]
 	['invalid.whitespace',background: colors.red400]
-	
+
 	['support.function',colors.accessor]
 	['support.function.require',colors.keyword]
 	['support.variable.property',colors.accessor]
-	
+
 	['variable.parameter',colors.parameter]
 	['variable.special',colors.special]
 	['variable.other',colors.ivar]
@@ -352,16 +352,16 @@ export let scopes = [
 	['variable.language.global',colors.imports]
 	['meta.import variable.other',colors.imports]
 	['meta.definition.variable variable.other.readwrite',colors.variable]
-			
+
 	['meta.embedded.line',colors.gray200]
 	['entity.name.function',colors.prop]
 
 	['meta.definition.function entity.name.function',colors.prop]
 	['meta.definition entity.name.function',colors.prop]
 	['meta.definition.property variable.object.property',colors.prop]
-	
+
 	['meta.object-literal.key',colors.identifier]
-	
+
 	['meta.tag',darken(colors.tag,1.5)]
 	['meta.tag.attributes',darken(colors.tag,0)]
 	['entity.name.tag',colors.tag]
@@ -373,20 +373,19 @@ export let scopes = [
 	['entity.other.tag-ref.imba',`#ffc799`]
 	['entity.other.tag-mixin.imba',`#ffc799`]
 	# ['entity.other.tag.class-name',colors.yellow200]
-	# 
 	# ['entity.other.tag.event-modifier',colors.event-modifier]
-	
+
 	['support.class',colors.pascal]
 	['support.variable -support.variable.property',colors.pascal]
 	# ['support.function',colors.pascal]
 	['support.constant',colors.pascal]
 	['support.type.property-name',colors.prop]
-	
+
 	['string.quoted',colors.string]
 	['string.template',colors.string]
 	['string.regexp',colors.regexp]
 	['string.symbol',colors.symbol]
-	
+
 	['meta.type.annotation',colors.type]
 	['meta.type.annotation variable',colors.type]
 	['meta.type.annotation variable.other.readwrite',colors.type]
@@ -394,7 +393,7 @@ export let scopes = [
 	['meta.type.annotation support.class.builtin',colors.type]
 	['meta.type.annotation keyword.operator',colors.type]
 	['meta.type.annotation entity.name',colors.type]
-	
+
 	['meta.type.annotation entity.name.type',colors.type]
 
 	['keyword.operator.type',colors.type]
@@ -410,19 +409,19 @@ export let scopes = [
 	['support.constant.property-value','#a49feb']
 	['punctuation.separator.key-value.css','#e0ade3'] # 6d829b
 	['punctuation.separator.sel-properties.css','#6d829b'] # 6d829b
-	
+
 	['punctuation.separator.combinator.css','#eec487'] # 6d829b
 	['meta.selector entity.other.attribute-name','#eec487'] # 6d829b
 	['meta.selector entity.other.attribute-name.class','#e9e19b'] # 6d829b
 	['meta.style entity.other.attribute-name.mixin','#ffc799'] # 6d829b
 
 	['constant.other.color','#a49feb'] # 6d829b
-	
+
 	['meta.style.imba support.constant.color','#a49feb'] # 6d829b
 	['meta.style.imba support.constant.color','#a49feb'] # 6d829b
 	['meta.style.imba style.property.operator','#b37bb6']
 	['source.imba punctuation.separator.key-value.css','#b37bb6']
-	
+
 	# markdown
 	# ['entity.name.section.markdown','#ffffff']
 	['markup.fenced_code.block.markdown','#77b3d1']
@@ -434,9 +433,7 @@ export let scopes = [
 	['markup.inline.raw.string.markdown','#77b3d1']
 	['markup.underline.link',colors.blue200]
 	['markup.quote.markdown',colors.gray400,'italic']
-	
-	
-	
+
 	# ['meta.tagtree string.quoted',colors.string]
 	# ['meta.import punctuation.definition.block',colors.keyword]
 	# ['meta.import punctuation.separator.comma',colors.keyword]

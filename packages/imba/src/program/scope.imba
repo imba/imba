@@ -441,7 +441,6 @@ export class BracketsNode < Group
 	static def build doc,tok,scope,typ,types
 		let cls = self
 		let chr = doc.content[tok.offset - 1] # tok.prev.value # .slice(-1)
-		# console.log 'build brackets',tok,chr
 		if !chr or ' [{(|=&-;\n\t:/*%+-'.indexOf(chr) >= 0 # chr.match(/[\s\[\,\(\n\,]/)
 			typ = 'array'
 			cls = ArrayNode

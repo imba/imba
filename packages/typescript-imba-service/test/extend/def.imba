@@ -6,7 +6,7 @@ global class SomeClass
 		global.appState
 
 global class SomeSubClass < SomeClass
-	
+
 	get sub
 		self
 

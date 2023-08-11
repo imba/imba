@@ -20,9 +20,8 @@ class @test < Field
 
 	name = ''
 
-
 class Hello
-	
+
 	prop something @test
 
 	def @num val = 0

@@ -1,5 +1,3 @@
-let L = console.log
-
 import './colors'
 import {performance} from 'perf_hooks'
 
@@ -103,7 +101,7 @@ export class Logger
 		if logLevels.indexOf(kind) < logLevels.indexOf(self.loglevel)
 			return self
 
-		return L! unless parts.length
+		return console.log! unless parts.length
 
 		let sym = logSymbols[kind] or kind
 		let [str,*rest] = format(*parts)
@@ -112,16 +110,16 @@ export class Logger
 		if #spinner and #spinner.isSpinning
 			if kind == 'success'
 				#spinner.clear!
-				L(sym + ' ' + str,*rest)
+				console.log(sym + ' ' + str,*rest)
 				#spinner.frame!
 
 			#spinner.text = str
 		else
-			L(sym + ' ' + str,*rest)
+			console.log(sym + ' ' + str,*rest)
 
 	def log
 		let [str,*rest] = format(*arguments)
-		L(str,*rest)
+		console.log(str,*rest)
 
 	def debug do write('debug',*arguments)
 	def info do write('info',*arguments)

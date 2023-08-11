@@ -64,7 +64,6 @@ def jsChanged(prev, next, filename)
 
 ###
  # remove code that only changes metadata and does not require a js update for the component to keep working
- #
  # 1) add_location() calls. These add location metadata to elements, only used by some dev tools
  # 2) ... maybe more (or less) in the future
  # @param code

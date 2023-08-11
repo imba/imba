@@ -299,7 +299,7 @@ global class SpecGroup < SpecComponent
 				await pre()
 
 		block.run!
-	
+
 	def traverse
 		if #traversed =? yes
 			SPEC.eval(blk,self) if blk
@@ -455,7 +455,6 @@ global class SpecAssert < SpecComponent
 global.spec = global.SPEC = new Spec
 global.test = global.spec.test
 global.describe = global.spec.describe
-# global def describe name, blk do SPEC.context.describe(name,blk)
 
 global def before name, blk do SPEC.before(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
@@ -468,7 +467,7 @@ global def eqcss el, match,sel,o = {}
 	elif el isa Element and !el.parentNode
 		document.body.appendChild(el)
 	if typeof sel == 'string'
-		el = el.querySelector(sel)	
+		el = el.querySelector(sel)
 	elif typeof sel == 'number'
 		el = el.children[sel]
 

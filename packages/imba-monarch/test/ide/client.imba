@@ -35,7 +35,7 @@ class State
 			window.ctx = context
 			window.ct = context.token.context
 			imba.commit!
-	
+
 	get loc
 		#loc
 
@@ -45,7 +45,7 @@ class State
 		doc = window.doc = new Script(owner,code)
 		loc = imba.locals.loc or 0
 		# parseInt(window.localStorage.getItem('loc') or '0')
-		
+
 const state = window.state = new State()
 
 global css @root
@@ -63,7 +63,7 @@ global css @root
 		d:hflex g:1 my:1 ai:center
 		dt d:inline-flex m:0 c:gray5
 		dd m:0
-	
+
 	.str bg:green4/5 c:green4 p:2px ws:pre
 	.num bg:blue4/5 c:blue4 p:1
 	.arr d:hflex g:1
@@ -93,7 +93,7 @@ global css @root
 		@before
 			pos:absolute fs:8px x:-50% y:-50%
 			content: counter(depth)
-	
+
 	.push + .pop
 		counter-increment:depth 0
 
@@ -125,7 +125,6 @@ global css @root
 	.style.name c:purple4
 	.style.modifier c:fuchsia4
 	.style.value c:indigo4
-	
 
 extend tag textarea
 	def on$caretmove mods, ctx, handler, o
@@ -181,9 +180,9 @@ tag ast-node
 
 tag ast-token < ast-node
 	css d:inline c:hue4
-	
+
 	<self .{data.#classes}
-		@click=(state.focus = data) 
+		@click=(state.focus = data)
 		@pointerenter=(state.hover = data)
 	> data.value
 
@@ -212,7 +211,6 @@ tag ast-node-info
 			of:hidden h:20px pos:absolute t:0px
 			@hover h:auto of:auto pos:absolute t:0px zi:100
 
-
 	<self>
 		if data isa Token
 			<div>
@@ -233,7 +231,6 @@ tag ast-node-info
 					<dd> <.multi.str[ws:pre]> parent.value # .split("\n").slice(0,10).join("\n").trim()
 					<dt> "outerText"
 					<dd> <.multi.str[ws:pre]> parent.outerText
-					
 
 tag Prop
 	<self>
@@ -293,14 +290,13 @@ tag Code
 		# log innerText,txt
 		# setTimeout(&,100) do save!
 
-
 	<self contentEditable='true' @keyup=reselected @pointerup=reselected spellcheck=false @paste=pasted>
 		# <pre[p:2 m:0 c:blue8]>
 		# 	<code innerHTML=highlight(data)>
 		<pre[p:6 m:0 c:blue8]>
 			<code> <ast-group data=data.root>
 
-tag App	
+tag App
 
 	def mount
 		try
@@ -317,7 +313,6 @@ tag App
 	def reset
 		imba.locals.loc = 0
 		document.location.reload!
-
 
 	def render
 		<self[inset:0 fs:12px d:vflex g:1 bg:black]
@@ -337,6 +332,5 @@ tag App
 						if state.context
 							<ast-context data=state.context>
 					<section> <pre$dts>
-						
-	
+
 imba.mount <App>

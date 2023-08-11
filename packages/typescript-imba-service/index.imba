@@ -8,31 +8,31 @@ global.IMBA_TYPINGS = require.resolve('typescript-imba-plugin/typings/imba.d.ts'
 class Logger
 	def close
 		yes
-		
+
 	def hasLevel lebel
 		yes
-		
+
 	def loggingEnabled
 		yes
-		
+
 	def perftrc
 		yes
-		
+
 	def info str
 		return
 		console.log str
-	
+
 	def startGroup
 		console.group()
-	
+
 	def endGroup
 		console.groupEnd()
-		
+
 	def msg str, type = null
 		# return
 		return
 		console.log str
-	
+
 	def getLogFileName
 		undefined
 
@@ -65,7 +65,7 @@ export default class Service
 		self.startTime = Date.now!
 		self.ps = new ts.server.ProjectService(defaults)
 		self.ready = new Promise do #ready = $1
-		
+
 		console.log 'start with project',cwd
 		if options.open
 			open(options.open)
@@ -79,9 +79,7 @@ export default class Service
 
 		locals.map do
 			console.log $1.code,$1.messageText,$1.category,$1.file..fileName
-		# console.log x.cp.rootFiles
 		# for f in global.ils.cp.rootFiles
-		#	console.log f.fileName
 		console.log "found {locals.length} errors ({errors.length} including dependencies)"
 
 	get ils
@@ -117,5 +115,5 @@ export default class Service
 if process.env.IMBA_LS_INIT
 	let cwd = process.env.PWD
 	let service = global.service = new Service(cwd,open: process.env.IMBA_LS_INIT)
-	global.service.summarize!.then do 
+	global.service.summarize!.then do
 		console.log 'done in',Date.now! - service.startTime

@@ -16,10 +16,6 @@ class Car < Base
 
 let car = Car.get(1)
 
-
 car.completion
 Car.get(1).completion
-
-
-
 

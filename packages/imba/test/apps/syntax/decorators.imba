@@ -100,7 +100,7 @@ class Hello
 
 let item = new Hello
 
-test do	
+test do
 	item.setup!
 	eq $1.log, ['call setup']
 
@@ -148,7 +148,7 @@ class CustomWatch
 
 let i5 = new CustomWatch
 
-test do	
+test do
 	eq i5.name, 'john'
 	i5.name = 'jane'
 	eq $1.log,[['john','jane','name']]

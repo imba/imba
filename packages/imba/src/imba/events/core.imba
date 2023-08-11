@@ -63,7 +63,7 @@ extend class Event
 
 		#onceHandlerEnd do
 			setTimeout(&,parseTime(time)) do
-				o.target.flags.decr('cooldown')	
+				o.target.flags.decr('cooldown')
 				o.active = no
 
 		return yes
@@ -221,8 +221,6 @@ export class EventHandler
 			aborted: no
 		}
 
-		# console.log 'handling event',event.target,event.currentTarget
-
 		state.current = state
 
 		if event.handle$mod
@@ -237,7 +235,7 @@ export class EventHandler
 		# let object = state.proxy or event
 
 		self.currentEvents ||= new Set
-		self.currentEvents.add(state)	
+		self.currentEvents.add(state)
 
 		for own handler,val of mods
 			break if state.aborted

@@ -7,11 +7,9 @@ export class History
 	def pushState state, title, url
 		stack.length = Math.max(pos,0)
 		stack[++pos] = [state,title,url]
-		# console.log "pushed state {url}"
 		return self
 
 	def replaceState state, title, url
-		# console.log "replaced state {url}"
 		stack.length = pos
 		stack[pos] = [state,title,url]
 

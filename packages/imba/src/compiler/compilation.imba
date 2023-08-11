@@ -141,4 +141,4 @@ export class Compilation
 	def raiseErrors
 		if errors.length
 			throw errors[0].toError!
-		return self		
+		return self

@@ -78,7 +78,6 @@ def parseOptions options, extras = []
 
 	let command = options._name
 
-
 	options = options.opts! if options.opts isa Function
 
 	let dir = options.cwd ||= process.cwd!
@@ -94,7 +93,7 @@ def parseOptions options, extras = []
 	options.imbaConfig = await getConfigFilePath("root", {vite: options.vite})
 	# only overwrite if vite is present in the config file
 	options.vite = yes if options.imbaConfig.bundler == 'vite' and !options.esbuild
-	
+
 	options.package = resolvePackage(options.cwd) or {}
 	options.dotenv = nfs.existsSync(np.resolve(options.cwd,'.env')) ? resolveFile('.env',options.cwd) : null
 	options.nodeModulesPath = resolvePath('node_modules',options.cwd)
@@ -133,7 +132,6 @@ def parseOptions options, extras = []
 
 	if options.web and command != 'build'
 		command = options.command = 'serve'
-		# console.log 'changing to serve!!'
 
 	if options.web and command != 'serve'
 		# if we are serving - the entrypoint will be redirected to a server-script
@@ -166,7 +164,6 @@ def parseOptions options, extras = []
 	options.#parsed = yes
 	return options
 
-
 def test(o, otherOptions)
 	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
 	await ensurePackagesInstalled(['vitest'], process.cwd!)
@@ -177,7 +174,7 @@ def test(o, otherOptions)
 
 		if userTestConfig.test.environment == 'jsdom'
 			await ensurePackagesInstalled(['@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
-		
+
 	let configFile = testConfigPath
 
 	# create a temporary file and put the config there
@@ -190,9 +187,9 @@ def test(o, otherOptions)
 	nfs.writeFileSync(configFile, content)
 
 	let params = ["--config", configFile, "--root", process.cwd()]
-	
+
 	params.unshift 'bench' if otherOptions..bench?
-	
+
 	if !o.args.includes('--dir')
 		params.push "--dir", process.cwd()
 
@@ -206,7 +203,7 @@ def test(o, otherOptions)
 		stdio: "inherit"
 	const vitest = spawn(vitest-path, params, options)
 	vitest.on('exit') do process.exit $1
-	
+
 def bench o
 	test(o, {bench?: yes})
 
@@ -220,7 +217,6 @@ def run entry, o, extras
 
 	unless o._name == 'preview' or o._name == 'serve' or o._name == 'build'
 		return cli.help! if o.args.length == 0
-
 
 	let prog = o = await parseOptions(o,extras)
 
@@ -401,7 +397,7 @@ def run entry, o, extras
 			})
 			return
 	let run = do
-		o.name ||= entry	
+		o.name ||= entry
 		let runner = new Runner(bundle,o)
 		if o.vite
 			await runner.initVite!
@@ -485,10 +481,10 @@ cli
 	.action(do print-info!)
 
 cli
-	.command('fmt')
+	.command('fmt [formatters...]')
 	.description('Removes extra whitespace, debug logs, and commented logs from **/*.imba')
 	.option('-f, --force', 'Format without checking git status')
-	.action(do imba-fmt($1.opts!))
+	.action(do imba-fmt($1,$2.opts!))
 
 log.ts 'parse options'
 

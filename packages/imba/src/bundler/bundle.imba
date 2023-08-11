@@ -1,4 +1,3 @@
-global.L = console.log
 global.E = do
 	process.stderr.write "\x1b[31m"
 	console.error(...$0)
@@ -295,7 +294,7 @@ export default class Bundle < Component
 			esoptions.outbase = fs.cwd
 
 		if o.esbuild
-			extendObject(esoptions,o.esbuild,'esbuild')			
+			extendObject(esoptions,o.esbuild,'esbuild')
 
 		imbaoptions = {
 			platform: o.platform
@@ -334,8 +333,6 @@ export default class Bundle < Component
 			esoptions.outExtension = {".js": ".iife.js"}
 		elif esoptions.format == 'esm' and nodeish?
 			esoptions.outExtension = {".js": ".mjs"}
-
-		# console.log esoptions
 
 		if true
 			let addExtensions = {
@@ -477,7 +474,6 @@ export default class Bundle < Component
 			let regex = new RegExp("^({Object.keys(o.resolve).join('|')})$")
 
 			esb.onResolve(filter: regex) do(args)
-				# console.log 'onresolving',args.path
 				let res = o.resolve[args.path]
 				res = res and res[platform] or res
 				return res
@@ -647,8 +643,6 @@ export default class Bundle < Component
 			# import from css
 			if args.kind == 'import-rule'
 				return {external: true}
-
-			# console.log 'on resolve still',args
 			if path.indexOf('node:') == 0
 				return {external: true}
 
@@ -686,11 +680,10 @@ export default class Bundle < Component
 
 				let res = await esb.resolve(args.path,opts)
 
-				if res.path					
+				if res.path
 					# if it resolve to an imba file - we don't want to make it external?
 					if res.path.match(/\.imba$/)
 						return null
-
 
 					let base = res.path.split('node_modules')[0]
 					let inpath = np.relative(base,outdir)
@@ -778,8 +771,7 @@ export default class Bundle < Component
 				importerFile: file.rel
 			}}
 
-		esb.onLoad(namespace: 'file', filter: /\.html$/) do(args)	
-			# console.log "load html file",args,o.format
+		esb.onLoad(namespace: 'file', filter: /\.html$/) do(args)
 
 			# when this is in a html
 			if html? or args.pluginData..asset
@@ -906,7 +898,6 @@ export default class Bundle < Component
 
 			if suffix == '?styles'
 				let res = builder.styles[src.rel]
-				# console.log "ONLOAD {path}",arguments[0],Object.keys(builder.styles)
 				return res or {loader: 'css', contents: ""}
 
 			let t = Date.now!
@@ -996,8 +987,6 @@ export default class Bundle < Component
 					if #watchedPaths[path] or flags != 1
 						dirty = yes
 
-				# console.log 'rebuild?!',entryPoints,changes,dirty,#watchedPaths
-
 				if main? and dirty
 					log.debug "changes demanding a resolve?",changes
 
@@ -1056,7 +1045,6 @@ export default class Bundle < Component
 		let entries = manifest
 		# need to wait until the paths are done, no??
 		js.replace(/(\w+_default\d*) = \"(.*)\"/g) do(m,name,path)
-			# console.log 'get entry?!?',path,entries[path]
 			if let entry = entries[path]
 				return mapping[name] = entry.url or entry.path # to url
 			mapping[name] = entryToUrlMap[path] or path
@@ -1143,8 +1131,6 @@ export default class Bundle < Component
 				file.#output = outs[path]
 			else
 				console.log 'could not map the file to anything!!',file.path,path,Object.keys(outs),fs.cwd,esoptions.outdir
-
-		# console.log 'done here',Object.keys(ins),Object.keys(outs)
 		for own path,output of meta.outputs
 			# skip if this is not a relevant asset, like for css?
 			root.builder.outputs.add(output)
@@ -1376,7 +1362,6 @@ export default class Bundle < Component
 		###
 		if hasGlobStylesheet
 			let entries = entryPoints.map do ins[$1] or main..source
-			# console.log 'import css from',entries,Object.keys(ins),Object.keys(outs),entryPoints,!!main,main
 			let cssinputs = collectStyleInputs(entries,true)
 			# TODO Reuse previous sheet if we know that nothing has changed
 			if cssinputs.length
@@ -1392,7 +1377,6 @@ export default class Bundle < Component
 				}
 
 				for item,i in cssinputs
-					# console.log 'where is chunk from?',item
 					let chunk = item.#csschunk
 
 					if chunk
@@ -1477,7 +1461,6 @@ export default class Bundle < Component
 		log.ts "resolved public paths"
 		# rewrite assets in html files
 		for asset in assets
-			# console.log asset.path,asset.type,asset.fullpath
 			# go through html files, convert them back to html and replace path references
 			if asset.type == 'html'
 				let inpath = asset.entryPoint or ''
@@ -1556,8 +1539,6 @@ export default class Bundle < Component
 				catch e
 					log.error "Unable to create symlink for node_modules. If you're on Windows, try enabling \"Developer Mode\" in Windows settings or creating a Vite project instead."
 					process.exit!
-
-			# console.log 'ready to write',manifest.assets.map do $1.path
 			for asset in assets
 				let path = asset.path
 				if build? and static? and !asset.public
@@ -1575,7 +1556,7 @@ export default class Bundle < Component
 			# is this only really needed for hmr?
 			await mfile.write(JSON.stringify(entryManifest,null,2),manifest.hash)
 
-			L("\x1bc") if program.clear
+			console.log("\x1bc") if program.clear
 
 			if program.#listening
 				log.info "built %bold in %ms - %heap (%address)",entryPoints[0],builder.elapsed,program.#listening

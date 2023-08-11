@@ -481,7 +481,7 @@ export const states = {
 		[/(@esmIdentifier)/,'identifier.const.export']
 		[/\*/,'operator.star']
 		'comma_'
-		'common_'		
+		'common_'
 	]
 
 	esm_specifiers: [
@@ -944,7 +944,7 @@ export const states = {
 
 	]
 
-	_tag: [		
+	_tag: [
 		[/\/>/,'tag.close','@pop']
 		[/>/,'tag.close',switchTo: '@>tag_content=&-_tagcontent']
 		# '@>css_selector&rule-_sel'
@@ -1126,7 +1126,6 @@ def rewrite-token raw
 	raw = raw.replace('$T','$S2')
 
 	# if orig != raw
-	#	console.log 'rewriting token',orig,raw
 	return raw
 
 def rewrite-actions actions,add
@@ -1139,7 +1138,7 @@ def rewrite-actions actions,add
 		if typeof add == 'string'
 			actions.next = add
 		elif add
-			Object.assign(actions,add)		
+			Object.assign(actions,add)
 
 		if actions.next
 			actions.next = rewrite-state(actions.next)
@@ -1147,7 +1146,6 @@ def rewrite-actions actions,add
 			actions.switchTo = rewrite-state(actions.switchTo)
 
 	elif actions and actions.cases
-		# console.log 'found cases to transform!!'
 		let cases = {}
 		for own k,v of actions.cases
 			let newkey = rewrite-token(k)

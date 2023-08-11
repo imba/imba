@@ -113,4 +113,3 @@ test "reverse" do
 # test "change id of todo" do
 # 	todos[0].id = 100
 # 	var i = await spec.tick()
-#	console.log("info")
