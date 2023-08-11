@@ -6853,6 +6853,9 @@ export class Call < Node
 			if str == 'export'
 				return Export.new(args)
 
+			if str == 'rescue'
+				return RescueFunc.new([],args)
+
 		@callee = callee	
 		@args = args or ArgList.new([])
 
@@ -7912,6 +7915,13 @@ export class Try < ControlFlowStatement
 		@catch.traverse if @catch
 		@finally.traverse if @finally
 		# no blocks - add an empty catch
+
+	def c o
+		if stack.isExpression or isExpression
+			var ast = IIFE([self])
+			return ast.c o
+		
+		super.c(o)
 
 	def js o
 		var out = "try " + body.c(braces: yes, indent: yes)
