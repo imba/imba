@@ -87,6 +87,8 @@ class SpecComponent
 	get root
 		parent ? parent.root : self
 
+def isPlainObject val
+	typeof val == 'object' and val and Object.getPrototypeOf(val) == Object.prototype
 
 def createChainable keys,fn
 	let create
@@ -152,7 +154,8 @@ global class Spec < SpecComponent
 
 		test = test.bind(self)
 
-		test = createChainable(['skip','todo','only','client','node','web'],test)
+		test = createChainable(['skip','todo','only','client','node','web','both','concurrent','fails'],test)
+		describe = createChainable(['skip','todo','only','client','node','web','both','concurrent'],describe.bind(self))
 		self
 
 	get fullName
@@ -178,7 +181,10 @@ global class Spec < SpecComponent
 			return Promise.resolve(self)
 
 	def describe name, blk
-		blocks.push new SpecGroup(name, blk, self)
+		let options = this
+		let that = SPEC
+
+		that.context.blocks.push new SpecGroup(name, blk, that.context,options)
 
 	def test name, blk
 		let options = this
@@ -264,8 +270,9 @@ global class Spec < SpecComponent
 
 global class SpecGroup < SpecComponent
 
-	def constructor name, blk, parent
+	def constructor name, blk, parent, options
 		super()
+		options = options
 		parent = parent
 		name = name
 		blocks = []
@@ -409,7 +416,15 @@ global class SpecAssert < SpecComponent
 			return false if a.length != b.length
 			for item,i in a
 				return false unless self.compare(item,b[i])
-			return JSON.stringify(a) == JSON.stringify(b)
+			return true
+			# return JSON.stringify(a) == JSON.stringify(b)
+		if isPlainObject(a) and isPlainObject(b)
+			# Not caring about order of keys
+			for own k,v of a
+				return false unless compare(v,b[k])
+			return true
+
+		# deep similar
 		return false
 
 	get critical
@@ -439,8 +454,9 @@ global class SpecAssert < SpecComponent
 
 global.spec = global.SPEC = new Spec
 global.test = global.spec.test
+global.describe = global.spec.describe
+# global def describe name, blk do SPEC.context.describe(name,blk)
 
-global def describe name, blk do SPEC.context.describe(name,blk)
 global def before name, blk do SPEC.before(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
