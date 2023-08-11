@@ -52,7 +52,7 @@ export def @thenable target, key, desc
 
 				let promise = this[thensym] ||= new Promise do(resolve,reject)
 					# TODO should only happen in debug
-					let timeout = setTimeout(warn,2s)
+					let timeout = setTimeout(warn,5s)
 
 					let err = do(error)
 						clearTimeout(timeout)
