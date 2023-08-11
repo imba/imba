@@ -25,6 +25,7 @@ import np from 'node:path'
 import nfs from 'node:fs'
 import crypto from 'node:crypto'
 import {getConfigFilePath} from '../utils/vite.imba'
+import Cache from '../bundler/cache.imba';
 
 import vitePluginEnvironment from './vite-plugin-environment.ts'
 
@@ -58,6 +59,8 @@ export def getCacheDir
 
 const IMBA_HASH = getImbaHash!
 const CACHE_DIR = getCacheDir!
+
+global.VITE_IMBA_CACHE = new Cache(cachedir: CACHE_DIR)
 
 export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	let name = "vite-plugin-imba"
