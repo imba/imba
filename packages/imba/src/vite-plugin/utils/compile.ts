@@ -111,8 +111,8 @@ const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 			}
 		}
 		// Should move into the compiler itself
-		const compiled = await imbacache.memo(cachekey,mtime,()=> Promise.resolve(wrap_compile(code,finalCompileOptions)));
-		// const compiled = wrap_compile(code,finalCompileOptions);
+		// const compiled = await imbacache.memo(cachekey,mtime,()=> Promise.resolve(wrap_compile(code,finalCompileOptions)));
+		const compiled = wrap_compile(code,finalCompileOptions);
 	
 		if (compiled["erroredΦ"]){
 			throw compiled
