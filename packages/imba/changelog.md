@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.0.0-alpha.231
+
+* Allow using `$vite$` in compiler for vite-only code.
+
+* Various fixes for vite integration.
+
+* Add `rescue` keyword
+
+    Acts like a combined try-catch wrapper for arbitrary expressions. It will return the result of the expression, _or_ the error if the expression throws. Very useful for catching rejected promises and other errors.
+
+    ```imba
+    # if this crashes you'd better have wrapped your code in a try/catch(!)
+    let res = await server.save(...)
+
+    let res = rescue await server.save(...)
+    if res isa Error
+        ...
+    # if an error was thrown inside server.save, the error is assigned to res
+    ```
+
+    You could previously do something like this with try-catch:
+
+    ```imba
+    let res = try
+        await server.save(...)
+    catch e
+        e
+    ```
+
+    But this only worked for assignments, and try/catch did not consistently
+    work inside of expressions. Syntactically rescue acts just as a regular
+    function call like `update(id, rescue(validate!))`
+
 ## 2.0.0-alpha.230
 
 * Improved integration with vite
