@@ -332,7 +332,8 @@ CLI.prototype.compileFile = function (src){
 	var dstp = src.targetPath && path.relative(process.cwd(),src.targetPath);
 
 	var srcpAbs = path.resolve(srcp);
-	var dstpAbs = path.resolve(dstp);
+	if(dstp)
+		var dstpAbs = path.resolve(dstp);
 
 	if (srcp.indexOf("../") >= 0) {
 		srcp = srcpAbs;
