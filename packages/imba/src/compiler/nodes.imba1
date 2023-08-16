@@ -6998,6 +6998,7 @@ export class Call < Node
 			arg.option(:assertion,yes)
 			args.@nodes[0] = AssertionNode.new(arg)
 
+		# INFO devlogs
 		if callee isa Identifier and callee.value == 'L'
 			let dim = '\x1b[90m'
 			let bg-blue = '\x1b[44m'
@@ -7024,7 +7025,7 @@ export class Call < Node
 					.replace(/\n/g, "\\n")
 					.replace(/\r/g, "\\r")
 					.replace(/\t/g, "\\t")
-				if arg isa Literal and !(arg isa Self or arg isa This)
+				if arg isa Literal and !(arg isa Self or arg isa This or arg isa Arr)
 					fmts.push "%s"
 					result.push LIT("'{bg-black}{green}{s}{reset}'")
 				else
