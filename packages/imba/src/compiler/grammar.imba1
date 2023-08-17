@@ -282,7 +282,7 @@ var grammar =
 	]
 
 	Argvar: [
-		o 'ARGVAR' do Argvar.new A1
+		o 'ARGVAR' do Argvar.new(A1).setEnds(A1,A1)
 	]
 
 	Symbol: [
