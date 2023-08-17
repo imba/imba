@@ -4070,6 +4070,13 @@ export class IifeFunc < Func
 		var out = body.c(braces: yes)
 		return "(()=>{out})()"
 
+export class AmperFunc < Func
+
+	def js s,o
+		body = body.consume(ImplicitReturn.new)
+		var out = body.c(braces: yes)
+		return "((v$)=>{out})"
+
 export class RescueFunc < Func
 
 	def visit o
@@ -6827,6 +6834,30 @@ export class Argvar < ValueNode
 # CALL
 
 export class DoPlaceholder < Node
+
+export class AmperRef < ValueNode
+
+	def visit stack
+		
+		let blk = stack.up do |v|
+			v isa ArgList or v isa Block or v isa AmperFunc
+
+		let base = stack.relative(blk,1)
+		let inner = stack.relative(base,1)
+
+		if base isa Assign and stack.@nodes.indexOf(base.left) == -1
+			unless base.right isa AmperFunc
+				let rgt = base.right
+				let wrapper = base.right = AmperFunc.new([],rgt)
+			return self
+
+		unless base isa AmperFunc
+			let wrapper = AmperFunc.new([],base)
+			blk.replace(base,wrapper)
+		self
+
+	def c
+		"v$"
 
 export class TaggedTemplate < Node
 

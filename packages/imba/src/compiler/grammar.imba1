@@ -833,6 +833,7 @@ var grammar =
 		o 'Invocation'
 		o 'TaggedTemplate'
 		o 'Require'
+		o 'AMPER_REF' do AmperRef.new(A1)
 		# TODO Makes no sense that this is not more specific
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
 		# o 'Value Type' do A1.set(datatype: A2)
