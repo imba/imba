@@ -7071,12 +7071,6 @@ export class Call < Node
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
 			safeop = '?.'
-		# if callee.safechain
-		#	console.log 'function safechain!!'
-		#	var isfn = Util.IsFunction.new([callee])
-		#	wrap = ["{isfn.c}  &&  ",""]
-		#	callee = OP('.',callee.left,callee.right)
-		#	# callee should already be cached now -
 
 		# should just force expression from the start, no?
 		if @receiver
