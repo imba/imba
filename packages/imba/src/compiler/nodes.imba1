@@ -1125,6 +1125,8 @@ export class Node
 			return Return.new(self)
 		elif node == NumberLike
 			return NumberLike.new(self)
+		elif node isa Util.Is
+			return node.clone(self)
 		return self
 
 	def toExpression
@@ -5051,13 +5053,8 @@ export class Op < Node
 			@op = '&&'
 		elif @op == 'or'
 			@op = '||'
-		elif @op == 'is'
-			@op = '==='
-		elif @op == 'isnt'
-			@op = '!=='
 		elif @op == 'not'
 			@op = '!'
-
 		@left = l
 		@right = r
 		return self
@@ -5159,6 +5156,26 @@ export class Op < Node
 				FALSE
 			).c
 
+		let neg = false
+
+		if op == 'isnt'
+			neg = true
+			op = 'is'
+
+		if op == 'is'
+
+			if r instanceof Str or r instanceof Num
+				op = neg ? '!==' : '==='
+
+		if op == 'is'
+			let res
+			if r instanceof Parens
+				l.cache
+				res = r.consume(Util.Is.new([l,null]))
+			else
+				res = Util.Is.new([l,r])
+			return (neg ? '!' : '') + res.c
+
 		l = l.c if l isa Node
 		r = r.c if r isa Node
 
@@ -5174,7 +5191,7 @@ export class Op < Node
 		@op == '+' and @left and @left.isString
 
 	def isLogical
-		@op == '&&' or @op == '||'
+		@op == '&&' or @op == '||' or @op == 'or' or @op == 'and'
 
 	def isBitwise
 		!!constants.BITWISE_OPERATORS[@op]
@@ -5190,9 +5207,18 @@ export class Op < Node
 		10
 
 	def consume node
+	
 		if node == NumberLike
 			if isBitwise
 				return self
+
+		if node instanceof Util.Is
+			if isLogical
+				left = left.consume(node)
+				right = right.consume(node)
+			elif op == '!'
+				left = left.consume(node)
+			return self
 
 		return super if isExpressable
 
@@ -5315,7 +5341,6 @@ export class InstanceOf < Op
 			out = helpers.parenthesize(out) if o.parent isa Op
 
 		# should this not happen in #c?
-		out = helpers.parenthesize(out) if o.parent isa Op
 		out
 
 export class TypeOf < Op
@@ -11669,6 +11694,19 @@ export class Util.IndexOf < Util
 		scope__.root.helper(self,helper)
 		# When this is triggered, we need to add it to the top of file?
 		"idx$__({args.map(|v| v.c ).join(',')})"
+
+
+export class Util.Is < Util
+
+	def helper
+		'function is$(a,b){ return a === b || ' + "b?.[{symbolRef('#matcher')}]?.(a) || false" + '}'
+
+	def clone b
+		Util.Is.new([args[0],b])
+
+	def js o
+		scope__.root.helper(self,helper)
+		return "is$({args[0].c},{args[1].c})"
 
 export class Util.Promisify < Util
 
