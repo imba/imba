@@ -5305,7 +5305,14 @@ export class InstanceOf < Op
 				return "(typeof {obj.c}=='{name.toLowerCase}'||{obj.c} instanceof {name})"
 
 				# convert
-		var out = "{left.c} instanceof {right.c}"
+				
+		var out
+
+		if String(@op) == 'isa'
+			out = "{right.c}[Symbol.hasInstance]({left.c})"
+		else
+			out = "{left.c} instanceof {right.c}"
+			out = helpers.parenthesize(out) if o.parent isa Op
 
 		# should this not happen in #c?
 		out = helpers.parenthesize(out) if o.parent isa Op
