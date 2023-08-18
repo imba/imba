@@ -70,10 +70,11 @@ export def getConfigFilePath(type, opts\Object)
 		imbaConfig = await imbaConfig({command, mode})
 
 	return imbaConfig if type == "root"
-	return imbaConfig if configPath == imbaConfigPath
 
 	const configObj = imbaConfig[type]
 
+	return configObj if configPath == imbaConfigPath
+	
 	# TODO no merging if it is all the same file
 
 	# load default imba config
