@@ -232,7 +232,7 @@ global class Spec < SpecComponent
 				characterData: true,
 				subtree: true
 			})
-			console.log 'running spec'
+
 			console.info = do(...params)
 				context.state.info.push(params)
 				context.state.log.push(params[0])

@@ -938,6 +938,12 @@ export class Node
 	def safechain
 		no
 
+	def sourcecode
+		let src = STACK.SOURCECODE
+		let start = startLoc
+		let end = endLoc
+		src.slice(start,end)
+
 	def oid
 		@oid ||= STACK.generateId('')
 
@@ -1127,6 +1133,9 @@ export class Node
 			return NumberLike.new(self)
 		elif node isa Util.Is
 			return node.clone(self)
+		elif node isa AmperWalker
+			node.test(self)
+
 		return self
 
 	def toExpression
@@ -1301,6 +1310,9 @@ export class Node
 export class ValueNode < Node
 
 	prop value
+
+	def startLoc
+		@startLoc or (@value and @value:startLoc ? @value.startLoc : -1)
 
 	def initialize value
 		setup
@@ -1486,6 +1498,13 @@ export class Index < ValueNode
 export class ListNode < Node
 
 	prop nodes
+
+	def consume node
+		if node isa Walker
+			for n in @nodes
+				n.consume(node)
+			return self
+		super
 
 	def initialize list
 		setup
@@ -2334,6 +2353,9 @@ export class Parens < ValueNode
 		catch e
 			[0,0]
 
+	def endLoc
+		@endLoc or (@close and @close:endLoc ? @close.endLoc : 0)
+
 	def load value
 		@noparen = no
 		value isa Block and value.count == 1 ? value.first : value
@@ -2373,7 +2395,6 @@ export class Parens < ValueNode
 
 	def prebreak br
 		super(br)
-		console.log "PREBREAK"
 		@value.prebreak(br) if @value
 		self
 
@@ -2401,6 +2422,10 @@ export class ExpressionBlock < ListNode
 export class Return < Statement
 
 	prop value
+
+	def replace base, replacement
+		if @value == base
+			@value = replacement
 
 	def initialize v
 		@traversed = no
@@ -4070,11 +4095,49 @@ export class IifeFunc < Func
 		var out = body.c(braces: yes)
 		return "(()=>{out})()"
 
+export class Walker
+	prop leaks
+	def initialize fn
+		@func = fn
+		@leaks = no
+		@matches = []
+
+	def test node
+		no
+
+export class AmperWalker < Walker
+	prop deopt
+	
+	def test node
+		if node isa Call
+			node.@args.consume(self)
+			node.@callee.consume(self)
+			return
+
+		let variable = node.@variable
+		if variable and !variable.isGlobal
+			@deopt = yes
+
+		if node isa This or node isa Self
+			@self = node
+
 export class AmperFunc < Func
 
+
 	def js s,o
-		body = body.consume(ImplicitReturn.new)
-		var out = body.c(braces: yes)
+		# traverse into the function to see if it is dynamic
+		let walker = AmperWalker.new(self)
+		body.consume(walker)
+
+		# hash the output? Or the source? Maybe the source is enough?
+		var out = body.c(braces: no)
+
+		unless walker.deopt
+			let raw = body.sourcecode
+			let sym = raw.replace(/[\"]/g,"'").replace
+			let pars = [LIT('"' + sym + '"'),walker.@self or LIT('null'),LIT("(v$)=>{out}")]
+			return Util.memo(*pars).c
+
 		return "((v$)=>{out})"
 
 export class RescueFunc < Func
@@ -4640,6 +4703,13 @@ export class Str < Literal
 	def js o
 		String(@value)
 
+	def cache o
+		# should never cache basic strings?
+		if raw:length > 20
+			super
+
+		return self
+
 	def c o
 		@cache ? super(o) : (M js, @value, o)
 
@@ -5071,6 +5141,13 @@ export class Op < Node
 		@left.traverse if @left and @left:traverse
 		return self
 
+	def startLoc
+		# what about ++test?
+		@startLoc or @left.startLoc
+	
+	def endLoc
+		@endLoc or (@right or @left).endLoc
+
 	def hasTagRight
 		if isLogical
 			let l = @left.unwrappedNode
@@ -5219,6 +5296,10 @@ export class Op < Node
 			if isBitwise
 				return self
 
+		elif node isa Walker
+			left.consume(node)
+			right.consume(node)
+
 		if node instanceof Util.Is
 			if isLogical
 				left = left.consume(node)
@@ -5319,36 +5400,19 @@ export class UnaryOp < Op
 
 export class InstanceOf < Op
 
-	def js o
+	def js s,o
+		if String(@op) == 'instanceof'
+			let out = "{left.c} instanceof {right.c}"
+			out = helpers.parenthesize(out) if s.parent isa Op
+			return out
+
 		# fix checks for String and Number
-
-		if right isa Identifier or right isa VarOrAccess
-			# WARN otherwise - what do we do? does not work with dynamic
-			# classes etc? Should probably send to utility function isa$
-			var name = AST.c(right.value)
-			var obj = left.node
-			# TODO also check for primitive-constructor
-			if name in ['String','Number','Boolean']
-				if STACK.tsc
-					return "(typeof {obj.c}=='{name.toLowerCase}')"
-
-				unless obj isa LocalVarAccess
-					obj.cache
-				# need a double check for these (cache left) - possibly
-				return "(typeof {obj.c}=='{name.toLowerCase}'||{obj.c} instanceof {name})"
-
-				# convert
-				
-		var out
-
-		if String(@op) == 'isa'
-			out = "{right.c}[Symbol.hasInstance]({left.c})"
-		else
-			out = "{left.c} instanceof {right.c}"
-			out = helpers.parenthesize(out) if o.parent isa Op
-
-		# should this not happen in #c?
-		out
+		if right isa Parens
+			let out = right.consume(Util.Isa.new([left.cache,null])).c
+			out = helpers.parenthesize(out) # if o.parent isa Op
+			return out
+		
+		return Util.Isa.new([left,right]).js(s,o)
 
 export class TypeOf < Op
 
@@ -6252,7 +6316,7 @@ export class Identifier < Node
 				return "'{symbol}'"
 
 		let up = STACK.current
-		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
+		return toStr.c if (up isa Util and !(up isa Util.Iterable) and !(up isa Util.Is)) # not all utils
 		let out = js
 		# FIXME should it not always enable?
 		if OPTS:sourcemap and (!o or o:mark !== false)
@@ -6840,7 +6904,7 @@ export class AmperRef < ValueNode
 	def visit stack
 		
 		let blk = stack.up do |v|
-			v isa ArgList or v isa Block or v isa AmperFunc
+			v isa ArgList or v isa Block or v isa AmperFunc or v isa Return or v isa TagAttr
 
 		let base = stack.relative(blk,1)
 		let inner = stack.relative(base,1)
@@ -6930,9 +6994,6 @@ export class Call < Node
 			return callee
 
 		return self
-
-	def loc
-		@callee.loc
 
 	def visit
 		args.traverse
@@ -8256,6 +8317,10 @@ export class TagAttr < TagPart
 
 	def endLoc
 		@value?.endLoc
+
+	def replace base, replacement
+		if @value == base
+			@value = replacement
 
 	def isStatic
 		super and @chain.every(do |item|
@@ -10908,7 +10973,6 @@ export class StyleRuleSet < StyleNode
 					setter.traverse
 			elif !@flag
 				for ph in @placeholders
-					console.log "{ph}"
 					ph.warn "Only allowed inside tag tree"
 
 		if o:rule and o:styles
@@ -11574,7 +11638,6 @@ export class Util < Node
 
 	def self.slice obj, a, b
 		var slice = Identifier.new("slice")
-		console.log "slice {a} {b}"
 		return CALL(OP('.',obj,slice),AST.compact([a,b]))
 
 	def self.iterable obj, cache
@@ -11608,6 +11671,12 @@ var HELPERS = {
 
 	unit: '''(value,unit){
 		return value + unit;
+	};'''
+
+	memo: '''(hash,slf,cb){
+		let sym = Symbol.for(hash)
+		let fn = globalThis[sym] ||= (cb.memoized=sym,cb)
+		return slf == null ? fn : fn.bind(slf)
 	};'''
 
 	optNegIndex: '''(value,index){ return value ? value[value.length + index] : null };'''
@@ -11645,8 +11714,8 @@ var HELPERS = {
 	};'''
 
 	contains: '''(a,b){
-		var res = (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-		return res >= 0;
+		const sym = Symbol.for("#has");
+		return b && ( b[sym]?.(a) ?? b.includes?.(a) ?? b.has?.(a) ?? false);
 	};'''
 
 	requireDefault: '''(obj){
@@ -11723,15 +11792,34 @@ export class Util.IndexOf < Util
 
 export class Util.Is < Util
 
+	def left
+		args[0]
+
+	def right
+		args[1]
+		
 	def helper
-		'function is$(a,b){ return a === b || ' + "b?.[{symbolRef('#matcher')}]?.(a) || false" + '}'
+		'// @ts-ignore\nfunction is$(a,b){ return a === b || ' + "b?.[{symbolRef('#matcher')}]?.(a) || false" + '}'
 
 	def clone b
-		Util.Is.new([args[0],b])
+		constructor.new([args[0],b])
 
 	def js o
 		scope__.root.helper(self,helper)
 		return "is$({args[0].c},{args[1].c})"
+
+export class Util.Isa < Util.Is
+
+	def helper
+		'// @ts-ignore\nfunction isa$(a,b){ return typeof b === "string" ? (typeof a === b) : b[Symbol.hasInstance]?.(a) }'
+
+	def js
+		if right instanceof Str
+			return "typeof {left.c}==={right.c}"
+			
+		scope__.root.helper(self,helper)
+		return "isa$({left.c},{right.c})"
+		# return "(typeof {right.c} == 'string' ? (typeof {left.c} == {right.c}) [Symbol.hasInstance]({args[0].c})"
 
 export class Util.Promisify < Util
 
@@ -12600,7 +12688,6 @@ export class Variable < Node
 		let scope = closure.parent
 		let res = self
 		while scope and res and parents:length < 5
-			console.log 'get parents!!!'
 			if res = scope.lookup(@name)
 				parents.unshift(res)
 				let newscope = res.scope.parent

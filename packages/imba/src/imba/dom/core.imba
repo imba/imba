@@ -555,7 +555,7 @@ export class Element < Node
 			return escapeTextContent(self.textContent)
 
 		for item,i in self.childNodes
-			if item isa String
+			if typeof item == 'string'
 				o += escapeTextContent(item,self.nodeName)
 			elif item isa Number
 				o += "" + item

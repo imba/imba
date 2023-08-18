@@ -375,6 +375,7 @@ export class EventHandler
 
 		if error != undefined
 			if self.type != 'error'
+
 				let detail = error isa Error ? error.message : error
 				let custom = new CustomEvent('error',{detail: detail, bubbles: true, cancelable: true})
 				# @ts-ignore

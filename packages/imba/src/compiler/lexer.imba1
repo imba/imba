@@ -1887,7 +1887,7 @@ export class Lexer
 
 		elif value == '&' and @chunk.match(/^\&\s*[,\)\}\]]/)
 			tokid = 'DO_PLACEHOLDER'
-		elif value == '&' and @chunk.match(/^\&(\s*[\.\>\<\=\%\^]|\s+(is|isnt)\b|[\[\(])/)
+		elif value == '&' and @chunk.match(/^\&(\s*[\.\>\<\=\%\^]|\s+(is|isnt|in|not|isa)\b|[\[\(])/)
 			tokid = 'AMPER_REF'
 		elif value == '**'
 			tokid = 'EXP'
