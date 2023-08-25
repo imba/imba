@@ -161,7 +161,7 @@ var HEREDOC = /// ^ ("""|''') ([\s\S]*?) (?:\n[^\n\S]*)? \1 ///
 
 var OPERATOR = /// ^ (
 	?: [-=]=>             # function - what
-	 | !&
+	 | !& (?=[\s\n])
 	 | [&|~^]?=\? # reassign
 	 | [&|~^]= # bit assign
 	 | \?\?= # nullish coallescing assignment
