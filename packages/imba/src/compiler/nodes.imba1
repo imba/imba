@@ -5297,15 +5297,15 @@ export class Op < Node
 				return self
 
 		elif node isa Walker
-			left.consume(node)
-			right.consume(node)
+			left.consume(node) if left
+			right.consume(node) if right
 
 		if node instanceof Util.Is
-			if isLogical
+			if op == '!'
 				left = left.consume(node)
-				right = right.consume(node)
-			elif op == '!'
-				left = left.consume(node)
+			elif isLogical
+				left = left.consume(node) if left
+				right = right.consume(node) if right
 			return self
 
 		return super if isExpressable
