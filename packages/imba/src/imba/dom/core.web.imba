@@ -85,6 +85,9 @@ extend class Document
 	get flags
 		self.documentElement.flags
 
+	def emit ...params
+		self.documentElement.emit(...params)
+
 extend class Node
 	get #parent
 		##parent or this.parentNode or ##up # FIX
