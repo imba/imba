@@ -85,32 +85,38 @@ class ArrayPatcher
 				idx++
 			return
 
-		let toReplace = array[idx]
+		let i = idx
+		let toReplace = array[i]
 
 		# this only works if things are supposed to go in an array once
 		if toReplace === item
 			++idx
 		else
+			# might be slower - not sure
+			if i > 0 and array[i - 1] === item
+				return
+
 			let prevIndex = array.indexOf(item)
 			let changed = changes.get(item)
-
+				
 			if prevIndex === -1
-				array.splice(idx,0,item)
+				array.splice(i,0,item)
 				changes.set(item,1)
 				idx++
+			elif prevIndex < i
+				return
 
-			elif prevIndex === idx + 1
+			elif prevIndex === i + 1
 				# if the last one is simply removed
 				if toReplace
 					changes.set(toReplace,-1)
-				array.splice(idx,1)
+				# better to filter out value after? Splice is expensive
+				array.splice(i,1)
 				++idx
-			elif prevIndex < idx
-				return
 			else
-				if prevIndex > idx
+				if prevIndex > i
 					array.splice(prevIndex,1)
-				array.splice(idx,0,item)
+				array.splice(i,0,item)
 
 			if changed == -1
 				changes.delete(item)
@@ -190,7 +196,8 @@ class Context
 		return self
 
 	def add beacon
-		patcher.push(beacon) if tracking and beacon
+		if tracking and beacon
+			patcher.push(beacon)
 
 	def react reaction
 		ROOT.reactions.add(reaction)
@@ -272,6 +279,7 @@ class Ref
 		id = NEXT_REF_ID++
 		observer = null
 		observers = null
+		v = 0
 		# name = name
 
 		val.##referenced(self) if val and val.##referenced
@@ -279,6 +287,7 @@ class Ref
 
 	def changed level, newValue,oldValue
 		RUN_ID++
+		v++
 		# mixing responsibilities with deep observers?
 		oldValue.##dereferenced(self,newValue) if oldValue and oldValue.##dereferenced
 		newValue.##referenced(self,oldValue) if newValue and newValue.##referenced
@@ -295,6 +304,8 @@ class Ref
 		return
 
 	def invalidated level, source
+		v++
+
 		observer.invalidated(level + 1,this) if observer
 
 		if observers
@@ -318,7 +329,7 @@ class Ref
 			return observer = null
 
 		let obs = observers
-		let idx = obs.indexOf(item)
+		let idx = obs ? obs.indexOf(item) : -1
 		if idx >= 0
 			obs.splice(idx,1)
 		return
@@ -509,15 +520,17 @@ class RefType
 		index.get(value)
 
 # why not inherit from beacon?
+# why not store the value directly on this?
 class Memo
-	def constructor target,func,vkey
+	def constructor target,func,vkey,type
 		self.observing = null
 		self.observers = null
 		self.flags = 68
 		self.target = target
 		self.func = func
 		self.vkey = vkey
-		self.version = 0
+		self.type = type
+		self.v = 0
 		# global.ops.push(self)
 
 	get beacon
@@ -536,20 +549,24 @@ class Memo
 			return observer = null
 
 		let obs = observers
-		let idx = obs.indexOf(self)
+		let idx = obs ? obs.indexOf(self) : -1
 		if idx >= 0
 			obs.splice(idx,1)
 		return
 
 	def invalidated stack, source
 		flags |= F.STALE | F.POSSIBLY_STALE
+		# console.log('invalidated',stack,this,observer,this === observer)
 		observer.invalidated(stack,this) if observer
 
 		return unless observers
 		for observer in observers
 			# these are never - they are always computeds
+			# not clear that these are invalidated? only if this value has not changed
 			observer.invalidated(stack,this)
 		self
+
+	def lazyvalue
 
 	def value
 		CTX.add(self) if TRACKING
@@ -563,10 +580,27 @@ class Memo
 		let res = func.call(target)
 		CTX.pop(self)
 		let prev = target[vkey]
+		let changed = no
+		
+		# for array-likes see if they are identical
+		if res and prev and res.constructor === prev.constructor and res instanceof Array
+			let l = res.length
+			if l != prev.length
+				changed = yes
+			else
+				let i = 0
+				while i < l
+					if res[i] != prev[i]
+						break changed = yes
+					i++
+		else
+			changed = res !== prev
+
 		target[vkey] = res
 		flags ~= (F.STALE | F.POSSIBLY_STALE | F.RUNNING)
-		if res !== prev
-			self.version++
+		if changed
+			self.v++
+
 		TRACKING--
 		return res
 
@@ -586,7 +620,7 @@ class ComputedType
 		const lazy = self.lazyDescriptor = {
 			enumerable: no
 			get: do
-				let wrapper = this[bkey] = new Memo(this,func,vkey)
+				let wrapper = this[bkey] = new Memo(this,func,vkey,type)
 				Object.defineProperty(this,name,descriptor)
 				wrapper.value!
 		}
@@ -611,7 +645,7 @@ class Reaction
 		flags & F.RUNNING
 
 	def invalidated stack,source
-		if source isa Memo
+		if source instanceof Memo
 			flags |= F.POSSIBLY_STALE
 			checkComputedValues.add(source)
 		else
@@ -646,7 +680,7 @@ class Reaction
 			for value of checkComputedValues
 				let v0 = cachedComputedVersions.get(value)
 				value.value!
-				let v1 = value.version
+				let v1 = value.v
 				if v0 != v1
 					break stale = yes
 
@@ -674,8 +708,8 @@ class Reaction
 		self.observing = beacons
 
 		checkComputedValues.clear!
-		for item in beacons when item isa Memo
-			cachedComputedVersions.set(item,item.version)
+		for item in beacons when item instanceof Memo
+			cachedComputedVersions.set(item,item.v)
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
@@ -716,8 +750,8 @@ class Awaits < Reaction
 		self.observing = beacons
 
 		checkComputedValues.clear!
-		for item in beacons when item isa Memo
-			cachedComputedVersions.set(item,item.version)
+		for item in beacons when item instanceof Memo
+			cachedComputedVersions.set(item,item.v)
 
 		flags ~= (F.RUNNING | F.STALE | F.POSSIBLY_STALE)
 		TRACKING--
@@ -777,6 +811,9 @@ export def reportObserved item
 
 export def createRef params = F.OBJECT
 	return new Ref(F.OBJECT)
+
+export def getComputed target, name
+	target[REFSYM(name)]
 
 export def @computed target, name, desc
 	let sym = METASYM(name)
