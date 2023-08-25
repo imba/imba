@@ -5466,7 +5466,7 @@ export class Access < Op
 		return self
 
 	def startLoc
-		(@left or @right).startLoc
+		@left isa ScopeContext ? (@right).startLoc : (@left or @right).startLoc
 
 	def endLoc
 		@right && @right.endLoc
@@ -6251,10 +6251,10 @@ export class Identifier < Node
 		[@value.@loc,@value.@loc + @value.@len]
 
 	def startLoc
-		@value and @value:startLoc ? @value.startLoc : null
+		@startLoc or @value and @value:startLoc ? @value.startLoc : null
 
 	def endLoc
-		@value and @value:endLoc ? @value.endLoc : null
+		@endLoc or @value and @value:endLoc ? @value.endLoc : null
 
 	def loc
 		[startLoc,endLoc]
