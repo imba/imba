@@ -1269,23 +1269,34 @@ export class StyleTheme
 # should not happen at root - but create a theme instance
 
 export const StyleExtenders = {
-	transform: '''
-		--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;
-		--t_scale:1;--t_scale-x:1;--t_scale-y:1;
-		--t_skew-x:0;--t_skew-y:0;
-		transform: translate3d(var(--t_x),var(--t_y),var(--t_z))
-		           rotate(var(--t_rotate))
-		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y))
-		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
-	'''
+	transform: {
+		specificity: 0
+		body: '''
+			--t_x:0;--t_y:0;--t_rotate:0;
+			--t_scale:1;--t_scale-x:1;--t_scale-y:1;
+			transform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))
+				scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
+		'''	
+	}
 
-	outline: '''
+	transform_complex: {
+		specificity: 0
+		body: '''
+			--t_z:0;--t_skew-x:0;--t_skew-y:0;
+			transform: translate3d(var(--t_x),var(--t_y),var(--t_z))
+								rotate(var(--t_rotate))
+								skewX(var(--t_skew-x)) skewY(var(--t_skew-y))
+								scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale)) !important;
+		'''
+	}
+
+	outline: {body: '''
 		--ol_s:solid;--ol_w:1px;--ol_o:0px; --ol_c:transparent;
 		outline:var(--ol_w) var(--ol_s) var(--ol_c); outline-offset:var(--ol_o);
 		outline:1px solid transparent; outline-offset:var(--ol_o);
-	'''
+	'''}
 
-	ease: '''
+	ease: {body: '''
 		--e_ad:0ms;--e_af:cubic-bezier(0.23, 1, 0.32, 1);--e_aw:0ms;
 		--e_sd:var(--e_ad);--e_sf:var(--e_af);--e_sw:var(--e_aw);
 		--e_od:var(--e_sd);--e_of:var(--e_sf);--e_ow:var(--e_sw);
@@ -1302,7 +1313,7 @@ export const StyleExtenders = {
 			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c), filter var(--e_c),
 			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),min-width var(--e_b),min-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),
 			var(--e_rest);
-	'''
+	'''}
 }
 
 export const AutoPrefixes = {
@@ -1316,7 +1327,7 @@ export class StyleSheet
 	def constructor stack
 		#stack = stack
 		#parts = []
-		#apply = {}
+		#apply = {transform_complex: [], transform: []}
 		#register = {}
 		transforms = null
 
@@ -1348,9 +1359,11 @@ export class StyleSheet
 
 		let prepend = do(val)
 			unless parts.indexOf(val) >= 0
-			parts.unshift(val)
+				parts.unshift(val)
 
 		for own k,v of #apply
+			continue if !v or v.length == 0
+
 			let helper = StyleExtenders[k]
 
 			let base = {}
@@ -1373,6 +1386,7 @@ export class StyleSheet
 					let group = groups[ns] ||= {}
 					group[sel] = rule
 					all[sel] = yes
+
 			if helper
 
 				for own ns,group of groups
@@ -1393,8 +1407,12 @@ export class StyleSheet
 						if !some or s.match(/[\s\>\,]|:(not|before|after|marker)|::/)
 							corr.push(s)
 					sel = corr
+					let selstr = sel.join(', ')
 
-					let str = sel.join(', ') + ' {\n' + helper + '\n}'
+					# if helper.specificity === 0
+					#	selstr = `:where({selstr})`
+
+					let str = selstr + ' {\n' + helper.body + '\n}'
 
 					if ns
 						str = ns + ' {\n' + str + '\n}'
@@ -1529,6 +1547,9 @@ export class StyleRule
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
 				unless meta.transform
 					meta.transform = yes
+				if key.match(/^(z|skew-x|skew-y)$/)
+					meta.transform_complex = yes
+				
 				parts.push "--t_{key}: {value} !important;"
 			elif key.match(/^(ease-.*)$/)
 				meta.ease = yes
@@ -1576,6 +1597,9 @@ export class StyleRule
 			let sel = isKeyFrame ? selector : selparser.parse(selector,options)
 			if meta.transform
 				apply('transform',sel)
+
+			if meta.transform_complex
+				apply('transform_complex',sel)
 
 			if meta.ease
 				apply('ease',sel)
