@@ -40,7 +40,7 @@ const Huge = { #matcher: do(v) v > 1000 }
 test do
 	ok 1 is Odd # Odd.#matcher(1) returns true
 	ok 2 isnt Odd # Odd.#matcher(2) returns false
-	
+
 	# This can also be used nested with other conditions
 	ok num is (Odd or 2)
 	ok 2000 is Huge
@@ -50,7 +50,6 @@ test do
 # Here's a more complicated example
 
 # Let's create a class now
-
 
 class Status
 	name

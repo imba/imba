@@ -7,7 +7,6 @@ let arr = [joe, jane, pete]
 let set = new Set(arr)
 let map = new Map(arr.map(do [$1,1]))
 
-
 let OddCollection = {
 	# custom method to be called to check if val IN this
 	def #has val
@@ -24,7 +23,6 @@ test 'in' do
 	ok mike not in map
 
 test '#has' do
-	# custom 
+	# custom
 	ok 120 !in OddCollection
 	ok 121 in OddCollection
-	

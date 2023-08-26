@@ -98,7 +98,7 @@ class ArrayPatcher
 
 			let prevIndex = array.indexOf(item)
 			let changed = changes.get(item)
-				
+
 			if prevIndex === -1
 				array.splice(i,0,item)
 				changes.set(item,1)
@@ -556,7 +556,6 @@ class Memo
 
 	def invalidated stack, source
 		flags |= F.STALE | F.POSSIBLY_STALE
-		# console.log('invalidated',stack,this,observer,this === observer)
 		observer.invalidated(stack,this) if observer
 
 		return unless observers
@@ -581,7 +580,7 @@ class Memo
 		CTX.pop(self)
 		let prev = target[vkey]
 		let changed = no
-		
+
 		# for array-likes see if they are identical
 		if res and prev and res.constructor === prev.constructor and res instanceof Array
 			let l = res.length

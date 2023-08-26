@@ -1276,7 +1276,7 @@ export const StyleExtenders = {
 			--t_scale:1;--t_scale-x:1;--t_scale-y:1;
 			transform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))
 				scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
-		'''	
+		'''
 	}
 
 	transform_complex: {
@@ -1549,7 +1549,7 @@ export class StyleRule
 					meta.transform = yes
 				if key.match(/^(z|skew-x|skew-y)$/)
 					meta.transform_complex = yes
-				
+
 				parts.push "--t_{key}: {value} !important;"
 			elif key.match(/^(ease-.*)$/)
 				meta.ease = yes
