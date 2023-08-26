@@ -63,7 +63,8 @@ Usage: imbac [options] path/to/script.imba
   --styles [format]      Specify how styles should be added: 'extern', 'inline'
   --silent               only print out errors (skip warnings)
   --hmr                  compile for hot-module-reloading
-  --analyze          print out the scopes and variables of your script
+  --analyze              print out the scopes and variables of your script
+  --source-id [id]       set source id which is used in namespaces
 `;
 
 function CLI(options){
