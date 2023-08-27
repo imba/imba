@@ -130,6 +130,7 @@
     "vite": "^4.4.9",
     "vite-node": "^0.32.4",
     "vitest": "^0.32.4",
+    "haikunator": "^2.1.2",
     "workerpool": "^6.0.3"
   },
   "dependencies": {

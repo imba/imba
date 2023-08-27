@@ -473,6 +473,7 @@ cli
 	.description('Create a new imba project')
 	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
 	.option('-y, --yes', 'Say yes to any confirmation prompts')
+	.option('--fast', 'Generate random project name, choose default response for all prompts, and only print out resulting directory name, useful for bash scripts')
 	.action(do create($1, $2.opts!))
 
 cli
