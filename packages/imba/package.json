@@ -112,6 +112,9 @@
     },
     "vitest": {
       "optional": true
+    },
+    "gherkin-io": {
+      "optional": true
     }
   },
   "devDependencies": {
@@ -119,6 +122,7 @@
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
     "fdir": "^4.1.0",
+    "gherkin-io": "^1.2.0",
     "image-size": "^0.9.3",
     "micromatch": "^4.0.5",
     "ora": "^5.2.0",
@@ -142,7 +146,6 @@
     "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
     "get-port": "^5.1.1",
-    "gherkin-io": "^1.2.0",
     "handlebars": "^4.7.7",
     "local-pkg": "^0.4.2",
     "lodash.mergewith": "^4.6.2",
