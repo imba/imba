@@ -4,6 +4,6 @@ export class BaseContext
 
 	get retry
 		meta.decorators..retry
-		
+
 	get version
 		makeVersion10? ? "10": "2"
