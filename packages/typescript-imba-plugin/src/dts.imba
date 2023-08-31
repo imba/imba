@@ -12,27 +12,26 @@ def extractBlock text,imports = []
 		let source = imports.find do $1[0].match(ext[2])
 		if source
 			info.ns ||= source[1]
-	# elif ext = text.match(/typeof ([\w]+)/)	
+	# elif ext = text.match(/typeof ([\w]+)/)
 	if text.indexOf(' {') == 0
 		info.global = yes
 
 	return info
 
-
 export default class ImbaScriptDts
-	
+
 	def constructor owner
 		self.owner = owner
 
 	get ils
 		global.ils
-		
+
 	get ps
 		ils.ps
-		
+
 	get ts
 		global.ts
-		
+
 	get fileName
 		owner.fileName + "._.d.ts"
 
@@ -41,7 +40,7 @@ export default class ImbaScriptDts
 
 	get content
 		#body
-	
+
 	def update body
 		let prev = #raw
 		#raw = body
@@ -53,7 +52,7 @@ export default class ImbaScriptDts
 			return
 
 		body = rewriteDts(body)
-	
+
 		# TODO What if the new version is now empty? We want to remove it now
 		if #body =? body
 			return self unless owner

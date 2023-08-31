@@ -135,7 +135,7 @@ class Styles
 				else
 					return "calc(var(--u_{unit},1px) * {value})"
 			else
-				yes	
+				yes
 
 		elif typ == 'string'
 			if key and CSS_STR_PROPS[key] and value[0] != '"' and value[0] != "'"

@@ -18,7 +18,7 @@ export default class Cache
 		#key = Symbol!
 		o = options
 		dir = o.cachedir # or np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
-		nodefs = options.volume or nfs
+		nodefs = o.volume or nfs
 		aliaspath = dir and np.resolve(dir,'.imba-aliases')
 		aliasmap = []
 		aliascache = {}
@@ -86,6 +86,7 @@ export default class Cache
 		keyPathCache[key] ||= np.resolve(dir,key)
 
 	def getKeyTime key
+		key = normalizeKey(key)
 		let cached = cache[key]
 
 		if cached and cached.time
@@ -126,7 +127,6 @@ export default class Cache
 
 		if index >= 0
 			# unless index % 40 == 0
-			#	console.log "key not correctly aligned in file",index,key
 			#	throw "error"
 			return aliascache[key] = idFaucet(index) # idFaucet(index / 40)
 		else
@@ -153,12 +153,11 @@ export default class Cache
 		if cached and cached.time >= time
 			return cached.promise
 
-		let keytime = getKeyTime(key)
+		let keytime = getKeyTime(name)
 
 		# check for file on disk
 		# let file = program.fs.lookup(np.resolve(dir,key))
 		# let mtime = file.mtimesync
-		# console.log 'memo',dir,key,keytime,cached && cached.exists
 
 		if keytime > time
 			cached = cache[key] = {
@@ -171,6 +170,7 @@ export default class Cache
 				promise: cb!
 			}
 
-			cached.promise.then do(val) setKeyValue(key,val)
+			cached.promise.then do(val)
+				setKeyValue(key,val)
 
 		return cached.promise

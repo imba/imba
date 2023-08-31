@@ -22,7 +22,7 @@ extend class Two
 
 	def handle
 		super
-		_exthandled = yes	
+		_exthandled = yes
 
 	def setup
 		super.name = "hello"
@@ -75,7 +75,7 @@ describe "dynamic extend" do
 		for own k,v of updates
 			extend class Hello
 				def [k]
-					super + v	
+					super + v
 
 		let item2 = new Hello
 		eq item2.one!, 11

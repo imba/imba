@@ -156,7 +156,7 @@ export def resolveConfig options
 		config.#path = src
 		return parseConfig(config)
 	catch e
-		const config = await getConfigFilePath("imba", {vite: options.vite})
+		const config = options.vite and (await getConfigFilePath("imba", {vite: options.vite}))
 		return parseConfig(config or {})
 
 export def extendObject obj,patch,path = []

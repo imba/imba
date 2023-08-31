@@ -2,7 +2,7 @@
   "name": "imba",
   "description": "Intuitive and powerful language for building webapps that fly",
   "author": "Sindre Aarsaether",
-  "version": "2.0.0-alpha.230",
+  "version": "2.0.0-alpha.231",
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
     "test-cli": "cd test/cli && node ../../bin/imba index.imba",
@@ -131,9 +131,10 @@
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
-    "vite": "^4.4.7",
-    "vite-node": "^0.33.0",
-    "vitest": "^0.33.0",
+    "vite": "^4.4.9",
+    "vite-node": "^0.32.4",
+    "vitest": "^0.32.4",
+    "haikunator": "^2.1.2",
     "workerpool": "^6.0.3"
   },
   "dependencies": {

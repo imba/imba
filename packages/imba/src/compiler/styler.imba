@@ -104,8 +104,6 @@ for dir,row of 'vh'
 				Object.assign(o,combo)
 				return o
 
-			# console.log "add layout function",name,combo
-
 			# if dir == 'v'
 
 export const validTypes = {
@@ -847,10 +845,8 @@ export class StyleTheme
 		return params
 
 	def box_shadow ...params
-		# console.log params.length # ,a..length
 		let o = {'box-shadow': params}
 		for pair,i in params
-			# console.log par.length,par[0]
 			let tpl = no
 			for par,pi in pair
 				if pi == 0 and pair.length < 3
@@ -866,7 +862,6 @@ export class StyleTheme
 						o["--bxs-{tpl}-alpha"] = par.param.toAlpha!
 
 					par.set(parameterize: yes)
-					# console.log 'dealing with the color',par.option('parameterize')
 					pair[pi] = ''
 					# pair.pop!
 					yes
@@ -1043,7 +1038,7 @@ export class StyleTheme
 			o['align-content'] = o['align-items'] = align
 		return o
 
-	def outline params		
+	def outline params
 		# TODO use :where() selector for 0 specificity outline defaults
 		if params.length == 3 or (params.length == 1 and String(params[0]) == 'none')
 			return {outline: [params]}
@@ -1207,9 +1202,6 @@ export class StyleTheme
 		let fallback = no
 		let result = null
 		let unit = orig._unit
-
-		# console.log 'value',key
-		# console.log 'resolve value',raw
 		if typeof config == 'string'
 			if aliases[config]
 				config = aliases[config]
@@ -1269,7 +1261,7 @@ export class StyleTheme
 				if typ == '#'
 					return color.toString(a,typ)
 				elif typ == '##'
-					
+
 					return color.toVar(a)
 			return m
 		return text
@@ -1277,23 +1269,34 @@ export class StyleTheme
 # should not happen at root - but create a theme instance
 
 export const StyleExtenders = {
-	transform: '''
-		--t_x:0;--t_y:0;--t_z:0;--t_rotate:0;
-		--t_scale:1;--t_scale-x:1;--t_scale-y:1;
-		--t_skew-x:0;--t_skew-y:0;
-		transform: translate3d(var(--t_x),var(--t_y),var(--t_z))
-		           rotate(var(--t_rotate))
-		           skewX(var(--t_skew-x)) skewY(var(--t_skew-y))
-		           scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
-	'''
+	transform: {
+		specificity: 0
+		body: '''
+			--t_x:0;--t_y:0;--t_rotate:0;
+			--t_scale:1;--t_scale-x:1;--t_scale-y:1;
+			transform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))
+				scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));
+		'''
+	}
 
-	outline: '''
+	transform_complex: {
+		specificity: 0
+		body: '''
+			--t_z:0;--t_skew-x:0;--t_skew-y:0;
+			transform: translate3d(var(--t_x),var(--t_y),var(--t_z))
+								rotate(var(--t_rotate))
+								skewX(var(--t_skew-x)) skewY(var(--t_skew-y))
+								scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale)) !important;
+		'''
+	}
+
+	outline: {body: '''
 		--ol_s:solid;--ol_w:1px;--ol_o:0px; --ol_c:transparent;
 		outline:var(--ol_w) var(--ol_s) var(--ol_c); outline-offset:var(--ol_o);
 		outline:1px solid transparent; outline-offset:var(--ol_o);
-	'''
+	'''}
 
-	ease: '''
+	ease: {body: '''
 		--e_ad:0ms;--e_af:cubic-bezier(0.23, 1, 0.32, 1);--e_aw:0ms;
 		--e_sd:var(--e_ad);--e_sf:var(--e_af);--e_sw:var(--e_aw);
 		--e_od:var(--e_sd);--e_of:var(--e_sf);--e_ow:var(--e_sw);
@@ -1310,7 +1313,7 @@ export const StyleExtenders = {
 			color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c), filter var(--e_c),
 			inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),min-width var(--e_b),min-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),
 			var(--e_rest);
-	'''
+	'''}
 }
 
 export const AutoPrefixes = {
@@ -1324,7 +1327,7 @@ export class StyleSheet
 	def constructor stack
 		#stack = stack
 		#parts = []
-		#apply = {}
+		#apply = {transform_complex: [], transform: []}
 		#register = {}
 		transforms = null
 
@@ -1356,9 +1359,11 @@ export class StyleSheet
 
 		let prepend = do(val)
 			unless parts.indexOf(val) >= 0
-			parts.unshift(val)
+				parts.unshift(val)
 
 		for own k,v of #apply
+			continue if !v or v.length == 0
+
 			let helper = StyleExtenders[k]
 
 			let base = {}
@@ -1368,7 +1373,6 @@ export class StyleSheet
 
 			for item in v
 				for rule in (item.#rules or [])
-					# console.log rule
 					let ns = rule.#media or ''
 					let sel = rule.#string.replace(/:not\((#_|\._0?)+\)/g,'')
 
@@ -1383,7 +1387,6 @@ export class StyleSheet
 					group[sel] = rule
 					all[sel] = yes
 
-			# console.log 'groups',groups
 			if helper
 
 				for own ns,group of groups
@@ -1404,8 +1407,12 @@ export class StyleSheet
 						if !some or s.match(/[\s\>\,]|:(not|before|after|marker)|::/)
 							corr.push(s)
 					sel = corr
+					let selstr = sel.join(', ')
 
-					let str = sel.join(', ') + ' {\n' + helper + '\n}'
+					# if helper.specificity === 0
+					#	selstr = `:where({selstr})`
+
+					let str = selstr + ' {\n' + helper.body + '\n}'
 
 					if ns
 						str = ns + ' {\n' + str + '\n}'
@@ -1512,7 +1519,6 @@ export class StyleRule
 				# using :is it should be much, much easier with the nested selectors?
 				# can even just take the whole outer selector as a simple :is on this element
 				let substr = keys.slice(1).join('')
-				# console.log "SUBSTR",substr
 				# do we unwrap, or can we just use :where etc and trust it?
 				let subsel = selparser.unwrap(selector,substr)
 				let obj = {}
@@ -1530,18 +1536,20 @@ export class StyleRule
 			elif key[0] == '['
 				# better to just check if key contains '.'
 				# this is only for a single property
-				# console.warn "DEPRECATED",key,self
 				let o = JSON.parse(key)
 				subrules.push new StyleRule(self,selector,value,options)
 				continue
 
 			# elif key.match(/^outline-?/)
-			#	# meta.outline = yes 
+			#	# meta.outline = yes
 			#	parts.push "{key}: {value} !important;"
 
 			elif key.match(/^(x|y|z|scale|scale-x|scale-y|skew-x|skew-y|rotate)$/)
 				unless meta.transform
 					meta.transform = yes
+				if key.match(/^(z|skew-x|skew-y)$/)
+					meta.transform_complex = yes
+
 				parts.push "--t_{key}: {value} !important;"
 			elif key.match(/^(ease-.*)$/)
 				meta.ease = yes
@@ -1589,6 +1597,9 @@ export class StyleRule
 			let sel = isKeyFrame ? selector : selparser.parse(selector,options)
 			if meta.transform
 				apply('transform',sel)
+
+			if meta.transform_complex
+				apply('transform_complex',sel)
 
 			if meta.ease
 				apply('ease',sel)

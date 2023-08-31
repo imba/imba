@@ -15,15 +15,14 @@ extend class Token
 		if pops
 			return pops
 		return self
-		
+
 	get nextNode
 		next..node
-		
+
 	get prevNode
 		prev..node
 
 ###
-
 
 ###
 export class LexedLine
@@ -32,7 +31,7 @@ export class LexedLine
 	tokens\any[]
 	startState\any
 	endState\any
-	
+
 	def clone newOffset = offset
 		let clones = []
 		let delta = newOffset - offset
@@ -40,7 +39,7 @@ export class LexedLine
 			let clone = tok.clone()
 			clone.offset = tok.offset + delta
 			clones.push(clone)
-		
+
 		return new LexedLine({
 			offset: newOffset
 			startState: startState

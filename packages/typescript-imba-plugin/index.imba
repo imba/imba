@@ -18,15 +18,14 @@ def patch ts
 	})
 
 	Object.defineProperty(ts.server.ScriptInfo.prototype,'im',{get: do this.#imba})
-	
+
 def init modules = {}
 	let ts = global.ts = global.TS = modules.typescript
 	# don't patch if there are no imba files here?
-	# console.log('init plugin',Object.keys(modules))
 	try
 		if ts.#patched =? yes
 			patch(ts)
-		
+
 		if ts.#ils =? yes
 			ts.ils = global.ils ||= new Service
 			util.log('init plugin')

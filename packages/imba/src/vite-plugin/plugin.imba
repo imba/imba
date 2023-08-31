@@ -26,6 +26,7 @@ import np from 'node:path'
 import nfs from 'node:fs'
 import crypto from 'node:crypto'
 import {getConfigFilePath} from '../utils/vite.imba'
+import Cache from '../bundler/cache.imba';
 
 import vitePluginEnvironment from './vite-plugin-environment.ts'
 
@@ -48,7 +49,7 @@ export def getImbaHash
 			const data = nfs.readFileSync(filePath);
 			hash.update(data)
 	hash.digest 'hex'
-	
+
 export def getCacheDir
 	# or just the directory of this binary?
 	let dir = process.env.IMBA_CACHEDIR or np.resolve(dirname,'.imba-cache')
@@ -59,6 +60,8 @@ export def getCacheDir
 
 const IMBA_HASH = getImbaHash!
 const CACHE_DIR = getCacheDir!
+
+global.VITE_IMBA_CACHE = new Cache(cachedir: CACHE_DIR)
 
 export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	let name = "vite-plugin-imba"
@@ -105,18 +108,20 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	def transform(code, id, opts)
 		const ssr = !!opts..ssr;
 		const imbaRequest = requestParser(id, ssr);
-		
+
 		return if !imbaRequest or imbaRequest.query.imba
 
 		let hash
 		let cacheFile
-		try
-			hash = crypto.createHash('md5').update(JSON.stringify(options.server.config) + code + id + IMBA_HASH + JSON.stringify imbaConfig).digest('hex')
-			cacheFile = np.join(CACHE_DIR, hash);
-			const r = await nfs.promises.readFile(cacheFile, 'utf-8');
-			return JSON.parse r
-
 		let compiledData\CompileData
+
+		if false
+			try
+				hash = crypto.createHash('md5').update(JSON.stringify(options.server.config) + code + id + IMBA_HASH + JSON.stringify imbaConfig).digest('hex')
+				cacheFile = np.join(CACHE_DIR, hash);
+				const r = await nfs.promises.readFile(cacheFile, 'utf-8');
+				return JSON.parse r
+
 		try compiledData = await compileImba(imbaRequest, code, options) catch e
 			cache.setError(imbaRequest, e);
 			throw toRollupError(e, options);
@@ -137,19 +142,19 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				platform: 'browser'
 				format: "iife"
 				stdin: {contents: code, resolveDir: process.cwd!}
-				write: no				
+				write: no
 			const newCode =  res.outputFiles[0].text
 			compiledData.compiled.js = code: "const body = {JSON.stringify newCode}; export default \{body: body\}; export \{body\}"
 
 		const result = {
 			...compiledData.compiled.js,
-			meta: 
+			meta:
 				vite:
 					lang: compiledData.lang
 		}
-		try nfs.writeFile(cacheFile, JSON.stringify(result), do 1)
+		# try nfs.writeFile(cacheFile, JSON.stringify(result), do 1)
 		return result
-	
+
 	def resolveId(id, importer, opts)
 		let ssr = !!opts..ssr or options.ssr
 		# ssr = no if test?
@@ -172,7 +177,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				id = id.split("?")[0]
 			const resolution = await this.resolve(id, importer, {skipSelf: yes, ...opts})
 			return {...resolution, external: yes}
-		
+
 	def load(id, opts)
 		const ssr = !!opts..ssr
 
@@ -188,7 +193,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 				return "export default '{path}'"
 
 		const imbaRequest = requestParser(id, !!ssr)
-		if resolvedAllCssModuleId == id 
+		if resolvedAllCssModuleId == id
 			return "export default ''"
 			# return 'export default ".dev-ssr/all.css"' if dev?
 			# if build?
@@ -204,7 +209,6 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 					return _css
 				else
 					console.log "cache empty: loading {id}"
-
 
 			if viteConfig.assetsInclude(filename)
 				log.debug "load returns raw content for {filename}"
@@ -240,4 +244,4 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 	plugins.push cucumberPlugin! if process.env.VITEST
 
 	plugins
-		
+

@@ -44,7 +44,7 @@ class WorkerInstance
 			urls.push url
 			ids.push id
 			# debugger if url.endsWith(".css")
-			moduleMap[url] = 
+			moduleMap[url] =
 				file: mod.file
 				id: mod.id
 				url: url
@@ -99,10 +99,10 @@ class WorkerInstance
 			# setup-vite fork
 			process.on('SIGINT') do
 				fork.kill('SIGINT')
-			
+
 			fork.on('exit') do(code)
 				process.exit(code)
-			
+
 			return fork
 
 		cluster.setupMaster(args)
@@ -166,7 +166,6 @@ class WorkerInstance
 				md: md
 
 		elif message.type == 'resolve'
-			# console.log "resolving", message
 			const id = message.payload.id
 			const importer = message.payload.importer
 			const output = await runner.viteNodeServer.resolveId(id, importer)
@@ -183,7 +182,6 @@ class WorkerInstance
 		if message == 'reload'
 			console.log "RELOAD MESSAGE"
 			reload!
-
 
 	def broadcast event
 		current..send(event)
@@ -244,7 +242,7 @@ export default class Runner < Component
 		config.configFile = no
 		viteServer = await Vite.createServer config
 		viteNodeServer = new ViteNode.ViteNodeServer viteServer, {
-			deps: 
+			deps:
 				moduleDirectories: ['node_modules']
 			transformMode:
 				ssr: [/.*/g]
@@ -331,7 +329,6 @@ export default class Runner < Component
 			#hash = bundle.result.hash
 			# running with vite, we use a thinner bundle
 			bundle..on('built') do(result)
-				# console.log "got manifest?"
 				# let hash = result.manifest.hash
 				if #hash =? result.hash
 					reload!

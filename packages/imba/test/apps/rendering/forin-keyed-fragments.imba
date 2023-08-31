@@ -8,7 +8,7 @@ tag Item
 		"x"
 		<slot> "-"
 
-describe "for in keyed fragments" do	
+describe "for in keyed fragments" do
 	tag App
 		items = items
 		bool = yes

@@ -38,7 +38,6 @@ class IndexedTagFragment < Fragment
 				par.#removeChild(array[--from])
 		elif len > from
 			while len > from
-				# console.log 'inserting before now',array[from]
 				par.#insertChild(array[from++],end)
 		self.length = len
 		return

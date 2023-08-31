@@ -8,7 +8,7 @@ extend class APPNS.Main
 		self
 
 # extend class Local.Main
-# 	get that	
+# 	get that
 # 		self
 
 extend class APPCLS

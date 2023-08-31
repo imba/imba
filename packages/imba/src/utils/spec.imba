@@ -87,6 +87,23 @@ class SpecComponent
 	get root
 		parent ? parent.root : self
 
+def isPlainObject val
+	typeof val == 'object' and val and Object.getPrototypeOf(val) == Object.prototype
+
+def createChainable keys,fn
+	let create
+	create = do(ctx)
+		const chain = do(...args) fn.apply(ctx,args)
+		Object.assign(chain,fn)
+		for key in keys
+			Object.defineProperty(chain,key,{
+				get: do create({...ctx, [key]: true})
+			})
+		return chain
+	let chain = create({})
+	chain.fn = fn
+	return chain
+
 global class Spec < SpecComponent
 
 	get keyboard
@@ -135,6 +152,10 @@ global class Spec < SpecComponent
 			observer = new MutationObserver do(muts)
 				context.state.mutations.push(...muts)
 
+		test = test.bind(self)
+
+		test = createChainable(['skip','todo','only','client','node','web','both','concurrent','fails'],test)
+		describe = createChainable(['skip','todo','only','client','node','web','both','concurrent'],describe.bind(self))
 		self
 
 	get fullName
@@ -160,19 +181,24 @@ global class Spec < SpecComponent
 			return Promise.resolve(self)
 
 	def describe name, blk
-		blocks.push new SpecGroup(name, blk, self)
+		let options = this
+		let that = SPEC
+
+		that.context.blocks.push new SpecGroup(name, blk, that.context,options)
 
 	def test name, blk
-		let inline = stack[-1] isa SpecExample
+		let options = this
+		let that = SPEC
+		let inline = that.stack[-1] isa SpecExample
 
 		if name isa Function
 			blk = name
-			name = inline ? "" : (context.blocks.length + 1)
+			name = inline ? "" : (that.blocks.length + 1)
 
 		if inline
 			return blk()
 
-		context.blocks.push new SpecExample(name, blk, context)
+		that.context.blocks.push new SpecExample(name, blk, that.context,options)
 
 	def before name, blk
 		if name isa Function
@@ -206,7 +232,7 @@ global class Spec < SpecComponent
 				characterData: true,
 				subtree: true
 			})
-			console.log 'running spec'
+
 			console.info = do(...params)
 				context.state.info.push(params)
 				context.state.log.push(params[0])
@@ -244,8 +270,9 @@ global class Spec < SpecComponent
 
 global class SpecGroup < SpecComponent
 
-	def constructor name, blk, parent
+	def constructor name, blk, parent, options
 		super()
+		options = options
 		parent = parent
 		name = name
 		blocks = []
@@ -273,9 +300,15 @@ global class SpecGroup < SpecComponent
 
 		block.run!
 
+	def traverse
+		if #traversed =? yes
+			SPEC.eval(blk,self) if blk
+		self
+
 	def start
 		emit('start', [self])
-		SPEC.eval(blk,self) if blk
+		traverse!
+		# SPEC.eval(blk,self) if blk
 
 		if console.group
 			console.group(name)
@@ -295,10 +328,11 @@ global class SpecGroup < SpecComponent
 
 global class SpecExample < SpecComponent
 
-	def constructor name, block, parent
+	def constructor name, block, parent, options
 		super()
 		parent = parent
 		evaluated = no
+		options = options
 		name = name
 		block = block
 		assertions = []
@@ -337,6 +371,14 @@ global class SpecExample < SpecComponent
 					pup("spec:fail",message: ass.toString!)
 		console.groupEnd(fullName)
 		emit('done',[self])
+		return self
+
+	def toJSON
+		{
+			failed: failed
+			messages: assertions.filter(do $1.critical).map(do $1.toString!)
+			error: error && error.message
+		}
 
 	def fail
 		console.log "✘ {fullName}".red, state, error
@@ -369,11 +411,20 @@ global class SpecAssert < SpecComponent
 	def compare a,b
 		if a === b
 			return true
+
 		if a isa Array and b isa Array
 			return false if a.length != b.length
 			for item,i in a
 				return false unless self.compare(item,b[i])
-			return JSON.stringify(a) == JSON.stringify(b)
+			return true
+			# return JSON.stringify(a) == JSON.stringify(b)
+		if isPlainObject(a) and isPlainObject(b)
+			# Not caring about order of keys
+			for own k,v of a
+				return false unless compare(v,b[k])
+			return true
+
+		# deep similar
 		return false
 
 	get critical
@@ -402,10 +453,10 @@ global class SpecAssert < SpecComponent
 			"ok"
 
 global.spec = global.SPEC = new Spec
+global.test = global.spec.test
+global.describe = global.spec.describe
 
-global def describe name, blk do SPEC.context.describe(name,blk)
 global def before name, blk do SPEC.before(name,blk)
-global def test name, blk do SPEC.test(name,blk)
 global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
 global def ok actual, o do SPEC.eq(!!actual, true, o)
 global def nok actual, o do SPEC.eq(!!actual, false, o)
@@ -416,7 +467,7 @@ global def eqcss el, match,sel,o = {}
 	elif el isa Element and !el.parentNode
 		document.body.appendChild(el)
 	if typeof sel == 'string'
-		el = el.querySelector(sel)	
+		el = el.querySelector(sel)
 	elif typeof sel == 'number'
 		el = el.children[sel]
 

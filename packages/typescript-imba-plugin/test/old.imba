@@ -19,9 +19,6 @@
 			mappings[fullname] = info
 			# mappings[fullname + 'base'] = info
 
-
-		
-
 		while (idx = body.indexOf('class Ω',idx)) >= 0
 			# add double closer
 			let start = body.indexOf('\n',idx)
@@ -36,15 +33,11 @@
 
 			if m and m[5] and !realname[0].match(/\w/)
 				realname = m[5]
-				
-
-			# console.log "NESTED",nested
 			let info = mappings[name] ||= {
 				name: realname
 			}
 
 			unless exists
-				# console.log 'could not find?!',name,realname
 				let source = imports.find do $1[0].match(realname)
 				if source
 					info.ns ||= source[1]
@@ -55,7 +48,6 @@
 			# 		if let ext = m[1].match(/typeof (?:import\("([^"]+)"\)\.)?([^;]+)/)
 			# 			info.ns = ext[1]
 			# 			info.name = ext[2]
-			# 
 			# 			let source = imports.find do $1[0].match(ext[2])
 			# 			if source
 			# 				info.ns ||= source[1]
@@ -66,10 +58,9 @@
 			idx += 5
 
 		# Should definitely parse as AST instead
-			
+
 		# find imports
 		body = body.replace(/export class (\Ω([^\Ω\s]+)(?:\Ω(\w+))?)\s(extends ([^\s]+)\s)?\{/g) do(m,full,name,mod)
-			# console.log 'replacing',m,mod,name
 
 			# if mod == 'import'
 			let mapping = mappings[full]
@@ -90,32 +81,31 @@
 
 			let reg = new RegExp(" {name}[, ]")
 			let source = imports.find do $1[0].match(reg)
-			# console.log 'found source?',source,reg
 			if source
 				return "declare module \"{source[1]}\" \{\ninterface {name} \{"
 			# let path = body.replace()
-			
+
 			'declare global {\ninterface ' + name + ' {'
-			
+
 		# can we do this?
-		
+
 		# now replace the this types
 		if false
 			body = body.replace(/\Ω([\w\$]+)\Ω[\w\$]+/g,'this')
 			body = body.replace(/\@this \{ this & \w+ \}/g,'')
 			body = body.replace(/this & \w+/g,'this')
-		
+
 			# clean empty comments
 		if true
 			body = body.replace(/\/\*\*?[\r\n\t\s]*\*\//g,'')
-		
+
 			# clean all jsdoc related comments since they should
 			# just be proxied to the real imba file
 			body = body.replace(/\/\*\*[\S\s]+?\*\//gm, '')
-		
+
 			# replace extends field
 			body = body.replace(/^[\t\s]+__extends__\:.+;/gm,'')
-		
+
 		body = body + '\nexport {}'
 
 		for own fullname,info of mappings

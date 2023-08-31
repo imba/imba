@@ -14,7 +14,6 @@ def regexify array, pattern = '#'
 		pattern.replace('#',escaped)
 	new RegExp('(?:' + items.join('|') + ')')
 
-
 def denter indent,outdent,stay,o = {}
 	if indent == null
 		indent = toodeep
@@ -51,7 +50,7 @@ def denter indent,outdent,stay,o = {}
 		if indent[k] and indent[k].indexOf('*') == -1
 			indent[k] += '*$1'
 
-	# for own k,v of cases  
+	# for own k,v of cases
 	let rule = [/^(\t*)(?=[^ \t\n])/,{cases: cases}]
 	if o.comment
 		let clones = {}
@@ -63,7 +62,6 @@ def denter indent,outdent,stay,o = {}
 		return [ [/^(\t*)(?=#\s|#$)/,{cases: clones}], rule ]
 
 	return rule
-	
 
 export const states = {
 
@@ -110,7 +108,7 @@ export const states = {
 		'extend_class_'
 		'class_'
 		'tagclass_'
-		'augmentation_'		
+		'augmentation_'
 		'var_'
 		'func_'
 		'import_'
@@ -128,9 +126,9 @@ export const states = {
 		'decorator_'
 		[/[ ]+/, 'white']
 		'common_'
-		
+
 	]
-	
+
 	indentable_: [
 		[/^[ ]+/, 'white']
 		denter('@>_paren_indent&-_indent',null,null)
@@ -142,7 +140,7 @@ export const states = {
 		denter(2,-1,0)
 		'block_'
 	]
-	
+
 	_paren_indent: [
 		denter(2,-1,0)
 		'block_'
@@ -269,7 +267,7 @@ export const states = {
 		'identifier_'
 		[/@implicitCall/,'@rematch',switchTo: '@implicit_call_body']
 	]
-	
+
 	# [/\$\w+\$/, 'identifier.env']
 	# 	[/\$\d+/, 'identifier.special']
 	# 	[/\#+@id/, 'identifier.symbol']
@@ -338,7 +336,7 @@ export const states = {
 		[/\}/, '}', '@pop']
 		[/(@id)(\s*:\s*)/, ['key','operator.assign.key-value','@object_value']]
 		[/(@id)/, 'identifier.$F']
-		[/\[/, '[', '@object_dynamic_key='] # 
+		[/\[/, '[', '@object_dynamic_key='] #
 		[/\s*=\s*/,'operator.assign','@object_value=']
 		[/:/,'operator.assign.key-value','@object_value=']
 		[/\,/,'delimiter.comma']
@@ -411,13 +409,13 @@ export const states = {
 		[/\(/,'(',switchTo: '@_do_params']
 		[/./,'@rematch',switchTo:'@_do']
 	]
-	
+
 	do_piped: [
 		denter(null,-1,-1)
 		[/\s*\|/,'args.open',switchTo: '@_do_piped_params']
 		[/./,'@rematch',switchTo:'@_do']
 	]
-	
+
 	_do_piped_params: [
 		[/\|/,'args.close',switchTo: '@_do']
 		'params_'
@@ -461,16 +459,15 @@ export const states = {
 	]
 
 	extend_class_: [
-		[/(extend)(\s)(class)(\s)/, 
+		[/(extend)(\s)(class)(\s)/,
 			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
 		]
 	]
 
-	
 	augmentation_: [
 		[/(extend)(?=\s+@id)/,'keyword.$1','@augmentation_start=']
 	]
-	
+
 	augmentation_start: [
 		denter({switchTo: '@>_class&class='},-1,-1)
 		# denter({switchTo: '@>_flow&-body'},-1,-1)
@@ -504,7 +501,7 @@ export const states = {
 		[/(import)(\s+type)(?=\s[\w\$\@\{])/,['keyword.import','keyword.type','@>import_body&-_imports=decl-import-type/part']]
 		[/(import)@B/,'keyword.import','@>import_body&-_imports=decl-import/part']
 	]
-	
+
 	import_body: [
 		denter(null,-1,0)
 		[/(@esmIdentifier)( +from)/,['identifier.$F.default','keyword.from',switchTo: '@import_source']]
@@ -520,7 +517,7 @@ export const states = {
 		'comma_'
 		'common_'
 	]
-	
+
 	import_source: [
 		denter(null,-1,0)
 		[/["']/, 'path.open','@_path=$#']
@@ -546,11 +543,8 @@ export const states = {
 		[/(@esmIdentifier)/,'identifier.const.export']
 		[/\*/,'operator.star']
 		'comma_'
-		'common_'		
+		'common_'
 	]
-
-	
-
 
 	esm_specifiers: [
 		[/\}/, '}', '@pop']
@@ -563,7 +557,6 @@ export const states = {
 		'whitespace'
 	]
 
-	
 	_path: [
 		[/[^"'\`\{\\]+/, 'path']
 		[/@escapes/, 'path.escape']
@@ -588,7 +581,7 @@ export const states = {
 
 		[/(def)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.function.decl-const-func','@>def_params&$1/$1']]
 	]
-	
+
 	flow_: [
 		# [/(else)(?=\s|$)/, ['keyword.$1','@flow_start.$S2.flow.$S4']]
 		[/(else)(?=\s|$)/, ['keyword.$1','@>_flow&$1']]
@@ -846,7 +839,6 @@ export const states = {
 		'expr_'
 	]
 
-
 	inline_var_body: [
 		[/\[/, 'array.[', '@array_var_body']
 		[/\{/, 'object.{', '@object_body']
@@ -903,8 +895,6 @@ export const states = {
 		}]
 		[/[\w\-\$]+/,'type']
 	]
-	
-	
 
 	css_: [
 		[/global(?=\s+css@B)/,'keyword.$#']
@@ -979,7 +969,7 @@ export const states = {
 		[/\+(@id)/, 'style.property.scope']
 		[/\s*([\:\=]\s*)(?=@br|$)/, 'style.property.operator',switchTo: '@>css_multiline_value&_stylevalue']
 		[/\s*([\:\=]\s*)/, 'style.property.operator',switchTo: '@>css_value&_stylevalue']
-	] 
+	]
 
 	css_value_: [
 		[/(x?xs|sm\-?|md\-?|lg\-?|xx*l|\dxl|hg|x+h)\b/, 'style.value.size'],
@@ -1063,7 +1053,7 @@ export const states = {
 
 	]
 
-	_tag: [		
+	_tag: [
 		[/\/>/,'tag.close','@pop']
 		[/>/,'tag.close',switchTo: '@>tag_content=&-_tagcontent']
 		# '@>css_selector&rule-_sel'
@@ -1109,8 +1099,6 @@ export const states = {
 		[/(?=\@@optid)/,'','@_tag_event&-_listener']
 	]
 
-	
-	
 	_tag_part: [
 		[/\)|\}|\]|\>/,'@rematch', '@pop']
 	]
@@ -1137,7 +1125,7 @@ export const states = {
 		[/(\s*\=\s*)/,'operator.equals.tagop.tag-$/', '@_tag_value&-tagattrvalue']
 		[/\s+/,'@rematch','@pop']
 	]
-	
+
 	_tag_interpolation: [
 		[/\}/,'tag.$/.interpolation.close','@pop']
 		'expr_'
@@ -1161,7 +1149,7 @@ export const states = {
 		[/(\/)(\/)/, ['regexp.slash.open','regexp.slash.close']]
 		# [/(\/)([^\\\/]|\\.)*(\\\/)(?=($))/, token: 'regexp']
 	]
-	
+
 	_regexp: [
 		[/(\{)(\d+(?:,\d*)?)(\})/, ['regexp.escape.control', 'regexp.escape.control', 'regexp.escape.control'] ],
 		[/(\[)(\^?)(?=(?:[^\]\\\/]|\\.)+)/, ['regexp.escape.control',{ token: 'regexp.escape.control', next: '@_regexrange'}]],
@@ -1206,7 +1194,7 @@ The monarch substate can be state using /something
 
 ###
 def rewrite-state raw
-	
+
 	let state = ['$S1','$S2','$S3','$S4','$S5','$S6']
 
 	if raw.match(/\@(pop|push|popall)/)
@@ -1252,9 +1240,8 @@ def rewrite-token raw
 	raw = raw.replace('$&','$S3')
 	raw = raw.replace('$I','$S2')
 	raw = raw.replace('$T','$S2')
-	
+
 	# if orig != raw
-	#	console.log 'rewriting token',orig,raw
 	return raw
 
 def rewrite-actions actions,add
@@ -1267,7 +1254,7 @@ def rewrite-actions actions,add
 		if typeof add == 'string'
 			actions.next = add
 		elif add
-			Object.assign(actions,add)		
+			Object.assign(actions,add)
 
 		if actions.next
 			actions.next = rewrite-state(actions.next)
@@ -1275,7 +1262,6 @@ def rewrite-actions actions,add
 			actions.switchTo = rewrite-state(actions.switchTo)
 
 	elif actions and actions.cases
-		# console.log 'found cases to transform!!'
 		let cases = {}
 		for own k,v of actions.cases
 			let newkey = rewrite-token(k)
@@ -1311,7 +1297,6 @@ def rewrite-actions actions,add
 
 def rewrite-rule owner, key
 	let rule = owner[key]
-	
 
 for own key,rules of states
 	let i = 0
@@ -1389,14 +1374,14 @@ export const grammar = {
 	id:  /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	classid: /\@?[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
 	plainid: /[A-Za-z_\$][\w\$]*(?:\-+[\w\$]+)*\??/
-	fieldid: /[\@\#]*@plainid/ 
+	fieldid: /[\@\#]*@plainid/
 	propid: /[\@\#]*@plainid/
 	defid: /[\@\#]*@plainid/
 	decid: /\@(?:@plainid)?/
 	symid: /\#+@plainid/
 	envvar: /\$+[\w\-]+\$/
 	symref: /\#+@plainid/
-	
+
 	optid: /(?:@id)?/
 	# (?:\-+[\w\$]+)*\??
 	esmIdentifier: /[A-Za-z_\$\@][\w\$]*(?:\-+[\w\$]+)*\??/
@@ -1408,14 +1393,14 @@ export const grammar = {
 	implicitCall: /(?!\s(?:and|or|is|isa)\s)(?=\s[\w\'\"\/\[\{])/ # not true for or etc
 	cssModifier: /(?:\@+[\<\>\!]?[\w\-]+\+?|\.+@id\-?)/
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
-	
+
 	cssVariable: /(?:--|\$)[\w\-\$]+/
 	cssPropertyName: /[\w\-\$]+/
 	# cssModifier: /\@[\w\-\$]+/
 	cssPropertyKey: /(?:@cssPropertyName(?:@cssModifier)*|\^*@cssModifier+)(?:\s*[\:\=])/
 	cssUpModifier: /\.\.[\w\-\$]+/
 	cssIsModifier: /\.[\w\-\$]+/
-	
+
 	regEx: /\/(?!\/\/)(?:[^\/\\]|\\.)*\/[igm]*/,
 	regexpctl: /[(){}\[\]\$\^|\-*+?\.]/,
 	regexpesc: /\\(?:[bBdDfnrstvwWn0\\\/]|@regexpctl|c[A-Z]|x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4})/,

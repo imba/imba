@@ -83,7 +83,6 @@ def run
 			result.raw = out
 			result.ok = out == expected
 			result.rule = res
-			# console.log out,expected
 
 			if false
 				console.log "--- rewrite {sel} ---"
@@ -104,7 +103,6 @@ def run
 		tot++
 		unless res.ok
 			failed++
-			# console.log "    {res.value}" if res.value
 			console.log "    {res.raw}" if res.raw
 			console.log res.rule.rule
 

@@ -139,7 +139,7 @@ export class Route
 	def match str = router.path
 		let up = parent.match(str)
 		return null unless up
-		let url = parseUrl(str)		
+		let url = parseUrl(str)
 		let matcher = url.url
 		let prefix = ''
 

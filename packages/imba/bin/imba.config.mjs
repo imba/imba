@@ -1,4 +1,3 @@
-import imbaPlugin, {vitePluginEnvironment} from 'imba/plugin'
 import np from 'node:path'
 import nfs from 'node:fs'
 // do not remove
@@ -12,6 +11,10 @@ const setupFiles = ['node_modules/imba/bin/test-setup.all.mjs']
 let userTestConfig = {}
 
 export default async function({mode, command}){
+	const lazy = await import('imba/plugin')
+	const imbaPlugin = lazy.default
+	const vitePluginEnvironment = lazy.vitePluginEnvironment;
+	// import imbaPlugin, {vitePluginEnvironment} from 'imba/plugin'
 	extensions.forEach((ext)=>{
 		const name = `test-setup${ext}`
 		const path = np.join(process.cwd(), name)

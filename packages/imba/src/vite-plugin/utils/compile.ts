@@ -1,11 +1,12 @@
 import { CompileOptions, ResolvedOptions } from './options';
 import {compile} from 'imba/compiler'
-
+import nfs from 'node:fs'
 // @ts-ignore
 import { createMakeHot } from 'imba-hmr';
 import { ImbaRequest } from './id';
 import { safeBase64Hash } from './hash';
 import { log } from './log';
+import Cache from '../../bundler/cache.imba';
 
 const scriptLangRE = /<script [^>]*lang=["']?([^"' >]+)["']?[^>]*>/;
 
@@ -26,6 +27,7 @@ const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 			format: 'esm',
 			resolveColors: true,
 			sourcePath: filename,
+			vite: true,
 			sourcemap: options.compilerOptions.sourcemap ?? "extern",
 			...imbaConfig
 		};
@@ -89,14 +91,36 @@ const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 		if(options.server?.config?.mode == "test" && options.server?.config?.test?.environment == 'node'){
 			finalCompileOptions.platform = "node"
 		}
-		const compiled = compile(code, finalCompileOptions);
+
+		// This is where you potentially cache it?
+		// Maybe just add that function to the compiler directly
+		const imbacache = globalThis.VITE_IMBA_CACHE;
+		const parts = [];
+		// match things in code
+		const cachekey = `${filename}-${finalCompileOptions.platform}-vite2`;
+		const mtime = nfs.existsSync(filename) ? nfs.statSync(filename).mtimeMs : 0;
+
+		const wrap_compile = (code,o) => {
+			const res = compile(code, o);
+			const map = res.sourcemap;
+			return {
+				js: {code: res.js, dependencies: [], map},
+				css: {code: res.css},
+				warnings: res.warnings,
+				errors: res.errors
+			}
+		}
+		// Should move into the compiler itself
+		// const compiled = await imbacache.memo(cachekey,mtime,()=> Promise.resolve(wrap_compile(code,finalCompileOptions)));
+		const compiled = wrap_compile(code,finalCompileOptions);
+	
 		if (compiled["erroredΦ"]){
 			throw compiled
 		}
 
-		const map = compiled.sourcemap
-		compiled.js = {code: compiled.js, map}
-		compiled.css = {code: compiled.css}
+		// const map = compiled.sourcemap
+		// compiled.js = {code: compiled.js, map}
+		// compiled.css = {code: compiled.css}
 		if (emitCss && compiled.css.code) {
 			// TODO properly update sourcemap?
 			compiled.js.code += `\n/*__css_import__*/import ${JSON.stringify(cssId)};\n`;
@@ -113,7 +137,7 @@ const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 				compileOptions: finalCompileOptions
 			});
 		}
-
+		// Dependencies will always be blank?
 		compiled.js.dependencies = dependencies;
 		return {
 			filename,

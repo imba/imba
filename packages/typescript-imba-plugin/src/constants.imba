@@ -41,7 +41,6 @@ export const Extensions = [
 
 const Suffixes = [".imba",""]
 
-
 export const DefaultConfig = {
 	include: ['**/*.imba','**/*']
 	exclude: ['node_modules/**/*','node_modules/**/*.imba','dist/**/*']
@@ -84,7 +83,7 @@ export const RequiredCompilerOptions = {
 	allowJs: true
 	maxNodeModuleJsDepth: 2
 	moduleResolution: 100
-} 
+}
 
 export const DefaultRichConfig = {
 	include: ['**/*.imba']

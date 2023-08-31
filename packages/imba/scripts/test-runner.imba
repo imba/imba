@@ -45,7 +45,6 @@ let consoleMapping = {
 let parseRemoteObject = do(obj)
 	let result = obj.value or obj
 	if obj.type == 'object'
-		# console.log("object",obj,obj.preview)
 		if obj.value
 			return obj.value
 		result = {}
@@ -117,7 +116,6 @@ def spawnRunner
 			return
 
 		if rpc[meth]
-			# console.log 'called puppy',meth # ,params
 			rpc[meth].apply(runner.page,params)
 			return
 
@@ -131,12 +129,10 @@ def spawnRunner
 		return receiver[meth].apply(receiver,params)
 
 	runner.on 'console' do(msg)
-		# console.log("page on console",msg._type)
 		let params = msg.args().filter(Boolean).map do |x|
 			parseRemoteObject(x._remoteObject)
 
 		let str = String(params[0]) # .replace(':','')
-		# console.log 'page on console',str
 		if runner.HANDLERS and runner.HANDLERS[str]
 			runner.HANDLERS[str](*params.slice(1))
 

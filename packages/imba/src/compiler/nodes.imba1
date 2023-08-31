@@ -346,6 +346,10 @@ var CALL = do |callee,pars = []|
 	# possibly return instead(!)
 	Call.new(callee,pars)
 
+var IIFE = do |body|
+	# possibly return instead(!)
+	IifeFunc.new([],body)
+
 var GET = do |left,right| OP('.',left,right)
 
 var CALLSELF = do |name,pars = []|
@@ -733,6 +737,9 @@ export class Stack
 	def isNode
 		platform == 'node'
 
+	def isVite
+		!!@options:vite
+
 	def env key
 		var val = @options["ENV_{key}"]
 		return val if val != undefined
@@ -745,7 +752,11 @@ export class Stack
 		if @options[lowercased] != undefined
 			return @options[lowercased]
 
-		if key == 'WEB' or key == 'BROWSER'
+		if key == 'VITE'
+			@meta:universal = no
+			return isVite
+
+		elif key == 'WEB' or key == 'BROWSER'
 			@meta:universal = no
 			return isWeb
 		elif key == 'NODE'
@@ -926,6 +937,12 @@ export class Node
 
 	def safechain
 		no
+
+	def sourcecode
+		let src = STACK.SOURCECODE
+		let start = startLoc
+		let end = endLoc
+		src.slice(start,end)
 
 	def oid
 		@oid ||= STACK.generateId('')
@@ -1114,6 +1131,11 @@ export class Node
 			return Return.new(self)
 		elif node == NumberLike
 			return NumberLike.new(self)
+		elif node isa Util.Is
+			return node.clone(self)
+		elif node isa AmperWalker
+			node.test(self)
+
 		return self
 
 	def toExpression
@@ -1288,6 +1310,9 @@ export class Node
 export class ValueNode < Node
 
 	prop value
+
+	def startLoc
+		@startLoc or (@value and @value:startLoc ? @value.startLoc : -1)
 
 	def initialize value
 		setup
@@ -1473,6 +1498,13 @@ export class Index < ValueNode
 export class ListNode < Node
 
 	prop nodes
+
+	def consume node
+		if node isa Walker
+			for n in @nodes
+				n.consume(node)
+			return self
+		super
 
 	def initialize list
 		setup
@@ -2321,6 +2353,9 @@ export class Parens < ValueNode
 		catch e
 			[0,0]
 
+	def endLoc
+		@endLoc or (@close and @close:endLoc ? @close.endLoc : 0)
+
 	def load value
 		@noparen = no
 		value isa Block and value.count == 1 ? value.first : value
@@ -2360,7 +2395,6 @@ export class Parens < ValueNode
 
 	def prebreak br
 		super(br)
-		console.log "PREBREAK"
 		@value.prebreak(br) if @value
 		self
 
@@ -2388,6 +2422,10 @@ export class ExpressionBlock < ListNode
 export class Return < Statement
 
 	prop value
+
+	def replace base, replacement
+		if @value == base
+			@value = replacement
 
 	def initialize v
 		@traversed = no
@@ -4049,6 +4087,82 @@ export class IsolatedFunc < Func
 				@leaks.push(source)
 		self
 
+export class IifeFunc < Func
+
+	def js s,o
+		body.consume(ImplicitReturn.new) unless option(:noreturn)
+		var ind = body.@indentation
+		var out = body.c(braces: yes)
+		return "(()=>{out})()"
+
+export class Walker
+	prop leaks
+	def initialize fn
+		@func = fn
+		@leaks = no
+		@matches = []
+
+	def test node
+		no
+
+export class AmperWalker < Walker
+	prop deopt
+	
+	def test node
+		if node isa Call
+			node.@args.consume(self)
+			node.@callee.consume(self)
+			return
+
+		let variable = node.@variable
+		if variable and !variable.isGlobal
+			@deopt = yes
+
+		if node isa This or node isa Self
+			@self = node
+
+export class AmperFunc < Func
+
+
+	def js s,o
+		# traverse into the function to see if it is dynamic
+		let walker = AmperWalker.new(self)
+		body.consume(walker)
+
+		# hash the output? Or the source? Maybe the source is enough?
+		var out = body.c(braces: no)
+
+		unless walker.deopt
+			let raw = body.sourcecode
+			let sym = raw.replace(/[\"]/g,"'").replace
+			let pars = [LIT('"' + sym + '"'),walker.@self or LIT('null'),LIT("(v$)=>{out}")]
+			return Util.memo(*pars).c
+
+		return "((v$)=>{out})"
+
+export class RescueFunc < Func
+
+	def visit o
+		@scope = null
+		body.traverse
+
+		if option(:async)
+			var fnscope = o.up(Func)
+			fnscope && fnscope.set(async: yes)
+
+		self
+
+	def js s,o
+		body = body.consume(ImplicitReturn.new)
+
+		var out = body.c(braces: no)
+		let fn = '()=>{ try { ' + out + ' } catch(e) { return e; } }'
+
+		if option('async')
+			return "await (async {fn})()"
+		else
+			return "({fn})()"
+
 export class Lambda < Func
 	def scopetype
 		var k = option(:keyword)
@@ -4589,6 +4703,13 @@ export class Str < Literal
 	def js o
 		String(@value)
 
+	def cache o
+		# should never cache basic strings?
+		if raw:length > 20
+			super
+
+		return self
+
 	def c o
 		@cache ? super(o) : (M js, @value, o)
 
@@ -5009,13 +5130,8 @@ export class Op < Node
 			@op = '&&'
 		elif @op == 'or'
 			@op = '||'
-		elif @op == 'is'
-			@op = '==='
-		elif @op == 'isnt'
-			@op = '!=='
 		elif @op == 'not'
 			@op = '!'
-
 		@left = l
 		@right = r
 		return self
@@ -5024,6 +5140,13 @@ export class Op < Node
 		@right.traverse if @right and @right:traverse
 		@left.traverse if @left and @left:traverse
 		return self
+
+	def startLoc
+		# what about ++test?
+		@startLoc or @left.startLoc
+	
+	def endLoc
+		@endLoc or (@right or @left).endLoc
 
 	def hasTagRight
 		if isLogical
@@ -5117,6 +5240,26 @@ export class Op < Node
 				FALSE
 			).c
 
+		let neg = false
+
+		if op == 'isnt'
+			neg = true
+			op = 'is'
+
+		if op == 'is'
+
+			if r instanceof Str or r instanceof Num
+				op = neg ? '!==' : '==='
+
+		if op == 'is'
+			let res
+			if r instanceof Parens
+				l.cache
+				res = r.consume(Util.Is.new([l,null]))
+			else
+				res = Util.Is.new([l,r])
+			return (neg ? '!' : '') + res.c
+
 		l = l.c if l isa Node
 		r = r.c if r isa Node
 
@@ -5132,7 +5275,7 @@ export class Op < Node
 		@op == '+' and @left and @left.isString
 
 	def isLogical
-		@op == '&&' or @op == '||'
+		@op == '&&' or @op == '||' or @op == 'or' or @op == 'and'
 
 	def isBitwise
 		!!constants.BITWISE_OPERATORS[@op]
@@ -5148,9 +5291,22 @@ export class Op < Node
 		10
 
 	def consume node
+	
 		if node == NumberLike
 			if isBitwise
 				return self
+
+		elif node isa Walker
+			left.consume(node) if left
+			right.consume(node) if right
+
+		if node instanceof Util.Is
+			if op == '!'
+				left = left.consume(node)
+			elif isLogical
+				left = left.consume(node) if left
+				right = right.consume(node) if right
+			return self
 
 		return super if isExpressable
 
@@ -5244,30 +5400,19 @@ export class UnaryOp < Op
 
 export class InstanceOf < Op
 
-	def js o
+	def js s,o
+		if String(@op) == 'instanceof'
+			let out = "{left.c} instanceof {right.c}"
+			out = helpers.parenthesize(out) if s.parent isa Op
+			return out
+
 		# fix checks for String and Number
-
-		if right isa Identifier or right isa VarOrAccess
-			# WARN otherwise - what do we do? does not work with dynamic
-			# classes etc? Should probably send to utility function isa$
-			var name = AST.c(right.value)
-			var obj = left.node
-			# TODO also check for primitive-constructor
-			if name in ['String','Number','Boolean']
-				if STACK.tsc
-					return "(typeof {obj.c}=='{name.toLowerCase}')"
-
-				unless obj isa LocalVarAccess
-					obj.cache
-				# need a double check for these (cache left) - possibly
-				return "(typeof {obj.c}=='{name.toLowerCase}'||{obj.c} instanceof {name})"
-
-				# convert
-		var out = "{left.c} instanceof {right.c}"
-
-		# should this not happen in #c?
-		out = helpers.parenthesize(out) if o.parent isa Op
-		out
+		if right isa Parens
+			let out = right.consume(Util.Isa.new([left.cache,null])).c
+			out = helpers.parenthesize(out) # if o.parent isa Op
+			return out
+		
+		return Util.Isa.new([left,right]).js(s,o)
 
 export class TypeOf < Op
 
@@ -5321,7 +5466,7 @@ export class Access < Op
 		return self
 
 	def startLoc
-		(@left or @right).startLoc
+		@left isa ScopeContext ? (@right).startLoc : (@left or @right).startLoc
 
 	def endLoc
 		@right && @right.endLoc
@@ -6106,10 +6251,10 @@ export class Identifier < Node
 		[@value.@loc,@value.@loc + @value.@len]
 
 	def startLoc
-		@value and @value:startLoc ? @value.startLoc : null
+		@startLoc or @value and @value:startLoc ? @value.startLoc : null
 
 	def endLoc
-		@value and @value:endLoc ? @value.endLoc : null
+		@endLoc or @value and @value:endLoc ? @value.endLoc : null
 
 	def loc
 		[startLoc,endLoc]
@@ -6171,7 +6316,7 @@ export class Identifier < Node
 				return "'{symbol}'"
 
 		let up = STACK.current
-		return toStr.c if (up isa Util and !(up isa Util.Iterable)) # not all utils
+		return toStr.c if (up isa Util and !(up isa Util.Iterable) and !(up isa Util.Is)) # not all utils
 		let out = js
 		# FIXME should it not always enable?
 		if OPTS:sourcemap and (!o or o:mark !== false)
@@ -6754,6 +6899,30 @@ export class Argvar < ValueNode
 
 export class DoPlaceholder < Node
 
+export class AmperRef < ValueNode
+
+	def visit stack
+		
+		let blk = stack.up do |v|
+			v isa ArgList or v isa Block or v isa AmperFunc or v isa Return or v isa TagAttr
+
+		let base = stack.relative(blk,1)
+		let inner = stack.relative(base,1)
+
+		if base isa Assign and stack.@nodes.indexOf(base.left) == -1
+			unless base.right isa AmperFunc
+				let rgt = base.right
+				let wrapper = base.right = AmperFunc.new([],rgt)
+			return self
+
+		unless base isa AmperFunc
+			let wrapper = AmperFunc.new([],base)
+			blk.replace(base,wrapper)
+		self
+
+	def c
+		"v$"
+
 export class TaggedTemplate < Node
 
 	prop value
@@ -6811,6 +6980,9 @@ export class Call < Node
 			if str == 'export'
 				return Export.new(args)
 
+			if str == 'rescue'
+				return RescueFunc.new([],args)
+
 		@callee = callee	
 		@args = args or ArgList.new([])
 
@@ -6822,9 +6994,6 @@ export class Call < Node
 			return callee
 
 		return self
-
-	def loc
-		@callee.loc
 
 	def visit
 		args.traverse
@@ -6953,6 +7122,7 @@ export class Call < Node
 			arg.option(:assertion,yes)
 			args.@nodes[0] = AssertionNode.new(arg)
 
+		# INFO devlogs
 		if callee isa Identifier and callee.value == 'L'
 			let dim = '\x1b[90m'
 			let bg-blue = '\x1b[44m'
@@ -6979,7 +7149,7 @@ export class Call < Node
 					.replace(/\n/g, "\\n")
 					.replace(/\r/g, "\\r")
 					.replace(/\t/g, "\\t")
-				if arg isa Literal and !(arg isa Self or arg isa This)
+				if arg isa Literal and !(arg isa Self or arg isa This or arg isa Arr)
 					fmts.push "%s"
 					result.push LIT("'{bg-black}{green}{s}{reset}'")
 				else
@@ -6993,12 +7163,6 @@ export class Call < Node
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
 			safeop = '?.'
-		# if callee.safechain
-		#	console.log 'function safechain!!'
-		#	var isfn = Util.IsFunction.new([callee])
-		#	wrap = ["{isfn.c}  &&  ",""]
-		#	callee = OP('.',callee.left,callee.right)
-		#	# callee should already be cached now -
 
 		# should just force expression from the start, no?
 		if @receiver
@@ -7871,6 +8035,13 @@ export class Try < ControlFlowStatement
 		@finally.traverse if @finally
 		# no blocks - add an empty catch
 
+	def c o
+		if stack.isExpression or isExpression
+			var ast = IIFE([self])
+			return ast.c o
+		
+		super.c(o)
+
 	def js o
 		var out = "try " + body.c(braces: yes, indent: yes)
 		out += " " + @catch.c if @catch
@@ -8146,6 +8317,10 @@ export class TagAttr < TagPart
 
 	def endLoc
 		@value?.endLoc
+
+	def replace base, replacement
+		if @value == base
+			@value = replacement
 
 	def isStatic
 		super and @chain.every(do |item|
@@ -10798,7 +10973,6 @@ export class StyleRuleSet < StyleNode
 					setter.traverse
 			elif !@flag
 				for ph in @placeholders
-					console.log "{ph}"
 					ph.warn "Only allowed inside tag tree"
 
 		if o:rule and o:styles
@@ -11464,7 +11638,6 @@ export class Util < Node
 
 	def self.slice obj, a, b
 		var slice = Identifier.new("slice")
-		console.log "slice {a} {b}"
 		return CALL(OP('.',obj,slice),AST.compact([a,b]))
 
 	def self.iterable obj, cache
@@ -11498,6 +11671,12 @@ var HELPERS = {
 
 	unit: '''(value,unit){
 		return value + unit;
+	};'''
+
+	memo: '''(hash,slf,cb){
+		let sym = Symbol.for(hash)
+		let fn = globalThis[sym] ||= (cb.memoized=sym,cb)
+		return slf == null ? fn : fn.bind(slf)
 	};'''
 
 	optNegIndex: '''(value,index){ return value ? value[value.length + index] : null };'''
@@ -11535,8 +11714,8 @@ var HELPERS = {
 	};'''
 
 	contains: '''(a,b){
-		var res = (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-		return res >= 0;
+		const sym = Symbol.for("#has");
+		return b && ( b[sym]?.(a) ?? b.includes?.(a) ?? b.has?.(a) ?? false);
 	};'''
 
 	requireDefault: '''(obj){
@@ -11609,6 +11788,38 @@ export class Util.IndexOf < Util
 		scope__.root.helper(self,helper)
 		# When this is triggered, we need to add it to the top of file?
 		"idx$__({args.map(|v| v.c ).join(',')})"
+
+
+export class Util.Is < Util
+
+	def left
+		args[0]
+
+	def right
+		args[1]
+		
+	def helper
+		'// @ts-ignore\nfunction is$(a,b){ return a === b || ' + "b?.[{symbolRef('#matcher')}]?.(a) || false" + '}'
+
+	def clone b
+		constructor.new([args[0],b])
+
+	def js o
+		scope__.root.helper(self,helper)
+		return "is$({args[0].c},{args[1].c})"
+
+export class Util.Isa < Util.Is
+
+	def helper
+		'// @ts-ignore\nfunction isa$(a,b){ return typeof b === "string" ? (typeof a === b) : b[Symbol.hasInstance]?.(a) }'
+
+	def js
+		if right instanceof Str
+			return "typeof {left.c}==={right.c}"
+			
+		scope__.root.helper(self,helper)
+		return "isa$({left.c},{right.c})"
+		# return "(typeof {right.c} == 'string' ? (typeof {left.c} == {right.c}) [Symbol.hasInstance]({args[0].c})"
 
 export class Util.Promisify < Util
 
@@ -12477,7 +12688,6 @@ export class Variable < Node
 		let scope = closure.parent
 		let res = self
 		while scope and res and parents:length < 5
-			console.log 'get parents!!!'
 			if res = scope.lookup(@name)
 				parents.unshift(res)
 				let newscope = res.scope.parent

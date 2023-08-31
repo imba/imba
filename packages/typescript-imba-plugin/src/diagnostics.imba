@@ -2,12 +2,12 @@
 Imba supports typescript typings not to be a strict statically typed language
 but rather to provide good tooling (ie goto definition, completions etc).
 Due to the dynamic nature of Imba there are many common patterns typescript
-reports as errors that we simply silence. 
+reports as errors that we simply silence.
 ###
 
 const Rules = [
-	
-	code: 2322	
+
+	code: 2322
 	text: /^\$\d+/
 	---
 	code: 2611
@@ -97,12 +97,11 @@ const Rules = [
 	# Declaration augments declaration in other file - not possible to solve?
 ]
 
-
 export def filter item
 	let msg = item.messageText
 	msg = msg.messageText or msg or ''
 	item.#suppress = yes
-		
+
 	for rule in Rules
 		if rule.code == item.code
 			if rule.text isa RegExp
@@ -111,6 +110,6 @@ export def filter item
 				return if rule.message.test(msg)
 			if rule.test isa Function
 				return if rule.test({message: msg, text: item.#otext},item)
-	
+
 	item.#suppress = no
 	return item

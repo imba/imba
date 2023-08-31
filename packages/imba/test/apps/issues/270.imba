@@ -5,7 +5,6 @@ tag app-component
 
 	def log val
 		console.info "{name}.{val}"
-		# console.log "{name}.{val}"
 
 	def mount
 		log 'mount'
@@ -70,7 +69,6 @@ let expect = [
 test "mount" do
 	imba.mount(<app-root>)
 	# await null
-	# console.log $1.log.slice(0),expect
 	# eq $1.log, expect
 
 test "manual" do |state|
@@ -81,7 +79,6 @@ test "manual" do |state|
 	console.log $1.log.slice(0),expect
 	# eq $1.log, expect
 	# await spec.tick()
-	# console.log $1
 
 # test "conditional" do
 # 	let el = document.createElement('app-root-if')

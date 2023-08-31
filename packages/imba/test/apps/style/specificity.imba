@@ -70,7 +70,7 @@ test 'inline precedence' do
 test 'inline precedence' do
 	eqcss app.$b6, 500
 
-test 'inline precedence' do	
+test 'inline precedence' do
 	eqcss app.$p0, 100
 	eqcss app.$p1, 200
 	eqcss app.$p2, 700
@@ -86,5 +86,5 @@ tag A
 tag B < A
 	css $button fw:700
 
-# test '$sel == inline' do	
+# test '$sel == inline' do
 #	eqcss <B>,700,0

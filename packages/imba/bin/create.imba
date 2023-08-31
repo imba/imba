@@ -1,4 +1,3 @@
-const L = console.log
 const cwd = process.cwd!
 const swd = __dirname
 
@@ -7,6 +6,8 @@ const fs = require 'fs'
 const path = require 'path'
 const prompt = require 'prompts'
 const spawn = require 'cross-spawn'
+const Haikunator = require 'haikunator'
+const haikunator = new Haikunator
 
 def quit msg='Quit'
 	console.error msg.red
@@ -76,16 +77,23 @@ def assertCleanGit
 
 def main name, opts
 
+	def log
+		return if opts.fast
+		console.log(...$0)
+
 	try
 		throw 1 unless parseInt(process.version.slice(1).split('.',1)[0]) >= 16
 	catch
-		L "Detected Node {process.version}, v16 or higher is recommended.".yellow
+		console.warn "Detected Node {process.version}, v16 or higher is recommended.".yellow
 
 	const promptOpts = onCancel: do quit!
 
 	let projectName =
-		try toValidRepoName name
-		catch e L(e.red)
+		if opts.fast
+			haikunator.haikunate(tokenLength: 0)
+		else
+			try toValidRepoName name
+			catch e console.error(e.red)
 
 	projectName ??= (await prompt {
 		type: 'text'
@@ -101,11 +109,14 @@ def main name, opts
 	assertCleanGit! if projectName is '.'
 
 	let template = templates[opts.template]
-	L('Template not found'.red) if opts.template and not template
+	console.error('Template not found'.red) if opts.template and not template
+
+	if opts.fast
+		template ??= templates.default
 
 	template ??= (await prompt {
 		type: 'select'
-		message: 'Choose a template or find more at ' + 'https://imba.io/templates'.blue
+		message: 'Choose a template'
 		choices: for own key, t of templates
 			{ title:t.name, description:t.desc, value:t }
 		initial: 0
@@ -118,7 +129,7 @@ def main name, opts
 	const packageName = projectName is '.' ? path.basename(cwd) : projectName
 	const dirStr = "./{projectName is '.' ? '' : projectName}"
 
-	unless opts.yes
+	unless opts.yes or opts.fast
 		quit! unless (await prompt {
 			type: 'confirm'
 			message: "Create {template.name.cyan} project named {packageName.cyan} in {dirStr.cyan}?"
@@ -133,20 +144,20 @@ def main name, opts
 
 	try
 		copy src, dest
-		L "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
+		log "\nCreated <{template.name}> project named '{packageName}' in {dirStr}".green
 	catch e
 		quit "\nFailed to copy project:\n\n{e}"
 
-	L '\nInstalling dependencies'.bold
+	log '\nInstalling dependencies'.bold
 
 	try
 		process.chdir(dest) unless projectName is '.'
 		spawn.sync 'npm', ['pkg', 'set', "name={packageName}"]
-		spawn.sync 'npm', ['up', '-S'], stdio:'inherit'
+		spawn.sync 'npm', ['up', '-S'], stdio:(!opts.fast and 'inherit')
 	catch e
-		L "\nFailed to install dependencies:\n\n{e}".red
+		console.error "\nFailed to install dependencies:\n\n{e}".red
 
-	L """
+	log """
 
 		Install the vscode extension for an optimal experience:
 		  {'https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba'.blue}
@@ -160,5 +171,8 @@ def main name, opts
 		  {'➜'.cyan} npm run dev
 
 	"""
+
+	if opts.fast
+		console.log projectName
 
 module.exports = main

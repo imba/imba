@@ -33,7 +33,6 @@ export class Build
 	def run
 		new Promise do(resolve)
 			spawned = exec(command,{cwd: cwd}) do(error,stdout,stderr)
-				# console.log([error,stdout,stderr])
 				if error
 					throw error
 
@@ -76,7 +75,6 @@ export class Build
 			child.stdout.on('data') do(data)
 				let str = data.toString('utf8')
 				process.stdout.write(str)
-				# console.log str
 				if str.indexOf("listening on ") >= 0 and resolved =? yes
 					resolve(self)
 
@@ -94,7 +92,6 @@ export class Build
 			if child
 				new Promise do(resolve)
 					tk(child.pid,'SIGKILL') do(err)
-						# console.log 'did kill?',err,command
 						resolve(self)
 
 			elif spawned

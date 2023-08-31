@@ -16,7 +16,7 @@ export def getConfigFilePath(type, opts\Object)
 	opts.mode ||= "development"
 
 	const types = ["client", "server", "test", "testSetup", "imba", "root"]
-	
+
 	unless types.includes type
 		throw new Error("Unrecognized config type {type}. Should be one of {types}")
 
@@ -52,20 +52,12 @@ export def getConfigFilePath(type, opts\Object)
 		# otherwise use the default test config
 		return imbaConfigPath
 
-	# load default imba config
-	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
-	if typeof defaultImbaConfig == "function"
-		defaultImbaConfig = await defaultImbaConfig({command, mode})
-
-
-	const defaultConfig = defaultImbaConfig[type]
-
 	# client, server, imba or test
 
 	# we only support imba.config.js
 	# to use a regular vite.config.js
 	# add a configFile property to client: { configFile: } im imba.config.js
-	
+
 	# search in current working dir
 
 	configPath ||= imbaConfigPath
@@ -78,10 +70,21 @@ export def getConfigFilePath(type, opts\Object)
 		imbaConfig = await imbaConfig({command, mode})
 
 	return imbaConfig if type == "root"
+
 	const configObj = imbaConfig[type]
 
+	return configObj if configPath == imbaConfigPath
+
+	# TODO no merging if it is all the same file
+
+	# load default imba config
+	let {default: defaultImbaConfig} = await import(String url.pathToFileURL imbaConfigPath)
+	if typeof defaultImbaConfig == "function"
+		defaultImbaConfig = await defaultImbaConfig({command, mode})
+	const defaultConfig = defaultImbaConfig[type]
+
 	return defaultConfig if !configObj
-	
+
 	mergeWith(defaultConfig, configObj) do(objValue, srcValue, prop)
 		# merge configs while removing duplicates
 		if Array.isArray(objValue) and Array.isArray(srcValue)

@@ -5,7 +5,7 @@ extend class String
 
 	get num?
 		int? or float?
-	
+
 	get int?
 		/^-?\d+$/.test self
 

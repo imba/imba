@@ -111,7 +111,6 @@ describe "Class Fields" do
 	describe "inheritance" do
 		# the benefit of this way of initing fields is that you can control
 		# when & how the fields are initialized, and the nested order of initing
-		#
 		class Rect
 			width = 0
 			height = 0

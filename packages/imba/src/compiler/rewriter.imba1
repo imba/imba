@@ -140,6 +140,7 @@ var IMPLICIT_CALL_MAP =
 	'IDREF': 1
 	'SPLAT': 1
 	'DO': 1
+	'AMPER_REF': 1
 	'BLOCK_ARG': 1
 	'FOR': 1
 	'CONTINUE': 1

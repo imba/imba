@@ -1,7 +1,7 @@
 let a = "a"
 let fn = do(val) val
 
-test do	
+test do
 	let el = <div> a
 		<span> "b"
 	eq el.textContent, "ab"

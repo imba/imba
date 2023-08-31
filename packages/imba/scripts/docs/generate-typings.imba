@@ -63,7 +63,6 @@ def run
 		let parsed = parser.prototype.parseSyntax(val)
 		if parsed.name == ' '
 			parsed = parsed.as[0]
-		# console.log val, parsed, getType(val)
 		# ,parsed,parsed.as[0]
 		# pdeep(parsed)
 
@@ -132,7 +131,6 @@ def run
 		let patch = patches[item.name]
 		Object.assign(item,patch) if patch
 		# if signature and signature != item.syntax
-		#	console.log("signature {item.name} {signature} ||| {item.syntax}")
 
 		item.type = try getType(item.sign or item.syntax)
 
@@ -142,8 +140,6 @@ def run
 		for [pat,options] in patterns
 			if pat.test(item.name)
 				Object.assign(item,options)
-
-	# console.log "groups {Object.keys(signgroups).length}"
 	for item in allprops
 		continue if skip(item)
 		let id = idify(item.name)
@@ -189,7 +185,7 @@ def run
 		dts.push("interface {id} extends _")
 		if signatures[item.syntax]
 			for s in signatures[item.syntax]
-				dts.w("set({s}): void;\n")		
+				dts.w("set({s}): void;\n")
 		else
 			dts.w("set({sign}): void;\n")
 
@@ -222,7 +218,6 @@ def run
 	# 	dts.w("@alias {item.alias}") if item.alias
 	# 	dts.w('*/')
 	# 	dts.w("{safeid item.name}:{item.propid};")
-	#
 	# 	if item.alias
 	# 		dts.w("/** @proxy {item.name} */")
 	# 		dts.w "{safeid item.alias}:{item.propid};"

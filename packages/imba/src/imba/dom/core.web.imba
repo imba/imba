@@ -85,6 +85,9 @@ extend class Document
 	get flags
 		self.documentElement.flags
 
+	def emit ...params
+		self.documentElement.emit(...params)
+
 extend class Node
 	get #parent
 		##parent or this.parentNode or ##up # FIX
@@ -189,7 +192,6 @@ extend class Node
 	def #placeChild item, f, prev
 
 		let type = typeof item
-		# console.log '#inserting!',item,f,prev,type
 
 		if type === 'undefined' or item === null
 			# what if the prev value was the same?
@@ -226,7 +228,7 @@ extend class Node
 					return res
 			else
 				self.appendChild(res = document.createTextNode(txt))
-				return res	
+				return res
 
 		else
 			if global.DEBUG_IMBA

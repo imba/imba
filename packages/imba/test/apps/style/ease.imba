@@ -20,7 +20,6 @@ def eqanim obj
 		ok(!!anim,message: "Expected animations")
 
 		return unless anim
-		# console.log 'eq anim',k,v,String(v[0]),v[1],anim,[String(anim[0]),String(anim[1]),anim[1]]
 		eq String(anim[0]),String(v[0])
 		eq String(anim[1]),String(v[1])
 		eq anim.duration,v[2]
@@ -33,7 +32,7 @@ def track cb
 	cb()
 
 	try
-		# let timeout = setTimeout(&,2000) do throw "Timeout!"	
+		# let timeout = setTimeout(&,2000) do throw "Timeout!"
 		await promise
 		await Promise.all(c.queue)
 		clearTimeout(timeout)
@@ -85,7 +84,6 @@ for typ in ['start','run','end','cancel']
 					# hacky event from imba core just to allow testing currently
 					if found.#easer
 						found.#easer.dom.addEventListener('easeoutend',finisher,once: true)
-						# console.log "OUTEND!",found.#easer.dom.parentNode
 
 tag App
 	<self[inset:0 d:vflex ja:center ai:stretch g:4 p:4]>
@@ -171,7 +169,6 @@ for el,i in document.querySelectorAll('.variations > *')
 		test "{name} leave" do
 			await imba.commit!
 			let res = await track do el.toggle!
-			# console.log 'got anims',res
 			eqanim el.outanim
 
 	if el.inanim

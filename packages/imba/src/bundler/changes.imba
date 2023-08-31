@@ -52,7 +52,6 @@ export default class ChangeLog
 
 		if pos == undefined or pos < cur
 			map.set(target,cur)
-			# console.log 'setting target',pos,cur
 			let start = Math.max((pos or 0) - offset,0)
 			return log.slice(start)
 

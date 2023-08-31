@@ -8,7 +8,6 @@ tag app-component
 
 	def log val
 		console.info "{name}.{val}"
-		# console.log "{@name}.{val}"
 
 	def mount
 		log 'mount'
@@ -81,11 +80,9 @@ let expect = [
 test "mount" do
 	imba.mount(<app-root>)
 	await imba.commit!
-	# console.log $1.log.slice(0),expect
 	eq $1.log, expect
 
 	# await spec.tick()
-	# console.log $1.log.slice(0),expect
 
 test "manual" do(state)
 	mounts = 0
@@ -96,10 +93,8 @@ test "manual" do(state)
 	# we do not guarantee that the mount is synchronous
 	eq mounts, 3
 	# await null
-	# console.log $1.log.slice(0),expect
 	# eq $1.log, expect
 	# await spec.tick()
-	# console.log $1
 
 # test "conditional" do
 # 	let el = document.createElement('app-root-if')
