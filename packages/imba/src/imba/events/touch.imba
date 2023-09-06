@@ -11,7 +11,8 @@ export def use_events_touch
 
 let iosMoveIframeFix = null
 
-class Touch
+export class Touch
+
 	def constructor e,handler,el
 		phase = 'init'
 		events = []
