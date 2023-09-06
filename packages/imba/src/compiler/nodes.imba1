@@ -1427,7 +1427,7 @@ export class Comment < Meta
 			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
 
 			v = out
-			v = '*' + v if v.match(/\@(type|param|satisfies|template)/)
+			v = '*' + v if v.match(/\@(type|param|satisfies|template)/) or STACK.tsc
 
 			"/*{v}*/"
 		elif v.match(/\@(type|param|satisfies|template)/)
