@@ -245,6 +245,14 @@ extend class Element
 	def log ...params
 		console.log(...params)
 
+	get hidden?
+		let style = global.getComputedStyle(self)
+		if style.display == 'none' or style.visibility == 'hidden'
+			return true
+		if offsetParent
+			return false
+		return parentElement.hidden?
+
 	def emit name, detail, o = {bubbles: true, cancelable: true}
 		o.detail = detail if detail != undefined
 		let event = new CustomEvent(name, o)
