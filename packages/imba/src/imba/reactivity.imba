@@ -392,15 +392,16 @@ extend class Array
 ###
 Set
 ###
+const Set_has = Set.prototype.has
 class ObservableSet < Set
 	def has do OBSERVED(this,super)
 	def keys do OBSERVED(this,super)
 	def values do OBSERVED(this,super)
 	def entries do OBSERVED(this,super)
 
-	def add do CHANGED(this,super)
-	def clear do CHANGED(this,super)
-	def delete do CHANGED(this,super)
+	def add(val) do Set_has.call(this,val) ? this : CHANGED(this,super)
+	def delete(val) do  Set_has.call(this,val) ? CHANGED(this,super) : this
+	def clear do size ? CHANGED(this,super) : this
 
 const SetExtensions = getExtensions(ObservableSet)
 
