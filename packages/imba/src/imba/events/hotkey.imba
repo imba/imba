@@ -118,9 +118,7 @@ export const hotkeys = new class HotKeyManager
 
 		# if there are multiple targets - prefer the ones that are visible
 		if targets.length > 1
-			let visible = targets.filter do !$1.hidden?
-			# let rect = $1.getBoundingClientRect()
-			# $1.offsetParent or (rect.width > 0 or rect.height > 0)
+			let visible = targets.filter do try !$1.hidden?
 			targets = visible if visible.length > 0
 
 		return unless targets.length
