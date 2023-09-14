@@ -242,7 +242,8 @@ extend class Element
 			return true
 		if offsetParent
 			return false
-		return parentElement.hidden?
+		return parentElement..hidden? ?? true
+
 
 	def emit name, detail, o = {bubbles: true, cancelable: true}
 		o.detail = detail if detail != undefined
