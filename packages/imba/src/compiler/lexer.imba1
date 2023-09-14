@@ -1910,6 +1910,9 @@ export class Lexer
 			if value == '{' and pt == 'IDENTIFIER'
 				tokid = '{{'
 
+			elif value == '{' and pt == '#'
+				tokid = '{{'
+
 			if value is '(' and pt in CALLABLE
 				tokid = 'CALL_START'
 

@@ -6383,6 +6383,97 @@ export class SymbolIdentifier < Identifier
 	def registerVariable
 		self
 
+export class IdentifierExpression < Node
+	prop single
+
+	def self.wrap node
+		return node
+		node isa self ? node : self.new(node)
+
+	def initialize value
+		super
+		@static = yes
+		@nodes = [@single = value]
+
+	def add part
+		@nodes.push(part)
+		@single = null
+		self
+
+	def isPrimitive
+		@single and @single isa Token
+
+	def isStatic
+		isPrimitive
+
+	def visit
+		for node in @nodes when node isa Node
+			node.traverse
+		self
+
+	def asObjectKey
+		if isPrimitive
+			"{@single.c()}"
+		elif (@single and !option(:prefix))
+			"[{@single.c()}]"
+		else
+			"[{asString}]"
+
+	def startLoc
+		let n = @nodes[0]
+		n?.startLoc
+
+	def endLoc
+		let n = @nodes[@nodes:length - 1]
+		n?.endLoc
+
+	def asIdentifier
+		(@single and !option(:prefix)) ? "[{@single.c()}]" : "[{asString}]"
+
+	def asString
+		# what if a part is a string?	
+		let s = '`'
+		if option(:prefix)
+			s += option(:prefix)
+		for node in @nodes
+			if node isa Token
+				s += node.value
+			else
+				s += '${'
+				s += node.c()
+				s += '}'
+		s += '`'
+		return s
+
+	def toRaw
+		@single ? @single.c : ''
+
+	def toString
+		toRaw
+
+	def js s, o = {}
+		if o:as == 'string' or s.parent isa Util
+			return asString
+		elif (o:as == 'key' or option(:as) == 'property')
+			return asObjectKey
+		elif o:as == 'access'
+			yes
+		elif @single and @single isa Node
+			return @single.c(o)
+		else
+			asString
+
+export class InterpolatedSymbolIdentifier < IdentifierExpression
+
+	def initialize pre, value
+		super(value)
+		@single = null
+		set(prefix: pre.@value)
+
+	def asString
+		"Symbol.for({super})"
+
+
 export class MixinIdentifier < Identifier
 
 	def symbol
@@ -8132,85 +8223,7 @@ export class Splat < ValueNode
 
 # TAGS
 
-export class IdentifierExpression < Node
-	prop single
 
-	def self.wrap node
-		return node
-		node isa self ? node : self.new(node)
-
-	def initialize value
-		super
-		@static = yes
-		@nodes = [@single = value]
-
-	def add part
-		@nodes.push(part)
-		@single = null
-		self
-
-	def isPrimitive
-		@single and @single isa Token
-
-	def isStatic
-		isPrimitive
-
-	def visit
-		for node in @nodes when node isa Node
-			node.traverse
-		self
-
-	def asObjectKey
-		if isPrimitive
-			"{@single.c()}"
-		elif @single
-			"[{@single.c()}]"
-		else
-			"[{asString}]"
-
-	def startLoc
-		let n = @nodes[0]
-		n?.startLoc
-
-	def endLoc
-		let n = @nodes[@nodes:length - 1]
-		n?.endLoc
-
-	def asIdentifier
-		@single ? "[{@single.c()}]" : "[{asString}]"
-
-	def asString
-		# what if a part is a string?	
-		let s = '`'
-		if option(:prefix)
-			s += option(:prefix)
-		for node in @nodes
-			if node isa Token
-				s += node.value
-			else
-				s += '${'
-				s += node.c()
-				s += '}'
-		s += '`'
-		return s
-
-	def toRaw
-		@single ? @single.c : ''
-
-	def toString
-		toRaw
-
-	def js s, o = {}
-		if o:as == 'string' or s.parent isa Util
-			return asString
-		elif o:as == 'key'
-			return asObjectKey
-		elif o:as == 'access'
-			yes
-		elif @single and @single isa Node
-			return @single.c(o)
-		else
-			asString
 
 export class TagPart < Node
 

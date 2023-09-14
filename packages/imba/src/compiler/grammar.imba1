@@ -267,6 +267,7 @@ var grammar =
 
 	SymbolIdentifier: [
 		o 'SYMBOLID' do SymbolIdentifier.new A1
+		o '# Interpolation' do InterpolatedSymbolIdentifier.new(A1, A2)
 	]
 
 	DecoratorIdentifier: [
@@ -665,7 +666,7 @@ var grammar =
 	MethodIdentifier: [
 		o 'Identifier'
 		o 'DecoratorIdentifier'
-		o 'SymbolIdentifier' do A1 # InterpolatedIdentifier.new(A1)
+		o 'SymbolIdentifier' do A1.set(as: 'property') # InterpolatedIdentifier.new(A1)
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
 		o 'MethodIdentifier Type' do A1.set(datatype: A2)
 	]
