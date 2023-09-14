@@ -827,7 +827,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
             out = `.\\@${escaped}`
           } else if(desc.shim) {
             let pre = neg ? ':not' : ':is';
-            out = `.\\@${escaped}`
+            out = `.\\@${desc.shim == true ? escaped : desc.shim}`
             out = `${pre}(:${typeof desc.native == 'string' ? desc.native : escaped},${out})`;
             neg = false;
           } else if(desc.flag) {

@@ -27,7 +27,7 @@ export const modifiers =
 	'first-page': {name: 'first'}
 	fullscreen: {}
 	focus: {shim: yes}
-	focin: {name: 'focus-within'}
+	focin: {name: 'focus-within',shim: 'focin'}
 	'focus-within': {}
 	'focus-visible': {}
 	hover: {shim: yes}
