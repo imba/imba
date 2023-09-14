@@ -210,14 +210,6 @@ extend class Node
 			let res
 			let txt = item
 
-			if (f & $TAG_FIRST_CHILD$) && (f & $TAG_LAST_CHILD$) and false
-				# FIXME what if the previous one was not text? Possibly dangerous
-				# when we set this on a fragment - it essentially replaces the whole
-				# fragment?
-				# log 'set textcontent raw',txt,prev
-				self.textContent = txt
-				return
-
 			if prev
 				if prev isa Text # check perf
 					prev.textContent = txt
@@ -231,10 +223,9 @@ extend class Node
 				return res
 
 		else
-			if global.DEBUG_IMBA
-				if !item.#insertInto
-					console.warn("Tried to insert",item,"into",this)
-					throw new TypeError("Only DOM Nodes can be inserted into DOM")
+			# Coerce the object to string if it is not
+			if !item.#insertInto
+				return #placeChild( String(item),f,prev )
 
 			return prev ? prev.#replaceWith(item,this) : item.#insertInto(this,null)
 		return
