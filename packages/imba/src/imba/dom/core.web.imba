@@ -244,6 +244,11 @@ extend class Element
 			return false
 		return parentElement..hidden? ?? true
 
+	get focus?
+		document.activeElement == self
+
+	get focin?
+		contains(document.activeElement)
 
 	def emit name, detail, o = {bubbles: true, cancelable: true}
 		o.detail = detail if detail != undefined
