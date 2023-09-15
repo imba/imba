@@ -7245,7 +7245,7 @@ export class Call < Node
 					result.push LIT("'{bg-black}{green}{s}{reset}'")
 				else
 					fmts.push "%s"
-					fmts.push "%O"
+					fmts.push "%o"
 					result.push LIT("'{bg-blue}{white}{s}{reset}'")
 					result.push arg
 
