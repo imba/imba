@@ -9,8 +9,8 @@
   },
   "devDependencies": {
     "@ionic/core": "^7.0.0-rc.2",
-    "imba": "file:../../imba",
-    "vite": "^3.0.9",
+    "imba": "../../imba",
+    "vite": "^4.4.7",
     "vite-plugin-imba": "../../vite-plugin-imba",
     "vite-tsconfig-paths-silent": "^4.0.5"
   },

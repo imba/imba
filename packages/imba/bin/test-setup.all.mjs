@@ -1,6 +1,7 @@
 import { vi } from "vitest"
 import assert from "assert"
 import 'imba/std'
+import './cucumber-setup.imba'
 
 vi.stubGlobal('rejects', assert.rejects)
 

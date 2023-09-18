@@ -104,7 +104,7 @@ function plugin(build) {
 		}
 	})
 
-	build.onLoad({ filter: /\.(js|ts)/ }, async (args) => {
+	build.onLoad({ filter: /\.(js|ts|txt)/ }, async (args) => {
 		// console.log('loading js',args);
 		if (watcher) watcher.add(args.path);
 		return;
@@ -286,7 +286,7 @@ let bundles = [
 		],
 		outExtension: { ".js": ".mjs" },
 		minify: true,
-		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
+		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild", 'gherkin-io', '@cucumber/gherkin'],
 		outdir: "dist",
 		format: "esm",
 		platform: "node",
@@ -297,7 +297,7 @@ let bundles = [
 		],
 		outExtension: { ".js": ".cjs" },
 		minify: true,
-		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
+		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild", 'gherkin-io', '@cucumber/gherkin'],
 		outdir: "dist",
 		format: "cjs",
 		platform: "node",

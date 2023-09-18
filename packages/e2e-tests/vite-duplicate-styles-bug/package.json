@@ -8,8 +8,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "imba": "file:../../imba",
-    "vite": "^4.3.9",
+    "imba": "../../imba",
+    "vite": "^4.4.7",
     "vite-node": "^0.32.4",
     "vite-tsconfig-paths-silent": "^4.0.5"
   },

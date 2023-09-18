@@ -30,6 +30,8 @@ export default async function({mode, command}){
 			globals: true,
 			benchmark: {
 				include: ["**/*.bench.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
+
+				includeSource: ['**/*.imba'],
 			},
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}", "features/**/*.feature"],
 			includeSource: ['**/*.imba'],

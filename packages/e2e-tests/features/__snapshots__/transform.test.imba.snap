@@ -1,0 +1,482 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Cucumber plugin  > Add.feature 1`] = `
+"import {parseFeatureIntoSteps} from \\"imba/plugin\\"
+
+const modules = import.meta.glob('./step_definitions/**/*.imba', {eager: yes})
+const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
+let s
+let c
+let elName
+let contexts = {}
+let text
+let stepRes
+let keyword
+let currentContext
+
+const decorators = {}
+
+
+def executeStep(text, keyword, context)
+	let s = global.Steps.find(text, keyword).stepDefinition
+	if const ext = s.target.extendContext
+		await ext(context)
+	let res = await s.target[s.fname]
+		.apply(
+			context,
+			# variables
+			[s.cucumberExpression.match(text).map(do $1.getValue!)]
+		)
+
+	# Assertions throw an error if accessed (they use a proxy)
+	return if res..__flags
+	return unless const features = res..__features
+	await features.reduce(&, do 1) do(acc, feature)
+		await acc
+		const steps = await parseFeatureIntoSteps(feature)
+		await steps.reduce(&, do 1) do(acc, step)
+			await acc
+			await executeStep(step.text, step.keyword, context)
+
+
+beforeAll do(suite)
+beforeEach do(suite)
+
+	let contextName = 'BaseContext'
+	const baseContext = Object.values(baseContexts).find(do $1[contextName])..[contextName]
+	elName = 'Background: Sets initial value for the sum'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c0 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Example: Adding two numbers works with background'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c1 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario: Supports multiple scenarios'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c2 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+
+	# find the context for the current test this beforeEach hook is running before
+	c = Object.keys(contexts).find(do 
+		contexts[$1].name == suite.meta.name or contexts[$1].name == suite.meta.suite..suite..name 
+	)
+	await executeStep('the initial value is 10', 'Given', contexts[c].context)
+
+
+describe 'Feature: Addition' do
+	test 'Example: Adding two numbers works with background' do
+		text = 'I add 12 and 4'
+		keyword = 'Given'
+		currentContext = contexts.c1.context
+		await executeStep(text, keyword, currentContext)
+		text = 'I should obtain 26'
+		keyword = 'Then'
+		currentContext = contexts.c1.context
+		await executeStep(text, keyword, currentContext)
+	test 'Scenario: Supports multiple scenarios' do
+		text = 'I add 12 and 10'
+		keyword = 'Given'
+		currentContext = contexts.c2.context
+		await executeStep(text, keyword, currentContext)
+		text = 'I should obtain 32'
+		keyword = 'Then'
+		currentContext = contexts.c2.context
+		await executeStep(text, keyword, currentContext)
+"
+`;
+
+exports[`Cucumber plugin  > Tags.feature 1`] = `
+"import {parseFeatureIntoSteps} from \\"imba/plugin\\"
+
+const modules = import.meta.glob('./step_definitions/**/*.imba', {eager: yes})
+const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
+let s
+let c
+let elName
+let contexts = {}
+let text
+let stepRes
+let keyword
+let currentContext
+
+const decorators = {}
+
+vi.setConfig
+	retry: 4
+vi.setConfig 
+	testTimeout: 50000000
+	hookTimeout: 50000000
+
+def executeStep(text, keyword, context)
+	let s = global.Steps.find(text, keyword).stepDefinition
+	if const ext = s.target.extendContext
+		await ext(context)
+	let res = await s.target[s.fname]
+		.apply(
+			context,
+			# variables
+			[s.cucumberExpression.match(text).map(do $1.getValue!)]
+		)
+
+	# Assertions throw an error if accessed (they use a proxy)
+	return if res..__flags
+	return unless const features = res..__features
+	await features.reduce(&, do 1) do(acc, feature)
+		await acc
+		const steps = await parseFeatureIntoSteps(feature)
+		await steps.reduce(&, do 1) do(acc, step)
+			await acc
+			await executeStep(step.text, step.keyword, context)
+
+
+beforeAll do(suite)
+	decorators['debug'] = '' or yes
+	   
+	decorators['makeVersion10'] = '' or yes
+	   
+	decorators['retry'] = '4' or yes
+	   
+beforeEach do(suite)
+
+	let contextName = 'BaseContext'
+	const baseContext = Object.values(baseContexts).find(do $1[contextName])..[contextName]
+	elName = 'Scenario: Accessing a value in context works'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c0 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+
+
+describe 'Feature: Context' do
+	test 'Scenario: Accessing a value in context works' do
+		text = 'The \\"version\\" in context is \\"10\\"'
+		keyword = 'Then'
+		currentContext = contexts.c0.context
+		await executeStep(text, keyword, currentContext)
+		text = 'The \\"retry\\" in context is \\"4\\"'
+		keyword = 'And'
+		currentContext = contexts.c0.context
+		await executeStep(text, keyword, currentContext)
+"
+`;
+
+exports[`Cucumber plugin  > scenario-outline feature 1`] = `
+"import {parseFeatureIntoSteps} from \\"imba/plugin\\"
+
+const modules = import.meta.glob('./step_definitions/**/*.imba', {eager: yes})
+const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
+let s
+let c
+let elName
+let contexts = {}
+let text
+let stepRes
+let keyword
+let currentContext
+
+const decorators = {}
+
+
+def executeStep(text, keyword, context)
+	let s = global.Steps.find(text, keyword).stepDefinition
+	if const ext = s.target.extendContext
+		await ext(context)
+	let res = await s.target[s.fname]
+		.apply(
+			context,
+			# variables
+			[s.cucumberExpression.match(text).map(do $1.getValue!)]
+		)
+
+	# Assertions throw an error if accessed (they use a proxy)
+	return if res..__flags
+	return unless const features = res..__features
+	await features.reduce(&, do 1) do(acc, feature)
+		await acc
+		const steps = await parseFeatureIntoSteps(feature)
+		await steps.reduce(&, do 1) do(acc, step)
+			await acc
+			await executeStep(step.text, step.keyword, context)
+
+
+beforeAll do(suite)
+beforeEach do(suite)
+
+	let contextName = 'BaseContext'
+	const baseContext = Object.values(baseContexts).find(do $1[contextName])..[contextName]
+	elName = 'Background: '
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c0 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario: Concat weird strings'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c1 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario Outline: Adding two numbers works on many cases'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c2 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+	elName = 'Scenario Outline: Adding two numbers works on many cases'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c3 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+
+	# find the context for the current test this beforeEach hook is running before
+	c = Object.keys(contexts).find(do 
+		contexts[$1].name == suite.meta.name or contexts[$1].name == suite.meta.suite..suite..name 
+	)
+	await executeStep('the initial value is 0', 'Given', contexts[c].context)
+
+
+describe 'Feature: Scenario outline' do
+	test 'Scenario: Concat weird strings' do
+		text = 'I concatenate \\"(scrim-toggler[sref=\\\\'browserbutton\\\\']\\" and \\")\\"'
+		keyword = 'Given'
+		currentContext = contexts.c1.context
+		await executeStep(text, keyword, currentContext)
+		text = 'The \\"str\\" in context is \\"(scrim-toggler[sref=\\\\'browserbutton\\\\'])\\"'
+		keyword = 'Then'
+		currentContext = contexts.c1.context
+		await executeStep(text, keyword, currentContext)
+	describe 'Scenario Outline: Adding two numbers works on many cases' do
+		describe 'Examples group 0: Basic examples' do
+			test 'Example 0: 1, 2, 3' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 1)
+				text = text.replaceAll('<b>', 2)
+				text = text.replaceAll('<result>', 3)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 1)
+				text = text.replaceAll('<b>', 2)
+				text = text.replaceAll('<result>', 3)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 1: 12, 2, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 12)
+				text = text.replaceAll('<b>', 2)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 12)
+				text = text.replaceAll('<b>', 2)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 2: 13, 1, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 13)
+				text = text.replaceAll('<b>', 1)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 13)
+				text = text.replaceAll('<b>', 1)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 3: 14, 0, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 14)
+				text = text.replaceAll('<b>', 0)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 14)
+				text = text.replaceAll('<b>', 0)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 4: 15, -1, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 15)
+				text = text.replaceAll('<b>', -1)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 15)
+				text = text.replaceAll('<b>', -1)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 5: 16, -2, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 16)
+				text = text.replaceAll('<b>', -2)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 16)
+				text = text.replaceAll('<b>', -2)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 6: 17, -3, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 17)
+				text = text.replaceAll('<b>', -3)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 17)
+				text = text.replaceAll('<b>', -3)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 7: 18, -4, 14' do(suite)
+				text = 'I add <a> and <b>'
+				text = text.replaceAll('<a>', 18)
+				text = text.replaceAll('<b>', -4)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Given'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+				text = 'I should obtain <result>'
+				text = text.replaceAll('<a>', 18)
+				text = text.replaceAll('<b>', -4)
+				text = text.replaceAll('<result>', 14)
+				keyword = 'Then'
+				currentContext = contexts.c2.context
+				await executeStep(text, keyword, currentContext)
+	describe 'Scenario Outline: Adding two numbers works on many cases' do
+		describe 'Examples group 0: Basic examples for concat' do
+			test 'Example 0: al, pha, alpha' do(suite)
+				text = 'I concatenate <a> and <b>'
+				text = text.replaceAll('<a>', '\\"al\\"')
+				text = text.replaceAll('<b>', '\\"pha\\"')
+				text = text.replaceAll('<result>', '\\"alpha\\"')
+				keyword = 'Given'
+				currentContext = contexts.c3.context
+				await executeStep(text, keyword, currentContext)
+				text = 'The \\"str\\" in context is <result>'
+				text = text.replaceAll('<a>', '\\"al\\"')
+				text = text.replaceAll('<b>', '\\"pha\\"')
+				text = text.replaceAll('<result>', '\\"alpha\\"')
+				keyword = 'Then'
+				currentContext = contexts.c3.context
+				await executeStep(text, keyword, currentContext)
+			test 'Example 1: ab, dellah, abdellah' do(suite)
+				text = 'I concatenate <a> and <b>'
+				text = text.replaceAll('<a>', '\\"ab\\"')
+				text = text.replaceAll('<b>', '\\"dellah\\"')
+				text = text.replaceAll('<result>', '\\"abdellah\\"')
+				keyword = 'Given'
+				currentContext = contexts.c3.context
+				await executeStep(text, keyword, currentContext)
+				text = 'The \\"str\\" in context is <result>'
+				text = text.replaceAll('<a>', '\\"ab\\"')
+				text = text.replaceAll('<b>', '\\"dellah\\"')
+				text = text.replaceAll('<result>', '\\"abdellah\\"')
+				keyword = 'Then'
+				currentContext = contexts.c3.context
+				await executeStep(text, keyword, currentContext)
+"
+`;
+
+exports[`Cucumber plugin  > support other languages 1`] = `
+"import {parseFeatureIntoSteps} from \\"imba/plugin\\"
+
+const modules = import.meta.glob('./step_definitions/**/*.imba', {eager: yes})
+const baseContexts = import.meta.glob('./**/*.context.imba', {eager: yes})
+let s
+let c
+let elName
+let contexts = {}
+let text
+let stepRes
+let keyword
+let currentContext
+
+const decorators = {}
+
+
+def executeStep(text, keyword, context)
+	let s = global.Steps.find(text, keyword).stepDefinition
+	if const ext = s.target.extendContext
+		await ext(context)
+	let res = await s.target[s.fname]
+		.apply(
+			context,
+			# variables
+			[s.cucumberExpression.match(text).map(do $1.getValue!)]
+		)
+
+	# Assertions throw an error if accessed (they use a proxy)
+	return if res..__flags
+	return unless const features = res..__features
+	await features.reduce(&, do 1) do(acc, feature)
+		await acc
+		const steps = await parseFeatureIntoSteps(feature)
+		await steps.reduce(&, do 1) do(acc, step)
+			await acc
+			await executeStep(step.text, step.keyword, context)
+
+
+beforeAll do(suite)
+beforeEach do(suite)
+
+	let contextName = 'BaseContext'
+	const baseContext = Object.values(baseContexts).find(do $1[contextName])..[contextName]
+	elName = 'مثال: ااا'
+	if suite.meta.name == elName or suite.meta.suite..suite..name == elName
+		suite.meta.decorators = decorators
+		contexts.c0 = {
+			context: global.__ccContext(baseContext, suite.meta)
+			name: elName
+		}
+
+
+describe 'Feature: برنامجي' do
+	test 'مثال: ااا' do
+		text = 'أبدأ البرنامج'
+		keyword = 'عندما'
+		currentContext = contexts.c0.context
+		await executeStep(text, keyword, currentContext)
+"
+`;

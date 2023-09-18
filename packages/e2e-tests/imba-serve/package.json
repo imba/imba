@@ -8,8 +8,8 @@
     "preview": "imba preview"
   },
   "devDependencies": {
-    "imba": "file:../../imba",
-    "vite": "^4.3.9"
+    "imba": "../../imba",
+    "vite": "^4.4.7"
   },
   "type": "module"
 }
