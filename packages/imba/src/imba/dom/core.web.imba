@@ -240,7 +240,7 @@ extend class Element
 		let style = global.getComputedStyle(self)
 		if style.display == 'none' or style.visibility == 'hidden'
 			return true
-		if offsetParent
+		if offsetParent or self === global.document.body
 			return false
 		return parentElement..hidden? ?? true
 
