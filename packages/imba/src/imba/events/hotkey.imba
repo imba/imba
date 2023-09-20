@@ -118,6 +118,12 @@ export const hotkeys = new class HotKeyManager
 
 		# if there are multiple targets - prefer the ones that are visible
 		if targets.length > 1
+			# see if some of the handlers are contained by 
+			let focus = document.activeElement
+			let infocus = targets.filter do focus.contains($1)
+			if infocus.length
+				targets = infocus
+
 			let visible = targets.filter do try !$1.hidden?
 			targets = visible if visible.length > 0
 
@@ -145,8 +151,9 @@ export const hotkeys = new class HotKeyManager
 							handlers.push(handler)
 
 		for handler,i in handlers
+			let res
 			if !e.repeat or handler.params.repeat
-				handler.handleEvent(event)
+				res = handler.handleEvent(event)
 
 			e..preventDefault! if !handler.passive? or event.#defaultPrevented
 			break unless handler.passive?
