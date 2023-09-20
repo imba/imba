@@ -35,6 +35,16 @@ extend class Event
 	def @closest selector
 		return !!target.closest(String(selector))
 
+	###
+	Only continue if element contains the currently focused element (document.activeElement)
+	Optionally pass in a selector to check a relative parent.
+	TODO: Document
+	###
+	def @focin sel
+		let el = #context.element
+		el = sel isa Element ? sel : (sel ? el.closest(sel) : el)
+		return el..contains(global.document.activeElement)
+
 	def @log ...params
 		console.info(...params)
 		return true
