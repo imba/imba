@@ -208,7 +208,7 @@ export class EventHandler
 		self.count ||= 0
 		self.state ||= {}
 
-		let state = {
+		let state = self.lastState = {
 			element: element
 			event: event
 			modifiers: mods
