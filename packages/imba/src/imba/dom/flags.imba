@@ -7,6 +7,9 @@ export class Flags
 	def contains ref
 		return dom.classList.contains(ref)
 
+	def has ref
+		return dom.classList.contains(ref)
+
 	def add ref
 		return self if contains(ref)
 		string += (string ? ' ' : '') + ref
