@@ -5,19 +5,21 @@ import 'imba/std'
 
 vi.stubGlobal('rejects', assert.rejects)
 
-vi.stubGlobal('ok',function(_0) {
-	if (arguments.length <= 1) {
-		return assert.ok(_0);
+vi.stubGlobal('ok',function(...args) {
+	if (args.length <= 1) {
+		return expect(args[0]).toBeTruthy()
 	} else {
-		return assert.deepStrictEqual(...arguments);
+		const [a, b] = args
+		expect(a).toStrictEqual(b)
 	};
 });
 
-vi.stubGlobal('nok',function(_0) {
-	if (arguments.length <= 1) {
-		return assert.ok(!(_0));
+vi.stubGlobal('nok',function(...args) {
+	if (args.length <= 1) {
+		return expect(args[0]).not.toBeTruthy()
 	} else {
-		return assert.notDeepStrictEqual(...arguments);
+		const [a, b] = args
+		expect(a).not.toStrictEqual(b)
 	};
 });
 
