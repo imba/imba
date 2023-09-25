@@ -358,7 +358,7 @@ var grammar =
 	]
 
 	Tag: [
-		o 'TAG_START TagOptions TAG_END' do A2.set(open: A1, close: A3)
+		o 'TAG_START TagOptions TAG_END' do A2.setEnds(open: A1, close: A3).setEnds(A1,A3)
 		o 'TAG_START TagOptions TAG_END TagBody' do A2.set(body: A4, open: A1, close: A3)
 	]
 

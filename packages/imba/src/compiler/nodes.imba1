@@ -7232,6 +7232,10 @@ export class Call < Node
 			let result = [LIT("\'{dim}::{reset}\'")]
 
 			for arg in args
+				# INFO leave for debugging purposes
+				# console.log arg:constructor:name
+				# console.log STACK.isWeb
+
 				let [start, end] = arg.loc
 				let s = src.slice(start,end)
 					.replace(/\\/g, '\\\\')
@@ -7245,7 +7249,8 @@ export class Call < Node
 					result.push LIT("'{bg-black}{green}{s}{reset}'")
 				else
 					fmts.push "%s"
-					fmts.push "%O"
+					const formatter = STACK.isWeb ? "%o" : "%O"
+					fmts.push formatter
 					result.push LIT("'{bg-blue}{white}{s}{reset}'")
 					result.push arg
 
