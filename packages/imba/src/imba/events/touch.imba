@@ -59,6 +59,10 @@ export class Touch
 	get dy
 		#dy == undefined ? event.y - start.y : #dy
 
+	# Amount of movement since initial pointerdown
+	get dr
+		Math.sqrt(dx*dx + dy*dy)
+
 	def stopImmediatePropagation
 		cancelBubble = yes
 		event.stopImmediatePropagation!
