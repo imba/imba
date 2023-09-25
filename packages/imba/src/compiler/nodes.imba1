@@ -11686,9 +11686,9 @@ var HELPERS = {
 		return value + unit;
 	};'''
 
-	memo: '''(hash,slf,cb){
+	memo: '''(hash,slf,cb,scope = globalThis){
 		let sym = Symbol.for(hash)
-		let fn = globalThis[sym] ||= (cb.memoized=sym,cb)
+		let fn = scope[sym] ||= (cb.memoized=sym,cb)
 		return slf == null ? fn : fn.bind(slf)
 	};'''
 
