@@ -273,7 +273,8 @@ export class Router < EventEmitter
 
 	set hash value
 		if $web$
-			history.replaceState(state,null,'#' + self.serializeParams(value))
+			let val = '#' + self.serializeParams(value)
+			global.history.replaceState(state,null,val)
 
 	def match pattern
 		route(pattern).match(path)
@@ -362,6 +363,7 @@ export class ElementRoute
 		# early return if routing clearly has not changed since
 		# previous resolve
 		let v = self.router.#version
+
 		return unless #version =? v
 
 		let r = route
@@ -457,8 +459,13 @@ extend class Node
 
 extend class Element
 	set route value
+		if value == undefined
+			# remove routing
+			return
+			
 		if #route
 			#route.path = value
+			# if route changes - all child routes need to reinitialize?
 			return
 
 		let par = value[0] != '/' ? #context.route : null
@@ -471,6 +478,10 @@ extend class Element
 		#route
 
 	set route-to value
+		if value == undefined
+			# remove routing
+			return
+
 		if #routeTo
 			#routeTo.path = value
 			return
