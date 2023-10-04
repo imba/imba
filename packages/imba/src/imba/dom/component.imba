@@ -273,7 +273,7 @@ export class Component < HTMLElement
 			awaken()
 			__F |= $EL_AWAKENED$
 
-		emit(self,'mount')
+		emit(self,'mount',[self])
 		let res = mount()
 		if res && res.then isa Function
 			res.then(scheduler.commit)
@@ -291,7 +291,7 @@ export class Component < HTMLElement
 		if __F & $EL_SCHEDULED$
 			# trigger potential unschedule listeners
 			unschedule()
-		emit(self,'unmount')
+		emit(self,'unmount',[self])
 		unmount()
 		scheduler.unschedule(self,#autorender) if #autorender
 
