@@ -156,11 +156,13 @@ extend class Node
 		parent.#replaceChild(other,#domNode or self)
 
 	get #placeholderNode
-		##placeholderNode ||= global.document.createComment("placeholder")
+		let c
+		##placeholderNode ||= (c = global.document.createComment("placeholder"),c.#forNode = self,c)
 
 	set #placeholderNode value
 		let prev = ##placeholderNode
 		##placeholderNode = value
+		value.#forNode = self
 		if prev and prev != value and prev.parentNode
 			prev.#replaceWith(value)
 
