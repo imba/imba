@@ -35,6 +35,7 @@ export const modifiers =
 	'in-range': {}
 	invalid: {shim: yes}
 	is: {type: 'selector'}
+	has: {type: 'selector'}
 	lang: {}
 	'last-of-type': {}
 	left: {}
