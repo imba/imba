@@ -9539,7 +9539,7 @@ export class Tag < TagLike
 			return true
 
 		if @parent
-			if @attrmap:route or isDynamicType
+			if @attrmap:route or isDynamicType or isSlot
 				@parent.set(shouldEnd: yes, ownCache: yes)
 
 		if isSlot
