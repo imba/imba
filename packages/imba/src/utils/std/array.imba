@@ -1,13 +1,22 @@
 extend class Array
 
-	get empty?
-		length is 0
-
 	get size
 		length
 
 	set size value
 		length = value
+
+	get empty?
+		size === 0
+
+	get any?
+		size > 0
+
+	get many?
+		size > 1
+
+	get one?
+		size === 1
 
 	get random
 		self[Math.floor(Math.random! * length)]
