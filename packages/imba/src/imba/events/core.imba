@@ -20,6 +20,9 @@ extend class CustomEvent
 
 extend class Event
 
+	get original
+		originalEvent or self
+
 	get #modifierState
 		#context[#context.step] ||= {}
 
