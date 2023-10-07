@@ -21,15 +21,18 @@ export class Queue < Set
 			if first
 				#idler = #resolve = null
 				self.emit('busy',self)
+			self.emit('add',value,self)
 		return value
 
 	def delete value
 		if super(value)
+			self.emit('delete',value,self)
 			if size == 0
 				if #resolve
 					#resolve(self)
 					#resolve = null
 				self.emit('idle',self)
+			
 			return true
 		return false
 
