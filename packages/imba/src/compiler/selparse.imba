@@ -324,7 +324,7 @@ export def unwrap parent, subsel
 	return sels.join(',')
 
 export def parse str, options
-	let sel = selparser.parse(str)
+	let sel = selparser.parse(str,options)
 	let out = sel and rewrite(sel,null,options)
 	return out
 

@@ -10935,6 +10935,8 @@ export class StyleRuleSet < StyleNode
 			@sel = sel or '&'
 			@css:type = 'scoped'
 			@css:scope = @tag
+			@css:top = @tag.root
+			# add top-level 
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
@@ -11010,6 +11012,7 @@ export class StyleRuleSet < StyleNode
 				id: @css:id
 				type: @css:type
 				scope: @css:scope
+				top: @css:top
 				component: cmp
 				inline: !!@flag
 				global: !!isGlobal

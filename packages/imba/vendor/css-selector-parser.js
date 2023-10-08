@@ -186,10 +186,11 @@ var doubleQuotesEscapeChars = {
   '"': '"'
 };
 
-function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators, substitutesEnabled) {
+function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators, substitutesEnabled,options) {
   var chr, getIdent, getStr, l, skipWhitespace;
   l = str.length;
   chr = null;
+  this.options = options;
   getStr = function(quote, escapeTable) {
     var esc, hex, result;
     result = '';
@@ -398,8 +399,6 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
     // var up = false
     var part = {}
 
-    // console.log('parseRule!',str.slice(pos),l);
-
     // simplest solution is to just remember
     var up = 0;
 
@@ -417,13 +416,27 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
       // Legacy support for the @.flag stuff
       if(chr == '@' && str.charAt(pos + 1) == '.'){
+        
         rule = rule || currentRule;
         part.implicitScope = true;
         pos++; chr = '.';
       } else if(chr == '@' && str.charAt(pos + 1) == '@'){
-        part.closest = true;
+
+        part.base = this.options.top && '.' + this.options.top.cssflag();
+        try {
+          let root = this.options.scope.root();
+          part.base = '.' + root.cssflag();
+        } catch(e) {
+
+        }
+        closest = part;
         rule = rule || currentRule;
         pos++;
+        if(str.charAt(pos + 1) == '.') {
+          pos++; chr = '.';
+          part.implicitScope = true;
+        }
+
       } else if(chr == '.' && str.charAt(pos + 1) == '.'){
         closest = part;
         rule = rule || currentRule;
@@ -631,14 +644,15 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
   return this;
 }
 
-CssSelectorParser.prototype.parse = function(str) {
+CssSelectorParser.prototype.parse = function(str,options) {
   var context = new ParseContext(
       str,
       0,
       this.pseudos,
       this.attrEqualityMods,
       this.ruleNestingOperators,
-      this.substitutesEnabled
+      this.substitutesEnabled,
+      options
   );
   return context.parse();
 };
@@ -841,15 +855,19 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           // fetch all the other
           // out = `:${neg ? 'not' : 'is'}(${out},${out} *)`
           let parts = entity.filter(v=> v.closest == part);
-          // console.log('found parts',parts.length);
           parts.map( v=> v.closest = null )
           part.not = false;
           let all = this._renderEntity(RULE({type: 'rule'},parts))
           parts.map( v=> v.skip = true )
-          // console.log("rendered",all);
+
+          if(part.base){
+            all = `${part.base}${all}`
+          }
           // find better way?
           out = `:${neg ? 'not' : 'is'}(${all} *)`
           neg = false;
+
+          
 
         } else if (part.up) {
           let rest = part.up > 5 ? ' *' : ' > *'.repeat(part.up);
@@ -888,8 +906,7 @@ parser.registerNestingOperators('>>>','>>','>', '+', '~')
 parser.registerAttrEqualityMods('^', '$', '*', '~')
 // parser.enableSubstitutes()
 
-export const parse = function(v){
-  // console.log('parsing',v);
-  return parser.parse(v) }
+export const parse = function(v,o){
+  return parser.parse(v,o) }
 export const render = function(v){ return parser.render(v) }
 // exports.default = parser;
