@@ -230,6 +230,7 @@ export class EventHandler
 			step: -1
 			state: self.state
 			commit: null
+			called: no
 			current: null
 			aborted: no
 		}
@@ -272,6 +273,7 @@ export class EventHandler
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
 				# handlers should commit by default
 				handler = val[0]
+				state.called = yes
 				state.commit = yes unless handler.passive #
 				args = [event,state].concat(val.slice(1))
 				context = element
@@ -323,6 +325,7 @@ export class EventHandler
 			elif handler == 'emit'
 				let name = args[0]
 				let detail = args[1] # is custom event if not?
+				state.called = yes
 				let e = new CustomEvent(name, bubbles: true, detail: detail) # : new Event(name)
 				e.originalEvent = event
 				let source = #teleport or element
