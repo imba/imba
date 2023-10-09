@@ -421,14 +421,10 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
         part.implicitScope = true;
         pos++; chr = '.';
       } else if(chr == '@' && str.charAt(pos + 1) == '@'){
-
-        part.base = this.options.top && '.' + this.options.top.cssflag();
-        try {
-          let root = this.options.scope.root();
-          part.base = '.' + root.cssflag();
-        } catch(e) {
-
-        }
+        // let base = this.options.tags?.[0]
+        // part.base = this.options.top && '.' + this.options.top.cssflag();
+        part.base = this.options.tags?.[0];
+        part.base &&= '.' + part.base.cssflag();
         closest = part;
         rule = rule || currentRule;
         pos++;

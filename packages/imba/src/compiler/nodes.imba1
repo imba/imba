@@ -10901,6 +10901,8 @@ export class StyleRuleSet < StyleNode
 	def visit stack, o
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 
+		let tags = stack.parents(TagLike)
+
 		@css = {}
 		@flag = stack.up(TagFlag)
 		@tag = @flag and @flag.@tag
@@ -10930,13 +10932,10 @@ export class StyleRuleSet < StyleNode
 				throw "css not allowed in class declaration"
 
 		elif stack.parent isa TagBody
-			# css nested inside tag tree
-			@tag = stack.up(TagLike)
+			@tag = tags[tags:length - 1]
 			@sel = sel or '&'
 			@css:type = 'scoped'
 			@css:scope = @tag
-			@css:top = @tag.root
-			# add top-level 
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
@@ -11012,7 +11011,7 @@ export class StyleRuleSet < StyleNode
 				id: @css:id
 				type: @css:type
 				scope: @css:scope
-				top: @css:top
+				tags: tags
 				component: cmp
 				inline: !!@flag
 				global: !!isGlobal
