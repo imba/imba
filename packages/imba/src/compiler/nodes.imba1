@@ -9434,9 +9434,6 @@ export class Tag < TagLike
 	def cssid
 		@cssid ||= "{sourceId}".replace('_','-')
 
-	def cssflag
-		@cssflag ||= "{sourceId}"
-
 	def tagvarprefix
 		return isSelf ? 'SELF' : 'T'
 		return @tagvarprefix ||= (type and type:toVarPrefix ? type.toVarPrefix : (isSelf ? 'self' : 'tag'))
@@ -10902,6 +10899,12 @@ export class StyleRuleSet < StyleNode
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
 
 		let tags = stack.parents(TagLike)
+
+		if tags[0] and cmp and tags[0].isSelf and tags[1]
+			tags[0] = cmp
+
+		if tags:length == 0 and cmp
+			tags = [cmp]
 
 		@css = {}
 		@flag = stack.up(TagFlag)
