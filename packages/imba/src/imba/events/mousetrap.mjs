@@ -437,6 +437,8 @@ export default function Mousetrap(targetElement) {
   if (!(self instanceof Mousetrap)) {
     return new Mousetrap(targetElement);
   }
+  
+  self.handleKeyEvent = _handleKeyEvent;
 
   /**
    * element to attach key events to

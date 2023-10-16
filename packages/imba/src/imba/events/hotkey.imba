@@ -93,6 +93,10 @@ export const hotkeys = new class HotKeyManager
 	def matchCombo str
 		yes
 
+	def handleEvent e
+		let res = mousetrap..handleKeyEvent(e)
+		return res
+
 	def handle e\Event, combo
 		let source = e.target and e.target.#hotkeyTarget or e.target or global.document.body
 		let targets\HTMLElement[] = Array.from(document.querySelectorAll('[data-hotkey]'))
@@ -140,7 +144,7 @@ export const hotkeys = new class HotKeyManager
 
 		source.dispatchEvent(event)
 		let handlers = []
-
+		
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
 				if handler.#combos[combo] or handler.#combos['*']
@@ -152,7 +156,8 @@ export const hotkeys = new class HotKeyManager
 						if group.contains(el) or el.contains(group) or (handler.global?)
 							handlers.push(handler)
 
-		
+		let handled = []
+
 		for handler,i in handlers
 			let res
 			if !e.repeat or handler.params.repeat
@@ -160,10 +165,13 @@ export const hotkeys = new class HotKeyManager
 
 			let last = handler.lastState or {}
 
+			handled.push(last)
+
 			e..preventDefault! if (!handler.passive? and last.called) or event.#defaultPrevented
 
 			break unless (handler.passive? or (last.called == no and !event.#stopPropagation and !event.#defaultPrevented))
-		self
+
+		return handled
 
 const DefaultHandler = do(e,state)
 	let el = state.element
