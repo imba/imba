@@ -451,7 +451,10 @@ export class ElementRouteTo < ElementRoute
 		if #options and #options.replace
 			self.router.replace(#href)
 		else
-			self.router.go(#href)
+			if self.router.path == #href
+				yes
+			else
+				self.router.go(#href)
 
 extend class Node
 	get router
