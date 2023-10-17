@@ -11413,7 +11413,7 @@ export class StyleTerm < ValueNode
 		valueOf
 
 	def toAlpha
-		toString
+		valueOf
 
 	def visit stack, o
 		@token = @value
@@ -11544,6 +11544,9 @@ export class StyleColor < StyleTerm
 		let name = raw.slice(1)
 		let rich = Color.from(raw)
 		let a = self:param ? self:param.toAlpha : 1
+
+		if a[0] == '$'
+			a = "var(--{a.slice(1)},100%)"
 
 		if @property and @property.isColor
 			return rich.toVar
