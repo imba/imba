@@ -118,7 +118,8 @@
     "@jridgewell/trace-mapping": "^0.3.18",
     "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
-    "fdir": "^4.1.0",
+    "haikunator": "^2.1.2",
+    "ignore": "^5.2.4",
     "image-size": "^0.9.3",
     "micromatch": "^4.0.5",
     "ora": "^5.2.0",
@@ -130,7 +131,6 @@
     "vite": "^4.4.9",
     "vite-node": "^0.32.4",
     "vitest": "^0.32.4",
-    "haikunator": "^2.1.2",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
@@ -141,6 +141,7 @@
     "dotenv": "^16.0.3",
     "envinfo": "^7.8.1",
     "esbuild": "^0.15.2",
+    "fdir": "^6.1.0",
     "get-port": "^5.1.1",
     "local-pkg": "^0.4.2",
     "lodash.mergewith": "^4.6.2",

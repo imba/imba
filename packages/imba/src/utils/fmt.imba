@@ -2,6 +2,7 @@ import { fdir } from 'fdir'
 import fs from 'fs'
 import cp from 'child_process'
 import np from 'path'
+import ignore from 'ignore'
 import 'imba/colors'
 
 const E = do
@@ -52,22 +53,36 @@ export default def fmt args, opts
 
 	unless opts.force
 		try
-			if cp.execSync("git status --porcelain", { stdio: "pipe" }).toString!
+			if cp.execSync("git status --porcelain").toString!
 				E "Git working directory is not clean"
 		catch e
 			E "Failed to check git status"
 
+	let gitignore = fs.readFileSync('.gitignore').toString!
+
+	let submodules = try
+		cp.execSync("git config --file .gitmodules --get-regexp path")
+			.toString!
+			.trim!
+			.split('\n')
+			.map(do '/' + $1.split(' ')[-1])
+
+	# TODO create ignore flag instead of hardcoding fmt.imba
+	let ig = ignore!
+		.add('fmt.imba')
+		.add('.*')
+		.add(gitignore)
+		.add(submodules)
+
 	let files = new fdir!
+		.withBasePath!
 		.glob("**/*.imba")
-		.withFullPaths!
+		.exclude(do ig.ignores($2))
 		.crawl(".")
 		.sync!
+		.filter(ig.createFilter!)
 
 	for filename\string of files
-		# TODO create ignore flag instead of hardcoding fmt.imba
-		continue if filename.endsWith 'fmt.imba'
-		continue if filename.includes 'node_modules'
-
 		let contents = fs.readFileSync filename, 'utf8'
 		let prev = contents
 
@@ -105,7 +120,7 @@ export default def fmt args, opts
 		if args.includes('devlogs') or !args.length
 			for line,i in contents.split('\n')
 				if devlog.test line
-					console.warn "Unable to remove devlog in {np.relative(process.cwd!,filename)}:{i+1}:{line.indexOf('L')+1} due to indent".yellow
+					console.warn "Unable to remove devlog in {filename}:{i+1}:{line.indexOf('L')+1} due to indent".yellow
 
 		continue if prev is contents
 		fs.writeFileSync filename, contents
