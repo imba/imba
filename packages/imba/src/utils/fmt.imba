@@ -58,7 +58,7 @@ export default def fmt args, opts
 		catch e
 			E "Failed to check git status"
 
-	let gitignore = fs.readFileSync('.gitignore').toString!
+	let gitignore = try fs.readFileSync('.gitignore').toString!
 
 	let submodules = try
 		cp.execSync("git config --file .gitmodules --get-regexp path")
