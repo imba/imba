@@ -139,6 +139,18 @@ export const modifiers =
 	enter: {flag:'@enter'}
 	leave: {flag:'@leave'}
 
+
+	darky: {
+		flag:'@darky',
+		raw:':is( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
+		neg:':not( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
+	}
+	lighty: {
+		flag:'@lighty',
+		raw:':not( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
+		neg:':is( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
+	}
+
 	# For whole module or single element?
 	touch: {flag: '@touch'}
 	suspended: {flag: '@suspended'}

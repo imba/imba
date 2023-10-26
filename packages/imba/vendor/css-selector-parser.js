@@ -770,6 +770,20 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         let pseudo = part.pseudo ? part : null;
         let desc = modifiers[part.pseudo];
 
+        if(desc?.raw) {
+          let sel = (neg ? desc.rawneg : desc.raw)
+
+          if(part.pseudo == 'lighty' && res == ':root'){
+            sel = neg ? ':not(.@light)' : '.@light';
+          }
+          else if(part.pseudo == 'darky' && res == ':root'){
+            sel = neg ? ':not(.@dark)' : '.@dark';
+          }
+
+          res += sel.replace(/\.\@/g,'.\\@');
+          continue;
+        }
+
         // Identify numeric media here?
 
         if(part.media || part.skip){
