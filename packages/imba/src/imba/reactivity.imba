@@ -647,11 +647,14 @@ class Reaction
 	def invalidated stack,source
 		if source instanceof Memo
 			flags |= F.POSSIBLY_STALE
-			checkComputedValues.add(source)
+			checkComputedValues..add(source)
 		else
 			flags |= F.STALE
 
-		CTX.react(self)
+		if observing
+			CTX.react(self)
+
+		return
 
 	def activate
 		observing = []
