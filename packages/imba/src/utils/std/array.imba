@@ -57,12 +57,16 @@ extend class Array
 		elif !(key isa Function)
 			cb = do $1
 
-		items.sort do
-			let a = cb($1)
-			let b = cb($2)
-			a > b ? 1 : (a < b ? -1 : 0)
-
-		reverse ? items.reversed : items
+		if reverse
+			items.sort do
+				let a = cb($1)
+				let b = cb($2)
+				a < b ? 1 : (a > b ? -1 : 0)
+		else
+			items.sort do
+				let a = cb($1)
+				let b = cb($2)
+				a > b ? 1 : (a < b ? -1 : 0)
 
 	def delete item
 		let idx = indexOf(item)
