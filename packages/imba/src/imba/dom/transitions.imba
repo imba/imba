@@ -53,6 +53,13 @@ export class Easer < Emitter
 	get flags
 		dom.flags
 
+	def link el
+		#linked ||= new Set
+		#linked.add(el)
+
+	def unlink el
+		#linked.delete(el)
+
 	def flag flags
 		for node in #nodes
 			node.flags.add(flags)
@@ -150,7 +157,9 @@ export class Easer < Emitter
 		return anims
 
 	def getAnimatedNodes
-		return transitions.nodesForBase(dom)
+		let nodes = transitions.nodesForBase(dom)
+		nodes = nodes.concat(Array.from(#linked)) if #linked
+		return nodes
 
 	def getNodeSizes dir = 'in', nodes = #nodes
 		let hits = transitions.nodesWithSize(nodes,dir)
