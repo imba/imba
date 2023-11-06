@@ -211,6 +211,8 @@ export class EventHandler
 		params.global
 
 	def handleEvent event
+		return if self.disabled
+
 		let element = #target or event.currentTarget
 		let mods = self.params
 		# let i = 0
