@@ -37,7 +37,7 @@ export def mount mountable, into
 	return element
 
 export def unmount el
-	if el and el.#removeFrom
+	if el and el.#removeFrom and el.parentNode
 		el.#removeFrom(el.parentNode)
 	return el
 
