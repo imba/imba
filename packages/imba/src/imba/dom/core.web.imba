@@ -496,8 +496,7 @@ export def createDynamic value, parent, flags, text
 		return value
 	elif value.#isRichElement
 		return value
-
-	elif typeof value == 'string' or (value and value.prototype isa Node)
+	else
 		return createComponent(value,parent,flags,text)
 
 export def getTagType name, klass
