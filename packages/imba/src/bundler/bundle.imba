@@ -362,7 +362,7 @@ export default class Bundle < Component
 			defines["process.browser"]="true"
 			defines["process.env.NODE_ENV"]="'{env}'"
 
-			if program.dotvars.DEBUG is '1'
+			if program.dotvars..DEBUG is '1'
 				defines["process.env.GIT_HASH"] = try JSON.stringify(cp.execSync('git rev-parse --short HEAD').toString!.trim!)
 
 			# FIXME Buffer is no longer tree-shaken if not used
