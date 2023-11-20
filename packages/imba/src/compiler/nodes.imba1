@@ -9707,7 +9707,7 @@ export class Tag < TagLike
 		!!@options:functional
 
 	def isSVG
-		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or (@parent and @parent.isSVG))
+		@isSVG ?= ((type isa TagTypeIdentifier and type.isSVG) or (@parent and @parent.isSVG and !isDynamicType))
 
 	def isAsset
 		@isAsset or no
@@ -9718,12 +9718,13 @@ export class Tag < TagLike
 			# LIT('imba.createLiveFragment')
 		elif isAsset
 			runtime:createAssetElement
+		
+		elif isDynamicType
+			runtime:createDynamic
 
 		elif isSVG
 			runtime:createSVGElement
 			# LIT('imba.createSVGElement')
-		elif isDynamicType
-			runtime:createDynamic
 		elif isComponent
 			runtime:createComponent
 		else
