@@ -1,4 +1,4 @@
-
+# imba$stdlib=1
 export const ROUTES = {}
 
 export class Location

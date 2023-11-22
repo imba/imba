@@ -241,6 +241,7 @@ def serve
 
 	statics["/compiler.js"] = cmpjs.body
 	statics["/imba.js"] = import.web('../index.imba').body
+	statics["/imba.runtime.js"] = fs.readFileSync(path.resolve(__dirname,'..','src','imba','runtime.mjs'),'utf-8')
 	statics["/spec.js"] = compiler.compile(specraw,Object.assign({sourcePath: 'spec'},copts)).js
 	statics["/std.js"] = std
 
@@ -260,6 +261,8 @@ def serve
 			let importmap = {
 				imports: {
 					'imba': '/imba.js',
+					# 'imba/runtime': '/imba.js',
+					'imba/runtime': '/imba.runtime.js',
 					'imba/compiler': '/compiler.js',
 					'imba/spec': '/spec.js'
 					'imba/std': '/std.js'

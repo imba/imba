@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {session} from '../storage'
 
 const map = new WeakMap

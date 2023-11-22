@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {MouseEvent} from '../dom/core'
 
 export def use_events_mouse

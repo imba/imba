@@ -13,6 +13,7 @@ test 'memoization' do
 	counter = 0
 	const user = new User(firstName: "John", lastName: "Doe")
 	eq user.name, "John Doe"
+	eq counter, 1
 	user.name
 	eq counter, 1
 	# ok el.classList.contains('custom-class')

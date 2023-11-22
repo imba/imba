@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import np from 'path'
 
 export const env = new class Env

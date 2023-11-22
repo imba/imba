@@ -1,4 +1,5 @@
 # imba$imbaPath=global
+# imba$stdlib=1
 # className: 'class',
 export const TYPES = {
 	"": [-1,{id: 1,slot: 1,part: 1,elementTiming: 'elementtiming'}]

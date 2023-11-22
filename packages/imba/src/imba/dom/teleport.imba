@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {Element} from './core'
 import {Component} from './component.imba'
 import {createSlot} from './fragment'

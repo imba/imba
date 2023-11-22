@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {emit,listen,once,unlisten} from './utils'
 
 export class Queue < Set

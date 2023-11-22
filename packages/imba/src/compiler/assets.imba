@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import { Monarch } from '../program/monarch'
 
 export def parseAsset raw,name

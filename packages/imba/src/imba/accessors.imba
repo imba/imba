@@ -1,3 +1,4 @@
+# imba$stdlib=1
 # TODO Functions like this should be inlineable and not depend on the runtime
 import {emit,listen} from './utils'
 

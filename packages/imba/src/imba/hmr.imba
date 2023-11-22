@@ -1,3 +1,5 @@
+# imba$stdlib=1
+
 class DevTools
 	def constructor
 		start!

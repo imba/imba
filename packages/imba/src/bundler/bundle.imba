@@ -196,7 +196,7 @@ export default class Bundle < Component
 		peerDependencies = Object.keys(pkg.peerDependencies or {})
 		devDependencies = Object.keys(pkg.devDependencies or {})
 
-		for ext in o.external
+		for ext in (o.external or [])
 			# if ext[0] == '!'
 			#	externals.push(ext)
 
@@ -606,6 +606,7 @@ export default class Bundle < Component
 				'colors': 'src/utils/colors.imba'
 				'std': 'src/utils/std/std.imba'
 				'spec': 'src/utils/spec.imba'
+				'runtime': 'src/imba/runtime.mjs'
 			}
 
 			let rel = args.path.slice(args.path.indexOf('/') + 1)

@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {Location} from './location'
 
 export class Request

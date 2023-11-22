@@ -1,3 +1,4 @@
+# imba$stdlib=1
 export const navigator = new class
 
 	get ios?

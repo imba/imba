@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import * as selparser from '../../vendor/css-selector-parser'
 import {modifiers} from './theme.imba'
 

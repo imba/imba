@@ -1,3 +1,4 @@
+# imba$stdlib=1
 export class SourceMapper
 
 	static def strip input

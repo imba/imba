@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {Text,createComment,createTextNode,Comment,Node} from './core'
 import {Flags} from './flags'
 

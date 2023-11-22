@@ -242,7 +242,7 @@ class Server
 		staticDir = global.IMBA_STATICDIR or ''
 
 		if proc.env.IMBA_PATH
-			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'dist','hmr.js')
+			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'hmr.js')
 
 		scheme = srv isa http.Server ? 'http' : 'https'
 

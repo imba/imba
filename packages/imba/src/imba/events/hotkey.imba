@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {Event,CustomEvent,Element} from '../dom/core'
 
 let isApple = try (global.navigator.platform or '').match(/iPhone|iPod|iPad|Mac/)

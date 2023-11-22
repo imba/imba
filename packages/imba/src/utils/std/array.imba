@@ -1,3 +1,5 @@
+# imba$stdlib=1
+
 extend class Array
 
 	get size

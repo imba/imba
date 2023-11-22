@@ -1,4 +1,5 @@
 # imba$imbaPath=global
+# imba$stdlib=1
 let rAF = global.requestAnimationFrame || (do(blk) global.setTimeout(blk,1000 / 60))
 let FPS = 60
 let SPF = 1 / 60

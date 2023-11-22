@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {createComment} from './core'
 import {Fragment} from './fragment'
 import {RenderContext} from './context'

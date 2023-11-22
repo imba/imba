@@ -1,6 +1,5 @@
 export * from './utils'
 export * from './scheduler'
-# export * from './asset'
 export * from './hooks'
 export * from './decorators'
 export * from './serve'
@@ -39,3 +38,4 @@ export * from './router/index'
 export * from './reactivity'
 export * from './accessors'
 export * from './storage'
+

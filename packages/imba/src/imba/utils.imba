@@ -1,5 +1,5 @@
+# imba$stdlib=1
 const dashRegex = /-./g
-
 export const __served__ = new Set
 
 export class LazyProxy
@@ -54,6 +54,7 @@ export def getDeepPropertyDescriptor item, key, stop
 		return desc or undefined
 
 	getDeepPropertyDescriptor(Reflect.getPrototypeOf(item),key,stop)
+
 
 # Basic events - move to separate file?
 const emit__ = do(event, args, node)
@@ -125,3 +126,4 @@ export class Emitter
 
 export def defineConfig config
 	config
+

@@ -296,7 +296,7 @@ var TYP = do |item,format|
 		""
 
 var LIT = do |val|
-	RawScript.new(val)
+	val isa RawScript ? val : RawScript.new(val)
 
 var SYM = do |val|
 	Symbol.new(val)
@@ -607,6 +607,9 @@ export class Stack
 	def runtime
 		@root.runtime
 
+	def corelib
+		@root.importProxy('core','imba/runtime').proxy
+
 	def cssns
 		@root.cssns
 
@@ -633,8 +636,12 @@ export class Stack
 		# Belongs in root
 		@symbols[key] ||= @root.declare((alias or ref),LIT("Symbol({name ? helpers.singlequote(name) : ''})"),system: yes, alias: (alias or ref)).resolve.c
 
+
 	def symbolFor name
 		@root.symbolRef(name)
+
+	def imbaSymbol name
+		STACK.isStdLib ? symbolFor('#' + name) : corelib[name]
 
 	def toInternalClassName name
 		if name:toClassName

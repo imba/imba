@@ -1,3 +1,4 @@
+# imba$stdlib=1
 
 export def @lazy target, key, desc
 	if desc.get

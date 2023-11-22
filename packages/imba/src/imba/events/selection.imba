@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {Event,CustomEvent,Element} from '../dom/core'
 
 export def use_events_selection

@@ -1,4 +1,5 @@
 # imba$imbaPath=global
+# imba$stdlib=1
 import {Event,CustomEvent,Element} from '../dom/core'
 import * as helpers from './helpers'
 

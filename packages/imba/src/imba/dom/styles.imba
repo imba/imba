@@ -1,6 +1,8 @@
+# imba$stdlib=1
+# imba$imbaPath=global
+
 import {Element} from './core'
 
-# imba$imbaPath=global
 const VALID_CSS_UNITS = {
 	cm:1
 	mm:1

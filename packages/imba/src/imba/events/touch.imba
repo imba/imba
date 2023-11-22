@@ -1,4 +1,5 @@
 # imba$imbaPath=global
+# imba$stdlib=1
 
 import {Event,Element} from '../dom/core'
 import {listen,once,emit,unlisten} from '../utils'

@@ -1,3 +1,4 @@
+# imba$stdlib=1
 # var conv = require('../../vendor/colors')
 import * as selparser from './selparse'
 import {conv} from '../../vendor/colors'

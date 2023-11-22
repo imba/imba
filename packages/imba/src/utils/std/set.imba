@@ -1,3 +1,4 @@
+# imba$stdlib=1
 extend class Set
 
 	def filter cb

@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {humanize,htmlify} from './hotkey.shared'
 
 export def use_events_hotkey

@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {KeyboardEvent} from '../dom/core'
 
 export def use_events_keyboard

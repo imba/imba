@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {commit} from './scheduler'
 
 const fn = do yes

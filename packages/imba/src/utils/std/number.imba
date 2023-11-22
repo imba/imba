@@ -1,3 +1,5 @@
+# imba$stdlib=1
+
 extend class Number
 
 	def to num

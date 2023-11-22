@@ -1,3 +1,4 @@
+# imba$stdlib=1
 let routerInstance = null
 
 import {EventEmitter} from '../../../vendor/events'

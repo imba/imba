@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {hooks} from './hooks'
 import {once,emit,listen} from './utils'
 import {scheduler,commit} from './scheduler'

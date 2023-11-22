@@ -19,14 +19,18 @@ test do
 	ok obj isa 'object'
 	ok sym isa 'symbol'
 	ok arr isa 'object'
+
+test do
 	ok arr isa Array
 	ok one isa ('string' or One)
 	ok num isa OddNumber
 	ok 120 !isa OddNumber
 
+test do
 	let dynamic = 'string'
 	ok str isa dynamic
 
+test do
 	ok "a" !isa Array
 	ok "a" isa (String or 'string')
 	ok "a" isa ('string' or 'number')

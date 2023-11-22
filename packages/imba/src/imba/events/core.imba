@@ -1,4 +1,5 @@
 # imba$imbaPath=global
+# imba$stdlib=1
 import {Event,Element,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'

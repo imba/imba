@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import { ImbaDocument } from '../program/document'
 import { Position, Range, Diagnostic,DiagnosticSeverity } from '../program/structures'
 

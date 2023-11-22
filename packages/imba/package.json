@@ -49,6 +49,10 @@
   ],
   "exports": {
     "./preflight.css": "./preflight.css",
+    "./hmr": "./hmr.js",
+    "./runtime": {
+      "default": "./src/imba/runtime.mjs"
+    },
     ".": {
       "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",

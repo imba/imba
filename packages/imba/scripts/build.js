@@ -42,6 +42,11 @@ function plugin(build) {
 		return { path: relative(p.path), external: true }
 	});
 
+	build.onResolve({ filter: /^imba\/runtime/ }, (p) => {
+		return { path: np.resolve(basedir,'src','imba','runtime.mjs'), external: false }
+		// return { path: relative(p.path), external: true }
+	});
+
 	build.onResolve({ filter: /^compiler1?$/ }, (p) => {
 		// find the output dir
 		// console.log('resolve compiler?',p,options);
@@ -93,6 +98,7 @@ function plugin(build) {
 		let body = imba2.compile(raw, Object.assign({
 			platform: options.platform || 'browser',
 			format: 'esm',
+			runtime: 'imba/runtime',
 			sourcePath: args.path,
 		}, self.imbaOptions));
 
@@ -114,7 +120,8 @@ async function universalise(result, o) {
 	for (let file of result.outputFiles) {
 
 		let bname = np.basename(file.path).split(".")[0];
-		console.log("output", file.path, bname);
+		let bytes = file.contents.length / 1000;
+		console.log("output", file.path, bname,bytes.toFixed(2) + 'kb');
 		fs.writeFileSync(file.path, file.contents);
 
 		if (o.format == 'esm' && file.path.indexOf('.mjs') >= 0) {
@@ -175,6 +182,7 @@ async function bundle(o) {
 	o.format = o.format || 'esm';
 
 	if (o.bundle == undefined) o.bundle = true;
+	o.conditions = ["imba-core","imba"];
 	o.loader = { '.txt': 'text' }
 	o.incremental = !!watcher;
 	o.logLevel = 'info';
@@ -198,13 +206,12 @@ async function bundle(o) {
 	}
 }
 
+let aliases = {
+	// 'imba/colors': '/Users/sindre/repos/imba/packages/imba/src/imba/utils/colors.imba',
+	// 'imba': '/Users/sindre/repos/imba/packages/imba/src/imba/utils.imba'
+}
+
 let bundles = [
-	{
-		entryPoints: ["src/imba/hmr.imba"],
-		outdir: "dist",
-		platform: "browser",
-		format: "esm",
-	},
 	{
 		entryPoints: ["src/imba/imba.imba"],
 		outdir: "dist",
@@ -216,6 +223,8 @@ let bundles = [
 	{
 		entryPoints: ["compiler.imba"],
 		outdir: "dist",
+		treeShaking: true,
+		alias: aliases,
 		platform: "browser",
 		format: "esm",
 		outExtension: { ".js": ".mjs" }
@@ -262,8 +271,11 @@ let bundles = [
 			"program.imba",
 			"workers.imba"
 		],
+		treeShaking: true,
+		alias: aliases,
 		outExtension: { ".js": ".imba.js" },
 		minify: true,
+		
 		external: ["lodash.mergewith", "chokidar", "esbuild", "vite-node/client","vite-node/server", "vite"],
 		outdir: ".",
 		format: "cjs",

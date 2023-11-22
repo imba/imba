@@ -1,3 +1,4 @@
+# imba$stdlib=1
 export class History
 	def constructor router
 		router = router

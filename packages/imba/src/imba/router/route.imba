@@ -1,3 +1,4 @@
+# imba$stdlib=1
 const cacheMap = new Map
 const urlCache = {}
 const queryCache = {}
@@ -66,6 +67,7 @@ export class Route
 		router = router
 		status = 200
 		path = str
+		#
 		#symbol = Symbol!
 		#matches = {}
 		#routes = {}

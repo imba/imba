@@ -928,6 +928,7 @@ var grammar =
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
 		o 'CSSDeclaration'
+		o 'RELATION ClassName' do ClassRelation.new(A2).set(keyword: A1)
 		o 'Comment'
 		o 'Tag'
 	]

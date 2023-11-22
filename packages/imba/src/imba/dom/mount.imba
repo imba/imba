@@ -1,3 +1,4 @@
+# imba$stdlib=1
 import {renderContext,RenderContext} from './context'
 import {scheduler} from '../scheduler'
 

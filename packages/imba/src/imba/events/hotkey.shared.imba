@@ -1,4 +1,4 @@
-
+# imba$stdlib=1
 const cfg = {
 	win: {
 		sep: '+'
