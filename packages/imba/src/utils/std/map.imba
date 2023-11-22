@@ -1,5 +1,3 @@
-# imba$stdlib=1
-
 extend class WeakMap
 	###
 	Retrieve value for a key while also setting the value

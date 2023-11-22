@@ -1,4 +1,3 @@
-# imba$stdlib=1
 Math.rand-int = do(min, max)
 	# inclusive of min and max
 	min = Math.ceil(min)

@@ -1,4 +1,3 @@
-# imba$stdlib=1
 extend class String
 
 	get upper?

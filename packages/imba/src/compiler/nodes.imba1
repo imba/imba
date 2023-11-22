@@ -874,6 +874,9 @@ export class Stack
 			i -= 1
 		return scopes
 
+	def closure
+		scope.closure
+
 	def closures
 		scopes.filter do |scope| scope.closure == scope
 
@@ -2290,6 +2293,15 @@ export class ClassAttribute < ClassField
 			let op = CALL(GET(THIS,'setAttribute'),[name.toAttrString,LIT('value')])
 			FN([LIT('value')],[op]).set(noreturn: true)
 
+export class ClassRelation < ValueNode
+
+	def c
+		""
+
+	def visit
+		@classdecl = STACK.up(ClassDeclaration)
+
+
 export class ClassBody < Block
 
 	def setup
@@ -3338,10 +3350,13 @@ export class ClassDeclaration < Code
 		# add static block
 
 	def initKey
-		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#__init__') : SymbolIdentifier.new('#__init__'))
+		@initKey ||= (STACK.tsc ? STACK.root.symbolRef('#__init__') : STACK.imbaSymbol('__init__')) # SymbolIdentifier.new('#__init__')
 
 	def patchKey
-		@patchKey ||= (STACK.tsc ? STACK.root.symbolRef('#__patch__') : SymbolIdentifier.new('#__patch__'))
+		@patchKey ||= (STACK.tsc ? STACK.root.symbolRef('#__patch__') : STACK.imbaSymbol('__patch__')) # SymbolIdentifier.new('#__patch__')
+
+	def refSym
+		@refSym ||= STACK.getSymbol()
 
 	def initPath
 		@initPath ||= OP('.',LIT('super'),initKey)
@@ -3355,7 +3370,7 @@ export class ClassDeclaration < Code
 	def instanceInit
 		return @instanceInit if @instanceInit
 		let call = Super.callOp(initKey)
-		if @superclass
+		if @superclass or @mixins:length
 			call = OP('&&',LIT('deep'),OP('&&',OP('.',LIT('super'),initKey),call))
 		let fn = addMethod(initKey,[],(isTag or @superclass) ? [call,BR] : '',{}) do |fun|
 			yes
@@ -3462,6 +3477,7 @@ export class ClassDeclaration < Code
 		set(iife: STACK.up isa Instantiation)
 		var separateInitChain = true
 		var fields = []
+		var mixins = @mixins = []
 		var signature = []
 		var params = []
 		var declaredFields = {}
@@ -3469,6 +3485,9 @@ export class ClassDeclaration < Code
 		var instanceMethodMap = {}
 
 		for node in body
+			if node isa ClassRelation
+				mixins.push(node)
+
 			if node isa ClassField
 				if !node.isStatic
 					let name = String(node.name)
@@ -3520,18 +3539,13 @@ export class ClassDeclaration < Code
 
 		var ctor = body.option(:ctor)
 
-		# if STACK.tsc
-		#	if ctor and @autosuper
-		#		ctor.body.add([LIT("super()"),BR],0)
-		#	# return self
 		let tsc = STACK.tsc
 		var inits = InstanceInitBlock.new()
 		var staticInits = @staticInits = ClassInitBlock.new()
 		var patches = InstancePatchBlock.new()
 
-		if @realName
-			staticInits.add util.defineName(THIS,@realName.toStr),0
-			# OP('=',LIT('this[Symbol.for("#name")]'),@realName.toStr),0
+		if @mixins[0] and !tsc
+			inits.add LIT("this[{refSym}]?.(...arguments)")
 
 		var ctor = body.option(:ctor)
 
@@ -3571,6 +3585,8 @@ export class ClassDeclaration < Code
 				allDecorators.push(node.@decorators)
 				staticInits.add([op,BR])
 
+		let supers = sup or @mixins[0]
+
 		if !inits.isEmpty and !tsc
 			@inits = inits
 			instanceInit
@@ -3581,7 +3597,7 @@ export class ClassDeclaration < Code
 				# tags always call init from outside the actual construction
 				yes
 
-			elif !@superclass
+			elif !supers
 				let initop = OP('.',THIS,initKey)
 				if !ctor
 					ctor = addMethod('constructor',[],[],{})
@@ -3591,9 +3607,9 @@ export class ClassDeclaration < Code
 						ctor.body.add([callop,BR],0)
 
 				else
-					let sup = ctor.option(:supr)
-					if sup
-						sup:real.set(target: initop,args: [])
+					let supr = ctor.option(:supr)
+					if supr
+						supr:real.set(target: initop,args: [])
 					else
 						ctor.body.add([CALL(initop,[]),BR],0)
 
@@ -3609,7 +3625,8 @@ export class ClassDeclaration < Code
 					ctor.inject(op,after ? {after: after} : 0)
 				yes
 
-		if !patches.isEmpty and !tsc
+		# Not supporting patches for now
+		if !patches.isEmpty and !tsc and false
 			instancePatch
 			patches.set(ctor: instancePatch)
 			instancePatch.inject(patches)
@@ -3617,7 +3634,6 @@ export class ClassDeclaration < Code
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
 
-			# staticInit.inject(staticInits,0)
 
 		if !STACK.tsc
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
@@ -3625,7 +3641,7 @@ export class ClassDeclaration < Code
 
 			if hasDecorators
 				STACK.use('hooks')
-				let decosym = STACK.symbolFor('#__hooks__')
+				let decosym = STACK.imbaSymbol('__hooks__') # STACK.symbolFor('#__hooks__')
 				staticInits.unshift LIT("this.prototype[{decosym}] = {runtime:hooks}"), yes
 				# staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
 
@@ -3634,16 +3650,17 @@ export class ClassDeclaration < Code
 				ctor = addMethod('constructor',[],ops,{})
 
 			if ctor and !isTag and !STACK.isStdLib
-				let ctorsym = STACK.symbolFor('#__initor__')				
-				let initsym = STACK.symbolFor('#__inited__')
+				# if we are in stdlib we should import from ./symbols
+				let ctorsym = STACK.imbaSymbol('__initor__')				
+				let initsym = STACK.imbaSymbol('__inited__')
 
-				let hooksym = STACK.symbolFor('#__hooks__')
+				let hooksym = STACK.imbaSymbol('__hooks__')
 				let initedHook = LIT("this[{hooksym}]&&this[{hooksym}].inited(this)")
 
 				# console.log "emitInited",initedHook,hasDecorators,hasInitedHook,STACK.imbaPath
 
-				if sup
-					let refsym = STACK.getSymbol()
+				if supers
+					let refsym = refSym
 					staticInits.unshift LIT("this.prototype[{ctorsym}] = {refsym}"), 0
 					if hasInitedHook
 						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) ({initedHook},this[{initsym}]());")
@@ -3657,13 +3674,8 @@ export class ClassDeclaration < Code
 					elif hasDecorators
 						ctor.inject LIT("!this[{ctorsym}] && this[{hooksym}].inited(this);")
 
-				# If we are not in the stdlib / core - add an inherited hook for the class?
-				# ctor.body.add([callop,BR],0)
-
-		if !tsc and sup
-			# add a reference to the namespace as well?
-			staticInits.add util.inheritClass(THIS)
-			# staticInits.add LIT('Object.getPrototypeOf(this.prototype).constructor?.inherited?.(this)')
+		if !tsc
+			staticInits.add CALL(STACK.corelib['register$'],[THIS,refSym,@realName ? @realName.toStr : NULL])
 
 		if !staticInits.isEmpty and !tsc
 			body.add([BR,staticInits])
@@ -3678,10 +3690,6 @@ export class ClassDeclaration < Code
 			cb(func)
 		func.traverse
 		return func
-
-	# def addGetter name, body
-
-	# def addSetter name, body
 
 	def js o
 
@@ -3725,6 +3733,18 @@ export class ClassDeclaration < Code
 			if up isa VarReference
 				try jshead += " {up.@value.@symbol}"
 
+		if @mixins:length
+			let all = []
+			for mixin in @mixins
+				all.push mixin.value
+
+			all.unshift sup or NULL
+			sup = null
+
+			all.unshift(refSym)
+
+			jshead += " extends {CALL(STACK.corelib['multi$'],all).c}"
+
 		if sup
 			supAccess = M(sup)
 			jshead += " extends {supAccess}"
@@ -3749,6 +3769,8 @@ export class ClassDeclaration < Code
 				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
 				extTarget = LIT("({wrap.c},{extTarget.c})")
 			# TODO can this happen in static block?
+
+
 			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
 
 		if option(:global) and !STACK.tsc
@@ -4305,6 +4327,7 @@ export class MethodDeclaration < Func
 
 		# instance-method / member
 		if closure isa ClassScope and !target
+			@class = closure.node
 			@target = closure.prototype
 			let inExt = closure.node.option('extension')
 			set(
@@ -4312,9 +4335,6 @@ export class MethodDeclaration < Func
 				inClassBody: yes,
 				inExtension: inExt
 			)
-
-			# if inExt
-			#	scope.context.@value = LIT("/** @type {closure.node.@className}*/(this)")
 
 			closure.annotate(self)
 
@@ -4361,6 +4381,11 @@ export class MethodDeclaration < Func
 
 	def js stack,co = {}
 		var o = @options
+
+		# need to have collected them already?
+		if isConstructor and !option(:supr) and @class and @class.@mixins:length
+			body.add(LIT('super(...arguments)'),0)
+
 		# FIXME Do this in the grammar - remnants of old implementation
 		unless type == :constructor or option(:noreturn) or isSetter()
 			if option(:chainable)
@@ -6358,6 +6383,23 @@ export class DecoratorIdentifier < Identifier
 
 	def toString
 		symbol
+
+export class ImportProxyAccess < Node
+	def initialize value
+		@value = value
+
+	def toString
+		@value
+
+	def asObjectKey
+		"[{toString}]"
+
+	def c o = {}
+		# console.log 'compiling identifier as',o and o:as,symbol
+		if o:as == 'field'
+			return "[{@value}]"
+		
+		return @value
 
 export class SymbolIdentifier < Identifier
 
@@ -10370,6 +10412,7 @@ export class Tag < TagLike
 		elif parent and !(parent isa TagSwitchFragment) and (isComponent or dynamicKey or option(:reference))
 			let pref = fragment.ref
 			let cref = @cref
+			
 			if dynamicKey or isDynamicType or isDetached
 				if fragment isa TagSlotProxy
 					foot.push "({tvar}=={cref}) || (!{cref} && {pref}{domCall('appendChild')}({cref}={tvar})) || ({pref}{domCall('replaceChild')}({tvar},{cref}),{cref}={tvar})"
@@ -11697,8 +11740,14 @@ export class Util < Node
 		'requireDefault$'
 
 	def js
-		scope__.root.helper(self,helper)
-		"{name}({@args.map(|v| v.c).join(',')})"
+		called(@args,option(:stdlib))
+
+	def called pars,std,name
+		if std and !STACK.isStdLib
+			"{STACK.corelib[std].c}({AST.cary(pars).join(',')})"
+		else
+			scope__.root.helper(self,helper)
+			"{name or self.name}({AST.cary(pars).join(',')})"
 
 var HELPERS = {
 	setField: '''(target,key,value,o){
@@ -11723,14 +11772,6 @@ var HELPERS = {
 		return el;
 	};'''
 
-	inheritClass: '''(cls){
-		Object.getPrototypeOf(cls.prototype).constructor?.inherited?.(cls);
-	};'''
-
-	defineName: '''(cls,name){
-		Object.defineProperty(cls,"name",{value:name,configurable:true});
-	};'''
-
 	initField: '''(target,key,o){
 		Object.defineProperty(target,key,o);
 	};'''
@@ -11742,17 +11783,21 @@ var HELPERS = {
 		};
 	};'''
 
-	decorate: '''(decorators,target,key,desc){
-		var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-		if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-		else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-		return c > 3 && r && Object.defineProperty(target, key, r), r;
-	};'''
+	decorate: {
+		inline: '''(decorators,target,key,desc){
+			var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+			else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+			return c > 3 && r && Object.defineProperty(target, key, r), r;
+		};'''
+		std: 'decorate$'
+	}
 
-	contains: '''(a,b){
-		const sym = Symbol.for("#has");
-		return b && ( b[sym]?.(a) ?? b.includes?.(a) ?? b.has?.(a) ?? false);
-	};'''
+	contains:
+		inline: '''(a,b){
+			const sym = Symbol.for("#has");
+			return b && ( b[sym]?.(a) ?? b.includes?.(a) ?? b.has?.(a) ?? false);
+		};'''
+		std: 'has$'
 
 	requireDefault: '''(obj){
 		return obj && obj.__esModule ? obj : { default: obj };
@@ -11786,8 +11831,9 @@ export class Util.Helper < Util
 
 for own k,v of HELPERS
 	Util[k] = do |*args|
-		let helper = 'function ' + k + '$__' + v
-		Util.Helper.new(args).set(name: k + '$__', helper: helper)
+		let helper = 'function ' + k + '$__' + (v:inline or v)
+		# different helper when they are bundled?
+		Util.Helper.new(args).set(name: k + '$__', helper: helper, stdlib: v:std or null)
 
 export class Util.Extend < Util
 	def helper
@@ -11807,9 +11853,7 @@ export class Util.Extend < Util
 		'''
 
 	def js o
-		# When this is triggered, we need to add it to the top of file?
-		scope__.root.helper(self,helper)
-		"extend$__({AST.compact(AST.cary(args)).join(',')})"
+		called(AST.compact(args),'extend$','extend$__')
 
 export class Util.IndexOf < Util
 
@@ -11821,9 +11865,7 @@ export class Util.IndexOf < Util
 		'''
 
 	def js o
-		scope__.root.helper(self,helper)
-		# When this is triggered, we need to add it to the top of file?
-		"idx$__({args.map(|v| v.c ).join(',')})"
+		called(args,'idx$','idx$__')
 
 
 export class Util.Is < Util
@@ -11841,8 +11883,7 @@ export class Util.Is < Util
 		constructor.new([args[0],b])
 
 	def js o
-		scope__.root.helper(self,helper)
-		return "is$({args[0].c},{args[1].c})"
+		return called(args,'is$','is$')
 
 export class Util.Isa < Util.Is
 
@@ -11852,10 +11893,8 @@ export class Util.Isa < Util.Is
 	def js
 		if right instanceof Str
 			return "typeof {left.c}==={right.c}"
-			
-		scope__.root.helper(self,helper)
-		return "isa$({left.c},{right.c})"
-		# return "(typeof {right.c} == 'string' ? (typeof {left.c} == {right.c}) [Symbol.hasInstance]({args[0].c})"
+
+		return called([left,right],'isa$','isa$')
 
 export class Util.Promisify < Util
 
@@ -11885,13 +11924,7 @@ export class Util.Iterable < Util
 
 	def js o
 		return args[0].c if args[0] isa Arr # or if we know for sure that it is an array
-		scope__.root.helper(self,helper)
-		return "iter$__({args[0].c})"
-
-export class Util.IsFunction < Util
-
-	def js o
-		"{args[0].c}"
+		return called(args,'iterable$','iter$__')
 
 export class Util.Array < Util
 
@@ -11914,11 +11947,6 @@ class Entities
 
 	def lookup path
 		@map[path]
-
-	# def register entity
-	# 	var path = entity.namepath
-	# 	@map[path] ||= entity
-	# 	self
 
 	def plain
 		JSON.parse(JSON.stringify(@map))
@@ -12350,7 +12378,6 @@ export class RootScope < Scope
 		@vars.split = yes
 
 		@imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
-		# @imba = register('imba', self, type: 'global', varclass: ImbaRuntime, path: 'imba')
 		@runtime = @imba.proxy
 		self
 
@@ -13028,7 +13055,7 @@ export class ImportProxy < Variable
 			js.push("import * as {@name} from {pathjs};")
 
 		if keys:length > 0
-			let out = keys.map(do |a| "{a} as {@exports[a]}").join(", ")
+			let out = keys.map(do |a| "{a} as {@exports[a].c}").join(", ")
 			js.push "import \{{out}\} from {pathjs};"
 
 		if touches:length
@@ -13040,7 +13067,8 @@ export class ImportProxy < Variable
 		if @globalName
 			return LIT("{M(@globalName,ctx)}.{C(key)}")
 		let raw = C(key,mark: false)
-		@exports[raw] ||= LIT("{@name}_{raw}")
+		
+		@exports[raw] ||= ImportProxyAccess.new("{@name}_{raw}")
 
 	def c
 		if !@importAll
