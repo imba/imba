@@ -144,6 +144,13 @@ export var F =
 	DIFF_MODIFIERS: 2 ** 4
 	DIFF_INLINE: 2 ** 5
 
+export var TPL = do |vars,string|	
+	string.replace(/\%(\w+)/g) do|m,k|	
+		let v = vars[k]
+		if v === yes
+			return k
+		return v ? C(v) : ''
+
 # Helpers for operators
 export var OP = do |op, l, r|
 	var o = String(op)
@@ -2162,17 +2169,6 @@ export class ClassField < Node
 
 		elif !isStatic and up isa ClassInitBlock
 			return ""
-			let key = name
-
-			let tpl = """
-			Object.defineProperty(this.prototype,{key.c(as: 'value')},\{
-				enumerable: true,
-				set{self.setter.c(keyword: '')},
-				get{self.getter.c(keyword: '')}
-			\})
-			"""
-
-			return tpl
 
 		elif !isStatic and up isa InstanceInitBlock
 			if @vscope
@@ -2946,6 +2942,8 @@ export class VariableDeclarator < Param
 
 		var defs = defaults
 		let typ = variable.datatype
+
+		# console.log 'compile variable!!'
 		# FIXME need to deal with var-defines within other statements etc
 		# FIXME need better syntax for this
 		if defs != null && defs != undefined
@@ -2954,6 +2952,8 @@ export class VariableDeclarator < Param
 			"{variable.c} = {defs}"
 		elif typ
 			"{variable.c} = {typ.c}(undefined)"
+		elif STACK.tsc
+			"{variable.c}/**/"
 		else
 			"{variable.c}"
 
@@ -3313,6 +3313,9 @@ export class ClassDeclaration < Code
 	def isExtension
 		option(:extension)
 
+	def isExported
+		option(:export)
+
 	def isGlobal
 		option(:global)
 
@@ -3320,6 +3323,7 @@ export class ClassDeclaration < Code
 		@name isa Access
 
 	def exportForDts
+		return false
 		return false unless STACK.tsc
 		return true if isNamespaced and (!@name.left.@variable or @name.left.@variable.isImported)
 		return false if isNamespaced and (@name.left.@variable and !@name.left.@variable.isImported)
@@ -3414,6 +3418,7 @@ export class ClassDeclaration < Code
 		@path = @name
 		@ownName = @name
 		@realName = @name isa Access ? @name.right : @name
+		# @internalName = STACK.toInternalClassName(@name)
 
 		# let dtsify = STACK.tsc and (isGlobal or isExtension or (isNamespaced and  )
 
@@ -3459,17 +3464,22 @@ export class ClassDeclaration < Code
 			@name.traverse(declaring: self)
 		elif @name
 			@name.traverse()
-
-		if isGlobal and !isExtension and !isNamespaced and option(:export) and STACK.tsc
-			@exportName = STACK.toInternalClassName(@name)
-
-		if @ownName == @name and (exportForDts)
-			if isGlobal and !isExtension and !isNamespaced and option(:export)
-				@exportName = STACK.toInternalClassName(@name)
-			else
+		
+		if STACK.tsc
+			if (isGlobal or isExtension)
 				@ownName = STACK.toInternalClassName(@name)
 
-		# console.log 'visited class',exportForDts,String(@ownName),String(@exportName)
+			# hmm
+			elif isGlobal and !isExtension and !isNamespaced and option(:export)
+				@exportName = STACK.toInternalClassName(@name)
+
+			if @ownName == @name and (exportForDts)
+				if isGlobal and !isExtension and !isNamespaced and option(:export)
+					@exportName = STACK.toInternalClassName(@name)
+				else
+					@ownName = STACK.toInternalClassName(@name)
+
+			# console.log 'visited class',exportForDts,String(@ownName),String(@exportName)
 
 		STACK.push(self)
 		ROOT.entities.add(namepath,self)
@@ -3635,13 +3645,13 @@ export class ClassDeclaration < Code
 			ctor.body.add([LIT("super()"),BR],0)
 
 
-		if !STACK.tsc
+		if !tsc
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
 			let hasDecorators = allDecorators:length > 0
 
 			if hasDecorators
 				STACK.use('hooks')
-				let decosym = STACK.imbaSymbol('__hooks__') # STACK.symbolFor('#__hooks__')
+				let decosym = STACK.imbaSymbol('__hooks__')
 				staticInits.unshift LIT("this.prototype[{decosym}] = {runtime:hooks}"), yes
 				# staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
 
@@ -3696,11 +3706,15 @@ export class ClassDeclaration < Code
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
+		var tsc = STACK.tsc
 		var up = STACK.up
 		var o = @options or {}
 
+		
+
 		var cname = @ownName isa Access ? @ownName.right : @ownName
 		var origName = @name isa Access ? @name.right : @name
+
 
 		# var namespaced = name != cname
 		var initor = null
@@ -3711,17 +3725,15 @@ export class ClassDeclaration < Code
 
 		@cname = cname
 
-		# if origName
-		# 	staticInits.add LIT('this[Symbol.for("#name")] = "' + origName.c + '"'),0
-
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
-		if STACK.tsc and isExtension and !exportForDts # (isNamespaced or @name.@variable and !@name.@variable.isImported)
+		if tsc and isExtension and !exportForDts and false # (isNamespaced or @name.@variable and !@name.@variable.isImported)
 			let parts = []
 			let target = @name.c
 			for part in body.@nodes
 				parts.push(part.c(as: 'descriptor',target: target))
+			console.log "lazy extending with tsc"
 			return parts.join(';\n')
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
@@ -3734,6 +3746,7 @@ export class ClassDeclaration < Code
 				try jshead += " {up.@value.@symbol}"
 
 		if @mixins:length
+
 			let all = []
 			for mixin in @mixins
 				all.push mixin.value
@@ -3753,7 +3766,7 @@ export class ClassDeclaration < Code
 			# TODO or the definition is local
 			jshead = "{name.c} = {jshead}"
 
-		if option(:export) or (STACK.tsc and exportForDts)
+		if option(:export) # or (tsc and (exportForDts or option(:global)))
 			# beware of double export
 			if option(:default)
 				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
@@ -3762,7 +3775,7 @@ export class ClassDeclaration < Code
 
 		let js = "{jshead} \{{jsbody}\}"
 
-		if isExtension and !STACK.tsc
+		if isExtension and !tsc
 			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
 
 			if @virtualSuper
@@ -3773,17 +3786,39 @@ export class ClassDeclaration < Code
 
 			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
 
-		if option(:global) and !STACK.tsc
-			# external access?
-			# js = "{js}; {scope__.root.globalRef}.{@cname} = {@cname}"
-			let access = name isa Access
-			let getter = name isa Access ? name.c : @cname
-			if STACK.tsc
-				js = "{js};{!access ? " export \{{@cname}\};" : ""} {scope__.root.globalRef}.{@cname} = {getter}"
-			else
+		if tsc
+			# only if the target is originally global
+			if isExtension
+				let iface = 'interface ' + origName.c + ' extends ' + @cname + ' {}'
+				# get import path and name for variable
+				# need to look into Namespaced.Class
+				let variable = @name.variable
+				let pre = 'declare global'
+				if variable
+					if variable.isImported
+						# console.log variable.importPath
+						pre = "declare module {variable.importPath}"
+						js = js + '\ndeclare module ' + variable.importPath + ' { interface ' + origName.c + ' extends ' + @cname + '{} }'
+					else
+						js = js + '\n' + iface
+				# if not global 
+				else
+					js = js + '\ndeclare global { interface ' + origName.c + ' extends ' + @cname + '{} }'
+
+		if option(:global)
+			if !tsc
+				let access = name isa Access
+				let getter = name isa Access ? name.c : @cname
 				js = "{js}; {scope__.root.globalRef}.{@cname} = {getter}"
+			else
+				# only for the new mode
+				js = js + '\ndeclare global { class ' + origName.c + ' extends ' + @cname + '{} }'
+				# js = 'namespace global {' + js + '}\ndeclare global { class ' + cname + ' extends global.' + origName + '{} }'
 
 		# if option(:export) and option(:global) and STACK.tsc
+
+		if tsc and @mixins:length
+			js = "interface {@cname} extends {@mixins.map(do $1.value.c).join(',')} \{\}\n" + js
 
 		if STACK.tsc and @exportName
 			js = "{js}; export \{{@ownName} as {@exportName}\}"
@@ -3842,6 +3877,9 @@ export class TagDeclaration < ClassDeclaration
 
 		let sup = superclass
 
+		if !name.isClass
+			set(global: yes)
+
 		@config = {}
 
 		if sup and !STACK.tsc
@@ -3893,10 +3931,19 @@ export class TagDeclaration < ClassDeclaration
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
-
+		let tsc = STACK.tsc
 		let className = name.toClassName
 		let sup = superclass
-		let anonGlobalTag = !option(:extension) and (!name.isClass) and STACK.tsc
+		let anonGlobalTag = !option(:extension) and (!name.isClass) and tsc
+
+		let tpl = {
+			name: name.@str
+		}
+
+		if tsc
+			tpl:declareName = tpl:localName = className
+			if isGlobal or isExtension
+				className = tpl:localName = STACK.toInternalClassName(name)
 
 		if sup and sup.@variable
 			sup = sup.@variable
@@ -3905,26 +3952,51 @@ export class TagDeclaration < ClassDeclaration
 		else
 			sup = runtime:Component
 
-		if STACK.tsc
+		if tsc
 			sup = superclass ? superclass.toClassName : LIT('imba.Component')
-			if option(:extension)
-				# className = "Extended${className}"
-				# ought to support the nested stuff?
-				# let out = "class Ω{name.toExtensionName.replace(/\./g,'__')}Ω{STACK.incr('extend')}"
-				let out = "class {@mixinName.c}"
-				#  extends {@className.c}
-				let obody = body.c
+			console.log(tpl:name,isGlobal)
 
-				if STACK.tsc and false
-					# if the class-name is aliased via an import we want to include that here
-					# console.log 'cl',@className
-					obody = "\n__extends__= new {M(@className.c,@name)};\n{obody}"
-
-				out = "{out} \{{obody}\}"
-				out = "export {out}" unless @name.@variable
-				return out
-			else
+			if !isExtension
+				body.unshift(LIT('declare $$TAG$$\n'))
 				body.unshift(LIT('static $$TAG$$\n'))
+
+			tpl:body = body.c
+			tpl:superName = sup
+
+			try tpl:export = option(:export) or !!@name.variable.@value.isExported
+
+			if isExtension and isGlobal
+				return TPL tpl, '''
+					declare global { interface %declareName extends %localName {} }
+					class %localName { %body }
+				'''
+			elif isExtension
+				try tpl:path = @name.variable.importPath
+				
+				if tpl:path
+					return TPL tpl, '''
+						declare module %path { interface %declareName extends %localName {} }
+						class %localName { %body }
+					'''
+
+				return TPL tpl,'''
+					%export interface %declareName extends %localName {}
+					class %localName { %body }
+				'''
+			elif isGlobal
+				return TPL tpl,'''
+					declare global {
+						interface %declareName extends %localName {}
+						class %declareName {}
+						interface HTMLElementTagNameMap { "%name": %declareName }
+					}
+					class %localName extends %superName {  %body }
+				'''
+			else
+				return TPL tpl,'''
+					%export interface %localName extends %superName { }
+					%export class %localName { %body }
+				'''
 
 		elif option(:extension)
 			let namevar = @name.@variable
@@ -3950,32 +4022,19 @@ export class TagDeclaration < ClassDeclaration
 			else
 				jshead = "{M 'export',option(:export)} {jshead}"
 
-		if anonGlobalTag and STACK.tsc # only tsc
-			# jshead = "globalThis[{M("'{M(name.toNodeName,name)} tag'",name)}] = {M 'class', keyword} extends {M sup, superclass}"
-			# jshead = "globalThis.{M className, name} = {M 'class', keyword} extends {M sup, superclass}"
-			jshead = "export {jshead}"
-			# jshead = "globalThis.{className} = {M 'class', keyword} {M className, name} extends {M sup, superclass}"
-
 		let js = "{jshead} \{{jsbody}\}"
 
 		@config:cssns = cssns if @cssns
 		@config:cssid = cssid if @cssid
 
-		if !STACK.tsc
-			if @staticInit
-				js += "; {OP('.',LIT(className),initKey).c}()"
-			# let ext = (option(:extends) or LIT('{}')).c
-			let ext = Obj.wrap(@config).c
-			if name.isClass
-				@config:name = name.symbol
-			js += "; {runtime:defineTag}({name.c},{className},{ext})"
+		if @staticInit
+			js += "; {OP('.',LIT(className),initKey).c}()"
+		# let ext = (option(:extends) or LIT('{}')).c
+		let ext = Obj.wrap(@config).c
+		if name.isClass
+			@config:name = name.symbol
+		js += "; {runtime:defineTag}({name.c},{className},{ext})"
 
-		# else
-		# 	if !option(:extension) and (!name.isClass)
-		# 		js += "; globalThis.{M name.toTscName, name} = {className};"
-
-		if STACK.tsc and (option(:global) or !name.isClass) and false
-			js += "; globalThis.{className} = {className}"
 		return js
 
 export class Func < Code
@@ -9795,6 +9854,7 @@ export class Tag < TagLike
 
 	def js o
 		var stack = STACK
+		var tsc = STACK.tsc
 		var isExpression = stack.isExpression
 
 		var head = []
@@ -9850,17 +9910,23 @@ export class Tag < TagLike
 				let fn = OP(".",root.tvar,gsym('#registerFunctionalSlot')).c
 				slotPath = "{fn}({STR(option(:name)).c})"
 
-		if stack.tsc
+		if tsc
+			# console.log tvar
 			# if tag is expression we want to suppress certain warnings
 			if type isa TagTypeIdentifier and !isSelf
 				if type.isAsset
 					add "{tvar} = new {M("SVGSVGElement",type)}"
 				elif type.isClass
-					add "{tvar} = new {M(type.toClassName,type)}"
+					tvar.@datatype = type.toClassName
+					add M("{tvar}.$$TAG$$",type)
+					# add "{tvar} = new {M(type.toClassName,type)}"
 				else
+					tvar.@datatype = type.toClassName
 					# add "{tvar} = new globalThis.{M(type.toClassName,type)}"
+					# the variables should be declared here
 					add "{tvar} = new {M(type.toClassName,type)}"
 			elif isSelf
+				tvar.@datatype = 'this'
 				add "{tvar} = {type.c}"
 			elif isDynamicType
 				if @options:dynamic
@@ -10635,6 +10701,10 @@ export class ESMSpecifier < Node
 		@name = name
 		@alias = alias
 
+	def sourcePath
+		console.log "Hello"
+		@importer ? @importer.sourcePath : null
+
 	def visit stack
 		@declaration = stack.up(ESMDeclaration)
 		if @declaration isa ImportDeclaration
@@ -10726,6 +10796,9 @@ export class AssetReference < ValueNode
 		return out
 
 export class ImportDeclaration < ESMDeclaration
+
+	def sourcePath
+		@source and @source.c()
 
 	def ownjs
 		var src = @source and @source.c()
@@ -12720,6 +12793,9 @@ export class Variable < Node
 	def isImported
 		@type == 'imported'
 
+	def importPath
+		isImported and @declarator ? @declarator.sourcePath : null
+
 	def typedAlias
 		@typedAlias ||= Variable.new(@scope,@name + '$TYPED$',@declarator,@options)
 
@@ -12828,8 +12904,14 @@ export class Variable < Node
 		@references:length
 
 	def c params
-		if params and params:as == 'field'
-			return "[" + c({}) + "]"
+
+		if params
+			if params:as == 'declaration' and STACK.tsc
+				if @datatype
+					return c({}) + ":" + C(@datatype)
+			
+			if params:as == 'field'
+				return "[" + c({}) + "]"
 
 		return @c if @c
 

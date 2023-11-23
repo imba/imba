@@ -399,11 +399,9 @@ export default class ImbaTypeChecker
 			symbol = sym("{root}.{name}") or sym("HTMLElementTagNameMap.{name}")
 
 			unless symbol
-				# let key = name.replace(/\-/g,'_') + '$$TAG$$'
 				let typ = (type("globalThis.{util.toCustomTagIdentifier(name)}") or type(util.toCustomTagIdentifier(name)))
 				if typ
 					symbol = typ.symbol
-				# symbol = sym("globalThis.{util.toCustomTagIdentifier(name)}")
 
 			unless symbol
 				if let cname = util.tagNameToClassName(name)

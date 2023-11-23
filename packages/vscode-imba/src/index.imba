@@ -161,7 +161,7 @@ export def activate context
 	commands.registerCommand('imba.setDefaultSettings') do
 		let settings = {
 			"[imba].editor.insertSpaces": false,
-			"[imba].editor.tabSize": 4,
+			"[imba].editor.tabSize": 2,
 			"[imba].editor.autoIndent": "advanced",
 			"files.eol": "\n"
 		}
