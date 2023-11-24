@@ -112,7 +112,10 @@ CLI.prototype.findRecursive = function (root,pattern){
 		src = path.normalize(src);
 		var stat = fs.statSync(src);
 
+		if(src.match(/node_modules\/?$/)) return;
+
 		if (stat.isDirectory() && depth > 0) {
+			
 			var files = fs.readdirSync(src);
 			let res = [];
 			for (let i = 0, items = iter$(files), len = items.length; i < len; i++) {
