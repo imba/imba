@@ -39,7 +39,7 @@ export const Extensions = [
 	'.avif'
 ]
 
-const Suffixes = [".imba",""]
+const Suffixes = [".web.imba",".imba",""]
 
 export const DefaultConfig = {
 	include: ['**/*.imba','**/*']
@@ -58,6 +58,7 @@ export const DefaultConfig = {
 		esModuleInterop: true
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
+		customConditions: ["tsimba","imba"]
 		declaration: false
 		strict: false
 		resolveJsonModule: true
@@ -77,7 +78,8 @@ export const RequiredCompilerOptions = {
 	skipLibCheck: true
 	skipDefaultLibCheck: true
 	importsNotUsedAsValues: 'preserve'
-	moduleSuffixes: [".imba",""]
+	customConditions: ["tsimba","imba"]
+	moduleSuffixes: Suffixes
 	target: 99
 	noEmit: true
 	allowJs: true
@@ -103,6 +105,7 @@ export const DefaultRichConfig = {
 		esModuleInterop: true
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
+		customConditions: ["tsimba","imba"]
 		importsNotUsedAsValues: 'preserve'
 		declaration: false
 		strict: false

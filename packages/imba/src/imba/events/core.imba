@@ -1,6 +1,6 @@
 # imba$imbaPath=global
 # imba$stdlib=1
-import {Event,Element,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
+$node$ import {Element,Event,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
@@ -19,6 +19,7 @@ extend class CustomEvent
 			desc
 		Object.defineProperties(self,ext)
 
+# this should clearly much rather export the real one
 extend class Event
 
 	get original
@@ -32,7 +33,11 @@ extend class Event
 
 	def #onceHandlerEnd cb
 		once(#context,'end',cb)
-
+	
+	###
+	Only trigger handler if event.target matches selector
+	@detail (selector)
+	###
 	def @sel selector
 		return !!target.matches(String(selector))
 

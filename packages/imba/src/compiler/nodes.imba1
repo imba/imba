@@ -294,13 +294,19 @@ var TYP = do |item,format|
 
 	if typ
 		let str = C(typ)
-
 		if format == 'jsdoc'
 			"/** @type \{{M(str,typ)}\} */"
 		else
 			":{M(str,typ)}"
 	else
 		""
+
+var TYPED = do |item,typ|
+	if typ
+		"{C(item)}:{C(typ)}"
+	else
+		C(item)
+
 
 var LIT = do |val|
 	val isa RawScript ? val : RawScript.new(val)
@@ -650,6 +656,16 @@ export class Stack
 	def imbaSymbol name
 		STACK.isStdLib ? symbolFor('#' + name) : corelib[name]
 
+	def toInternalName name
+		if name:c isa Function
+			name = name.c
+
+		let str = "Ω" + strip(name).split(".").join("__")
+		let nr = incr(str)
+		if nr > 1
+			str += "Ω" + nr
+		return str
+
 	def toInternalClassName name
 		if name:toClassName
 			name = name.toClassName
@@ -826,7 +842,7 @@ export class Stack
 	def up test
 		test ||= do |v| !(v isa VarOrAccess)
 
-		if typeof test == 'number'
+		if typeof test == 'number'	
 			return @nodes[@nodes:length - (1 + test)]
 
 		var i = @nodes:length - 2
@@ -2085,6 +2101,7 @@ export class ClassField < Node
 			let prefix = isStatic ? "{M('static',option(:static))} " : ''
 			let name = name isa IdentifierExpression ? name.asObjectKey : name.c(as: 'field')
 			let cls = STACK.up(ClassDeclaration)
+			let typ = STACK.tsc and datatype
 
 			if wrapper
 				let meta = @metaname = @name.metaIdentifier
@@ -2116,8 +2133,8 @@ export class ClassField < Node
 					let setter = "{prefix}set {M(name,@name)}{self.setter.c(keyword: '')}"
 					let getter = "{prefix}get {M(name,@name)}{self.getter.c(keyword: '')}"
 
-					if datatype
-						getter = "{datatype.c} {getter}"
+					if typ
+						getter = "{getter}:{typ.c}"
 
 					out = "{setter}\n{getter}\n{prefix}get {@handler.c}"
 
@@ -2134,9 +2151,8 @@ export class ClassField < Node
 					let sym = osym
 
 					out = "{prefix} get {M(name,@name)}() \{ return /** @type any */({getval}) \}" # the value scope?
-
-					if datatype
-						out = "{datatype.c} {out}"
+					if typ
+						out = "{out}:{C(typ)}"
 					out += "\n{prefix} set {M(name,@name)}(val) \{ {setval} \}"
 
 				else
@@ -2144,9 +2160,8 @@ export class ClassField < Node
 					out = "{prefix}{M(name,@name)}" # the value scope?
 					out += " = {value.c};" if value
 
-					let typ = datatype
 					if typ
-						out = "{typ.c} {out}"
+						out = "{out}:{C(typ)}"
 
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false) or wrapper
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
@@ -2579,16 +2594,24 @@ export class Param < Node
 			''
 
 	def js stack, params
+		let val = @value.c
+
 		if !params or params:as != 'declaration'
-			return "{@value.c}"
+			return val
+
+		if datatype and STACK.tsc
+			let typ = C(datatype)
+			val += '?' if datatype.isOptional
+			# now check if type is optional
+			val += ':' + typ
 
 		# include type??
 		if @defaults
-			return "{@value.c} = {@defaults.c}"
+			return "{val} = {@defaults.c}"
 		elif option(:splat)
-			return "..." + @value.c
+			return "..." + val
 		else
-			return @value.c
+			return val
 
 	def visit stack
 		@defaults.traverse if @defaults
@@ -2704,14 +2727,14 @@ export class ParamList < ListNode
 			# pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
 			AST.compact(nodes.map(|param|
 				let part = param.c(opts)
-				let typ = inline and param.datatype
+				let typ = STACK.tsc and inline and param.datatype
 				if typ
-					part = typ.c + part
+					part = part + ' as ' + typ.c
+
 				return part
 			)).join(",")
 		else
 			throw "not implemented paramlist js"
-			"ta" + AST.compact(map(|arg| arg.c )).join(",")
 
 	def head o
 		var reg = []
@@ -2953,7 +2976,7 @@ export class VariableDeclarator < Param
 		elif typ
 			"{variable.c} = {typ.c}(undefined)"
 		elif STACK.tsc
-			"{variable.c}/**/"
+			"{variable.c}"
 		else
 			"{variable.c}"
 
@@ -3035,13 +3058,17 @@ export class VarDeclaration < Node
 		let out = ''
 		let kind = kind
 		let typ = (datatype or (@left and @left.datatype))
-
 		if STACK.tsc and @variables:length > 1 and @variables.some(do $1.vartype)
 			kind = 'let' # or var?
 			for item in @variables
+				let itemjs = item.c()
 				if item.vartype
-					out += item.vartype.c + ' '
-				out += "{M(kind,keyword)} {item.c()};\n"
+					# Rename to datatype?
+					
+					# out += item.vartype.c + ' '
+					itemjs += ':' + item.vartype.c + ' '
+
+				out += "{M(kind,keyword)} {itemjs};\n"
 			out += "({left.c()}"
 			if right
 				out += " = {right.c(expression: true)}"
@@ -3056,7 +3083,8 @@ export class VarDeclaration < Node
 			out = M('export',option(:export)) + " {out}"
 
 		if typ
-			out = typ.c() + '\n' + out
+			yes
+			# out = typ.c() + '\n' + out
 
 		return out
 
@@ -3157,6 +3185,8 @@ export class Root < Code
 
 		STACK.root = @scope
 
+		
+
 		if o:bundle
 			if o:cwd and STACK.isNode
 				let abs = fspath.resolve(o:cwd,o:sourcePath)
@@ -3186,7 +3216,7 @@ export class Root < Code
 
 		if STACK.tsc
 			# out = "import 'imba/index.d.ts';\n{out}"
-			out = "export \{\};String();\n{out}\n"
+			out = "export \{\};String();import * as imba from 'imba';\n{out}\n"
 			if script:sourceCode and script:sourceCode.match(/(^|[\r\n])\# @nocheck[\n\r]/)
 				out = "// @ts-nocheck\n{out}"
 
@@ -3954,7 +3984,6 @@ export class TagDeclaration < ClassDeclaration
 
 		if tsc
 			sup = superclass ? superclass.toClassName : LIT('imba.Component')
-			console.log(tpl:name,isGlobal)
 
 			if !isExtension
 				body.unshift(LIT('declare $$TAG$$\n'))
@@ -3975,6 +4004,7 @@ export class TagDeclaration < ClassDeclaration
 				
 				if tpl:path
 					return TPL tpl, '''
+						%declareName
 						declare module %path { interface %declareName extends %localName {} }
 						class %localName { %body }
 					'''
@@ -3990,7 +4020,7 @@ export class TagDeclaration < ClassDeclaration
 						class %declareName {}
 						interface HTMLElementTagNameMap { "%name": %declareName }
 					}
-					class %localName extends %superName {  %body }
+					class %localName extends %superName { %body }
 				'''
 			else
 				return TPL tpl,'''
@@ -4067,6 +4097,9 @@ export class Func < Code
 	def nonlocals
 		@scope.@nonlocals
 
+	def isGlobal
+		option(:global)
+
 	def returnType
 		datatype
 
@@ -4121,8 +4154,8 @@ export class Func < Code
 
 			o.push('@this ' + option(:jsdocthis) + '')
 
-		if returnType
-			o.push('@returns { ' + returnType.asRawType + ' }')
+		# if returnType
+		# 	o.push('@returns { ' + returnType.asRawType + ' }')
 
 		let doc = o.join('\n')
 		return (doc ? '/**\n' + doc + '\n*/\n' : '')
@@ -4143,7 +4176,12 @@ export class Func < Code
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name ? ' ' + name.replace(/\./g,'_') : ''
 		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
-		var out = "{M(keyword,option('def') or option('keyword'))}{helpers.toValidIdentifier(name)}({params.c}) " + code
+		var out = "{M(keyword,option('def') or option('keyword'))}{helpers.toValidIdentifier(name)}({params.c}) "
+
+		if STACK.tsc and returnType
+			out += ':' + returnType.c
+		
+		out += code
 		# out = "async {out}" if option(:async)
 		out = "({out})()" if option(:eval)
 		return out
@@ -4471,7 +4509,12 @@ export class MethodDeclaration < Func
 
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
-			out = "{prefix}{M name, null, as: 'field'}({params.c}){code}"
+			out = "{prefix}{M name, null, as: 'field'}({params.c})"
+
+			if STACK.tsc and returnType
+				out += ':' + returnType.c + ' '
+		
+			out += code
 			out = jsdoc() + out
 			# out = @params.jsdoc() + out
 
@@ -4482,8 +4525,18 @@ export class MethodDeclaration < Func
 
 		var func = "({params.c})" + code
 		var ctx = context
-		var fname = helpers.toValidIdentifier(AST.sym(self.name))
 
+
+		var fname = helpers.toValidIdentifier(AST.sym(self.name))
+		var tpl = {
+			localName: fname
+			declareName: fname
+		}
+
+		if STACK.tsc and isGlobal
+			fname = tpl:localName = STACK.toInternalName(tpl:localName)
+
+			
 		if target
 
 			# special case here?
@@ -4520,7 +4573,11 @@ export class MethodDeclaration < Func
 				out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 
 		if o:global
-			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
+			if STACK.tsc
+				out = "{out};" + TPL(tpl,'declare global { var %declareName : typeof %localName }')
+			else
+				out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
+			# out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
 
 		if option(:return)
 			out = "return {out}"
@@ -4957,7 +5014,7 @@ export class Arr < Literal
 		var out = val isa Array ? AST.cary(val) : val.c
 		out = "[{out}]"
 		if datatype and STACK.tsc
-			out = datatype.c + '(' + out + ')'
+			out = out + ' as ' + datatype.c
 		return out
 
 	def hasSideEffects
@@ -5650,7 +5707,7 @@ export class Access < Op
 
 		# let typ = datatype
 		let up = stack.up
-		let typ = option(:datatype)
+		let typ = STACK.tsc and option(:datatype)
 
 		if ctx
 			if self isa ImplicitAccess and typ and stack.tsc and !(up isa Block) and false
@@ -5661,11 +5718,14 @@ export class Access < Op
 		if self isa ImplicitAccess
 			out = M(out,rgt.@token or rgt.@value)
 
+		# tricky?
 		if typ and (!(up isa Assign) or up.right.node == self)
 			if up isa Block and (self isa ImplicitAccess or lft isa Self)
-				out = typ.c + ' ' + out
+				out = out + ' as ' + typ.c
+				# out = typ.c + ' ' + out
 			else
-				out = typ.c + '(' + out + ')'
+				out = out + ' as ' + typ.c
+				# out = typ.c + '(' + out + ')'
 
 		out = pre + out
 
@@ -5881,19 +5941,20 @@ export class VarOrAccess < ValueNode
 	def js o
 		if @tagref
 			return @tagref.ref
-
+		
 		let val = @variable or @value
+		let typ = STACK.tsc and datatype
+
 		if @variable and @variable.declarator != self
 			if STACK.tsc and val.@typedAlias
 				let out = val.@typedAlias.c
 				return out
-			# if @variable.c == 'val'
-			#	# not when we are part of a setter though
-			#	console.log 'compile varoraccess variable',@variable
-			let typ = datatype #  or (STACK.tsc and @variable.vartype)
-			# FIXME not if it is in left-side of assignment
-			if typ
-				return typ.c() + '(' + @variable.c() + ')'
+
+			# if typ
+			#	return typ.c() + '(' + @variable.c() + ')'
+
+		if typ and !@variable
+			return val.c + ' as ' + datatype.c
 
 		return val.c()
 
@@ -5998,12 +6059,12 @@ export class VarReference < ValueNode
 	def js stack,params
 		let out = @value.c()
 		let typ = (STACK.tsc and datatype)
-		# console.log "result of varreference {out}"
-		# console.log "is expression?? {@expression} {params:expression}"
+
+		if typ
+			out = TYPED(out,typ)
+		
 		if @right
 			let rgt = @right.c(expression: true)
-			if typ
-				rgt = "{typ.c}({rgt})"
 			out += " = {rgt}"
 
 		if @expression
@@ -6015,9 +6076,8 @@ export class VarReference < ValueNode
 				let kind = @type # or var?
 				let js = ''
 				for item in @variables
-					if item.vartype
-						js += item.vartype.c + ' '
-					js += "{M(kind,@keyword)} {item.c()};\n"
+
+					js += "{M(kind,@keyword)} {TYPED(item,item.vartype)};\n"
 
 				if @value isa Obj
 					out = "({out})"
@@ -6028,9 +6088,8 @@ export class VarReference < ValueNode
 			out = "{@type} {out}"
 			if option(:export)
 				out = "{M('export',option(:export))} {out}"
-
-			if !@right and typ
-				out = typ.c + ' ' + out
+			# if !@right and typ
+			#	out = TYPED(item,typ)
 		return out
 
 # ASSIGN
@@ -6255,6 +6314,7 @@ export class TypeAnnotation < Node
 
 	def initialize value
 		@value = value
+		@optional = no
 		self
 
 	def add item
@@ -6269,15 +6329,32 @@ export class TypeAnnotation < Node
 	def asParam name
 		"@param \{{asRawType}\} {name}"
 
+	def isOptional
+		@optional
+
+	def visit
+		asRawType
+		self
+
 	def asRawType
+		if @rawType
+			return @rawType
+
+		let opt = no
 		let raw = String(@value).slice(1)
+		let end = raw.slice(-1)
+
+		if end == '?'
+			@optional = yes
+			raw = raw.slice(0,-1)
+
 		raw = raw.replace(/(^|[\[\,])\<([a-z\-\d]+)\>/g) do |m,pre,name|
 			# pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
 			pre + (TagTypeIdentifier.new(name)).toClassName
 
 		raw = raw.replace(/(^|[\[\,])self([\]\,\)\>]|$)/g) do |m,pre,post|
 			pre + "this" + post
-		return M(raw,self)
+		return @rawType = M(raw,self)
 
 	def asIteratorValue
 		wrapDoc(asRawType + '[]')
@@ -6286,6 +6363,9 @@ export class TypeAnnotation < Node
 		return '/**@type {' + inner + '}*/'
 
 	def c
+		if STACK.tsc
+			return asRawType
+
 		return '/**@type {' + asRawType + '}*/'
 		# M(String(@value).slice(1),self)
 
@@ -7294,22 +7374,16 @@ export class Call < Node
 
 		var callee = @callee = @callee.node # drop the var or access?
 
-		# if callee isa Call && callee.safechain
-		#	yes
-
 		if callee isa Access
 			lft = callee.left
 			rgt = callee.right
 
 		if callee isa Super
 			if let m = STACK.method
-				# console.log "in method {m} {m.name} {m.option('inExtension')}"
 				if m.option('inExtension')
 					callee = OP('.',callee,m.name)
 					@receiver = scope__.context
-					# callee = @callee = OP('.',scope__.context,'super$')
-					# args.unshift(m.name.toStr) # = ArgList.new
-			# @receiver = scope__.context
+
 			self
 			# return "supercall"
 
@@ -7335,7 +7409,7 @@ export class Call < Node
 			let black = '\x1b[30m'
 			let reset = '\x1b[0m'
 
-			callee = LIT("console.log")
+			callee = LIT("globalThis.DEBUG_IMBA && console.debug")
 			let src = STACK.SOURCECODE
 
 			let fmts = ["%s"]
@@ -8098,13 +8172,17 @@ export class ForOf < For
 		else
 
 			if STACK.tsc
+				let itertype = []
 				# get all the variables declared in the let
+				# Doesnt work with the single item now
 				for item in @declvars
+					# need to do it nested in arrays
 					if item.vartype
-						let vname = item.c
-						let decl = item.@declarator
-						let op = LIT("let {M item.typedAlias.c,decl} = {item.vartype.c}({vname})")
-						body.unshift(op)
+						itertype.push(item.vartype)
+						continue
+					
+				if itertype:length
+					src.set(datatype: LIT("Iterable<[{AST.cary(itertype)}]>"))
 
 			# compile to a naive for of loop
 			code = scope.c(braces: yes, indent: yes)
@@ -10702,7 +10780,6 @@ export class ESMSpecifier < Node
 		@alias = alias
 
 	def sourcePath
-		console.log "Hello"
 		@importer ? @importer.sourcePath : null
 
 	def visit stack
@@ -10756,6 +10833,16 @@ export class ESMDeclaration < Statement
 		@source = source
 		@defaults = (specifiers and specifiers.find(do $1 isa ImportDefaultSpecifier))
 
+	def addEnv env
+		@envs ||= []
+		@envs.push( EnvFlag.new env)
+		self
+
+	def isExcluded
+		if @envs
+			return !@envs.find(do $1.isTruthy)
+		return no
+
 	def isExport
 		String(keyword) == 'export'
 
@@ -10797,8 +10884,11 @@ export class AssetReference < ValueNode
 
 export class ImportDeclaration < ESMDeclaration
 
+
 	def sourcePath
 		@source and @source.c()
+
+	
 
 	def ownjs
 		var src = @source and @source.c()
@@ -10820,6 +10910,8 @@ export class ImportDeclaration < ESMDeclaration
 			"{M(keyword.c,keyword)} {src}"
 
 	def js
+		return "" if isExcluded
+
 		let out = ownjs
 		return out
 
@@ -10828,6 +10920,8 @@ export class ImportDeclaration < ESMDeclaration
 		@up.replace curr, [curr,BR,@next = next]
 
 	def visit
+		return if isExcluded
+
 		for item in @specifiers
 			item?.traverse()
 
@@ -10860,11 +10954,13 @@ export class ImportTypeDeclaration < ESMDeclaration
 export class ExportDeclaration < ESMDeclaration
 
 	def visit
+		return if isExcluded
 		for item in @specifiers
 			item?.traverse()
 		self
 
 	def js
+		return "" if isExcluded
 		let kw = M(keyword.c,keyword)
 
 		if @specifiers and @source
@@ -12157,12 +12253,18 @@ export class Scope
 		@cssns ||= "{root.sourceId}_{oid}"
 
 	def tagCache
-		@tagCache ||= declare('ϲτ',
-			LIT("{runtime:getRenderContext}()"),
-			system: yes
-			temporary: yes
-			alias: 'ϲτ'
-		)
+		unless @tagCache
+			var cache = LIT("{runtime:getRenderContext}()")
+			if STACK.closure isa IsolatedFunctionScope
+				cache = LIT('{}')
+
+			@tagCache = declare('ϲτ',
+				cache,
+				system: yes
+				temporary: yes
+				alias: 'ϲτ'
+			)
+		return @tagCache
 
 	def tagTempCache
 		@tagTempCache ||= declare('ϲττ',
@@ -12665,7 +12767,10 @@ export class MethodScope < Scope
 		if STACK.tsc and isInExtend
 			let cls = parent.closure.node
 			if cls.@className
-				let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+				# let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+				let ref = context.reference(LIT("{cls.@className.c}.prototype"))
+				# just set it directly??
+				# only need this if we are in a getter
 				context.@useReference = yes
 				ref.c
 		self

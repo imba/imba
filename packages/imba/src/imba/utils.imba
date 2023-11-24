@@ -112,7 +112,7 @@ export def unlisten obj, event, cb, meth
 	return
 
 # emit event
-export def emit obj, event, params
+export def emit obj, event, params = null
 	if let cb = obj.#__listeners__
 		emit__(event,params,cb[event]) if cb[event]
 		emit__(event,[event,params],cb.all) if cb.all

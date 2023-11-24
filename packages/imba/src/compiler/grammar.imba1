@@ -143,6 +143,8 @@ var grammar =
 	]
 
 	ExportDeclaration: [
+		o 'ENV_FLAG ExportDeclaration' do
+			A2.addEnv(A1)
 		o 'EXPORT { ImportSpecifierList }' do ExportNamedDeclaration.new(A1,[A3])
 		o 'EXPORT { ImportSpecifierList } FROM String' do
 			ExportNamedDeclaration.new(A1,[A3], A6)
@@ -176,6 +178,8 @@ var grammar =
 	]
 
 	ImportDeclaration: [
+		o 'ENV_FLAG ImportDeclaration' do
+			A2.addEnv(A1)
 		o 'IMPORT String' do
 			ImportDeclaration.new(A1,null, A2)
 		o 'IMPORT ImportDefaultSpecifier FROM String' do

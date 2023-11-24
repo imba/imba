@@ -4,6 +4,59 @@ import {Flags} from './flags'
 import {getDeepPropertyDescriptor} from '../utils'
 import {RenderContext,createRenderContext} from './context'
 
+const IEvent = window.Event
+const IUIEvent = window.UIEvent
+const IMouseEvent = window.MouseEvent
+const IPointerEvent = window.PointerEvent
+const IKeyboardEvent = window.KeyboardEvent
+const ICustomEvent = window.CustomEvent
+const INode = window.Node
+const IComment = window.Comment
+const IText = window.Text
+const IElement = window.Element
+const IHTMLElement = window.HTMLElement
+const IHTMLHtmlElement = window.HTMLHtmlElement
+const IHTMLSelectElement = window.HTMLSelectElement
+const IHTMLInputElement = window.HTMLInputElement
+const IHTMLTextAreaElement = window.HTMLTextAreaElement
+const IHTMLButtonElement = window.HTMLButtonElement
+const IHTMLOptionElement = window.HTMLOptionElement
+const IHTMLScriptElement = window.HTMLScriptElement
+const ISVGElement = window.SVGElement
+const IDocumentFragment = window.DocumentFragment
+const IShadowRoot = window.ShadowRoot
+const IDocument = window.Document
+const IWindow = window.Window
+const IcustomElements = window.customElements
+
+export {
+	IEvent as Event,
+	IUIEvent as UIEvent,
+	IMouseEvent as MouseEvent,
+	IPointerEvent as PointerEvent,
+	IKeyboardEvent as KeyboardEvent,
+	ICustomEvent as CustomEvent,
+	INode as Node,
+	IComment as Comment,
+	IText as Text,
+	IElement as Element,
+	IHTMLElement as HTMLElement,
+	IHTMLHtmlElement as HTMLHtmlElement,
+	IHTMLSelectElement as HTMLSelectElement,
+	IHTMLInputElement as HTMLInputElement,
+	IHTMLTextAreaElement as HTMLTextAreaElement,
+	IHTMLButtonElement as HTMLButtonElement,
+	IHTMLOptionElement as HTMLOptionElement,
+	IHTMLScriptElement as HTMLScriptElement,
+	ISVGElement as SVGElement,
+	IDocumentFragment as DocumentFragment,
+	IShadowRoot as ShadowRoot,
+	IDocument as Document,
+	IWindow as Window,
+	IcustomElements as customElements
+}
+
+###
 export const {
 	Event,
 	UIEvent,
@@ -30,6 +83,7 @@ export const {
 	Window,
 	customElements
 } = global.window
+###
 
 const descriptorCache = {}
 def getDescriptor item,key,cache
@@ -276,7 +330,7 @@ extend class Element
 	get #visitContext
 		##visitContext ||= {}
 
-	get flags
+	get flags\Flags
 		unless $flags
 			# unless deopted - we want to first cache the extflags
 			$flags = new Flags(self)
@@ -512,6 +566,9 @@ export def getTagType name, klass
 
 export def getSuperTagType name, klass, cmp
 	let typ = getTagType(name,klass)
+	if !typ
+		console.warn "could not inherit from undefined tag type {name}"
+
 	let custom = typ == cmp or (typ.prototype instanceof cmp) or typ.prototype.#htmlNodeName
 
 	if !custom

@@ -54,6 +54,7 @@
       "default": "./src/imba/runtime.mjs"
     },
     ".": {
+      "tsimba": "./src/imba/imba.imba.ts",
       "imba": "./src/imba/imba.imba",
       "browser": "./dist/imba.mjs",
       "default": "./index.js"
@@ -76,7 +77,8 @@
       "require": "./dist/std.cjs"
     },
     "./std/*": {
-      "tsimba": "./src/utils/std/*.imba.ts"
+      "tsimba": "./src/utils/std/*.imba.ts",
+      "imba": "./src/utils/std/*.imba"
     },
     "./program": {
       "browser": "./program.browser.imba.js",

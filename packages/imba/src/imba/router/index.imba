@@ -1,8 +1,10 @@
+# @ts-nocheck
 # imba$stdlib=1
+
 let routerInstance = null
 
 import {EventEmitter} from '../../../vendor/events'
-import {Node,Element,Document} from '../dom/core'
+$node$ import {Node,Element,Document} from '../dom/core'
 import {Location} from './location'
 import {History} from './history'
 import {Request} from './request'
@@ -12,7 +14,7 @@ import {proxy} from '../utils'
 import {Queue} from '../queue'
 
 extend class Document
-	get router
+	get router\Router
 		#router ||= new Router(self)
 
 export def use_router
@@ -23,6 +25,9 @@ export const router = proxy do
 	global.document.router
 
 export class Router < EventEmitter
+
+	declare aliases
+	declare redirects
 
 	# support redirects
 	def constructor doc, o = {}
@@ -323,7 +328,7 @@ export class ElementRoute
 		#activeKey = Symbol!
 		#urlKey = Symbol!
 
-	get router
+	get router\Router
 		node.ownerDocument.router
 
 	get route
@@ -458,7 +463,7 @@ export class ElementRouteTo < ElementRoute
 				self.router.go(#href)
 
 extend class Node
-	get router
+	get router\Router
 		ownerDocument.router
 
 extend class Element

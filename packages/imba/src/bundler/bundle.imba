@@ -1074,7 +1074,7 @@ export default class Bundle < Component
 		let t = Date.now!
 		if result isa Error
 			# log.info '',result
-			for err in result.errors
+			for err in (result.errors or [])
 				watchPath(err.location.file)
 
 			result.rebuild = prev and prev.rebuild.bind(prev)
@@ -1324,7 +1324,7 @@ export default class Bundle < Component
 		let outs = meta.outputs
 		let urls = meta.urls
 
-		if meta.errors.length
+		if meta.errors..length
 			# emit errors - should be linked to the inputs from previous working manifest?
 			log.error "failed with {meta.errors.length} errors"
 			emit('errored',meta.errors)

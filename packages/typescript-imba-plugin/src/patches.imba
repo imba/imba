@@ -10,7 +10,6 @@ import {DefaultConfig, DefaultRichConfig} from './constants'
 
 let EDITING = no
 global.state = {command: ''}
-let TSX_HOOK = no
 let EXTRA_HIT = null
 let EXTRA_EXTENSIONS = ['.imba']
 
@@ -323,21 +322,14 @@ export class System
 
 	def fileExists path
 		# util.log('fileExists',path)
-
 		if path.indexOf('.imba._.d.ts') >= 0
 			if virtualFileMap[path]
 				return true
 
-		if !TSX_HOOK
-			if let m = path.match(/(\.imba)?\._ils\.(\w+)$/)
-				return no if m[2] != 'ts'
-				path = path.replace(m[0],'.imba')
-
-			# TODO - use a special _ils_ subtype instead to check
-			elif path.indexOf('.imba') >= 0
-				let ipath = path.replace(/\.ts$/,'')
-				if #fileExists(ipath)
-					return yes
+		if path.indexOf('.imba') >= 0
+			let ipath = path.replace(/\.ts$/,'')
+			if #fileExists(ipath)
+				return yes
 
 		if (/[jt]sconfig\.json/).test(path)
 			util.log('fileExists',path,#fileExists(path),!!readVirtualFile(path))
@@ -350,13 +342,17 @@ export class System
 	# readDirectory?(path: string, extensions?: readonly string[], exclude?: readonly string[], include?: readonly string[], depth?: number): string[];
 	def readDirectory path, extensions, exclude, include,depth
 		let res = #readDirectory(path,extensions, exclude, include,depth)
+		L 'readDirectory',path,extensions
 		if false
+			
 			for name,i in res
 				if name.endsWith('.imba')
 					res[i] = name + '.ts'
 		return res
 
 	def readFile path,encoding = null
+		# L 'readFile',path
+
 		if path.indexOf('.imba._.d.ts') >= 0
 			return readVirtualFile(path)
 
@@ -387,13 +383,9 @@ export class Project
 			let name = hit..resolvedFileName
 
 			if name..match(/\.imba\.ts$/)
+				# L 'resolved',hit
 				hit.resolvedFileName = name.replace(/\.ts$/,'')
-				hit.extension = '.js'
-
-			elif name..match(/\._ils\.ts$/)
-				# Unclear if still used?
-				hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
-				hit.extension = '.js'
+				# hit.extension = '.js'
 
 		return res
 
@@ -405,7 +397,8 @@ export class Project
 		value.ignoreDeprecations = "5.0"
 		value.customConditions = ["tsimba","imba"]
 
-		if true
+		# what about if you only use imba through npx?
+		if false
 			let imbadts = value.lib.find(do $1.indexOf('imba.d.ts') >= 0)
 			unless imbadts
 				let rel = global.IMBA_TYPINGS or "" # __realname.replace('dist/index.js','typings/imba.d.ts')
@@ -420,6 +413,7 @@ export class Project
 			value[k] = v
 		let res = #setCompilerOptions(value)
 		util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
+		L 'setCompilerOptions',value
 		return
 
 	def onPluginConfigurationChanged name, data
@@ -481,7 +475,7 @@ export class ProjectService
 			util.log("getOrCreateOpenScriptInfo {fileName}")
 			# if fileContent !== undefined
 			#	fileContent = Compiler.readFile(fileName,fileContent)
-
+		L 'getOrCreateOpenScriptInfo',fileName
 		let script = #getOrCreateOpenScriptInfo(fileName, fileContent, scriptKind, hasMixedContent, projectRootPath)
 
 		script.#imba
@@ -568,6 +562,7 @@ export class ScriptVersionCache
 export class TS
 
 	def resolveImportPath path, src, project, withAssets = null
+		L 'resolveImportPath',path
 		let args = [path,src,project.getCompilerOptions(),project.directoryStructureHost]
 		if withAssets
 			EXTRA_EXTENSIONS = withAssets isa Array ? withAssets : constants.Extensions
@@ -576,33 +571,27 @@ export class TS
 		return res
 
 	def getSupportedExtensions options, extra
+		L 'getSupportedExtensions'
 		let res = #getSupportedExtensions(options,extra)
 		# util.log 'getSupportedExtensions',options,extra,res
 		res.unshift('.imba') if res.indexOf('.imba') == -1
 		return res
 
 	def resolveModuleName moduleName, containingFile, compilerOptions, host, cache, redirectedReference
+		L 'getSupportedExtensions',moduleName
 		let res = #resolveModuleName.apply(self,arguments)
 		let hit = res..resolvedModule
 		let name = hit..resolvedFileName
 
-		if name..match(/\.imba\.ts$/) and !TSX_HOOK
+		if name..match(/\.imba\.ts$/)
+			L 'resolved',name
 			hit.resolvedFileName = name.replace(/\.ts$/,'')
 			hit.extension = '.js'
 
-		elif name..match(/\._ils\.ts$/) and !TSX_HOOK
+		elif name..match(/\._ils\.ts$/)
 			hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
 			# util.log 'resolved!!',hit.resolvedFileName
 			hit.extension = '.js'
-
-		if hit..extension == '.tsx' and TSX_HOOK
-			if EXTRA_HIT and EXTRA_HIT[0] == name
-				name = EXTRA_HIT[1]
-				# @ts-ignore
-				if self.sys.fileExists(name)
-					hit.resolvedFileName = name
-					hit.extension = '.ts'
-
 		return res
 
 	def getScriptKindFromFileName fileName

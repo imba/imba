@@ -1,6 +1,7 @@
 # imba$stdlib=1
 
-import {Node,HTMLElement,CUSTOM_TYPES} from './core'
+$node$ import {Node,HTMLElement,CUSTOM_TYPES} from './core'
+
 import {createLiveFragment,createSlot} from './fragment'
 import {scheduler} from '../scheduler'
 
@@ -95,44 +96,44 @@ export class Component < HTMLElement
 		return
 
 	# called immediately after construction
-	def build
+	def build\any
 		self
 
 	# called before the first mount
-	def awaken
+	def awaken\any
 		self
 
 	# called when element is attached to document
-	def mount
+	def mount\any
 		self
 
 	# called when element is detached from document
-	def unmount
+	def unmount\any
 		self
 
 	# called after render
-	def rendered
+	def rendered\any
 		self
 
 	# called before element is stringified on server (SSR)
-	def dehydrate
+	def dehydrate\any
 		self
 
 	# called before awaken if element was not initially created via imba - on the client
-	def hydrate
+	def hydrate\any
 		# should only autoschedule if we are not awakening inside a parent context that
 		autoschedule = yes
 		self
 
-	def tick
+	def tick\any
 		commit()
 
 	# called when component is (re-)rendered from its parent
-	def visit
+	def visit\any
 		commit()
 
 	# Wrapper for rendering. Default implementation
-	def commit
+	def commit\any
 		unless render?
 			__F |= $EL_UNRENDERED$
 			return self
