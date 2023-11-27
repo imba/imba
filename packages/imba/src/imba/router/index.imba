@@ -29,6 +29,8 @@ export class Router < EventEmitter
 	declare aliases
 	declare redirects
 
+	declare history\History
+
 	# support redirects
 	def constructor doc, o = {}
 		super()
@@ -282,7 +284,8 @@ export class Router < EventEmitter
 			let val = '#' + self.serializeParams(value)
 			global.history.replaceState(state,null,val)
 
-	def match pattern
+	# See if router currently matches a pattern/path
+	def match\any pattern\(string|RegExp)
 		route(pattern).match(path)
 
 	def route pattern
@@ -467,7 +470,12 @@ extend class Node
 		ownerDocument.router
 
 extend class Element
-	set route value
+
+	###
+	@idl
+	@summary The path/route this element should be enabled for
+	###
+	set route value\(string | null)
 		if value == undefined
 			# remove routing
 			return
@@ -483,9 +491,13 @@ extend class Element
 		# TODO Use hook / event api instead
 		self.#afterVisit = self.#afterVisitRouted
 
-	get route
+	get route\ElementRoute
 		#route
-
+	
+	###
+	@idl
+	@summary The path/route to go to when clicking this element
+	###
 	set route-to value
 		if value == undefined
 			# remove routing

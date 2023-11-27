@@ -6,17 +6,6 @@ declare namespace imbameta {
     "tag.name self": null;
 
     /**
-     * Teleport to a global
-     */
-    "tag.name global": null;
-
-    /**
-     * Teleport tag
-     * @detail something
-     */
-    "tag.name teleport": null;
-
-    /**
      * Classname added to the element
      */
     "tag.flag": null;

@@ -157,8 +157,11 @@ export class Component < HTMLElement
 	(n)s = render every n s
 	(n)ms = render every n ms
 	(n)fps = render n times per second
+
+	@summary Specify how / when the component should re-render
+  @idl
 	###
-	set autorender value
+	set autorender value\(boolean | number | null | `${number}ms` | `${number}s` | `${number}fps`)
 		let o = #autorender ||= {}
 		o.value = value
 		scheduler.schedule(self,o) if mounted?

@@ -174,7 +174,7 @@ export default class ImbaTypeChecker
 		res or (fallback and styleprop('_',no) or null)
 
 	get metatokens
-		resolve('imbameta').exports.get('tokens')
+		try resolve('imbameta').exports.get('tokens')
 
 	def getMetaSymbol name
 		return member(metatokens,name)

@@ -23,6 +23,7 @@ extend class Array
 
 	def clear
 		length = 0
+		self
 
 	def resolve
 		await Promise.all self

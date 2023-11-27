@@ -196,10 +196,6 @@ interface Event {
     originalEvent: Event | null;
 }
 
-// interface Object {
-//     [key: string]: any;
-// }
-
 declare namespace imba {
 
     interface Globals {

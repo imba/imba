@@ -76,7 +76,7 @@ const emit__ = do(event, args, node)
 	return
 
 # method for registering a listener on object
-export def listen obj, event, listener, path
+export def listen obj, event, listener, path\any?
 	let cbs
 	let list
 	let tail
@@ -95,7 +95,7 @@ export def once obj, event, listener
 	return tail
 
 # remove a listener
-export def unlisten obj, event, cb, meth
+export def unlisten obj, event, cb, meth\any?
 	return unless cb
 	let node
 	let prev

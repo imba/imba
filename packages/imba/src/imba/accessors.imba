@@ -2,7 +2,12 @@
 # TODO Functions like this should be inlineable and not depend on the runtime
 import {emit,listen} from './utils'
 
-export def accessor value, target, key, name, slot, context
+# T extends {$accessor: (...args: any[]) => infer X} ? X : T
+# T extends {$accessor: (...args: any[]) => infer X} ? X : T
+# export def accessor value, target, key, name, slot, context
+
+export def accessor\($1 extends {$accessor: (...args: any[]) => infer X} ? X : $1) value\any, target\any?, key\any?, name\any?, slot\any?, context\any?
+	
 	if value and value.$accessor isa Function
 		value = value.$accessor(target, key, name, slot, context)
 	else

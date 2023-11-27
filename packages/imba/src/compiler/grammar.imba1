@@ -111,15 +111,21 @@ var grammar =
 	Line: [
 		o 'CSSDeclaration'
 		o 'Expression'
-		o 'VarDecl' do A1.option('block',yes) # VarDeclaration.new(A2,null,A1)
-		# o 'HEADER' do Terminator.new(A1)
+		# ?
+		o 'VarDecl' do A1.option('block',yes)
 		o 'Comment'
 		o 'Statement'
 		o 'Decorators'
 
 		o 'ImportDeclaration'
 		o 'ExportDeclaration'
+		o 'GLOBAL Line' do AST.GLOBAL(A2,A1)
+		o 'DECLARE Line' do AST.DECLARE(A2,A1)
+		# A2.set(declareOnly: A1)
 	]
+
+
+
 
 	# Pure statements which cannot be expressions.
 	Statement: [
@@ -162,10 +168,12 @@ var grammar =
 		o 'CSSDeclaration'
 		o 'TagDeclaration'
 		o 'VarAssign'
+		o 'GLOBAL Exportable' do AST.GLOBAL(A2,A1)
 	]
 
 	DefaultExportable: [
 		o 'Expression'
+		o 'GLOBAL DefaultExportable' do AST.GLOBAL(A2,A1)
 	]
 
 	ImportOrExport: [
@@ -381,7 +389,7 @@ var grammar =
 	CSSDeclaration: [
 		# o 'GLOBAL CSS CSS_SEL StyleBody CSS_END' do StyleRuleSet.new(A3,A4).set(global: A1)
 		o 'StyleBlockDeclaration' do A1.set(toplevel: true)
-		o 'GLOBAL CSSDeclaration' do A2.set(global: A1)
+		# o 'GLOBAL CSSDeclaration' do A2.set(global: A1)
 		o 'LOCAL CSSDeclaration' do A2.set(local: A1)
 	]
 
@@ -563,7 +571,7 @@ var grammar =
 		o 'TagDeclarationBlock' do A1
 		o 'EXTEND TagDeclarationBlock' do A2.set(extension: yes)
 		o 'LOCAL TagDeclarationBlock' do A2.set(local: yes)
-		o 'GLOBAL TagDeclarationBlock' do A2.set(global: A1)
+		# o 'GLOBAL TagDeclarationBlock' do A2.set(global: A1)
 
 	]
 
@@ -645,7 +653,7 @@ var grammar =
 	# FIXME clean up method
 	Method: [
 		o 'MethodDeclaration' do A1
-		o 'GLOBAL MethodDeclaration' do A2.set(global: A1)
+		# o 'GLOBAL MethodDeclaration' do A2.set(global: A1)
 		o 'STATIC MethodDeclaration' do A2.set(static: A1)
 	]
 
@@ -753,6 +761,18 @@ var grammar =
 	Splat: [
 		o 'SPLAT Expression' do AST.SPLAT(A2)
 	]
+
+	GlobalDeclaration: [
+		o 'GLOBAL GlobalAssignable = Expression' do GlobalDeclaration.new(A2,A4).set(keyword: A1,op: A3)
+		o 'GLOBAL GlobalAssignable' do GlobalDeclaration.new(A2).set(keyword: A1)
+		# o 'GlobalDeclaration = Expression' do A1.set(op: A2, value: A3)
+	]
+
+	GlobalAssignable: [
+		o 'Identifier'
+		o 'Identifier Type' do A1.set(datatype: A2)
+	]
+
 
 	VarKeyword: [
 		o 'VAR'
@@ -883,7 +903,7 @@ var grammar =
 		o 'ClassStart' do A1
 		o 'EXTEND ClassStart' do A2.set(extension: A1)
 		o 'LOCAL ClassStart' do A2.set(local: A1) # deprecated
-		o 'GLOBAL ClassStart' do A2.set(global: A1)
+		# o 'GLOBAL ClassStart' do A2.set(global: A1)
 	]
 
 	ClassStart: [

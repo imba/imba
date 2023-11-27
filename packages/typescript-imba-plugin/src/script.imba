@@ -10,7 +10,6 @@ import ImbaScriptInfo, {Token as ImbaToken} from 'imba-monarch'
 import Completions from './completions'
 import ImbaScriptContext from './context'
 import ImbaTypeChecker from './checker'
-import ImbaScriptDts from './dts'
 
 export default class ImbaScript
 	constructor info
@@ -19,14 +18,10 @@ export default class ImbaScript
 		global.hasImbaScripts = yes
 
 		if info.scriptKind == 0
-			info.scriptKind = 1
-			# util.log("had to wake script {fileName}")
+			info.scriptKind = 3
 
 	get ils
 		global.ils
-
-	get dts
-		#dts ||= new ImbaScriptDts(self)
 
 	get js
 		lastCompilation..js
@@ -59,18 +54,15 @@ export default class ImbaScript
 	def setup
 		let orig = info.textStorage.text
 		if orig == undefined
-			# if this was already being edited?!
 			orig = getFromDisk!
-			# util.log("setup {fileName} - read from disk",orig.length)
-		# else
-		# 	util.log("setup {fileName} from existing source",orig.length,info)
+		# console.log("Hello")
+
 		svc = global.ts.server.ScriptVersionCache.fromString(orig or '')
 		svc.currentVersionToIndex = do this.currentVersion
 		svc.versionToIndex = do(number) number
 		doc = new ImbaScriptInfo(self,svc)
 
-		# if global.ils.isSemantic
-		# now do the initial compilation?
+		
 
 		# how do we handle if file changes on disk?
 		try
@@ -143,11 +135,6 @@ export default class ImbaScript
 			let isSaved = result.input.#saved
 
 			util.log('onDidCompileScript',result,needDts,isSaved)
-
-			if isSaved and needDts and false
-				# wait for the next version of the program
-				project.markAsDirty!
-				project.updateGraph!
 
 			if ils.isSemantic and global.session
 				global.session..refreshDiagnostics!

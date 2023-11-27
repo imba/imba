@@ -33,6 +33,9 @@ export class Token
 	def traverse
 		return
 
+	def match regex
+		@value.match(regex)
+
 	def c
 		"" + @value
 

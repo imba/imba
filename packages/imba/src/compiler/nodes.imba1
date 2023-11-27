@@ -16,11 +16,58 @@ import Compilation from './compilation'
 
 import SourceMapper from './sourcemapper'
 
+class MappedString
+	def initialize value, source
+		@value = value
+		@source = source
+
+	def startLoc
+		@source.startLoc
+
+	def endLoc
+		@source.endLoc
+
+	def toString
+		@value
+
+	def c
+		@value
+
+class InternalName
+
+	def initialize value, source
+		@source = source or value
+		if value:toClassName
+			value = value.toClassName
+
+		if value:c isa Function
+			value = value.c(mark: no)
+
+
+		value = "Ω" + SourceMapper.strip(value).split(".").join("__")
+		let nr = STACK.incr(value)
+		if nr > 1
+			value += "Ω" + nr
+		@value = value
+
+	def startLoc
+		@source.startLoc
+
+	def endLoc
+		@source.endLoc
+
+	def toString
+		@value
+
+	def c
+		@value
+
 var TAG_NAMES = constants.TAG_NAMES
 var TAG_GLOBAL_ATTRIBUTES = constants.TAG_GLOBAL_ATTRIBUTES
 
 var TAG_TYPES = {}
 var TAG_ATTRS = {}
+var TSC = no
 
 var EXT_LOADER_MAP = {
 	svg: 'image'
@@ -144,12 +191,39 @@ export var F =
 	DIFF_MODIFIERS: 2 ** 4
 	DIFF_INLINE: 2 ** 5
 
-export var TPL = do |vars,string|	
-	string.replace(/\%(\w+)/g) do|m,k|	
+export var TPL = do |vars,string,o = {}|
+	string = string.replace(/\%/g,'@')
+	string = string.replace(/\@\{([^\}]+)\}/g) do|m,subtpl|
+		let o = {}
+		let sub = TPL(vars,subtpl,o)
+		o:replaced ? sub : ''
+
+	string.replace(/\@(\w+)/g) do|m,k|	
 		let v = vars[k]
+
 		if v === yes
+			o:replaced = yes
 			return k
-		return v ? C(v) : ''
+		
+		if v
+			v = M(v)
+
+		if v
+			o:replaced = yes
+
+		return v or ''
+
+export var DECLARE = do |node,keyword|
+	if !Compilation:current:tsc
+		return LIT('')
+
+	node.set(declareOnly: keyword)
+
+export var GLOBAL = do |node,keyword|
+	return node.set('global': keyword)
+	
+
+
 
 # Helpers for operators
 export var OP = do |op, l, r|
@@ -252,24 +326,36 @@ var MLOC = do |a,b|
 		endLoc: do b
 	}
 
+var MPREV = [-1,-1,-1]
 var M = do |val,mark,o|
 	if mark == undefined
 		mark = val
+		o ||= {mark: false}
 
 	if mark and mark:startLoc
 		val = C(val,o)
+
+		# what if the value itself creates a location?
 		let ref = STACK.incr('sourcePair')
 		let start = mark.startLoc
 		let end = mark.endLoc
+
 		let m0 = ''
 		let m1 = ''
+
+		if start === MPREV[0] and end === MPREV[1] and ref == (MPREV[2] + 1) and val.startsWith('/*%')
+			STACK.decr('sourcePair')
+			return val
 
 		if start == 0 or start > 0
 			m0 = end >= start ? "/*%{start}|{ref}$*/" : "/*%{start}$*/"
 
 		if end == 0 or end > 0
 			m1 = start >= 0 ? "/*%{end}|{ref}$*/" : "/*%{end}$*/"
+
+		MPREV = [start,end,ref]
 		return m0 + val + m1
+
 	return C(val,o)
 
 var MSTART = do |*params|
@@ -657,6 +743,7 @@ export class Stack
 		STACK.isStdLib ? symbolFor('#' + name) : corelib[name]
 
 	def toInternalName name
+		let base = name
 		if name:c isa Function
 			name = name.c
 
@@ -664,18 +751,24 @@ export class Stack
 		let nr = incr(str)
 		if nr > 1
 			str += "Ω" + nr
+
+
+		# Include something for sourcemapping?
 		return str
 
 	def toInternalClassName name
+		
 		if name:toClassName
 			name = name.toClassName
 		elif name:c isa Function
 			name = name.c
 
+		let stripped = strip(name)
 		let str = "Ω" + strip(name).split(".").join("__")
 		let nr = incr(str)
 		if nr > 1
 			str += "Ω" + nr
+
 		return str
 
 	def domCall name
@@ -1080,6 +1173,9 @@ export class Node
 
 	def datatype
 		@options ? @options:datatype : null
+
+	def datatype= val
+		option('datatype',val)
 
 	def configure obj
 		set(obj)
@@ -2025,18 +2121,6 @@ export class ClassField < Node
 			@fslot = osym('meta')
 			@fname = @name.metaIdentifier
 
-			# let body = []
-
-			# let fn = @accessor = MethodDeclaration.new([],[LIT('"ets"'),CodeBlock.new([wrapper])],Identifier.new('render__'),null,{})
-			# let block = fn.body.add(CodeBlock.new([wrapper]))
-			# let desc = @accessor.scope.declare('desc',wrapper)
-			# console.log "wrapper {wrapper}"
-			# @accessor.body.add(Return.new(desc))
-
-			# if STACK.tsc
-			#	body = [OP('=')]
-			# fn.traverse
-			# console.log fn.c
 			wrapper.@scope = @vscope = FieldScope.new(wrapper)
 			wrapper.@scope.@parent = scope__
 			wrapper.traverse
@@ -2128,7 +2212,6 @@ export class ClassField < Node
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
 			if STACK.tsc
-				# console.log 'here',STACK.tsc
 				if wrapper
 					let setter = "{prefix}set {M(name,@name)}{self.setter.c(keyword: '')}"
 					let getter = "{prefix}get {M(name,@name)}{self.getter.c(keyword: '')}"
@@ -2150,18 +2233,24 @@ export class ClassField < Node
 					let setval = ''
 					let sym = osym
 
-					out = "{prefix} get {M(name,@name)}() \{ return /** @type any */({getval}) \}" # the value scope?
-					if typ
-						out = "{out}:{C(typ)}"
-					out += "\n{prefix} set {M(name,@name)}(val) \{ {setval} \}"
+					if true
+						out = "declare {prefix} {M(name,@name)}"
+						out = "{out}:{C(typ)}" if typ
+						return out
+					else
+						out = "{prefix} get {M(name,@name)}"
+						out += "{out}:{C(typ)}" if typ
+						out += ' {}'
+						out += "\n{prefix} set {M(name,@name)}(val)" + '{}'
+					
+					return out
 
 				else
 
 					out = "{prefix}{M(name,@name)}" # the value scope?
-					out += " = {value.c};" if value
+					out += ":{C(typ)}" if typ
+					out += " = {value.c}" if value
 
-					if typ
-						out = "{out}:{C(typ)}"
 
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false) or wrapper
 				let setter = "{prefix}set {name}{self.setter.c(keyword: '')}"
@@ -2411,7 +2500,7 @@ export class Parens < ValueNode
 
 		# check if we really need parens here?
 		if datatype and STACK.tsc
-			str = datatype.c + '(' + str + ')'
+			str = '(' + str + '):' + datatype.c
 		return str
 
 	def set obj
@@ -2727,10 +2816,8 @@ export class ParamList < ListNode
 			# pars = filter(|arg| arg isa RequiredParam or arg isa OptionalParam) if @splat
 			AST.compact(nodes.map(|param|
 				let part = param.c(opts)
-				let typ = STACK.tsc and inline and param.datatype
-				if typ
-					part = part + ' as ' + typ.c
-
+				# let typ = STACK.tsc and inline and param.datatype
+				# part = part + ' as ' + typ.c if typ
 				return part
 			)).join(",")
 		else
@@ -2964,14 +3051,17 @@ export class VariableDeclarator < Param
 		return null if variable.@proxy
 
 		var defs = defaults
-		let typ = variable.datatype
+		let typ = STACK.tsc and variable.datatype
 
 		# console.log 'compile variable!!'
 		# FIXME need to deal with var-defines within other statements etc
 		# FIXME need better syntax for this
 		if defs != null && defs != undefined
 			defs = defs.c(expression: yes) if defs isa Node
-			defs = "{typ.c}({defs})" if typ
+			if typ
+				# ever used?
+				defs = "{typ.c}({defs})"
+
 			"{variable.c} = {defs}"
 		elif typ
 			"{variable.c} = {typ.c}(undefined)"
@@ -3179,7 +3269,7 @@ export class Root < Code
 		STACK.reset # -- nested compilation does not work now
 		@scope.options = OPTS = STACK.@options = @options = o or {}
 		STACK.SOURCECODE = script:sourceCode
-		STACK.root = @scope
+		ROOT = STACK.root = @scope
 		@scope.@imba.configure(o)
 		traverse
 
@@ -3349,6 +3439,12 @@ export class ClassDeclaration < Code
 	def isGlobal
 		option(:global)
 
+	def isStrict
+		option(:strict)
+	
+	def isLoose
+		!isStrict
+
 	def isNamespaced
 		@name isa Access
 
@@ -3436,6 +3532,10 @@ export class ClassDeclaration < Code
 		@inits or (@supernode and @supernode:isInitingFields and @supernode.isInitingFields)
 
 	def visit
+
+		if isGlobal and isExported
+			warn "exporting global classes not supported", loc: option(:global)
+			yes
 		# replace with some advanced lookup?
 		@body.@delimiter = ''
 		let blk = STACK.up(Block)
@@ -3526,7 +3626,8 @@ export class ClassDeclaration < Code
 
 		for node in body
 			if node isa ClassRelation
-				mixins.push(node)
+				mixins.push(node.value)
+
 
 			if node isa ClassField
 				if !node.isStatic
@@ -3750,6 +3851,10 @@ export class ClassDeclaration < Code
 		var initor = null
 		var sup = superclass
 
+		var tpl = {
+			supr: sup
+		}
+
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)
 
@@ -3758,20 +3863,12 @@ export class ClassDeclaration < Code
 		var externalAccess = LIT(cname)
 		var supAccess = null
 
-		if tsc and isExtension and !exportForDts and false # (isNamespaced or @name.@variable and !@name.@variable.isImported)
-			let parts = []
-			let target = @name.c
-			for part in body.@nodes
-				parts.push(part.c(as: 'descriptor',target: target))
-			console.log "lazy extending with tsc"
-			return parts.join(';\n')
 		let jsbody = body.c()
 		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
 
 		if name
 			jshead += " {M cname, name}"
 		else
-			# console.log 'are we in an assignment?',"{STACK.up}"
 			if up isa VarReference
 				try jshead += " {up.@value.@symbol}"
 
@@ -3779,13 +3876,12 @@ export class ClassDeclaration < Code
 
 			let all = []
 			for mixin in @mixins
-				all.push mixin.value
+				all.push mixin
 
 			all.unshift sup or NULL
 			sup = null
 
 			all.unshift(refSym)
-
 			jshead += " extends {CALL(STACK.corelib['multi$'],all).c}"
 
 		if sup
@@ -3805,53 +3901,68 @@ export class ClassDeclaration < Code
 
 		let js = "{jshead} \{{jsbody}\}"
 
-		if isExtension and !tsc
+		if tsc
+			let tpl = {
+				body: jsbody
+				name: @cname
+				localName: @cname
+				declareName: origName
+				default: option(:default)
+				mixins: AST.cary(@mixins).join(', ') or null
+				supr: superclass
+			}
+
+			let str
+			try tpl:export = option(:export) or !!@name.variable.@value.isExported
+			try tpl:path = isExtension and @name.variable.importPath
+			# only if the target is originally global
+			str = if isExtension and tpl:path
+				'''
+					%declareName
+					declare module %path { interface %declareName extends %localName {} }
+					class %localName { %body }
+				'''
+			elif isExtension and @name and !@name.variable
+				'''
+				declare global { interface %declareName extends %localName {} }
+				class %localName { %body }
+				'''
+			elif isExtension
+				'''
+					%export interface %declareName extends %localName {}
+					class %localName { %body }
+				'''
+			elif isGlobal
+				'''
+				declare global {
+					namespace %declareName {}
+					interface %declareName {}
+					class %declareName extends %localName { }
+				}
+				interface %localName @{extends %mixins }{ [index:string]: any }
+				class %localName @{extends %supr }{ %body }
+				'''
+			else
+				'''
+				%export %default interface %localName @{extends %mixins }{ [index:string]: any }
+				%export %default class %localName @{extends %supr }{ %body }
+				'''
+			return TPL(tpl,str)
+
+		if isExtension
 			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
 
 			if @virtualSuper
 				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
 				extTarget = LIT("({wrap.c},{extTarget.c})")
-			# TODO can this happen in static block?
-
 
 			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
 
-		if tsc
-			# only if the target is originally global
-			if isExtension
-				let iface = 'interface ' + origName.c + ' extends ' + @cname + ' {}'
-				# get import path and name for variable
-				# need to look into Namespaced.Class
-				let variable = @name.variable
-				let pre = 'declare global'
-				if variable
-					if variable.isImported
-						# console.log variable.importPath
-						pre = "declare module {variable.importPath}"
-						js = js + '\ndeclare module ' + variable.importPath + ' { interface ' + origName.c + ' extends ' + @cname + '{} }'
-					else
-						js = js + '\n' + iface
-				# if not global 
-				else
-					js = js + '\ndeclare global { interface ' + origName.c + ' extends ' + @cname + '{} }'
-
 		if option(:global)
-			if !tsc
-				let access = name isa Access
-				let getter = name isa Access ? name.c : @cname
-				js = "{js}; {scope__.root.globalRef}.{@cname} = {getter}"
-			else
-				# only for the new mode
-				js = js + '\ndeclare global { class ' + origName.c + ' extends ' + @cname + '{} }'
-				# js = 'namespace global {' + js + '}\ndeclare global { class ' + cname + ' extends global.' + origName + '{} }'
+			let access = name isa Access
+			let getter = name isa Access ? name.c : @cname
+			js = "{js}; {scope__.root.globalRef}.{@cname} = {getter}"
 
-		# if option(:export) and option(:global) and STACK.tsc
-
-		if tsc and @mixins:length
-			js = "interface {@cname} extends {@mixins.map(do $1.value.c).join(',')} \{\}\n" + js
-
-		if STACK.tsc and @exportName
-			js = "{js}; export \{{@ownName} as {@exportName}\}"
 		return js
 
 export class ExtendDeclaration < ClassDeclaration
@@ -3898,7 +4009,6 @@ export class TagDeclaration < ClassDeclaration
 			no
 
 	def visit
-
 		if STACK.hmr
 			self.cssid
 			self.cssns
@@ -3971,9 +4081,11 @@ export class TagDeclaration < ClassDeclaration
 		}
 
 		if tsc
-			tpl:declareName = tpl:localName = className
+			tpl:declareName = tpl:localName = MappedString.new(className,name)
+
 			if isGlobal or isExtension
-				className = tpl:localName = STACK.toInternalClassName(name)
+				className = tpl:localName = InternalName.new(name)
+				# STACK.toInternalClassName(name)
 
 		if sup and sup.@variable
 			sup = sup.@variable
@@ -4457,6 +4569,9 @@ export class MethodDeclaration < Func
 
 		@body.traverse
 
+		# traverse returnType
+		returnType.traverse if returnType
+
 		if isConstructor and option(:supr)
 			let ref = scope__.context.@reference
 			let supr = option(:supr)
@@ -4478,6 +4593,10 @@ export class MethodDeclaration < Func
 
 	def js stack,co = {}
 		var o = @options
+		var tsc = STACK.tsc
+
+		if option(:declareOnly) and !tsc
+			return ''
 
 		# need to have collected them already?
 		if isConstructor and !option(:supr) and @class and @class.@mixins:length
@@ -4498,29 +4617,78 @@ export class MethodDeclaration < Func
 
 		var out = ""
 
+		var tpl = tsc and {
+			kind: option(:keyword)
+			static: option(:static)
+			export: option(:export)
+			default: option(:default)
+			async: option(:async)
+			code: code # with braces
+			key: M(name, null, as: 'field')
+			get: isGetter ? option(:keyword) : null
+			set: isSetter ? option(:keyword) : null
+			returnType: returnType
+			params: params
+			function: !option(:inClassBody) and !option(:inObject)
+		}
+
+		if tsc
+			let generics = {}
+			let ret = returnType
+			let paramtypes = params.map do $1.datatype
+
+			let all = [ret]
+
+			for typ in all
+				continue unless typ isa TypeAnnotation
+				# console.log "matching generics?",typ,String(typ)
+				if typ.@generics
+					# console.log "matching generics!",typ.@generics
+					typ.@generics.forEach do
+						let param = params.at($1 - 1)
+						let key = '$' + $1
+						# dont push multiple times
+						try generics[key] = param.datatype.makeGeneric(key)
+						# try generics.push(param.datatype.makeGeneric('$' + $1))
+
+			tpl:generics = AST.cary(Object.values(generics)).join(',') or null
+			# extract the types
+			yes
+
+		if tsc and returnType
+			# TODO need to work together with the one above
+			# console.log "has returnType!",!!tpl:static,returnType
+			# Reference to the class name
+			let str = '''
+				@export @default @async @static @get @set @function @key@{<@generics>}(@params):@returnType @code
+			'''
+
+			if tpl:static and returnType.hasSelfReference
+				tpl:returnType = returnType.withReplacedThis('THIS')
+				# tpl:typeParams = @params # without defaults
+				str = '''
+					%async %static @function %key<THIS extends abstract new (...args: any) => any>(this:THIS@{, @params}):%returnType;
+					%async %static %get %set @function %key(%params) %code
+				'''
+
+			return TPL tpl,str
+
+
 		if (option(:inClassBody) or option(:inObject)) and co:as != 'descriptor'
-			# what if this is async?
 			let prefix = ''
 			if self.isGetter
 				prefix = M('get',option(:keyword)) + ' '
 			elif self.isSetter
 				prefix = M('set',option(:keyword)) + ' '
-			# let prefix = self.isGetter() ? 'get ' : (self.isSetter() ? 'set ' : '')
 
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			out = "{prefix}{M name, null, as: 'field'}({params.c})"
 
-			if STACK.tsc and returnType
+			if tsc and returnType
 				out += ':' + returnType.c + ' '
 		
 			out += code
-			out = jsdoc() + out
-			# out = @params.jsdoc() + out
-
-			if option(:declareOnly) and !STACK.tsc
-				return ''
-
 			return out
 
 		var func = "({params.c})" + code
@@ -5241,7 +5409,8 @@ export class Self < Literal
 		let out = M(js,@value)
 		let typ = STACK.tsc and option(:datatype)
 		if typ
-			out = "{typ.c}({out})"
+			out = "{out} as any as ({typ.c})"
+	
 		return out
 
 export class This < Self
@@ -5945,14 +6114,6 @@ export class VarOrAccess < ValueNode
 		let val = @variable or @value
 		let typ = STACK.tsc and datatype
 
-		if @variable and @variable.declarator != self
-			if STACK.tsc and val.@typedAlias
-				let out = val.@typedAlias.c
-				return out
-
-			# if typ
-			#	return typ.c() + '(' + @variable.c() + ')'
-
 		if typ and !@variable
 			return val.c + ' as ' + datatype.c
 
@@ -6016,6 +6177,7 @@ export class VarReference < ValueNode
 		# for now - this can happen
 		super(value)
 		@export = no
+		self.set(type: type)
 		@type = type and String(type)
 		@declared = yes # just testing now
 
@@ -6056,8 +6218,18 @@ export class VarReference < ValueNode
 				@value.@variable ||= scope.register(@value.symbol,@value,type: @type, datatype: datatype)
 		return self
 
-	def js stack,params
+	def js stack,params,plain
 		let out = @value.c()
+	
+		if option(:global) and !plain
+			if STACK.tsc
+				let pars = {
+					js: js(stack,params,yes)
+					kind: type
+					name: out
+				}
+				return TPL pars, 'declare global { %js }'
+		
 		let typ = (STACK.tsc and datatype)
 
 		if typ
@@ -6076,7 +6248,7 @@ export class VarReference < ValueNode
 				let kind = @type # or var?
 				let js = ''
 				for item in @variables
-
+					# no longer supported
 					js += "{M(kind,@keyword)} {TYPED(item,item.vartype)};\n"
 
 				if @value isa Obj
@@ -6124,6 +6296,7 @@ export class Assign < Op
 		var l = @left
 		var r = @right
 
+
 		# The special case where setting `item = item` should compile to `self.item = item`
 		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
 			@left = l = Access.new(".",scope__.context,l.@value)
@@ -6140,6 +6313,22 @@ export class Assign < Op
 
 		if l
 			l.traverse()
+
+		# needed for extending global type in tooling
+		if l isa Access and l.@left and l.@left.@variable == ROOT.GLOBAL
+			# warn about this?
+			@globalAssign = yes
+		
+		# console.log String(STACK),String(l),String(l and l.@left)
+
+		if STACK.tsc
+			if l isa Access and l.@left isa VarOrAccess
+				let variable = l.@left.@variable
+				# console.log variable,l.@left.@value
+				# if it is not a var
+
+		if option(:global) and l isa VarReference and !STACK.tsc
+			@left = l = OP('.',ROOT.GLOBAL,l.value)
 
 		# if l isa VarOrAccess
 		let up = STACK.up
@@ -6162,7 +6351,30 @@ export class Assign < Op
 		# testing this
 		return super(o)
 
-	def js o
+	def js o,plain
+
+		# return OP('.',ROOT.GLOBAL,)
+		if option(:global) and !plain
+			if STACK.tsc
+				let orig = js(o,true)
+				# if not expressable - force wrap in function?
+				let id = left.value
+				let kind = left.type
+				let pars = {
+					js: orig
+					kind: left.type
+					name: id
+					localName: InternalName.new(id)
+				}
+
+				let out = '''
+					%js
+					type %localName = typeof %name
+					declare global { var %name : %localName }
+				'''
+
+				return TPL pars,out
+
 		unless right.isExpressable
 			p "Assign#js right is not expressable "
 			# here this should be go out of the stack(!)
@@ -6312,25 +6524,42 @@ export class CompoundAssign < Assign
 
 export class TypeAnnotation < Node
 
-	def initialize value
+	def initialize value, source
 		@value = value
+		@source = source
 		@optional = no
+		@replaced = null
 		self
 
 	def add item
 		@parts.push(item)
 
 	def startLoc
-		@value.startLoc + 1
+		(@source or @value).startLoc + 1
 
 	def endLoc
-		@value.endLoc
+		(@source or @value).endLoc
 
 	def asParam name
 		"@param \{{asRawType}\} {name}"
 
 	def isOptional
 		@optional
+
+	def hasSelfReference
+		@value.match(/(^|[\[\,\<])self([\]\,\)\>]|$)/g)
+
+	def withReplacedThis val
+		c.replace(/(^|[\[\,\<])this([\]\,\)\>]|$)/g,"$1" + val + "$2")
+
+	def makeGeneric name
+		unless @generic
+			asRawType
+			@generic = TypeAnnotation.new(@value)
+			@generic.@replaced = @genericWrap ? name : name + ' extends (' + @plain + ')'
+			@replaced = @genericWrap ? @plain.replace('$$GENERIC$$',name) : name
+		return @generic
+
 
 	def visit
 		asRawType
@@ -6341,7 +6570,8 @@ export class TypeAnnotation < Node
 			return @rawType
 
 		let opt = no
-		let raw = String(@value).slice(1)
+		let raw = String(@value)
+		raw = raw.slice(1) if raw[0] == '\\'
 		let end = raw.slice(-1)
 
 		if end == '?'
@@ -6349,11 +6579,22 @@ export class TypeAnnotation < Node
 			raw = raw.slice(0,-1)
 
 		raw = raw.replace(/(^|[\[\,])\<([a-z\-\d]+)\>/g) do |m,pre,name|
-			# pre + "InstanceType<" + (TagTypeIdentifier.new(name)).toClassName + ">"
 			pre + (TagTypeIdentifier.new(name)).toClassName
 
-		raw = raw.replace(/(^|[\[\,])self([\]\,\)\>]|$)/g) do |m,pre,post|
+		raw = raw.replace(/(^|[\[\,\<])self([\]\,\)\>]|$)/g) do |m,pre,post|
 			pre + "this" + post
+
+		raw = raw.replace(/(^|[\[\,\<\(])(\$\d*)([\s\]\,\)\>]|$)/g) do |m,pre,ref,post|
+			if ref == '$'
+				@genericWrap = yes
+				return pre + '$$GENERIC$$' + post
+
+			@generics ||= Set.new
+			@generics.add(parseInt(ref.slice(1)))
+			return m
+
+		@plain = raw
+
 		return @rawType = M(raw,self)
 
 	def asIteratorValue
@@ -6362,9 +6603,12 @@ export class TypeAnnotation < Node
 	def wrapDoc inner
 		return '/**@type {' + inner + '}*/'
 
+	def toString
+		asRawType
+
 	def c
 		if STACK.tsc
-			return asRawType
+			return @replaced ? M(@replaced,self) : asRawType
 
 		return '/**@type {' + asRawType + '}*/'
 		# M(String(@value).slice(1),self)
@@ -9995,14 +10239,15 @@ export class Tag < TagLike
 				if type.isAsset
 					add "{tvar} = new {M("SVGSVGElement",type)}"
 				elif type.isClass
-					tvar.@datatype = type.toClassName
+					tvar.@datatype = MappedString.new(type.toClassName,type)
+
 					add M("{tvar}.$$TAG$$",type)
 					# add "{tvar} = new {M(type.toClassName,type)}"
 				else
-					tvar.@datatype = type.toClassName
+					tvar.@datatype = MappedString.new(type.toClassName,type)
 					# add "{tvar} = new globalThis.{M(type.toClassName,type)}"
 					# the variables should be declared here
-					add "{tvar} = new {M(type.toClassName,type)}"
+					add "{tvar} = {M('new ' + type.toClassName,type)}"
 			elif isSelf
 				tvar.@datatype = 'this'
 				add "{tvar} = {type.c}"
@@ -12507,7 +12752,9 @@ export class RootScope < Scope
 	def initialize
 		super
 
-		register('global', self, type: 'global').@c = 'globalThis'
+		self.GLOBAL = register('global', self, type: 'global')
+		self.GLOBAL.@c = 'globalThis'
+
 		self.REQUIRE = register('require', self, type: 'global') # .@c = 'globalThis'
 		self.IMPORT = register('import', self, type: 'global')
 		self.MODULE = register('module', self, type: 'global')
@@ -13013,7 +13260,7 @@ export class Variable < Node
 		if params
 			if params:as == 'declaration' and STACK.tsc
 				if @datatype
-					return c({}) + ":" + C(@datatype)
+					return c({}) + ":" + M(@datatype)
 			
 			if params:as == 'field'
 				return "[" + c({}) + "]"

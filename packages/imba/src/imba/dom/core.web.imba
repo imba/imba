@@ -143,8 +143,14 @@ extend class Document
 		self.documentElement.emit(...params)
 
 extend class Node
+
+
+	###
+	@custom
+	@summary Reference to the parentNode even before element has been attached
+	###
 	get #parent
-		##parent or this.parentNode or ##up # FIX
+		##parent or this.parentNode or ##up
 
 	get #closestNode
 		self

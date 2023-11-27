@@ -6,7 +6,8 @@ interface Event {
      Tells the browser that the default action should not be taken. The event will still continue to propagate up the tree. See Event.preventDefault()
     @see https://imba.io/events/event-modifiers#core-prevent
     */
-    αprevent(): void;
+    // αprevent(): void;
+    
     /**
      Stops the event from propagating up the tree. Event listeners for the same event on nodes further up the tree will not be triggered. See Event.stopPropagation()
     */
@@ -108,7 +109,7 @@ interface Event {
      * Only trigger handler if event.target matches selector
      * @detail (selector)
      * */
-    αsel(selector: string): boolean;
+    // αsel(selector: string422): boolean;
 
     /**
      * Only trigger handler if event.target.closest(selector) returns a match

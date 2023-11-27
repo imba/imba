@@ -50,6 +50,18 @@ var IMBA_KEYWORDS = [
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop']
 
+var CONTEXTUAL_KEYWORDS = {
+	LET: {'global': 1, 'declare': 1, static: 1}
+	CONST: {'global': 1, 'declare': 1, static: 1}
+	VAR: {'global': 1, 'declare': 1, static: 1}
+	CLASS: {'global': 1, 'declare': 1, static: 1, extend: 1, strict: 1}
+	INTERFACE: {'global': 1, 'declare': 1, extend: 1, strict: 1}
+	TAG: {'global': 1, 'declare': 1, extend: 1, strict: 1}
+	DEF: {'global': 1, 'declare': 1}
+	PROP: {'static': 1}
+	CSS: {'global': 1}
+}
+
 # FixedArray for performance
 # var ALL_KEYWORDS = JS_KEYWORDS.concat(IMBA_KEYWORDS)
 export var ALL_KEYWORDS = [
@@ -920,8 +932,7 @@ export class Lexer
 						return true
 
 		if (id == 'guard' or id == 'alter' or id == 'watch') and (getScope == 'PROP')
-			# console.log 'got here!'
-			# only if we are on a newline? or something?
+			# TODO Remove
 			return true
 
 		if id == 'css'
@@ -1151,16 +1162,23 @@ export class Lexer
 		# prev = last @tokens
 		var len = input:length
 
+		# if typ == 'CONST' or typ == 'LET'
+		#	if @lastVal == 'global' or @lastVal == 'declare'
+		#		tTs(prev,@lastVal.toUpperCase)
+
+
 		# should be strict about the order, check this manually instead
 		if typ == 'CLASS' or typ == 'DEF' or typ == 'TAG' or typ == "PROP" or typ == 'CSS'
 			queueScope(typ)
 
+		if isKeyword and CONTEXTUAL_KEYWORDS[typ]	
 			var i = @tokens:length
+			var alts = CONTEXTUAL_KEYWORDS[typ]
 
 			while i
 				var prev = @tokens[--i]
 				var ctrl = "" + tV(prev)
-				if ctrl in IMBA_CONTEXTUAL_KEYWORDS
+				if alts[ctrl]
 					tTs(prev,ctrl.toUpperCase)
 				else
 					break
@@ -1226,11 +1244,14 @@ export class Lexer
 
 			token(':', ':',1)
 			moveCaret(-(idlen + colonOffset))
+			
 		else
 			token(typ, id, idlen)
 
 		if typ == 'CSS'
 			return len + lexStyleRule(len,true)
+
+
 
 		return len
 

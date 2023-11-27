@@ -100,3 +100,12 @@ if global.customElements
 export def use_dom_teleport
 	global.imba.uses_dom_teleport = yes
 	yes
+
+
+declare tag teleport
+
+	# The element (or selector) you want to add listeners and content to
+	set to value\(string | Element)
+		yes
+
+declare tag global

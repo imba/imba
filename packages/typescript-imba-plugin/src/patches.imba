@@ -398,7 +398,8 @@ export class Project
 		value.customConditions = ["tsimba","imba"]
 
 		# what about if you only use imba through npx?
-		if false
+		# This will add the imba.d.ts typings
+		if true
 			let imbadts = value.lib.find(do $1.indexOf('imba.d.ts') >= 0)
 			unless imbadts
 				let rel = global.IMBA_TYPINGS or "" # __realname.replace('dist/index.js','typings/imba.d.ts')

@@ -45,6 +45,25 @@ extend class Event
 		return !!target.closest(String(selector))
 
 	###
+	Tells the browser that the default action should not be taken. The event will still continue to propagate up the tree. See Event.preventDefault()
+  @see https://imba.io/events/event-modifiers#core-prevent
+	###
+	def @prevent
+		#defaultPrevented = yes
+		preventDefault!
+		return yes
+
+	###
+	Cancel propagation and prevent default
+	###
+	def @trap
+		#stopPropagation = yes
+		stopImmediatePropagation()
+		#defaultPrevented = yes
+		preventDefault()
+		return yes
+
+	###
 	Only continue if element contains the currently focused element (document.activeElement)
 	Optionally pass in a selector to check a relative parent.
 	TODO: Document

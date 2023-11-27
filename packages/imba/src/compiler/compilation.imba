@@ -112,6 +112,9 @@ export class Compilation
 		diagnostics.push item
 		return item
 
+	get tsc
+		options.tsc or options.platform === 'tsc'
+
 	get errored?
 		errors.length > 0
 

@@ -161,7 +161,9 @@ export default class Service < EventEmitter
 		if cache[dir]
 			return cache[dir]
 
-		let out = ts.resolveModuleName('imba',norm,{moduleResolution: 2},ps.host)
+		
+
+		let out = ts.resolveModuleName('imba',norm,{moduleResolution: 100, moduleSuffixes: ['.web.imba','.imba',''] },ps.host)
 
 		if out and out.resolvedModule
 			let imbadir = np.dirname(out.resolvedModule.resolvedFileName)
@@ -213,7 +215,7 @@ export default class Service < EventEmitter
 			exts.push({
 				extension: '.imba'
 				isMixedContent: false # Unclear what this entails
-				scriptKind: 1
+				scriptKind: 7 # or 7?
 			})
 
 		for script in imbaScripts
@@ -659,6 +661,9 @@ export default class Service < EventEmitter
 
 	def syncProjectForImba proj
 		# TODO - Should only include scripts reachable from this project
+		# No need to use getGeneratedDTS anymore
+		return
+
 		let all = ''
 		let globals = {}
 		for item in imbaScripts when item.doc
@@ -712,6 +717,9 @@ export default class Service < EventEmitter
 
 	get m
 		getScriptInfo('main.imba')
+
+	get mc
+		m.im.checker
 
 	get u
 		getScriptInfo('util.imba')
