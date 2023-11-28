@@ -378,7 +378,7 @@ export class ObservableArray < Array
 
 const ArrayExtensions = getExtensions(ObservableArray)
 
-extend class Array
+extend class Array<T>
 
 	get len
 		length

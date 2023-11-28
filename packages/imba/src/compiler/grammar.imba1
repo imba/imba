@@ -173,7 +173,7 @@ var grammar =
 
 	DefaultExportable: [
 		o 'Expression'
-		o 'GLOBAL DefaultExportable' do AST.GLOBAL(A2,A1)
+		o 'GLOBAL Exportable' do AST.GLOBAL(A2,A1)
 	]
 
 	ImportOrExport: [
@@ -933,6 +933,8 @@ var grammar =
 		o 'ClassName . SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
 		# ClassName.new(A3,A1) # AST.OP(A2,A1,A3)
 		# o 'Value . SymbolIdentifier' do IndexAccess.new(A2,A1,A3)
+		# Worth testing?
+		o 'ClassName Type' do A1.set(datatype: A2)
 	]
 
 	ClassBody: [

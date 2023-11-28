@@ -54,7 +54,7 @@ const stopCallback = do |e,el,combo|
 
 	return false
 
-export const hotkeys = new class HotKeyManager
+class HotKeyManager
 	def constructor
 		combos = {'*': {}}
 		identifiers = {}
@@ -173,6 +173,8 @@ export const hotkeys = new class HotKeyManager
 			break unless (handler.passive? or (last.called == no and !event.#stopPropagation and !event.#defaultPrevented))
 
 		return handled
+
+export const hotkeys = new HotKeyManager
 
 const DefaultHandler = do(e,state)
 	let el = state.element

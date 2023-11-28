@@ -1,4 +1,4 @@
-extend class Array
+extend class Array<T>
 
 	get size
 		length

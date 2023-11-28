@@ -34,6 +34,8 @@ var TSC_CARET_BEFORE = {
 	' ': 1
 }
 
+var TYPE_GENERICS_AFTER = /\w|\]|\)$/
+
 # new can be used as a keyword in imba, since object initing is done through
 # MyObject.new. new is a very useful varname.
 
@@ -446,6 +448,7 @@ export class Lexer
 		var pi = 0
 		@loc = @locOffset + i
 
+
 		while @chunk = code.slice(i)
 			let ctx = @context
 			if ctx and ctx:pop
@@ -461,6 +464,9 @@ export class Lexer
 
 	def basicContext
 		return selectorToken || symbolToken || identifierToken || whitespaceToken || lineToken || commentToken || heredocToken || tagToken || stringToken || numberToken || regexToken || literalToken || 0
+
+	def prevChars n = 1
+		n == 1 ? @code[@loc - 1] : @code.slice(@loc - n,@loc)
 
 	def moveCaret i
 		@loc += i
@@ -626,7 +632,7 @@ export class Lexer
 
 		return 0
 
-	def findTypeAnnotation str
+	def findTypeAnnotation str,autoend = no
 		var stack = []
 		var i = 0
 		var replaces = []
@@ -639,6 +645,8 @@ export class Lexer
 
 			if chr and chr == end
 				stack.shift()
+				if autoend and stack:length == 0
+					break i++
 
 			elif !end and (chr == ')' or chr == ']' or chr == '}' or chr == '>')
 				break
@@ -825,7 +833,13 @@ export class Lexer
 		return 0 unless var match = TAG.exec(@chunk)
 		var [input, type, identifier] = match
 
+
 		if type == '<'
+			if TYPE_GENERICS_AFTER.test(prevChars(1) or '')
+				return 0
+			# if @last and !@last:spaced and @lastTyp != 'TERMINATOR' and @lastTyp != 'INDENT'
+			#	return 0
+
 			token('TAG_START', '<',1)
 			pushEnd(INVERSES['TAG_START'])
 
@@ -1968,6 +1982,14 @@ export class Lexer
 			let annotation = findTypeAnnotation(@chunk.slice(1))
 			if annotation
 				value = value + annotation
+
+		# Add unspaced <> gemneric annotation?
+		if value == '<' and TYPE_GENERICS_AFTER.test(prevChars(1))
+			
+			let typ = findTypeAnnotation(@chunk,yes)
+			if typ
+				tokid = 'TYPE'
+				value = typ
 
 		if value == '..' and !prev:spaced
 			tokid = '?.'

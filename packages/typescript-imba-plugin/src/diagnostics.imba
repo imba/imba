@@ -34,6 +34,9 @@ const Rules = [
 	code: 2350
 	message: /Only a void function can be called/
 	---
+	code: 2510 # Base constructors must all have the same return type.
+	message: /./
+	---
 	code: 2551
 	test: do({message},item)
 		return no unless typeof message == 'string'

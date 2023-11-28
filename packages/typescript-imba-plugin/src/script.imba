@@ -131,10 +131,9 @@ export default class ImbaScript
 			result.#applied = yes
 
 			result.script.markContainingProjectsAsDirty!
-			let needDts = result.shouldGenerateDts # result.js.indexOf('class Ω') >= 0
 			let isSaved = result.input.#saved
 
-			util.log('onDidCompileScript',result,needDts,isSaved)
+			util.log('onDidCompileScript',result,isSaved)
 
 			if ils.isSemantic and global.session
 				global.session..refreshDiagnostics!
@@ -145,8 +144,7 @@ export default class ImbaScript
 		self
 
 	def syncDts
-		if lastCompilation..shouldGenerateDts
-			return
+		return
 
 	def getImbaDiagnostics
 
