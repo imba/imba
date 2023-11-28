@@ -790,6 +790,7 @@ var grammar =
 
 	VarDecl: [
 		o 'VarKeyword VarAssignable' do VarReference.new(A2,A1)
+		o 'STATIC VarDecl' do A2.set(static: A1)
 	]
 
 	VarAssign: [

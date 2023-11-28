@@ -6207,6 +6207,9 @@ export class VarReference < ValueNode
 		@type = type and String(type)
 		@declared = yes # just testing now
 
+	get is_static
+		option('static') and !STACK.tsc
+
 	def datatype
 		super or (@value:datatype ? @value.datatype : null)
 
@@ -6242,6 +6245,15 @@ export class VarReference < ValueNode
 			# should happen automatically when traversing via traverse(declaring:...)
 			if @value isa Identifier
 				@value.@variable ||= scope.register(@value.symbol,@value,type: @type, datatype: datatype)
+
+		if self:is_static
+
+			if @variables:length > 1
+				warn("Destructuring not supported for static variables", loc: option('static'))
+
+			for item in @variables
+				item.proxy(scope.staticsRef,LIT(STACK.getSymbol))
+		
 		return self
 
 	def js stack,params,plain
@@ -6260,6 +6272,11 @@ export class VarReference < ValueNode
 
 		if typ
 			out = TYPED(out,typ)
+
+		if self:is_static
+			let rgt = @right ? @right.c(expression: true) : 'null'
+			return "{out} ??= {rgt}"
+
 		
 		if @right
 			let rgt = @right.c(expression: true)
@@ -12504,6 +12521,9 @@ export class Scope
 
 	def nextShortRef
 		AST.counterToShortRef(@refcounter++)
+
+	def staticsRef
+		@staticsRef ||= declare('$statics$',CALL(STACK.corelib['statics$'],[context]))
 
 	def memovar name, init
 		@memovars ||= {}

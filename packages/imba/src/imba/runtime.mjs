@@ -9,6 +9,7 @@ export const __imba__ = Symbol.for('imba')
 export const __mixin__ = Symbol.for('#__mixin__')
 export const matcher = Symbol.for('#matcher')
 const state = globalThis[__imba__] ||= {counter: 0};
+const statics = new WeakMap;
 
 const L = function(){ }
 
@@ -26,6 +27,10 @@ export function has$(a,b){
 
 export function idx$(a,b){
 	return b?.indexOf ? b.indexOf(a) : Array.prototype.indexOf.call(a,b);
+}
+
+export function statics$(scope){
+	return statics.get(scope) || statics.set(scope,{}).get(scope);
 }
 
 export function iterable$(a){
