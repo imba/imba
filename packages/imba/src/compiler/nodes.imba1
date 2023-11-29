@@ -2256,6 +2256,9 @@ export class ClassField < Node
 				@setter = LIT("(val)\{ {op.c}.$set(val,{args}) \}")
 
 				if STACK.tsc
+					@getter = LIT("():ReturnType<typeof {op.c}.$get> \{ return {op.c}.$get({args}) \}")
+					@setter = LIT("(val:Parameters<typeof {op.c}.$set>[0])\{ {op.c}.$set(val,{args}) \}")
+
 					inner = "return {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
 				else
 					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
@@ -6456,9 +6459,6 @@ export class Assign < Op
 		# The special case where setting `item = item` should compile to `self.item = item`
 		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
 			@left = l = Access.new(".",scope__.context,l.@value)
-
-		# if l isa VarReference and l:is_static
-		# 	console.log "STATIC VAR!"
 
 		# console.log "Assign {l} {r}"
 		# Regularly, the var is declared after the right side, so `let item = item` resolves to
