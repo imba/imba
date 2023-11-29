@@ -94,6 +94,7 @@ var grammar =
 
 	Type: [
 		o 'TYPE' do TypeAnnotation.new(A1)
+		o 'GENERICS' do Generics.new(A1)
 	]
 
 	# An indented block of expressions. Note that the [Rewriter](rewriter.html)
@@ -273,7 +274,6 @@ var grammar =
 
 	# A literal identifier, a variable name or property.
 	Identifier: [
-		# o 'IDENTIFIER Type' do Identifier.new(A1).set(datatype: A2)
 		o 'IDENTIFIER' do Identifier.new(A1)
 	]
 
@@ -613,7 +613,7 @@ var grammar =
 
 	SimpleObjAssignable: [
 		o 'Identifier'
-		o 'Identifier Type' do A1.set(datatype: A2)
+		o 'Identifier Type' do AST.SETTYPE(A1,A2)
 		o 'SymbolIdentifier'
 		o 'Key'
 	]
@@ -680,7 +680,7 @@ var grammar =
 		o 'DecoratorIdentifier'
 		o 'SymbolIdentifier' do A1.set(as: 'property') # InterpolatedIdentifier.new(A1)
 		o '[ Expression ]' do InterpolatedIdentifier.new(A2)
-		o 'MethodIdentifier Type' do A1.set(datatype: A2)
+		o 'MethodIdentifier Type' do AST.SETTYPE(A1,A2)
 	]
 
 	MethodBody: [
@@ -752,9 +752,7 @@ var grammar =
 	# Function Parameters
 	ParamVar: [
 		o 'Identifier' do Param.new(A1)
-		o 'Identifier Type' do Param.new(A1).set(datatype: A2)
-		# o 'Identifier TypeAnnotation' do Param.new(A1).set(datatype: A2)
-		# o 'SPLAT ParamVar' do Splat.new(A2).set(keyword: A1)
+		o 'Identifier Type' do AST.SETTYPE(Param.new(A1),A2)
 	]
 
 	# A splat that occurs outside of a parameter list.
@@ -770,7 +768,7 @@ var grammar =
 
 	GlobalAssignable: [
 		o 'Identifier'
-		o 'Identifier Type' do A1.set(datatype: A2)
+		o 'Identifier Type' do AST.SETTYPE(A1,A2)
 	]
 
 
@@ -782,10 +780,9 @@ var grammar =
 
 	VarAssignable: [
 		o 'Identifier'
-		o 'Identifier Type' do A1.set(datatype: A2)
+		o 'Identifier Type' do AST.SETTYPE(A1,A2)
 		o 'Array' # all kinds?
 		o 'Object' # not supported anymore
-		# o 'VarAssignable Type' do A1.set(datatype: A2)
 	]
 
 	VarDecl: [
@@ -809,7 +806,7 @@ var grammar =
 		# FIXME this isn really assignable?
 		# o 'Value . NEW' do LegacyNew.new(A1).set(keyword: A3)
 		# o 'Value . Super' do SuperAccess.new('.',A1,A3)
-		o 'SimpleAssignable Type' do A1.set(datatype: A2)
+		o 'SimpleAssignable Type' do AST.SETTYPE(A1,A2)
 	]
 
 	Access: [
@@ -862,13 +859,8 @@ var grammar =
 		o 'AMPER_REF' do AmperRef.new(A1)
 		# TODO Makes no sense that this is not more specific
 		o 'Value BANG' do BangCall.new(A1).set(keyword: A2)
-		# o 'Value Type' do A1.set(datatype: A2)
 	]
 
-	# TypedValue: [
-	#	o 'Value'
-	#	o 'Value Type' do A1.set(datatype: A2)
-	# ]
 
 	IndexValue: [
 		o 'Expression' do Index.new A1
@@ -935,7 +927,7 @@ var grammar =
 		# ClassName.new(A3,A1) # AST.OP(A2,A1,A3)
 		# o 'Value . SymbolIdentifier' do IndexAccess.new(A2,A1,A3)
 		# Worth testing?
-		o 'ClassName Type' do A1.set(datatype: A2)
+		o 'ClassName Type' do AST.SETTYPE(A1,A2)
 	]
 
 	ClassBody: [
@@ -962,23 +954,17 @@ var grammar =
 
 	ClassDeclLine: [
 		o 'STATIC ClassFieldDeclaration' do A2.set(static: A1)
-		o 'DECLARE STATIC ClassFieldDeclaration' do A3.set(static: A2,declareOnly: A1)
-		o 'DECLARE ClassFieldDeclaration' do A2.set(declareOnly: A1)
 		o 'STATIC MethodDeclaration' do A2.set(static: A1)
-		o 'DECLARE MethodDeclaration' do A2.set(declareOnly: A1)
-		o 'DECLARE STATIC MethodDeclaration' do A2.set(static: A2,declareOnly: A1)
 		o 'MethodDeclaration'
 		o 'ClassFieldDeclaration'
+		o 'DECLARE ClassDeclLine' do AST.DECLARE(A2,A1)
 	]
 
 	ClassFieldDeclaration: [
 		o 'ClassField ClassFieldOp Expression' do A1.set(value: A3,op: A2) # ClassField.new(A1, A3)
 		o 'ClassField' do A1
-		# o 'ClassFieldDeclaration @ Expression' do A1.set(wrapper: A3)
 		o 'ClassFieldDeclaration AS AccessorBody' do A1.set(wrapper: A3)
 		o 'ClassFieldDeclaration FieldDescriptorFull' do A1.set(wrapper: A2)
-		# Legacy support for the @set - should remove and replace
-		# o 'ClassFieldDeclaration DECORATOR WatchBody' do A1.set(watch: A3)
 
 	]
 
@@ -1023,7 +1009,7 @@ var grammar =
 		o 'ClassFieldIdentifier' do ClassField.new(A1)
 		o 'PROP ClassFieldIdentifier' do ClassProperty.new(A2).set(keyword: A1)
 		o 'ATTR ClassFieldIdentifier' do ClassAttribute.new(A2).set(keyword: A1)
-		o 'ClassField Type' do A1.set(datatype: A2)
+		o 'ClassField Type' do AST.SETTYPE(A1,A2)
 		o 'ClassField CALL_START CALL_END' do A1.set(controller: A2)
 	]
 
@@ -1067,7 +1053,7 @@ var grammar =
 	Array: [
 		o '[ ]' do Arr.new(ArgList.new([])).setEnds(A1,A2)
 		o '[ ArgList OptComma ]' do Arr.new(A2).setEnds(A1,A4)
-		o 'Array Type' do A1.set(datatype: A2)
+		o 'Array Type' do AST.SETTYPE(A1,A2)
 	]
 
 	# Inclusive and exclusive range dots.
@@ -1146,7 +1132,7 @@ var grammar =
 	Parenthetical: [
 		o '( ExpressionList )' do Parens.new(A2,A1,A3)
 		o '( ExpressionList ) UNIT' do ExpressionWithUnit.new(Parens.new(A2,A1,A3),A4)
-		o 'Parenthetical Type' do A1.set(datatype: A2)
+		o 'Parenthetical Type' do AST.SETTYPE(A1,A2)
 		# o '( INDENT ExpressionList OUTDENT )' do Parens.new(A3,A1,A5)
 	]
 
@@ -1206,7 +1192,7 @@ var grammar =
 	# This enables support for pattern matching.
 	ForValue: [
 		o 'Identifier'
-		o 'Identifier Type' do A1.set(datatype: A2)
+		o 'Identifier Type' do AST.SETTYPE(A1,A2)
 		o 'Array' # do ValueNode.new A1
 		o 'Object' # do ValueNode.new A1
 	]

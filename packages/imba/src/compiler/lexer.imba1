@@ -292,7 +292,7 @@ var NOT_SPACED_REGEX = ['NUMBER', 'REGEX', 'BOOL', 'TRUE', 'FALSE', '++', '--', 
 var UNFINISHED = ['\\','.','UNARY', 'MATH', 'EXP', '+', '-', 'SHIFT', 'RELATION', 'COMPARE', 'THROW', 'EXTENDS']
 
 # } should not be callable anymore!!! '}', '::',
-var CALLABLE  = ['IDENTIFIER','SYMBOLID', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END','DECORATOR','@']
+var CALLABLE  = ['IDENTIFIER','SYMBOLID', 'STRING', 'REGEX', ')', ']','INDEX_END', 'THIS', 'SUPER', 'TAG_END', 'IVAR', 'SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END','DECORATOR','@','GENERICS']
 
 # optimize for FixedArray
 var INDEXABLE = [
@@ -1988,7 +1988,7 @@ export class Lexer
 			
 			let typ = findTypeAnnotation(@chunk,yes)
 			if typ
-				tokid = 'TYPE'
+				tokid = 'GENERICS'
 				value = typ
 
 		if value == '..' and !prev:spaced
