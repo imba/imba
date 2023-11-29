@@ -106,6 +106,7 @@ export default class Service < EventEmitter
 	def getExternalFiles proj
 		util.log('getExternalFiles')
 		let paths = Object.keys(virtualScripts)
+		L 'getExternalFiles',paths
 		# paths.concat()
 		# return paths.concat('imba-typings/imba.d.ts')
 		return paths
@@ -120,7 +121,9 @@ export default class Service < EventEmitter
 		bridge.handle(data)
 
 	def createVirtualProjectConfig
+		L 'create Virtual config',!!cp,tsversion
 		return false if cp or !ip or !ip.shouldSupportImba!
+		
 		let jspath = resolvePath('jsconfig.json')
 		let tspath = resolvePath('tsconfig.json')
 
@@ -174,6 +177,8 @@ export default class Service < EventEmitter
 				package: JSON.parse(ps.host.readFile(pkg))
 			}
 
+			L 'imbaForPath',path,norm,out
+
 			return cache[dir] = obj
 		return null
 
@@ -217,8 +222,10 @@ export default class Service < EventEmitter
 				isMixedContent: false # Unclear what this entails
 				scriptKind: 7 # or 7?
 			})
+			L 'patching',exts
 
 		for script in imbaScripts
+			L 'imbaScript',!!script
 			script.wake!
 
 		info.ls = info.languageService
@@ -240,6 +247,7 @@ export default class Service < EventEmitter
 
 	def convertImbaDtsDefinition item
 		try
+
 			let file = item.fileName.replace("._.d.ts",'')
 			let gdts = item.fileName == dts..fileName
 			let found
@@ -382,8 +390,12 @@ export default class Service < EventEmitter
 
 		let intercept = Object.create(null)
 
+		intercept.getSemanticColassifications = do(...pars)
+			return ls.getSemanticColassifications(...pars)
+
 		intercept.getEncodedSemanticClassifications = do(filename,span,format)
 			if util.isImba(filename)
+
 				let script = getImbaScript(filename)
 				let spans = script.getSemanticTokens!
 				return {spans: spans, endOfLineState: ts.EndOfLineState.None}
@@ -391,6 +403,7 @@ export default class Service < EventEmitter
 			return ls.getEncodedSemanticClassifications(filename,span,format)
 
 		intercept.getEncodedSyntacticClassifications = do(filename,span)
+			util.log("getEncodedSyntacticClassifications")
 			return ls.getEncodedSyntacticClassifications(filename,span)
 
 		intercept.getQuickInfoAtPosition = do(filename,pos)

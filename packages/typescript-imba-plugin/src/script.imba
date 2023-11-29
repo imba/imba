@@ -45,8 +45,10 @@ export default class ImbaScript
 
 	def openedWithContent content
 		util.log('openedWithContent',fileName)
+		self.openedContent = content
 		if content != self.content
 			util.log('replace content?',fileName,[content,doc.content,self.content])
+			replaceContent(content)
 
 	def getFromDisk
 		fs.readFileSync(fileName,'utf-8')
@@ -80,6 +82,7 @@ export default class ImbaScript
 					let body = getFromDisk!
 					# the underlying imba code has actually changed
 					util.log('reloadWithFileText content?',fileName,[body,doc.content,content])
+					# what if it is open?
 					if body != content and !this.isOpen
 						replaceContent(body)
 
@@ -174,9 +177,11 @@ export default class ImbaScript
 		return diags
 
 	def editContent start, end, newText
+		util.log('editContent',start,end,newText,self)
 		svc.edit(start,end - start,newText)
 		# this should just start asynchronously instead
 		if ils.isSemantic
+			# should probably speed up compilation for certain types of edits?
 			util.delay(self,'asyncCompile',250)
 
 	def replaceContent newText
@@ -188,6 +193,9 @@ export default class ImbaScript
 			svc.getSnapshot!
 			doc.tokens
 			util.log('replaced content',[newText,doc.content,content])
+			if ils.isSemantic
+				# should probably speed up compilation for certain types of edits?
+				util.delay(self,'asyncCompile',250)
 
 	def compile
 		let snap = svc.getSnapshot!
@@ -265,7 +273,7 @@ export default class ImbaScript
 
 			result.push(tok.offset, tok.endOffset - tok.offset, ((typ + 1) << typeOffset) + mod)
 
-		# util.log("semantic!",result)
+		util.log("got semantic tokens",result)
 		return result
 
 	def getCompletions pos, options

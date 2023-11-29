@@ -80,9 +80,6 @@ export class Compilation
 			# return doc.rangeAt(i0,i1)
 		return []
 
-	get shouldGenerateDts
-		js and js.indexOf('Ω') >= 0
-
 	def o2dRange start, end, fuzzy = yes
 		let range = o2iRange(start,end,fuzzy)
 		return i2d(range)
@@ -265,7 +262,7 @@ export class Compilation
 			let compiler = getCompiler!
 			self.result = compiler.compile(body,options)
 			#compiling = Promise.resolve(self)
-			util.log("compiled {fileName} in {Date.now! - t0}ms")
+			L("compiled {fileName} in {Date.now! - t0}ms")
 		catch e
 			util.log 'compiler crashed',script.fileName,e
 

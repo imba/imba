@@ -10,6 +10,9 @@ const Rules = [
 	code: 2322
 	text: /^\$\d+/
 	---
+	code: 2610
+	message: /./ # 'valuetype' is defined as an accessor in class ..., but is overridden here in
+	---
 	code: 2611
 	message: /./
 	---
@@ -67,6 +70,9 @@ const Rules = [
 	code: 2425
 	message: /./
 	---
+	code: 2426 # "Class '{0}' defines instance member accessor '{1}', but extended class '{2}' defines it as instance member function."
+	message: /./
+	---
 	code: 2556
 	text: /\.\.\.arguments/
 	---
@@ -75,6 +81,9 @@ const Rules = [
 	---
 	code: 2557
 	text: /\.\.\.arguments/
+	---
+	code: 2538 # cannot be used as index
+	message: /.*/ # /unique symbol' cannot be used as an index type/
 	---
 	code: 2554
 	test: do({message})
@@ -88,9 +97,7 @@ const Rules = [
 	---
 	code: 2304 # dynamic asset items
 	message: /Svg[A-Z]/
-	---
-	code: 2538 # dynamic asset items
-	message: /unique symbol' cannot be used as an index type/
+	
 	---
 	code: 2307
 	message: /\.(txt|css|a?png|jpe?g|gif|svg)'/
