@@ -142,12 +142,12 @@ export const modifiers =
 
 
 	darky: {
-		flag:'@darky',
+		flag:'@dark',
 		raw:':is( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
 		neg:':not( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
 	}
 	lighty: {
-		flag:'@lighty',
+		flag:'@light',
 		raw:':not( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
 		neg:':is( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
 	}
