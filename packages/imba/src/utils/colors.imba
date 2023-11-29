@@ -65,6 +65,11 @@ String.prototype.f = do(n)
 String.prototype.b = do(n)
 	"\x1b[48;5;{n}m{this}\x1b[49m"
 
+declare extend class String
+	# TODO add the other colors here
+
+	get yellow do ""
+
 ###
 console.log "Hello this is a {"blue".blue} string and a {"red".red} one and a {"green".green} one."
 console.log "Hello this is a {c.blue("blue")} string and a {c.red("red")} one and a {c.green("green")} one."

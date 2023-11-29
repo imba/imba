@@ -20,9 +20,14 @@ export def accessor\($1 extends {$accessor: (...args: any[]) => infer X} ? X : $
 		value.$init = value.$set or do yes
 	return value
 
-export def descriptor context, value, args = []
-	return new value(...args) if value.prototype
-	return value.apply(context,args)
+
+### @ts
+type IsFunction<T> = T extends (...args: any[]) => any ? true : false;
+type Descriptor<T> = {[K in keyof T]: IsFunction<T[K]> extends true ? T[K] : (arg?: T[K]) => void};
+###
+
+export def descriptor\Descriptor<$1> value
+	return value
 
 export class Accessor
 

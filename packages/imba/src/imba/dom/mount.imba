@@ -10,7 +10,7 @@ export def render blk, ctx = {}
 		renderContext.context = prev
 	return res
 
-export def mount mountable, into
+export def mount mountable, into\Element?
 	if $node$
 		console.error "imba.mount not supported on server.\nTo spawn a dev-server for an imba client run:\n  > imba serve my-imba-file.imba"
 		# if mountable isa Function

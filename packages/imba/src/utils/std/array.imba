@@ -71,5 +71,6 @@ extend class Array<T>
 
 	def delete item
 		let idx = indexOf(item)
-		return unless idx >= 0
+		return false unless idx >= 0
 		splice(idx,1)
+		return true
