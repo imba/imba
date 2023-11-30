@@ -1,6 +1,5 @@
 import ImbaScriptDts from './dts'
 import np from 'path'
-import Compiler from './compiler'
 import * as util from './util'
 import Bridge from './bridge'
 import ipc from 'node-ipc'
@@ -88,6 +87,15 @@ export default class Service < EventEmitter
 
 	get f
 		getImbaScript(#lastSelection[0])
+
+	get fts
+		f.info.cacheSourceFile.sourceFile.text
+
+	get fimba
+		f.content
+
+	get flc
+		f.lastCompilation
 
 	def onDidSaveTextDocument file
 		util.log('onDidSaveTextDocument',file)
@@ -638,23 +646,23 @@ export default class Service < EventEmitter
 		if true
 			for own k,v of intercept
 				let orig = v
-				intercept[k] = do
+				intercept[k] = do(...args)
 					try
 						let t = Date.now!
-						util.warn("call {k}",...arguments)
-						let res = v.apply(intercept,arguments)
-						util.warn("return {k} in {Date.now! - t}ms",res)
+						# util.warn("call {k}",...arguments)
+						let res = v.apply(intercept,args)
+						util.warn("return {k} in {Date.now! - t}ms",args,res)
 						return res
 					catch e
-						util.log('error',k,e)
+						util.log('error',k,args,e)
 						return null
 
 		return ls.#proxied = new Proxy(ls, {
 			get: do(target,key)
-				util.log(`ils get`,key)
+				# util.log(`ils get`,key)
 				return intercept[key] || target[key]
 			set: do(target,key,value)
-				util.log(`ils set`,target,key)
+				# util.log(`ils set`,target,key)
 				target[key] = value
 				return yes
 		})

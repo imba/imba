@@ -1,7 +1,6 @@
 import { isImba } from './util'
 import * as util from './util'
 import * as constants from './constants'
-import Compiler from './compiler'
 import ImbaScript from './script'
 import * as Diagnostics from './diagnostics'
 import np from 'path'
@@ -56,7 +55,7 @@ export class Session
 		let handler = handlers.get('geterr')
 		# wont send in syntactic mode?
 		let req = {arguments: {files: files, delay: 10}}
-		util.log('sendErrors',req)
+		# util.log('sendErrors',req)
 		handler.call(this,req)
 
 	def getFormattingEditsForRange args
@@ -143,10 +142,6 @@ export class Session
 			# util.log('skip diagnostics')
 			return []
 
-		# util.log('filterDiagnostics!',diagnostics,project)
-
-		# return diagnostics unless script.#imba
-
 		for item in diagnostics
 			try
 				let mapper = item.#mapper ||= item.file..scriptSnapshot..mapper
@@ -190,25 +185,15 @@ export class Session
 		return diagnostics.filter do !$1.#suppress
 
 	def sendDiagnosticsEvent(file, project, diags, kind)
-		if kind == 'semanticDiag' and diags.length
-			util.log('sendDiagnisticsPrefilter',diags.slice(0))
+		# if kind == 'semanticDiag' and diags.length
+		#	util.log('sendDiagnisticsPrefilter',diags.slice(0))
 
 		diags = filterDiagnostics(file,project,diags,kind)
 
 		if kind == 'semanticDiag' and util.isImba(file) and global.ils
 			let script = global.ils.getImbaScript(file)
 			let add = script.getImbaDiagnostics()
-			# util.log('sendDiagnosticsEvent for imba',script,add)
 			diags.push(...add)
-			###
-			category: 1
-			code: 2551
-			file: SourceFileObject {pos: 0, end: 1289, flags: 131072, modifierFlagsCache: 0, transformFlags: 10617424, …}
-			length: 7
-			messageText: "Property 'assertz' does not exist on type 'Console'. Did you mean 'assert'?"
-			relatedInformation: [{…}]
-			start: 284
-			###
 			# for item in script.diagnostics
 
 		# if diags.length
@@ -279,7 +264,7 @@ export class ScriptInfo
 		# let converted = snap.c.i2o(pos)
 
 	def editContent start, end, newText
-		util.log('editContent',start,end,newText)
+		util.log('ScriptInfo editContent',start,end,newText)
 		if #imba
 			#imba.editContent(start,end,newText)
 		else
@@ -473,10 +458,12 @@ export class ProjectService
 	def getOrCreateOpenScriptInfo(fileName, fileContent, scriptKind, hasMixedContent, projectRootPath)
 		let origFileContent = fileContent
 		if util.isImba(fileName)
-			util.log("getOrCreateOpenScriptInfo {fileName}")
+			yes
+			# util.log("getOrCreateOpenScriptInfo {fileName}")
 			# if fileContent !== undefined
 			#	fileContent = Compiler.readFile(fileName,fileContent)
-		L 'getOrCreateOpenScriptInfo',fileName
+		# Here we should probably detect if we have the scrimt or not
+		util.log('getOrCreateOpenScriptInfo',fileName,fileContent..length,scriptKind,hasMixedContent,projectRootPath)
 		let script = #getOrCreateOpenScriptInfo(fileName, fileContent, scriptKind, hasMixedContent, projectRootPath)
 
 		script.#imba

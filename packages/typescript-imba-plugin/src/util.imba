@@ -37,12 +37,13 @@ class Logger
 		let ns = params[0]
 		let data = params[1]
 		let id = ++nr
-		state[ns] ||= []
-		state[ns].unshift([id].concat(params.slice(1)))
 
 		if console.context isa Function
 			console.context!.log(...params)
 			return
+
+		state[ns] ||= []
+		state[ns].unshift([id].concat(params.slice(1)))
 
 		if TRACING
 			TRACING.push(params)
@@ -253,7 +254,8 @@ extend class String
 export def toImbaDisplayParts parts
 	for part in parts
 		# if part.text[0] == 'Ω'
-		part.text = toImbaIdentifier(part.text)
+		part.text = part.text
+		# part.text = toImbaIdentifier(part.text)
 		# part.text.replace(toImbaRegex,toImbaReplacer)
 	return parts
 

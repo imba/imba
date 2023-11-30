@@ -3,7 +3,7 @@ import fs from 'fs'
 import * as util from './util'
 
 import { TokenModifier, TokenType } from './constants'
-import Compiler,{Compilation} from './compiler'
+import {Compilation} from './compiler'
 
 # import ImbaScriptInfo from './lexer/script'
 import ImbaScriptInfo, {Token as ImbaToken} from 'imba-monarch'
@@ -11,10 +11,13 @@ import Completions from './completions'
 import ImbaScriptContext from './context'
 import ImbaTypeChecker from './checker'
 
+import {createEdits} from './diff'
+
 export default class ImbaScript
 	constructor info
 		self.info = info
 		self.diagnostics = []
+		self.saveCompiledOutput = no
 		global.hasImbaScripts = yes
 
 		if info.scriptKind == 0
@@ -64,21 +67,24 @@ export default class ImbaScript
 		svc.versionToIndex = do(number) number
 		doc = new ImbaScriptInfo(self,svc)
 
-		
-
 		# how do we handle if file changes on disk?
+
+		# This is very tricky as we are representing the files as two different ones
 		try
 			# if this was cached across sessions - opening a big project would be _much_ faster
 			let result = lastCompilation = compile!
 			let its = info.textStorage
+
+			# Here we are replacing the ScriptVersionCache for the file as tsc sees it
 			let snap = its.svc = global.ts.server.ScriptVersionCache.fromString(result.js or '\n')
 			its.text = undefined
 
+			let {getFileTextAndSize} = its
 			let reloadWithFileText_ = its.reloadWithFileText
 
 			its.reloadWithFileText = do(tempFileName)
 				util.log('reloadWithFileText',fileName,tempFileName,this,this.ownFileText,this.pendingReloadFromDisk,this.isOpen)
-				unless tempFileName
+				if !tempFileName and !this.isOpen
 					let body = getFromDisk!
 					# the underlying imba code has actually changed
 					util.log('reloadWithFileText content?',fileName,[body,doc.content,content])
@@ -89,11 +95,13 @@ export default class ImbaScript
 				return reloadWithFileText_.call(its,tempFileName)
 
 			its.getFileTextAndSize = do(tempFileName)
-				util.log('getFileTextAndSize',fileName,tempFileName)
+				let sup = getFileTextAndSize.call(its,tempFileName)
+				util.log('getFileTextAndSize',fileName,tempFileName,sup)
 				{text: lastCompilation..js or ''}
 
 			its.reload = do(newText)
 				util.log('reload',fileName,newText.slice(0,10))
+				reloadedContent = newText
 				return false
 
 			# util.log('resetting the original file',snap)
@@ -112,34 +120,76 @@ export default class ImbaScript
 		svc.positionToLineOffset(pos)
 
 	def asyncCompile
-		util.log('async compile!')
+		let t0 = Date.now!
+		
 		let snap = svc.getSnapshot!
 		let body = snap.getText(0,snap.getLength!)
 		let output = new Compilation(info,snap)
-		# Compiler.compile(info,body)
 		output.compile!
+		util.log(`compiled {fileName}`,(Date.now! - t0) + 'ms',output..js..length)
 		applyOutput(output)
+
+	get currts
+		info.cacheSourceFile.sourceFile.text
+
+	def forceSync
+		let js = lastCompilation.js
+		info.textStorage.edit(0,currts.length,js)
+		info.markContainingProjectsAsDirty!
 
 	def applyOutput result
 		lastCompilation = result
-		diagnostics=result.diagnostics
+		diagnostics = result.diagnostics
 
 		if let js = result.js
 			let its = info.textStorage
-			let end = its.svc.getSnapshot!.getLength!
-			util.log('compiled',fileName,end,its)
-			its.edit(0, end, result.js)
-			let snap = its.svc.getSnapshot!
-			snap.mapper = result
-			result.#applied = yes
 
-			result.script.markContainingProjectsAsDirty!
-			let isSaved = result.input.#saved
+			let meta = result.applied = {}
 
-			util.log('onDidCompileScript',result,isSaved)
+			let curr = meta.cached = currts
+			let oldsnap = its.svc.getSnapshot!
+			let end = oldsnap.getLength!
 
-			if ils.isSemantic and global.session
-				global.session..refreshDiagnostics!
+			
+
+			try
+				if oldsnap.mapper
+					curr = oldsnap.mapper.js
+					meta.lcprev = curr
+
+				meta.tsbefore = curr = oldsnap.getText(0,end)
+				meta.oldend = end
+
+				let edits = try createEdits(curr,js)
+				util.log('compiled',fileName,end,its,edits)
+				meta.edits = edits
+
+				if edits
+					for [start,end,str] in edits
+						its.edit(start, end, str)
+				else
+					its.edit(0, end, result.js)
+				meta.edited = yes
+				# just repacing the whole thing now?
+				# Should much rather diff it and fake the edits
+				let snap = its.svc.getSnapshot!
+				try meta.after = snap.getText(0,snap.getLength!)
+
+				# potential for memory leak - should clean up
+				snap.mapper = result
+				result.#applied = yes
+				# check if we are out of sync
+
+				info.markContainingProjectsAsDirty!
+				let isSaved = result.input.#saved
+				# util.log('onDidCompileScript',result,isSaved)
+
+				if ils.isSemantic and global.session
+					global.session..refreshDiagnostics!
+			catch e
+				util.log('error applying ts',e)
+				meta.error = e
+
 		else
 			util.log('errors from compilation!!!',result)
 			diagnostics=result.diagnostics
@@ -176,6 +226,7 @@ export default class ImbaScript
 
 		return diags
 
+	# Edit content of the imba file
 	def editContent start, end, newText
 		util.log('editContent',start,end,newText,self)
 		svc.edit(start,end - start,newText)
@@ -184,6 +235,7 @@ export default class ImbaScript
 			# should probably speed up compilation for certain types of edits?
 			util.delay(self,'asyncCompile',250)
 
+	# Replace content of the imba file
 	def replaceContent newText
 		let from = content
 		let snap = svc.getSnapshot!
@@ -200,9 +252,6 @@ export default class ImbaScript
 	def compile
 		let snap = svc.getSnapshot!
 		let output = new Compilation(info,snap)
-		# let body = snap.getText(0,snap.getLength!)
-		# let result = Compiler.compile(info,body)
-		# result.input = snap
 		return output.compile!
 
 	get snapshot
