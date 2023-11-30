@@ -6,7 +6,7 @@
     "main": "dist/index.js",
     "scripts": {
         "watch": "node \"../imba/bin/imba\" build -wSM index.imba",
-        "build": "node \"../imba/bin/imba\" build -SM index.imba",
+        "build": "rm -rf ./imba & cp -r ../imba/src/imba/ ./imba & node \"../imba/bin/imba\" build -SM index.imba",
         "prepublish": "npm run build"
     },
     "repository": {
@@ -15,7 +15,6 @@
         "directory": "packages/typescript-imba-plugin"
     },
     "dependencies": {
-        "diff": "^5.1.0",
         "fast-diff": "^1.3.0",
         "imba-monarch": "file:../imba-monarch",
         "node-ipc": "9.1.4"
