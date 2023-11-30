@@ -762,10 +762,11 @@ export class Stack
 		SourceMapper.strip(val)
 
 	def generateId ns = 'oid'
+		return AST.counterToShortRef(STACK.tsc ? 1 : STACK.incr(ns))
 		AST.counterToShortRef(STACK.incr(ns))
 
 	def getSymbol ref, alias = null, name = ''
-		let key = ref or incr('symbols')
+		let key = ref or (STACK.tsc ? 1 : incr('symbols'))
 		# ref ||= "" + incr('symbols')
 		# Belongs in root
 		@symbols[key] ||= @root.declare((alias or ref),LIT("Symbol({name ? helpers.singlequote(name) : ''})"),system: yes, alias: (alias or ref)).resolve.c
@@ -920,6 +921,9 @@ export class Stack
 		elif key == 'NODE'
 			@meta:universal = no
 			return isNode
+		elif key == 'TSC'
+			return self.tsc
+
 		elif key == 'WORKER'
 			@meta:universal = no
 			return platform and platform.indexOf('worker') >= 0
@@ -2149,6 +2153,8 @@ class InstancePatchBlock < InstanceInitBlock
 export class ClassField < Node
 	prop name
 
+	
+
 	def initialize name
 		super
 		@name = name
@@ -2258,8 +2264,14 @@ export class ClassField < Node
 				if STACK.tsc
 					@getter = LIT("():ReturnType<typeof {op.c}.$get> \{ return {op.c}.$get({args}) \}")
 					@setter = LIT("(val:Parameters<typeof {op.c}.$set>[0])\{ {op.c}.$set(val,{args}) \}")
+					
+					let pars = [wrapper.c(expression: yes),args,metasym,context]
+					
+					inner = "const self = this;return {runtime:accessor}({pars.join(',')})"
 
-					inner = "return {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
+					if wrapper.@callback
+						inner += '.$function(' + wrapper.@callback.c + ')'
+
 				else
 					inner = "return this[{metasym}] || {runtime:accessor}({wrapper.c(expression: yes)},{args},{metasym},{context})"
 					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
@@ -3977,19 +3989,14 @@ export class ClassDeclaration < Code
 					%declareName
 					declare module %path {
 						interface %declareName@generics extends %localName@generics {}
-						// interface %declareName|Constructor extends %localName|Constructor {}
 					}
-					// type %localName|Constructor = typeof %localName
 					class %localName@generics { %body }
 				'''
 			elif isExtension and tpl:global
 				'''
 				declare global {
 					interface %declareName@generics extends %localName@generics {}
-					// class %declareName@generics extends %localName@generics {}
-					// interface %declareName|Constructor extends %localName|Constructor {}
 				}
-				// type %localName|Constructor = typeof %localName
 				class %localName@generics { %body }
 				'''
 			elif isExtension
@@ -3998,8 +4005,6 @@ export class ClassDeclaration < Code
 				# So - even if this is extending the local
 				# console.log @name,tpl:ref and tpl:ref.isGlobal
 				'''
-					// %export interface %declareName|Constructor extends %localName|Constructor {}
-					// type %localName|Constructor = typeof %localName
 					%export %default interface %declareName@generics extends %localName@generics {}
 					class %localName@generics { %body }
 				'''
@@ -4007,19 +4012,11 @@ export class ClassDeclaration < Code
 				# dont add constructor if mixin?
 				'''
 				declare global {
-					// namespace @declareName {}
-					// interface @declareName|Constructor extends @localName|Constructor {
-					// 	@{@!supr? prototype: @declareName;}
-					// 	@{@!supr? new(...args:ConstructorParameters<@localName|Constructor>): @declareName;}
-					// }
 					interface @declareName@generics extends @localName@suprGenerics {}
 					class @declareName@generics extends @localName@suprGenerics {}
-					// var @declareName: @declareName|Constructor;
 				}
-				// type @localName|Constructor = typeof @localName
 				interface @localName@generics @{extends @mixins }{ [index:string]: any }
 				class @localName@generics @{extends @supr }{
-					// declare ["constructor"]: typeof @declareName;
 					@body
 				}
 				'''
@@ -4027,7 +4024,6 @@ export class ClassDeclaration < Code
 				'''
 				%export %default interface %localName@generics @{extends %mixins }{ [index:string]: any }
 				%export %default class %localName@generics @{extends %supr }{
-					declare ["constructor"]: typeof @localName;
 					@body
 				}
 				'''
@@ -4322,40 +4318,6 @@ export class Func < Code
 
 	def jsdoc
 		return ''
-		let o = []
-
-		if @desc
-			@desc.@skip = yes
-			o.push(@desc.toString)
-
-		for item in @params.nodes when item isa Param
-			if item.datatype
-				o.push(item.jsdoc())
-
-		if option(:inExtension) and @target
-			let kls = @context.node
-			let name = @context.node.@className
-			if name and STACK.tsc
-				# console.log 'inext',@context.node.@className
-				# o.push('@this { this & ' + name.c + ' }')
-				# let thistype = "globalThis." + name.c
-				let thistype = name.c
-				if kls.option(:instanceOnly)
-					thistype = "typeof {thistype}"
-				else
-					thistype = "InstanceType<typeof {thistype}>"
-				# o.push('@this ' + thistype + '')
-				# FIXME not used?
-
-		if option(:jsdocthis)
-
-			o.push('@this ' + option(:jsdocthis) + '')
-
-		# if returnType
-		# 	o.push('@returns { ' + returnType.asRawType + ' }')
-
-		let doc = o.join('\n')
-		return (doc ? '/**\n' + doc + '\n*/\n' : '')
 
 	def js s,o
 		body.consume(ImplicitReturn.new) unless option(:noreturn)
@@ -4373,10 +4335,13 @@ export class Func < Code
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name ? ' ' + name.replace(/\./g,'_') : ''
 		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
+
+
 		var out = "{M(keyword,option('def') or option('keyword'))}{helpers.toValidIdentifier(name)}({params.c}) "
 
 		if STACK.tsc and returnType
 			out += ':' + returnType.c
+
 		
 		out += code
 		# out = "async {out}" if option(:async)
@@ -7407,9 +7372,11 @@ export class Descriptor < Node
 		if item isa ArgList
 			if item.@generated
 				# extract options etc
-				let part = DescriptorPart.new(KEY('callback'))
-				part.params = item
-				@chain.push(@last = part)
+				set(callback: item)
+				# let part = DescriptorPart.new(KEY('callback'))
+				# part.params = item
+				# @chain.push(@last = part)
+				
 			else
 				# console.log 'add',item.@generated
 				if type == '='
@@ -7437,7 +7404,7 @@ export class Descriptor < Node
 			# TODO rename to primitive instead
 			parts.add LIT("{ref.c}.default.literal = {@literal.c}")
 
-		if @callback
+		if @callback and !STACK.tsc
 			parts.add LIT("{ref.c}.callback = {@callback.c}")
 
 		if STACK.tsc
@@ -13646,6 +13613,7 @@ export class SystemVariable < Variable
 			@name = "{o:gsym.replace(/\#/g,'$')}$"
 			return self
 
+		# let sysnr = STACK.tsc ? @scope.incr('sysvar') : STACK.incr('sysvar')
 		let sysnr = STACK.incr('sysvar')
 		@name = "${sysnr}"
 		return self

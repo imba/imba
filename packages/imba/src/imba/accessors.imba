@@ -6,8 +6,16 @@ import {emit,listen} from './utils'
 # T extends {$accessor: (...args: any[]) => infer X} ? X : T
 # export def accessor value, target, key, name, slot, context
 
-export def accessor\($1 extends {$accessor: (...args: any[]) => infer X} ? X : $1) value\any, target\any?, key\any?, name\any?, slot\any?, context\any?
-	
+
+### @ts
+type AccessorLike<T> = T extends { $accessor: (...args:any[]) => any } ? T : {$accessor(...args:any[]):T,$function(...args:any[]):T}
+###
+
+# type AccessorLike<T> = T extends { $accessor: (...args:any[]) => any } ? T : {$accessor(...args:any[]):T}
+# ($1 extends {$accessor: (...args: any[]) => infer X} ? X : $1) value\any, target\any?, key\any?, name\any?, slot\any?, context\any?,callback\any?
+
+export def accessor<T>\AccessorLike<T> value\T, target\any?, key\any?, name\any?, slot\any?, context\any?
+
 	if value and value.$accessor isa Function
 		value = value.$accessor(target, key, name, slot, context)
 	else
