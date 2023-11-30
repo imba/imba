@@ -245,7 +245,7 @@ export class Compilation
 		#result = res
 		done = yes
 		if res.js
-			self.js = res.js # .replace(/\$CARET\$/g,'valueOf') # '       '
+			self.js = res.js
 			self.locs = res.locs
 		diagnostics = res.diagnostics
 		yes
@@ -258,16 +258,19 @@ export class Compilation
 
 		try
 			done = yes
-			let t0 = Date.now!
+			let t0 = started = Date.now!
 			let compiler = getCompiler!
 			self.result = compiler.compile(body,options)
 			#compiling = Promise.resolve(self)
 			L("compiled {fileName} in {Date.now! - t0}ms")
 		catch e
 			util.log 'compiler crashed',script.fileName,e
-
 			self.result = {diagnostics: []}
 			yes
+		finally
+			ended = Date.now!
+			took = ended - started
+
 		return self
 
 export default new class Compiler
@@ -275,6 +278,7 @@ export default new class Compiler
 	cache = {}
 
 	def lookup src, body
+		# is this used?
 		if cache[body]
 			return cache[body]
 

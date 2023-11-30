@@ -114,6 +114,11 @@
 					"default": 0,
 					"description": "Port for debugging"
 				},
+				"imba.debugLevel": {
+					"type": "number",
+					"default": 0,
+					"description": "Controls level of debugging"
+				},
 				"imba.workspaceSymbols.scope": {
 					"type": "string",
 					"default": "imbaOnly",

@@ -22,6 +22,9 @@ export default class Client
 	def warn message, o = {}
 		emit('warn',message: message, options: o)
 
+	def status o = {}
+		emit('status',o)
+
 	def emit event, data = {}
 		let payload = {
 			type: 'event'
@@ -41,14 +44,11 @@ export default class Client
 				try
 					# util.group("call rpc {e.command}",...e.arguments)
 					res = await meth.apply(ils,e.arguments)
-					if res
-						
-						res = JSON.parse(util.toImbaString(JSON.stringify(res)))
 
 					host.emit('message',{
 						type: 'response'
 						responseRef: e.requestRef
-						body: JSON.parse(util.toImbaString(JSON.stringify(res)))
+						body: JSON.parse(util.toImbaString(JSON.stringify(res or {})))
 						ts: Date.now!
 					})
 				catch err

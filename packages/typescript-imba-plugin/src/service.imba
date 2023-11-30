@@ -128,9 +128,14 @@ export default class Service < EventEmitter
 
 		bridge.handle(data)
 
-	def createVirtualProjectConfig
-		L 'create Virtual config',!!cp,tsversion
-		return false if cp or !ip or !ip.shouldSupportImba!
+	def set-status o
+		if bridge
+			bridge.emit('status',o)
+	
+
+	def createVirtualProjectConfig proj, inferred = no
+		util.log 'create Virtual config',!!cp,tsversion,ps,ps..inferredProjects..slice(0),ip,ip..shouldSupportImba!
+		return false if cp # or !inferred or !proj or !proj.shouldSupportImba!
 		
 		let jspath = resolvePath('jsconfig.json')
 		let tspath = resolvePath('tsconfig.json')
@@ -140,7 +145,7 @@ export default class Service < EventEmitter
 			util.log('found js/tsconfig')
 			return false
 
-		util.log('createVirtualProjectFile')
+		util.log('createVirtualProjectFile',jspath,tspath)
 
 		# notify about configuring their own tspath
 
@@ -228,18 +233,22 @@ export default class Service < EventEmitter
 			exts.push({
 				extension: '.imba'
 				isMixedContent: false # Unclear what this entails
-				scriptKind: 7 # or 7?
+				scriptKind: 7
 			})
-			L 'patching',exts
 
 		for script in imbaScripts
-			L 'imbaScript',!!script
 			script.wake!
 
 		info.ls = info.languageService
 		let decorated = decorateLanguageService(info.languageService)
 		emit('create',info) unless inferred
-		createVirtualProjectConfig!
+		util.log('create',service..inferredProjects,service)
+
+		if inferred and !cp
+			setTimeout(&,100) do
+				if proj.shouldSupportImba!
+					createVirtualProjectConfig(proj,inferred)
+
 		util.log('decorated!')
 		return decorated
 
@@ -672,39 +681,11 @@ export default class Service < EventEmitter
 
 	def awakenProjectForImba proj
 		util.warn "service awakenProjectForImba",proj
-		# what if it happens multiple times?
-		# now we should block / delay the mark project as dirty stuff
-		for item in imbaScripts
-			item.syncDts!
-
 		syncProjectForImba(proj)
 		self
 
 	def syncProjectForImba proj
-		# TODO - Should only include scripts reachable from this project
-		# No need to use getGeneratedDTS anymore
 		return
-
-		let all = ''
-		let globals = {}
-		for item in imbaScripts when item.doc
-			let dts = item.doc.getGeneratedDTS({},globals)
-			if dts
-				all += '\n' + dts
-		for own k,v of globals
-			all = all.replaceAll("&&{k}&&","module '{v.doc.fileName}'")
-
-		all = all.replace(/&&.+?&&/g,'global')
-
-		let file = dts = proj.#dts ||= new ImbaScriptDts({fileName: np.resolve(proj.currentDirectory,'generated.imba'), project: proj})
-		let changed = file.update(all)
-
-		# TODO Should also be per-project
-		imbaGlobals = globals
-
-		if changed and isSemantic and global.session
-			global.session..refreshDiagnostics!
-		self
 
 	def getScriptInfo src
 		ps.getScriptInfo(resolvePath(src))

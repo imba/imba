@@ -194,14 +194,10 @@ export class Session
 			let script = global.ils.getImbaScript(file)
 			let add = script.getImbaDiagnostics()
 			diags.push(...add)
-			# for item in script.diagnostics
 
-		# if diags.length
-		#	util.log('sendDiagnosticsEvent',file, project, diags.slice(0,5), kind)
 		#sendDiagnosticsEvent(file,project,diags,kind)
 
 	def convertToDiagnosticsWithLinePosition diagnostics, script
-		# util.log 'convertToDiagnosticsWithLinePosition',diagnostics,script
 		#convertToDiagnosticsWithLinePosition(diagnostics, script)
 
 export class ScriptInfo
@@ -271,7 +267,6 @@ export class ScriptInfo
 			#editContent(start,end,newText)
 
 	def getSnapshot
-		# util.log('getSnapshot',self.path)
 		#imba
 		return #getSnapshot!
 
@@ -363,6 +358,8 @@ export class Project
 	def resolveModuleNameLiterals ...params
 		let res = #resolveModuleNameLiterals(...params)
 
+		util.log('resolveModuleNameLiterals',params,res)
+
 		for item,i in res
 			let hit = item..resolvedModule
 			let name = hit..resolvedFileName
@@ -382,6 +379,8 @@ export class Project
 		value.ignoreDeprecations = "5.0"
 		value.customConditions = ["tsimba","imba"]
 
+		# 
+
 		# what about if you only use imba through npx?
 		# This will add the imba.d.ts typings
 		if true
@@ -397,9 +396,17 @@ export class Project
 
 		for own k,v of constants.RequiredCompilerOptions
 			value[k] = v
+
+		let imbaPath = global..ils..resolveImbaDirForProject(self)
+
+		unless imbaPath
+			value.paths ||= {}
+			value.paths['imba'] = ['./node_modules/imba/src/imba/imba.imba',__realname.replace('dist/index.js','imba/imba.imba')]
+			value.baseUrl ||= '.'
+			util.log("no imbaPath!",value)
+
 		let res = #setCompilerOptions(value)
 		util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
-		L 'setCompilerOptions',value
 		return
 
 	def onPluginConfigurationChanged name, data
@@ -559,27 +566,20 @@ export class TS
 		return res
 
 	def getSupportedExtensions options, extra
-		L 'getSupportedExtensions'
 		let res = #getSupportedExtensions(options,extra)
-		# util.log 'getSupportedExtensions',options,extra,res
 		res.unshift('.imba') if res.indexOf('.imba') == -1
 		return res
 
 	def resolveModuleName moduleName, containingFile, compilerOptions, host, cache, redirectedReference
-		L 'getSupportedExtensions',moduleName
+		util.log('resolveModuleName',moduleName,compilerOptions)
 		let res = #resolveModuleName.apply(self,arguments)
 		let hit = res..resolvedModule
 		let name = hit..resolvedFileName
 
 		if name..match(/\.imba\.ts$/)
-			L 'resolved',name
 			hit.resolvedFileName = name.replace(/\.ts$/,'')
 			hit.extension = '.js'
 
-		elif name..match(/\._ils\.ts$/)
-			hit.resolvedFileName = name.replace(/(\.imba)?\._ils\.ts$/,'.imba')
-			# util.log 'resolved!!',hit.resolvedFileName
-			hit.extension = '.js'
 		return res
 
 	def getScriptKindFromFileName fileName
@@ -664,10 +664,7 @@ export default def patcher ts
 		get imbaName
 			return #imbaName if #imbaName
 			let name = escapedName
-			# elif name.match(/^[\w\-]+CustomElement$/)
-			#	name = util.dasherize(name.slice(0,-13))
-			# elif name.indexOf('_$SYM$_') == 0
-			#	name = name.split("_$SYM$_").join("#")
+
 			if name.indexOf('___') == 0
 				name = name.slice(1)
 

@@ -1,4 +1,4 @@
-import {window, commands, languages, IndentAction, workspace,Range, extensions, TextEdit} from 'vscode'
+import {window, commands, languages, IndentAction, workspace,Range, extensions, TextEdit,StatusBarAlignment} from 'vscode'
 
 import path from 'path'
 import * as util from './util'
@@ -11,6 +11,7 @@ import ImbaScript from 'imba-monarch'
 # include
 
 let bridge = null
+let statusbar = null
 let log = util.log
 
 languages.setLanguageConfiguration('imba',{
@@ -113,8 +114,6 @@ export def activate context
 	let conf = workspace.getConfiguration('imba')
 	let id = "imba-ipc-{String(Math.random!)}"
 
-	log("activating imba?! {process.env.TSS_DEBUG}")
-
 	commands.registerCommand('imba.autoImportAlert') do(doc,item)
 		let message = "Added auto-import for {item.source}"
 		try
@@ -125,6 +124,11 @@ export def activate context
 		window.showWarningMessage(message)
 
 	try
+
+		statusbar = window.createStatusBarItem(StatusBarAlignment.Left, 0)
+		statusbar.text = "Imba"
+		# statusbar.show!
+
 		const tls = extensions.getExtension('vscode.typescript-language-features')
 		log("gettingtls extension")
 		await tls.activate(context)
@@ -137,6 +141,15 @@ export def activate context
 
 		bridge.on('warn') do({message,options})
 			window.showWarningMessage(message)
+
+		bridge.on('status') do(o)
+			static let last = null
+			last = o
+			Object.assign(statusbar,o)
+			statusbar.show!
+			if o.autohide isa 'number'
+				setTimeout(&,o.autohide) do
+					statusbar.hide! if last == o
 
 		if conf.get('debugPort')
 			unless process.env.TSS_DEBUG

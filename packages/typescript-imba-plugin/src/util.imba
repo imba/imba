@@ -34,31 +34,10 @@ class Logger
 	def log ...params
 		return unless DEBUGGING
 
-		let ns = params[0]
-		let data = params[1]
-		let id = ++nr
-
 		if console.context isa Function
 			console.context!.log(...params)
-			return
 
-		state[ns] ||= []
-		state[ns].unshift([id].concat(params.slice(1)))
-
-		if TRACING
-			TRACING.push(params)
-
-		if false
-			if ns == 'send'
-				if data.type == 'event'
-					sent.unshift Object.assign({e: data.event},data.body)
-				elif data.type == 'response'
-					sent.unshift Object.assign({c: data.command},data.body)
-			elif ns == 'receive'
-				if data.type == 'request'
-					received.unshift Object.assign({c: data.command},data.arguments)
-
-			logs.unshift([id,...params])
+		return
 
 global.logger = process.env.ILS_DEBUG ? global.console : new Logger
 
@@ -173,8 +152,11 @@ export def delay target, name, timeout = 500, params = []
 	let meta = target.#timeouts ||= {}
 
 	global.clearTimeout(meta[name])
-	meta[name] = global.setTimeout(&,timeout) do
+	if timeout == 0
 		call(target,name,params)
+	else
+		meta[name] = global.setTimeout(&,timeout) do
+			call(target,name,params)
 
 export def cancel target, name
 	let meta = target.#timeouts ||= {}

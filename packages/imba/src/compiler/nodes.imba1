@@ -33,7 +33,7 @@ class MappedString
 		@value
 
 	def c
-		@value
+		M(@value,self)
 
 class InternalName
 
@@ -429,7 +429,8 @@ var TYPED = do |item,typ|
 		C(item)
 
 
-var LIT = do |val|
+var LIT = do |val,src|
+	return MappedString.new(val,src) if src
 	val isa RawScript ? val : RawScript.new(val)
 
 var SYM = do |val|
@@ -4178,10 +4179,11 @@ export class TagDeclaration < ClassDeclaration
 			sup = superclass ? superclass.toClassName : LIT('imba.Component')
 
 			if !isExtension
-				body.unshift(LIT('declare $$TAG$$\n'))
-				body.unshift(LIT('static $$TAG$$\n'))
+				body.unshift(LIT('static $$TAG$$'),yes)
+				body.unshift(LIT('constructor(){ super() }',@name),yes)
 
 			tpl:body = body.c
+			tpl:default = option(:default)
 			tpl:superName = sup
 
 			try tpl:export = option(:export) or !!@name.variable.@value.isExported
@@ -4208,16 +4210,14 @@ export class TagDeclaration < ClassDeclaration
 			elif isGlobal
 				return TPL tpl,'''
 					declare global {
-						interface %declareName extends %localName {}
-						class %declareName {}
+						class %declareName extends %localName {}
 						interface HTMLElementTagNameMap { "%name": %declareName }
 					}
 					class %localName extends %superName { %body }
 				'''
 			else
 				return TPL tpl,'''
-					%export interface %localName extends %superName { }
-					%export class %localName { %body }
+					%export %default class %localName extends %superName { %body }
 				'''
 
 		elif option(:extension)
@@ -9666,7 +9666,7 @@ class TagLike < Node
 
 	def tagvar name
 		name = InternalPrefixes[name] or name
-		@tagvars[name] ||= scope__.closure.temporary(null,{reuse: no,alias:"{name}{tagvarprefix}"},"{name}{tagvarprefix}")
+		@tagvars[name] ||= scope__.closure.temporary(null,{nodecl: STACK.tsc, reuse: no, alias: "{name}{tagvarprefix}"},"{name}{tagvarprefix}")
 
 	def tagvarprefix
 		""
@@ -10452,33 +10452,25 @@ export class Tag < TagLike
 
 		if tsc
 			# console.log tvar
-			# if tag is expression we want to suppress certain warnings
 			if type isa TagTypeIdentifier and !isSelf
 				if type.isAsset
-					add "{tvar} = new {M("SVGSVGElement",type)}"
+					add "var {tvar} = new {M("SVGSVGElement",type)}"
 				elif type.isClass
-					tvar.@datatype = MappedString.new(type.toClassName,type)
-
-					add M("{tvar}.$$TAG$$",type)
-					# add "{tvar} = new {M(type.toClassName,type)}"
+					add M("var {tvar} = new {M(type.toClassName,type)};{tvar}",type)
 				else
 					tvar.@datatype = MappedString.new(type.toClassName,type)
-					# add "{tvar} = new globalThis.{M(type.toClassName,type)}"
-					# the variables should be declared here
-					add "{tvar} = {M('new ' + type.toClassName,type)}"
+					add M("var {tvar} = new {M(type.toClassName,type)};{tvar}",type)
+
 			elif isSelf
 				tvar.@datatype = 'this'
-				add "{tvar} = {type.c}"
+				add "var {tvar} = {type.c}"
 			elif isDynamicType
 				if @options:dynamic
-					add "{tvar} = new Γany"
-					add "{type.c}" # this is the string
+					add "var {tvar} = {type.c};{tvar}"
 				else
-					add "{tvar} = new {M('Γany',type)}"
-					add "{type.c}" # this is the string
+					add "var {tvar} = new {M('Γany',type)}"
 			else
-				add "{tvar} = new {M('HTMLElement',type)}"
-				add "{type.c}" # this is the string
+				add "var {tvar} = new {M('HTMLElement',type)}"
 
 			for item in @attributes
 				@ref = tvar
@@ -12875,9 +12867,8 @@ export class Scope
 					return v.reuse(decl)
 
 		var item = SystemVariable.new(self,name,decl,o)
-
 		@varpool.push(item) # It should not be in the pool unless explicitly put there?
-		@vars.push(item) # WARN variables should not go directly into a declaration-list
+		@vars.push(item) unless o:nodecl # WARN variables should not go directly into a declaration-list
 		if name and o:reuse
 			@vars["_temp_{name}"] = item
 		return item
@@ -13613,8 +13604,7 @@ export class SystemVariable < Variable
 			@name = "{o:gsym.replace(/\#/g,'$')}$"
 			return self
 
-		# let sysnr = STACK.tsc ? @scope.incr('sysvar') : STACK.incr('sysvar')
-		let sysnr = STACK.incr('sysvar')
+		let sysnr = STACK.tsc ? @scope.incr('sysvar') : STACK.incr('sysvar')
 		@name = "${sysnr}"
 		return self
 
