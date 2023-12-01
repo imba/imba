@@ -1,4 +1,3 @@
-# @ts-nocheck
 # imba$stdlib=1
 
 let routerInstance = null
@@ -13,9 +12,7 @@ import {commit,scheduler} from '../scheduler'
 import {proxy} from '../utils'
 import {Queue} from '../queue'
 
-extend class Document
-	get router\Router
-		#router ||= new Router(self)
+
 
 export def use_router
 	global.imba.use_router = yes
@@ -557,3 +554,7 @@ extend class Element
 				let res = await self.routed(match,route.state,prev)
 				unsuspend!
 		return
+
+extend class Document
+	get router\Router
+		#router ||= new Router(self)

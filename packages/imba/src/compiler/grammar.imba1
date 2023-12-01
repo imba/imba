@@ -578,8 +578,8 @@ var grammar =
 	TagDeclarationBlock: [
 		o 'TAG TagType' do TagDeclaration.new(A2).set(keyword: A1)
 		o 'TAG TagType ClassBody' do TagDeclaration.new(A2, null, A3).set(keyword: A1)
-		o 'TAG TagType COMPARE TagType' do TagDeclaration.new(A2, A4).set(keyword: A1)
-		o 'TAG TagType COMPARE TagType ClassBody' do TagDeclaration.new(A2, A4, A5).set(keyword: A1)
+		o 'TAG TagType COMPARE TagType' do TagDeclaration.new(A2, A4).set(keyword: A1, extends: A3)
+		o 'TAG TagType COMPARE TagType ClassBody' do TagDeclaration.new(A2, A4, A5).set(keyword: A1, extends: A3)
 	]
 
 	# Going to move back to fewer custom tokens
@@ -907,9 +907,9 @@ var grammar =
 		o 'CLASS ClassBody' do ClassDeclaration.new(null, null, A2).set(keyword: A1)
 		# o 'CLASS ClassName ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
 		# o 'CLASS ClassName ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
-		o 'CLASS ClassName COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1)
-		o 'CLASS ClassName COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1)
-		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1)
+		o 'CLASS ClassName COMPARE Expression' do ClassDeclaration.new(A2, A4, []).set(keyword: A1, extends: A3)
+		o 'CLASS ClassName COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A4, A5).set(keyword: A1, extends: A3)
+		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1, extends: A2)
 	]
 
 	ClassName: [

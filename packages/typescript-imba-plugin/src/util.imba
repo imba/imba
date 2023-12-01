@@ -236,8 +236,8 @@ extend class String
 export def toImbaDisplayParts parts
 	for part in parts
 		# if part.text[0] == 'Ω'
-		part.text = part.text
-		# part.text = toImbaIdentifier(part.text)
+		# part.text = part.text
+		part.text = toImbaIdentifier(part.text)
 		# part.text.replace(toImbaRegex,toImbaReplacer)
 	return parts
 

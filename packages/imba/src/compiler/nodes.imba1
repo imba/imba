@@ -208,7 +208,8 @@ export var F =
 export var TPL = do |vars,string,o = {}|
 	STACK.call(template: string) do
 		string = string.replace(/\%/g,'@')
-		string = string.replace(/\@\{(\@(\!?\w+)\? )?([^\}]+)\}/g) do|m,g,cond,subtpl|
+
+		string = string.replace(/\@\{(\@(\!?\w+)\? )?([^{}]*(:?\{[^{}]*\}[^{}]*)*)\}/g) do|m,g,cond,subtpl|
 			if cond
 				if cond[0] == '!'
 					return '' if vars[cond.slice(1)]
@@ -1409,6 +1410,11 @@ export class Node
 	# the "name-suggestion" for nodes if they need to be cached
 	def alias
 		null
+
+	# Shorthand for outputting sourcemapped keywords where it looks
+	# for an option with the same name in options
+	def mo val
+		M(val,@options and @options[val])
 
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
@@ -3926,35 +3932,6 @@ export class ClassDeclaration < Code
 			if up isa VarReference
 				try jshead += " {up.@value.@symbol}"
 
-		if @mixins:length
-
-			let all = []
-			for mixin in @mixins
-				all.push mixin
-
-			all.unshift sup or NULL
-			sup = null
-
-			all.unshift(refSym)
-			jshead += " extends {CALL(STACK.corelib['multi$'],all).c}"
-
-		if sup
-			supAccess = M(sup)
-			jshead += " extends {supAccess}"
-
-		if name isa Access and !exportForDts and !isExtension
-			# TODO or the definition is local
-			jshead = "{name.c} = {jshead}"
-
-		if option(:export) # or (tsc and (exportForDts or option(:global)))
-			# beware of double export
-			if option(:default)
-				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
-			else
-				jshead = "{M 'export',option(:export)} {jshead}"
-
-		let js = "{jshead} \{{jsbody}\}"
-
 		if tsc
 			let up = STACK.parent
 			let tpl = {
@@ -4029,6 +4006,23 @@ export class ClassDeclaration < Code
 				}
 				'''
 			return TPL(tpl,str)
+
+		if @mixins:length
+			jshead += " {mo('extends')} {CALL(STACK.corelib['multi$'],[refSym,sup or NULL].concat(@mixins)).c}"
+		elif sup
+			jshead += " {mo('extends')} {M(sup)}"
+
+		if name isa Access and !exportForDts and !isExtension
+			jshead = "{name.c} = {jshead}"
+
+		if option(:export) # or (tsc and (exportForDts or option(:global)))
+			# beware of double export
+			if option(:default)
+				jshead = "{mo('export')} {mo('default')} {jshead}"
+			else
+				jshead = "{mo('export')} {jshead}"
+
+		let js = "{jshead} \{{jsbody}\}"
 
 		if isExtension
 			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
@@ -4152,6 +4146,7 @@ export class TagDeclaration < ClassDeclaration
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
+		
 		let tsc = STACK.tsc
 		let className = name.toClassName
 		let sup = superclass
@@ -4159,6 +4154,7 @@ export class TagDeclaration < ClassDeclaration
 
 		let tpl = {
 			name: name.@str
+			mixins: AST.cary(@mixins).join(', ') or null
 		}
 
 		if tsc
@@ -4213,11 +4209,13 @@ export class TagDeclaration < ClassDeclaration
 						class %declareName extends %localName {}
 						interface HTMLElementTagNameMap { "%name": %declareName }
 					}
+					@{@mixins? interface %localName extends @mixins { }}
 					class %localName extends %superName { %body }
 				'''
 			else
 				return TPL tpl,'''
-					%export %default class %localName extends %superName { %body }
+				@{@mixins? %export %default interface %localName extends @mixins { }}
+				%export %default class %localName extends %superName { %body }
 				'''
 
 		elif option(:extension)
@@ -4236,13 +4234,18 @@ export class TagDeclaration < ClassDeclaration
 
 		let closure = scope__.parent
 		let jsbody = body.c()
-		let jshead = "{M 'class', keyword} {M className, name} extends {M sup, superclass}"
+		let jshead = "{M 'class', keyword} {M className, name} {mo('extends')} "
+
+		if @mixins:length
+			jshead += "{CALL(STACK.corelib['multi$'],[refSym,sup or NULL].concat(@mixins)).c}"
+		elif sup
+			jshead += "{M(sup)}"
 
 		if option(:export)
 			if option(:default)
-				jshead = "{M 'export',option(:export)} {M 'default',option(:default)} {jshead}"
+				jshead = "{mo 'export'} {mo 'default'} {jshead}"
 			else
-				jshead = "{M 'export',option(:export)} {jshead}"
+				jshead = "{mo 'export'} {jshead}"
 
 		let js = "{jshead} \{{jsbody}\}"
 
@@ -12384,6 +12387,7 @@ export class Util < Node
 
 	def called pars,std,name
 		if std and !STACK.isStdLib
+			# in typescript?
 			"{STACK.corelib[std].c}({AST.cary(pars).join(',')})"
 		else
 			scope__.root.helper(self,helper)
