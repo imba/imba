@@ -350,6 +350,10 @@ declare module "imba/compiler" {
     export function compile(fileName: string, options: any): any;
 }
 
+declare module "imba/runtime" {
+    export function iterable$<T>(a:T):(T extends {toIterable: (...args: any[]) => infer X} ? X : T);
+}
+
 declare module "imba/typings" {
 
 	interface ThemeColors {

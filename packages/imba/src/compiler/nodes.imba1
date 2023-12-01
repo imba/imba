@@ -5775,8 +5775,14 @@ export class UnaryOp < Op
 export class InstanceOf < Op
 
 	def js s,o
-		if String(@op) == 'instanceof'
-			let out = "{left.c} instanceof {right.c}"
+
+		if right instanceof Str
+			let out = "typeof {left.c}==={right.c}"
+			out = helpers.parenthesize(out) if s.parent isa Op
+			return out
+
+		if String(@op) == 'instanceof' or STACK.tsc
+			let out = "{left.c} {M('instanceof',@opToken)} {right.c}"
 			out = helpers.parenthesize(out) if s.parent isa Op
 			return out
 
@@ -8586,7 +8592,7 @@ export class ForOf < For
 				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let')
 
 		else
-			source = vars:source = STACK.tsc ? o:source : util.iterable(o:source)
+			source = vars:source = util.iterable(o:source) # STACK.tsc ? o:source : 
 			vars:value = o:value = o:name # need to visit these to declare them
 			let declvars = scope__.captureVariableDeclarations do
 				o:value.traverse(declaring: 'let')
@@ -12354,9 +12360,9 @@ export class Util < Node
 		return CALL(OP('.',obj,slice),AST.compact([a,b]))
 
 	def self.iterable obj, cache
-		return obj if STACK.tsc
+		# return obj if STACK.tsc
 		var node = Util.Iterable.new([obj])
-		node.cache(force: yes, pool: 'iter') if cache
+		node.cache(force: yes, pool: 'iter') if cache and !STACK.tsc
 		return node
 
 	def self.counter start, cache

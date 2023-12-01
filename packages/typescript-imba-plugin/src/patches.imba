@@ -358,8 +358,6 @@ export class Project
 	def resolveModuleNameLiterals ...params
 		let res = #resolveModuleNameLiterals(...params)
 
-		util.log('resolveModuleNameLiterals',params,res)
-
 		for item,i in res
 			let hit = item..resolvedModule
 			let name = hit..resolvedFileName
