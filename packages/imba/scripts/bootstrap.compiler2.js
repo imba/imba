@@ -1248,61 +1248,254 @@ var require_constants = __commonJS({
     }
   }
 });
+var runtime_exports = {};
+__export2(runtime_exports, {
+  HAS: () => HAS,
+  __has__: () => __has__,
+  __has__$: () => __has__$,
+  __hooks__: () => __hooks__,
+  __hooks__$: () => __hooks__$,
+  __imba__: () => __imba__,
+  __imba__$: () => __imba__$,
+  __init__: () => __init__,
+  __init__$: () => __init__$,
+  __inited__: () => __inited__,
+  __inited__$: () => __inited__$,
+  __initor__: () => __initor__,
+  __initor__$: () => __initor__$,
+  __meta__: () => __meta__,
+  __meta__$: () => __meta__$,
+  __mixin__: () => __mixin__,
+  __mixin__$: () => __mixin__$,
+  __patch__: () => __patch__,
+  __patch__$: () => __patch__$,
+  augment$: () => augment$,
+  decorate$: () => decorate$,
+  extend$: () => extend$,
+  has$: () => has$,
+  idx$: () => idx$,
+  inited$: () => inited$,
+  is$: () => is$,
+  isa$: () => isa$,
+  iterable$: () => iterable$,
+  matcher: () => matcher,
+  mixes: () => mixes,
+  multi$: () => multi$,
+  register$: () => register$,
+  statics$: () => statics$
+});
+function is$(a, b) {
+  var _a;
+  return a === b || ((_a = b == null ? void 0 : b[matcher]) == null ? void 0 : _a.call(b, a));
+}
 function isa$(a, b) {
   var _a;
   return typeof b === "string" ? typeof a === b : (_a = b == null ? void 0 : b[Symbol.hasInstance]) == null ? void 0 : _a.call(b, a);
+}
+function has$(a, b) {
+  var _a, _b, _c, _d, _e, _f;
+  return (_f = (_e = (_c = (_a = b == null ? void 0 : b[__has__$]) == null ? void 0 : _a.call(b, a)) != null ? _c : (_b = b == null ? void 0 : b.includes) == null ? void 0 : _b.call(b, a)) != null ? _e : (_d = b == null ? void 0 : b.has) == null ? void 0 : _d.call(b, a)) != null ? _f : false;
+}
+function idx$(a, b) {
+  return (b == null ? void 0 : b.indexOf) ? b.indexOf(a) : Array.prototype.indexOf.call(a, b);
+}
+function statics$(scope) {
+  return statics.get(scope) || statics.set(scope, {}).get(scope);
 }
 function iterable$(a) {
   var _a;
   return ((_a = a == null ? void 0 : a.toIterable) == null ? void 0 : _a.call(a)) || a;
 }
-function register$(klass, symbol, name) {
-  var _a, _b;
-  let supr = (_a = Object.getPrototypeOf(klass.prototype)) == null ? void 0 : _a.constructor;
-  let smeta = supr[__meta__];
-  let meta = klass[__meta__] = (smeta == null ? void 0 : smeta.symbol) == symbol ? smeta : Object.create(supr[__meta__] || null);
-  if (klass.name !== name && name) {
-    Object.defineProperty(klass, "name", { value: name, configurable: true });
+function decorate$(decorators, target, key, desc) {
+  let c = arguments.length;
+  let r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc;
+  let d;
+  let i = decorators.length;
+  while (i > 0) {
+    if (d = decorators[--i]) {
+      r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }
+    ;
   }
-  meta.id = state.counter++;
-  meta.name = klass.name;
-  meta.symbol = symbol;
-  let own = meta[symbol] || (meta[symbol] = {});
-  (_b = own.parent) != null ? _b : own.parent = supr;
-  if ((supr == null ? void 0 : supr.inherited) instanceof Function)
-    supr.inherited(klass);
-  return klass;
+  ;
+  c > 3 && r && Object.defineProperty(target, key, r);
+  return r;
 }
-function extend$(target, ext) {
+function isSameDesc(a, b) {
+  if (!a || !b)
+    return false;
+  if (a.get)
+    return b.get === a.get;
+  if (a.set)
+    return b.set === a.set;
+  if (a.value)
+    return a.value === b.value;
+}
+function extend$(target, ext, descs) {
   const klass = target.constructor;
-  const descs = Object.getOwnPropertyDescriptors(ext);
+  descs != null ? descs : descs = Object.getOwnPropertyDescriptors(ext);
+  const originals = Object.getOwnPropertyDescriptors(target);
   delete descs.constructor;
-  if (descs[__init__]) {
-    delete descs[__init__];
+  if (descs[__init__$]) {
+    delete descs[__init__$];
   }
   ;
   Object.defineProperties(target, descs);
-  let meta = klass[__meta__];
-  if (meta) {
-    let own = meta[meta.symbol];
-    if (own.augments) {
-      for (let target2 of own.augments) {
-        Object.defineProperties(target2.prototype, descs);
+  let meta = klass[__meta__$];
+  if (meta && meta.augments) {
+    for (let target2 of meta.augments) {
+      let current = Object.getOwnPropertyDescriptors(target2.prototype);
+      let defines = {};
+      for (let key of Object.keys(descs)) {
+        let prop = descs[key];
+        if (current[key] && !isSameDesc(originals[key], current[key]))
+          console.warn("wont extend", key);
+        else
+          defines[key] = prop;
       }
+      if (Object.keys(defines).length)
+        extend$(target2.prototype, null, defines);
     }
   }
   return target;
 }
-var __init__, __initor__, __inited__, __hooks__, __meta__, __imba__, state;
+function augment$(klass, mixin, meta) {
+  meta || (meta = klass[__meta__$]);
+  let mix = mixin[__meta__$];
+  meta.uses || (meta.uses = []);
+  meta.inits || (meta.inits = []);
+  if (mix.parent) {
+    if (!(klass.prototype instanceof mix.parent)) {
+      throw new Error(`Mixin ${mix.name} has superclass not present in target class`);
+    }
+  }
+  if (!mix.augments) {
+    mix.augments = /* @__PURE__ */ new Set();
+    let ref = mix.ref = /* @__PURE__ */ Symbol();
+    mixin.prototype[ref] = true;
+    Object.defineProperty(mixin, Symbol.hasInstance, {
+      value: function(rel) {
+        return rel && !!rel[ref];
+      }
+    });
+  }
+  if (klass.prototype[mix.ref]) {
+    return klass;
+  }
+  for (let v of mix.uses || []) {
+    augment$(klass, v, meta);
+  }
+  mix.augments.add(klass);
+  meta.uses.push(mixin);
+  let descs = Object.getOwnPropertyDescriptors(mixin.prototype);
+  delete descs.constructor;
+  delete descs.name;
+  if (descs[__init__$]) {
+    meta.inits.push(mixin.prototype[__init__$]);
+    delete descs[__init__$];
+  }
+  Object.defineProperties(klass.prototype, descs);
+  meta.top.version++;
+  return klass;
+}
+function multi$(symbol, sup, ...mixins) {
+  let Mixins = sup ? class extends sup {
+  } : class {
+  };
+  let meta = Mixins[__meta__$] = meta$(sup, symbol);
+  meta.parent = sup || false;
+  for (let mixin of mixins) {
+    augment$(Mixins, mixin, meta);
+  }
+  Mixins.prototype[symbol] = function(o, deep, fields) {
+    if (meta.inits)
+      for (let init of meta.inits) {
+        init.call(this, o, false, fields);
+      }
+    return;
+  };
+  return Mixins;
+}
+function meta$(up, symbol) {
+  let mup = up && up[__meta__$] || null;
+  if ((mup == null ? void 0 : mup.symbol) == symbol)
+    return mup;
+  let meta = Object.create(mup);
+  meta.top || (meta.top = { version: 0 });
+  meta.parent = null;
+  meta.own = {};
+  meta.up = mup;
+  meta.symbol = symbol;
+  meta.augments = null;
+  meta.inits = null;
+  meta.uses = null;
+  meta.top[symbol] = meta;
+  return meta;
+}
+function register$(klass, symbol, name, flags) {
+  var _a, _b;
+  let supr = (_a = Object.getPrototypeOf(klass.prototype)) == null ? void 0 : _a.constructor;
+  let meta = klass[__meta__$] = meta$(supr, symbol);
+  if (meta.parent)
+    supr = meta.parent;
+  if (klass.name !== name && name) {
+    Object.defineProperty(klass, "name", { value: name, configurable: true });
+  }
+  meta.id = state.counter++;
+  meta.parent = supr;
+  meta.flags = flags;
+  meta.name = klass.name;
+  meta.symbol = symbol;
+  let own = meta[symbol] || (meta[symbol] = {});
+  (_b = own.parent) != null ? _b : own.parent = supr;
+  meta.top.version++;
+  if (flags & HAS.CONSTRUCTOR)
+    klass.prototype[__initor__$] = symbol;
+  if ((supr == null ? void 0 : supr.inherited) instanceof Function)
+    supr.inherited(klass);
+  return klass;
+}
+function inited$(obj, symbol) {
+  var _a;
+  if (obj[__initor__$] === symbol) {
+    (_a = obj[__inited__$]) == null ? void 0 : _a.call(obj);
+    obj[__hooks__$] && obj[__hooks__$].inited(obj);
+  }
+}
+var __init__, __initor__, __inited__, __hooks__, __patch__, __has__, __meta__, __imba__, __mixin__, __init__$, __initor__$, __inited__$, __hooks__$, __patch__$, __has__$, __meta__$, __imba__$, __mixin__$, matcher, HAS, state, statics, mixes;
 var init_runtime = __esm({
   "src/imba/runtime.mjs"() {
     __init__ = /* @__PURE__ */ Symbol.for("#__init__");
     __initor__ = /* @__PURE__ */ Symbol.for("#__initor__");
     __inited__ = /* @__PURE__ */ Symbol.for("#__inited__");
     __hooks__ = /* @__PURE__ */ Symbol.for("#__hooks__");
+    __patch__ = /* @__PURE__ */ Symbol.for("#__patch__");
+    __has__ = /* @__PURE__ */ Symbol.for("#has");
     __meta__ = /* @__PURE__ */ Symbol.for("#meta");
     __imba__ = /* @__PURE__ */ Symbol.for("imba");
-    state = globalThis[__imba__] || (globalThis[__imba__] = { counter: 0 });
+    __mixin__ = /* @__PURE__ */ Symbol.for("#__mixin__");
+    __init__$ = /* @__PURE__ */ Symbol.for("#__init__");
+    __initor__$ = /* @__PURE__ */ Symbol.for("#__initor__");
+    __inited__$ = /* @__PURE__ */ Symbol.for("#__inited__");
+    __hooks__$ = /* @__PURE__ */ Symbol.for("#__hooks__");
+    __patch__$ = /* @__PURE__ */ Symbol.for("#__patch__");
+    __has__$ = /* @__PURE__ */ Symbol.for("#has");
+    __meta__$ = /* @__PURE__ */ Symbol.for("#meta");
+    __imba__$ = /* @__PURE__ */ Symbol.for("imba");
+    __mixin__$ = /* @__PURE__ */ Symbol.for("#__mixin__");
+    matcher = /* @__PURE__ */ Symbol.for("#matcher");
+    HAS = {
+      DECORATORS: 1 << 0,
+      ACCESSORS: 1 << 2,
+      FIELDS: 1 << 3,
+      CONSTRUCTOR: 1 << 4
+    };
+    state = globalThis[__imba__$] || (globalThis[__imba__$] = {
+      counter: 0,
+      classes: {}
+    });
+    statics = /* @__PURE__ */ new WeakMap();
+    mixes = multi$;
   }
 });
 var $1, $2, $3, $source$, $lineText$, $version$, DOCMAP, _Position, Position, _Range, Range, DiagnosticSeverity, _Diagnostic, Diagnostic;
@@ -1317,17 +1510,18 @@ var init_structures = __esm({
     $version$ = /* @__PURE__ */ Symbol.for("#version");
     DOCMAP = /* @__PURE__ */ new WeakMap();
     _Position = class {
-      [__init__]($$ = null, deep = true, fields = true) {
+      [__init__$]($$ = null, deep = true, fields = true) {
         this.line = $$ ? $$.line : void 0;
         this.character = $$ ? $$.character : void 0;
         this.offset = $$ ? $$.offset : void 0;
       }
       constructor(l, c, o, v = null) {
-        this[__init__]();
+        this[__init__$]();
         this.line = l;
         this.character = c;
         this.offset = o;
         this[$version$] = v;
+        inited$(this, $1);
       }
       toString() {
         return "" + this.line + ":" + this.character;
@@ -1338,17 +1532,18 @@ var init_structures = __esm({
     };
     Position = _Position;
     (() => {
-      register$(_Position, $1, "Position");
+      register$(_Position, $1, "Position", 16);
     })();
     _Range = class {
-      [__init__]($$ = null, deep = true, fields = true) {
+      [__init__$]($$ = null, deep = true, fields = true) {
         this.start = $$ ? $$.start : void 0;
         this.end = $$ ? $$.end : void 0;
       }
       constructor(start, end) {
-        this[__init__]();
+        this[__init__$]();
         this.start = start;
         this.end = end;
+        inited$(this, $2);
       }
       get offset() {
         return this.start.offset;
@@ -1371,7 +1566,7 @@ var init_structures = __esm({
     };
     Range = _Range;
     (() => {
-      register$(_Range, $2, "Range");
+      register$(_Range, $2, "Range", 16);
     })();
     DiagnosticSeverity = {
       Error: 1,
@@ -1392,6 +1587,7 @@ var init_structures = __esm({
         this.source = data.source;
         this.message = data.message;
         DOCMAP.set(this, doc);
+        inited$(this, $3);
       }
       get [$source$]() {
         return DOCMAP.get(this);
@@ -1425,7 +1621,7 @@ var init_structures = __esm({
     };
     Diagnostic = _Diagnostic;
     (() => {
-      register$(_Diagnostic, $3, "Diagnostic");
+      register$(_Diagnostic, $3, "Diagnostic", 16);
     })();
   }
 });
@@ -1551,10 +1747,11 @@ var init_utils = __esm({
     init_structures();
     $12 = /* @__PURE__ */ Symbol();
     _Converter = class {
-      constructor(rules, matcher) {
+      constructor(rules, matcher2) {
         this.cache = {};
         this.rules = rules;
-        this.matcher = matcher;
+        this.matcher = matcher2;
+        inited$(this, $12);
       }
       convert(value) {
         for (let $213 = 0, $37 = iterable$(this.rules), $43 = $37.length; $213 < $43; $213++) {
@@ -1573,7 +1770,7 @@ var init_utils = __esm({
     };
     Converter = _Converter;
     (() => {
-      register$(_Converter, $12, "Converter");
+      register$(_Converter, $12, "Converter", 16);
     })();
   }
 });
@@ -3979,9 +4176,10 @@ var init_lexer2 = __esm({
     $13 = /* @__PURE__ */ Symbol();
     _LexedLine = class {
       constructor($$ = null) {
-        this[__init__]($$);
+        this[__init__$]($$);
+        inited$(this, $13);
       }
-      [__init__]($$ = null, deep = true, fields = true) {
+      [__init__$]($$ = null, deep = true, fields = true) {
         this.offset = $$ ? $$.offset : void 0;
         this.text = $$ ? $$.text : void 0;
         this.tokens = $$ ? $$.tokens : void 0;
@@ -4009,7 +4207,7 @@ var init_lexer2 = __esm({
     };
     LexedLine = _LexedLine;
     (() => {
-      register$(_LexedLine, $13, "LexedLine");
+      register$(_LexedLine, $13, "LexedLine", 16);
     })();
     compiled = compile("imba", grammar);
     lexer = new MonarchTokenizer("imba", compiled);
@@ -4267,18 +4465,18 @@ var init_symbol = __esm({
     ];
     ConversionCache = {};
     _Sym = class {
-      [__init__]($$ = null, deep = true, fields = true) {
-        var $43;
+      [__init__$]($$ = null, deep = true, fields = true) {
+        var $0;
         this.value = $$ ? $$.value : void 0;
-        this.body = $$ && ($43 = $$.body) !== void 0 ? $43 : null;
+        this.body = $$ && ($0 = $$.body) !== void 0 ? $0 : null;
       }
       static typeMatch(type) {
         if (ConversionCache[type] != void 0) {
           return ConversionCache[type];
         }
         ;
-        for (let i = 0, $53 = iterable$(Conversions), $63 = $53.length; i < $63; i++) {
-          let [strtest, modtest, flags, o] = $53[i];
+        for (let i = 0, $43 = iterable$(Conversions), $53 = $43.length; i < $53; i++) {
+          let [strtest, modtest, flags, o] = $43[i];
           if (type.indexOf(strtest) >= 0) {
             return ConversionCache[type] = Conversions[i];
           }
@@ -4297,11 +4495,12 @@ var init_symbol = __esm({
         return null;
       }
       constructor(flags, name, node, desc = null) {
-        this[__init__]();
+        this[__init__$]();
         this.flags = flags;
         this.name = name;
         this.node = node;
         this.desc = desc;
+        inited$(this, $14);
       }
       get importSource() {
         if (!this.imported\u03A6) {
@@ -4487,19 +4686,19 @@ var init_symbol = __esm({
     };
     Sym = _Sym;
     (() => {
-      register$(_Sym, $14, "Sym");
+      register$(_Sym, $14, "Sym", 16);
     })();
     _ForVar = class extends Sym {
     };
     ForVar = _ForVar;
     (() => {
-      register$(_ForVar, $22, "ForVar");
+      register$(_ForVar, $22, "ForVar", 0);
     })();
     _SymbolMap = class {
     };
     SymbolMap = _SymbolMap;
     (() => {
-      register$(_SymbolMap, $32, "SymbolMap");
+      register$(_SymbolMap, $32, "SymbolMap", 0);
     })();
   }
 });
@@ -4570,9 +4769,9 @@ var init_scope = __esm({
       __realname: { datatype: "\\string" }
     };
     _Node = class {
-      [__init__]($$ = null, deep = true, fields = true) {
-        var $362;
-        this.type = $$ && ($362 = $$.type) !== void 0 ? $362 : "";
+      [__init__$]($$ = null, deep = true, fields = true) {
+        var $0;
+        this.type = $$ && ($0 = $$.type) !== void 0 ? $0 : "";
         this.start = $$ ? $$.start : void 0;
         this.end = $$ ? $$.end : void 0;
         this.parent = $$ ? $$.parent : void 0;
@@ -4581,7 +4780,7 @@ var init_scope = __esm({
         return new this(doc, tok, scope, typ, types);
       }
       constructor(doc, token, parent, type) {
-        this[__init__]();
+        this[__init__$]();
         this.doc = doc;
         this.start = token;
         this.end = null;
@@ -4589,6 +4788,7 @@ var init_scope = __esm({
         this.parent = parent;
         this.$name = null;
         token.scope = this;
+        inited$(this, $15);
       }
       pop(end) {
         this.end = end;
@@ -4680,12 +4880,12 @@ var init_scope = __esm({
     };
     Node = _Node;
     (() => {
-      register$(_Node, $15, "Node");
+      register$(_Node, $15, "Node", 16);
     })();
     _Group = class extends Node {
       constructor(doc, token, parent, type, parts = []) {
         super(doc, token, parent, type);
-        this[__initor__] === $23 && (this[__hooks__] && this[__hooks__].inited(this), this[__inited__] && this[__inited__]());
+        inited$(this, $23);
       }
       get scope() {
         return this.parent.scope;
@@ -4702,20 +4902,19 @@ var init_scope = __esm({
     };
     Group = _Group;
     (() => {
-      _Group.prototype[__initor__] = $23;
-      register$(_Group, $23, "Group");
+      register$(_Group, $23, "Group", 16);
     })();
     _ValueNode = class extends Group {
     };
     ValueNode = _ValueNode;
     (() => {
-      register$(_ValueNode, $33, "ValueNode");
+      register$(_ValueNode, $33, "ValueNode", 0);
     })();
     _StringNode = class extends Group {
     };
     StringNode = _StringNode;
     (() => {
-      register$(_StringNode, $4, "StringNode");
+      register$(_StringNode, $4, "StringNode", 0);
     })();
     _StyleNode = class extends Group {
       get properties() {
@@ -4724,13 +4923,13 @@ var init_scope = __esm({
     };
     StyleNode = _StyleNode;
     (() => {
-      register$(_StyleNode, $5, "StyleNode");
+      register$(_StyleNode, $5, "StyleNode", 0);
     })();
     _StyleRuleNode = class extends Group {
     };
     StyleRuleNode = _StyleRuleNode;
     (() => {
-      register$(_StyleRuleNode, $6, "StyleRuleNode");
+      register$(_StyleRuleNode, $6, "StyleRuleNode", 0);
     })();
     _Scope = class extends Node {
       constructor(doc, token, parent, type, parts = []) {
@@ -4740,8 +4939,8 @@ var init_scope = __esm({
         this.refs = [];
         this.varmap = Object.create(parent ? parent.varmap : {});
         if (isa$(this, Root)) {
-          for (let $37 = 0, $38 = Object.keys(Globals), $39 = $38.length, key, val; $37 < $39; $37++) {
-            key = $38[$37];
+          for (let $362 = 0, $37 = Object.keys(Globals), $38 = $37.length, key, val; $362 < $38; $362++) {
+            key = $37[$362];
             val = Globals[key];
             let tok = { value: key, offset: -1, mods: 0 };
             this.varmap[key] = new Sym(SymbolFlags.GlobalVar, key, tok, val);
@@ -4752,7 +4951,7 @@ var init_scope = __esm({
         this.indent = parts[3] && parts[3][0] == "	" ? parts[3].length : 0;
         this.setup();
         return this;
-        this[__initor__] === $7 && (this[__hooks__] && this[__hooks__].inited(this), this[__inited__] && this[__inited__]());
+        inited$(this, $7);
       }
       setup() {
         if (this.handler\u03A6) {
@@ -4893,32 +5092,31 @@ var init_scope = __esm({
     };
     Scope = _Scope;
     (() => {
-      _Scope.prototype[__initor__] = $7;
-      register$(_Scope, $7, "Scope");
+      register$(_Scope, $7, "Scope", 16);
     })();
     _Root = class extends Scope {
     };
     Root = _Root;
     (() => {
-      register$(_Root, $8, "Root");
+      register$(_Root, $8, "Root", 0);
     })();
     _Class = class extends Scope {
     };
     Class = _Class;
     (() => {
-      register$(_Class, $9, "Class");
+      register$(_Class, $9, "Class", 0);
     })();
     _Method = class extends Scope {
     };
     Method = _Method;
     (() => {
-      register$(_Method, $10, "Method");
+      register$(_Method, $10, "Method", 0);
     })();
     _Flow = class extends Scope {
     };
     Flow = _Flow;
     (() => {
-      register$(_Flow, $11, "Flow");
+      register$(_Flow, $11, "Flow", 0);
     })();
     _ForScope = class extends Scope {
       get expression() {
@@ -4933,7 +5131,7 @@ var init_scope = __esm({
     };
     ForScope = _ForScope;
     (() => {
-      register$(_ForScope, $122, "ForScope");
+      register$(_ForScope, $122, "ForScope", 0);
     })();
     _WeakScope = class extends Scope {
       register(symbol) {
@@ -4945,7 +5143,7 @@ var init_scope = __esm({
     };
     WeakScope = _WeakScope;
     (() => {
-      register$(_WeakScope, $132, "WeakScope");
+      register$(_WeakScope, $132, "WeakScope", 0);
     })();
     _FieldScope = class extends Scope {
       get selfScope() {
@@ -4954,13 +5152,13 @@ var init_scope = __esm({
     };
     FieldScope = _FieldScope;
     (() => {
-      register$(_FieldScope, $142, "FieldScope");
+      register$(_FieldScope, $142, "FieldScope", 0);
     })();
     _SelectorNode = class extends Group {
     };
     SelectorNode = _SelectorNode;
     (() => {
-      register$(_SelectorNode, $152, "SelectorNode");
+      register$(_SelectorNode, $152, "SelectorNode", 0);
     })();
     _StylePropKey = class extends Group {
       get propertyName() {
@@ -4984,7 +5182,7 @@ var init_scope = __esm({
     };
     StylePropKey = _StylePropKey;
     (() => {
-      register$(_StylePropKey, $16, "StylePropKey");
+      register$(_StylePropKey, $16, "StylePropKey", 0);
     })();
     _StylePropValue = class extends Group {
       get key() {
@@ -4999,7 +5197,7 @@ var init_scope = __esm({
     };
     StylePropValue = _StylePropValue;
     (() => {
-      register$(_StylePropValue, $17, "StylePropValue");
+      register$(_StylePropValue, $17, "StylePropValue", 0);
     })();
     _StylePropNode = class extends Group {
       get key() {
@@ -5023,13 +5221,13 @@ var init_scope = __esm({
     };
     StylePropNode = _StylePropNode;
     (() => {
-      register$(_StylePropNode, $18, "StylePropNode");
+      register$(_StylePropNode, $18, "StylePropNode", 0);
     })();
     _StyleInterpolation = class extends Group {
     };
     StyleInterpolation = _StyleInterpolation;
     (() => {
-      register$(_StyleInterpolation, $19, "StyleInterpolation");
+      register$(_StyleInterpolation, $19, "StyleInterpolation", 0);
     })();
     _PathNode = class extends Group {
       get innerText() {
@@ -5038,7 +5236,7 @@ var init_scope = __esm({
     };
     PathNode = _PathNode;
     (() => {
-      register$(_PathNode, $20, "PathNode");
+      register$(_PathNode, $20, "PathNode", 0);
     })();
     _TagNode = class extends Group {
       get name() {
@@ -5073,7 +5271,7 @@ var init_scope = __esm({
     };
     TagNode = _TagNode;
     (() => {
-      register$(_TagNode, $21, "TagNode");
+      register$(_TagNode, $21, "TagNode", 0);
     })();
     _TagAttrNode = class extends Group {
       get propertyName() {
@@ -5090,7 +5288,7 @@ var init_scope = __esm({
     };
     TagAttrNode = _TagAttrNode;
     (() => {
-      register$(_TagAttrNode, $222, "TagAttrNode");
+      register$(_TagAttrNode, $222, "TagAttrNode", 0);
     })();
     _TagAttrValueNode = class extends Group {
       get propertyName() {
@@ -5102,7 +5300,7 @@ var init_scope = __esm({
     };
     TagAttrValueNode = _TagAttrValueNode;
     (() => {
-      register$(_TagAttrValueNode, $232, "TagAttrValueNode");
+      register$(_TagAttrValueNode, $232, "TagAttrValueNode", 0);
     })();
     _TagContent = class extends WeakScope {
       get ownerTag() {
@@ -5120,7 +5318,7 @@ var init_scope = __esm({
     };
     TagContent = _TagContent;
     (() => {
-      register$(_TagContent, $24, "TagContent");
+      register$(_TagContent, $24, "TagContent", 0);
     })();
     _Listener = class extends Group {
       get name() {
@@ -5129,13 +5327,13 @@ var init_scope = __esm({
     };
     Listener = _Listener;
     (() => {
-      register$(_Listener, $25, "Listener");
+      register$(_Listener, $25, "Listener", 0);
     })();
     _ParensNode = class extends Group {
     };
     ParensNode = _ParensNode;
     (() => {
-      register$(_ParensNode, $26, "ParensNode");
+      register$(_ParensNode, $26, "ParensNode", 0);
     })();
     _BracketsNode = class extends Group {
       static build(doc, tok, scope, typ, types) {
@@ -5154,19 +5352,19 @@ var init_scope = __esm({
     };
     BracketsNode = _BracketsNode;
     (() => {
-      register$(_BracketsNode, $27, "BracketsNode");
+      register$(_BracketsNode, $27, "BracketsNode", 0);
     })();
     _BracesNode = class extends Group {
     };
     BracesNode = _BracesNode;
     (() => {
-      register$(_BracesNode, $28, "BracesNode");
+      register$(_BracesNode, $28, "BracesNode", 0);
     })();
     _SpecifiersNode = class extends BracesNode {
     };
     SpecifiersNode = _SpecifiersNode;
     (() => {
-      register$(_SpecifiersNode, $29, "SpecifiersNode");
+      register$(_SpecifiersNode, $29, "SpecifiersNode", 0);
     })();
     _ArrayNode = class extends BracketsNode {
       get delimiters() {
@@ -5175,12 +5373,12 @@ var init_scope = __esm({
         });
       }
       indexOfNode(node) {
-        var $40;
+        var $39;
         let delims = this.delimiters;
         let index = 0;
-        $40 = 0;
+        $39 = 0;
         for (let delim of iterable$(delims)) {
-          let i = $40++;
+          let i = $39++;
           if (node.offset > delim.offset) {
             index++;
           }
@@ -5192,19 +5390,19 @@ var init_scope = __esm({
     };
     ArrayNode = _ArrayNode;
     (() => {
-      register$(_ArrayNode, $30, "ArrayNode");
+      register$(_ArrayNode, $30, "ArrayNode", 0);
     })();
     _IndexNode = class extends BracketsNode {
     };
     IndexNode = _IndexNode;
     (() => {
-      register$(_IndexNode, $31, "IndexNode");
+      register$(_IndexNode, $31, "IndexNode", 0);
     })();
     _TypeAnnotationNode = class extends Group {
       constructor() {
         super(...arguments);
         this.prev.datatype = this;
-        this[__initor__] === $322 && (this[__hooks__] && this[__hooks__].inited(this), this[__inited__] && this[__inited__]());
+        inited$(this, $322);
       }
       toString() {
         return this.value;
@@ -5212,20 +5410,19 @@ var init_scope = __esm({
     };
     TypeAnnotationNode = _TypeAnnotationNode;
     (() => {
-      _TypeAnnotationNode.prototype[__initor__] = $322;
-      register$(_TypeAnnotationNode, $322, "TypeAnnotationNode");
+      register$(_TypeAnnotationNode, $322, "TypeAnnotationNode", 16);
     })();
     _InterpolatedValueNode = class extends Group {
     };
     InterpolatedValueNode = _InterpolatedValueNode;
     (() => {
-      register$(_InterpolatedValueNode, $332, "InterpolatedValueNode");
+      register$(_InterpolatedValueNode, $332, "InterpolatedValueNode", 0);
     })();
     _ObjectNode = class extends BracesNode {
     };
     ObjectNode = _ObjectNode;
     (() => {
-      register$(_ObjectNode, $34, "ObjectNode");
+      register$(_ObjectNode, $34, "ObjectNode", 0);
     })();
     _ImportsNode = class extends Group {
       get isTypeOnly() {
@@ -5255,7 +5452,7 @@ var init_scope = __esm({
     };
     ImportsNode = _ImportsNode;
     (() => {
-      register$(_ImportsNode, $35, "ImportsNode");
+      register$(_ImportsNode, $35, "ImportsNode", 0);
     })();
     ScopeTypeMap = {
       style: StyleNode,
@@ -5331,7 +5528,7 @@ var init_document = __esm({
     };
     \u03A9Token = _\u03A9Token;
     (() => {
-      register$(_\u03A9Token, $110, "Token");
+      register$(_\u03A9Token, $110, "Token", 0);
     })();
     extend$(Token.prototype, \u03A9Token.prototype);
     _ImbaDocument = class {
@@ -5360,6 +5557,7 @@ var init_document = __esm({
           this.isLegacy = true;
         }
         ;
+        inited$(this, $210);
       }
       log(...params) {
         return console.log(...params);
@@ -5819,15 +6017,15 @@ var init_document = __esm({
         ;
         return tok;
       }
-      patternAtOffset(offset, matcher = /[\w\-\.\%]/) {
+      patternAtOffset(offset, matcher2 = /[\w\-\.\%]/) {
         let from = offset;
         let to = offset;
         let str = this.content;
-        while (from > 0 && matcher.test(this.content[from - 1])) {
+        while (from > 0 && matcher2.test(this.content[from - 1])) {
           from--;
         }
         ;
-        while (matcher.test(this.content[to + 1] || "")) {
+        while (matcher2.test(this.content[to + 1] || "")) {
           to++;
         }
         ;
@@ -6694,7 +6892,7 @@ var init_document = __esm({
     };
     ImbaDocument = _ImbaDocument;
     (() => {
-      register$(_ImbaDocument, $210, "ImbaDocument");
+      register$(_ImbaDocument, $210, "ImbaDocument", 16);
     })();
   }
 });
@@ -6896,7 +7094,7 @@ var init_sourcemapper = __esm({
     };
     SourceMapper = _SourceMapper;
     (() => {
-      register$(_SourceMapper, $111, "SourceMapper");
+      register$(_SourceMapper, $111, "SourceMapper", 0);
     })();
   }
 });
@@ -6927,7 +7125,7 @@ var init_compilation = __esm({
     };
     CompilationResult = _CompilationResult;
     (() => {
-      register$(_CompilationResult, $112, "CompilationResult");
+      register$(_CompilationResult, $112, "CompilationResult", 0);
     })();
     _Compilation = class {
       static error(opts) {
@@ -7095,7 +7293,7 @@ var init_compilation = __esm({
     Compilation = _Compilation;
     (() => {
       _Compilation.current = void 0;
-      register$(_Compilation, $211, "Compilation");
+      register$(_Compilation, $211, "Compilation", 16);
     })();
   }
 });
@@ -7295,7 +7493,7 @@ var require_lexer = __commonJS({
     function len$(a) {
       return a && (a.len instanceof Function ? a.len() : a.length) || 0;
     }
-    function idx$(a, b) {
+    function idx$2(a, b) {
       return b && b.indexOf ? b.indexOf(a) : [].indexOf.call(a, b);
     }
     function iter$(a) {
@@ -8207,7 +8405,7 @@ var require_lexer = __commonJS({
         if (m = this._chunk.match(/^[gs]et ([\$\w\-]+|\[)/)) {
           let ctx = this._contexts[this._contexts.length - 1] || {};
           let before = ctx.opener && this._tokens[this._tokens.indexOf(ctx.opener) - 1];
-          if (idx$(this._lastTyp, ["TERMINATOR", "INDENT"]) >= 0) {
+          if (idx$2(this._lastTyp, ["TERMINATOR", "INDENT"]) >= 0) {
             if (before && (before._type == "=" || before._type == "{")) {
               return true;
             }
@@ -8224,15 +8422,15 @@ var require_lexer = __commonJS({
       ;
       if (id == "css") {
         return true;
-        if (idx$(this._lastTyp, ["TERMINATOR"]) >= 0 || !this._lastTyp) {
+        if (idx$2(this._lastTyp, ["TERMINATOR"]) >= 0 || !this._lastTyp) {
           return true;
         }
         ;
-        if (idx$(this._lastVal, ["global", "local", "export", "default"]) >= 0) {
+        if (idx$2(this._lastVal, ["global", "local", "export", "default"]) >= 0) {
           return true;
         }
         ;
-        if (idx$(this._lastTyp, ["="]) >= 0) {
+        if (idx$2(this._lastTyp, ["="]) >= 0) {
           return true;
         }
         ;
@@ -8242,11 +8440,11 @@ var require_lexer = __commonJS({
         var scop = this.getScope();
         var incls = scop == "CLASS" || scop == "TAG" || scop == "EXTEND";
         if (id == "declare") {
-          return incls && idx$(this._lastTyp, ["INDENT", "TERMINATOR", "DECORATOR"]) >= 0;
+          return incls && idx$2(this._lastTyp, ["INDENT", "TERMINATOR", "DECORATOR"]) >= 0;
         }
         ;
         if (id == "constructor") {
-          return incls && idx$(this._lastTyp, ["INDENT", "TERMINATOR", "DECORATOR"]) >= 0;
+          return incls && idx$2(this._lastTyp, ["INDENT", "TERMINATOR", "DECORATOR"]) >= 0;
         }
         ;
         if (incls) {
@@ -8551,7 +8749,7 @@ var require_lexer = __commonJS({
       ;
       symbol = match[0];
       prev = last(this._tokens);
-      if (!prev || prev.spaced || idx$(this._prevVal, ["(", "[", "="]) >= 0) {
+      if (!prev || prev.spaced || idx$2(this._prevVal, ["(", "[", "="]) >= 0) {
         let sym = helpers2.dashToCamelCase(symbol.slice(1));
         this.token("STRING", '"' + sym + '"', match[0].length);
         return match[0].length;
@@ -8737,7 +8935,7 @@ var require_lexer = __commonJS({
       }
       ;
       prev = last(this._tokens);
-      if (prev && idx$(tT(prev), prev.spaced ? NOT_REGEX : NOT_SPACED_REGEX) >= 0) {
+      if (prev && idx$2(tT(prev), prev.spaced ? NOT_REGEX : NOT_SPACED_REGEX) >= 0) {
         return 0;
       }
       ;
@@ -9159,17 +9357,17 @@ var require_lexer = __commonJS({
         tokid = "EXP";
       } else if (value == "%" && (pt == "NUMBER" || pt == ")") && !prev.spaced) {
         tokid = "UNIT";
-      } else if (idx$(value, MATH) >= 0) {
+      } else if (idx$2(value, MATH) >= 0) {
         tokid = "MATH";
-      } else if (idx$(value, COMPARE) >= 0) {
+      } else if (idx$2(value, COMPARE) >= 0) {
         tokid = "COMPARE";
-      } else if (idx$(value, COMPOUND_ASSIGN) >= 0) {
+      } else if (idx$2(value, COMPOUND_ASSIGN) >= 0) {
         tokid = "COMPOUND_ASSIGN";
-      } else if (idx$(value, UNARY) >= 0) {
+      } else if (idx$2(value, UNARY) >= 0) {
         tokid = "UNARY";
-      } else if (idx$(value, SHIFT) >= 0) {
+      } else if (idx$2(value, SHIFT) >= 0) {
         tokid = "SHIFT";
-      } else if (idx$(value, LOGIC) >= 0) {
+      } else if (idx$2(value, LOGIC) >= 0) {
         tokid = "LOGIC";
       } else if (prev && !prev.spaced) {
         if (value == "{" && pt == "IDENTIFIER") {
@@ -9178,11 +9376,11 @@ var require_lexer = __commonJS({
           tokid = "{{";
         }
         ;
-        if (value === "(" && idx$(pt, CALLABLE) >= 0) {
+        if (value === "(" && idx$2(pt, CALLABLE) >= 0) {
           tokid = "CALL_START";
         } else if (value === "(" && pt == "DO") {
           tokid = "BLOCK_PARAM_START";
-        } else if (value === "[" && idx$(pt, INDEXABLE) >= 0) {
+        } else if (value === "[" && idx$2(pt, INDEXABLE) >= 0) {
           tokid = "INDEX_START";
           if (pt == "?") {
             tTs(prev, "INDEX_SOAK");
@@ -9193,9 +9391,9 @@ var require_lexer = __commonJS({
       }
       ;
       if (pv == "&" && pt != "AMPER_REF") {
-        if (!prev.spaced && idx$(tokid, ["COMPARE", ".", "(", "["]) >= 0) {
+        if (!prev.spaced && idx$2(tokid, ["COMPARE", ".", "(", "["]) >= 0) {
           tTs(prev, pt = "AMPER_REF");
-        } else if (prev.spaced && idx$(tokid, ["COMPARE"]) >= 0) {
+        } else if (prev.spaced && idx$2(tokid, ["COMPARE"]) >= 0) {
           tTs(prev, pt = "AMPER_REF");
         }
         ;
@@ -9613,7 +9811,7 @@ var require_lexer = __commonJS({
 });
 var require_rewriter = __commonJS({
   "src/compiler/rewriter.imba1"(exports) {
-    function idx$(a, b) {
+    function idx$2(a, b) {
       return b && b.indexOf ? b.indexOf(a) : [].indexOf.call(a, b);
     }
     function iter$(a) {
@@ -10107,7 +10305,7 @@ var require_rewriter = __commonJS({
           true;
         }
         ;
-        let isDefInObject = type == defType && idx$(indents[0], ["CLASS", "DEF", "MODULE", "TAG", "STRUCT"]) == -1;
+        let isDefInObject = type == defType && idx$2(indents[0], ["CLASS", "DEF", "MODULE", "TAG", "STRUCT"]) == -1;
         if ((type == ":" || isDefInObject) && ctx[0] != "{" && ctx[0] != "TERNARY" && (noBraceContext.indexOf(ctx[0]) == -1 || ctx[0] == defType)) {
           var tprev = tokens[i - 2];
           let autoClose = false;
@@ -10126,11 +10324,11 @@ var require_rewriter = __commonJS({
           ;
           var t0 = tokens[idx - 1];
           var t1 = tokens[idx];
-          if (!tprev || idx$(tprev._type, ["INDENT", "TERMINATOR"]) == -1) {
+          if (!tprev || idx$2(tprev._type, ["INDENT", "TERMINATOR"]) == -1) {
             autoClose = true;
           }
           ;
-          if (indents[0] && idx$(indents[0], ["CLASS", "DEF", "MODULE", "TAG", "STRUCT"]) >= 0) {
+          if (indents[0] && idx$2(indents[0], ["CLASS", "DEF", "MODULE", "TAG", "STRUCT"]) >= 0) {
             autoClose = true;
           }
           ;
@@ -11167,10 +11365,10 @@ var require_parser = __commonJS({
               self.$ = new yy.TagDeclaration($$[$0 - 1], null, $$[$0]).set({ keyword: $$[$0 - 2] });
               break;
             case 249:
-              self.$ = new yy.TagDeclaration($$[$0 - 2], $$[$0]).set({ keyword: $$[$0 - 3] });
+              self.$ = new yy.TagDeclaration($$[$0 - 2], $$[$0]).set({ keyword: $$[$0 - 3], extends: $$[$0 - 1] });
               break;
             case 250:
-              self.$ = new yy.TagDeclaration($$[$0 - 3], $$[$0 - 1], $$[$0]).set({ keyword: $$[$0 - 4] });
+              self.$ = new yy.TagDeclaration($$[$0 - 3], $$[$0 - 1], $$[$0]).set({ keyword: $$[$0 - 4], extends: $$[$0 - 2] });
               break;
             case 252:
               self.$ = new yy.TagIdRef($$[$0]);
@@ -11378,13 +11576,13 @@ var require_parser = __commonJS({
               self.$ = new yy.ClassDeclaration(null, null, $$[$0]).set({ keyword: $$[$0 - 1] });
               break;
             case 392:
-              self.$ = new yy.ClassDeclaration($$[$0 - 2], $$[$0], []).set({ keyword: $$[$0 - 3] });
+              self.$ = new yy.ClassDeclaration($$[$0 - 2], $$[$0], []).set({ keyword: $$[$0 - 3], extends: $$[$0 - 1] });
               break;
             case 393:
-              self.$ = new yy.ClassDeclaration($$[$0 - 3], $$[$0 - 1], $$[$0]).set({ keyword: $$[$0 - 4] });
+              self.$ = new yy.ClassDeclaration($$[$0 - 3], $$[$0 - 1], $$[$0]).set({ keyword: $$[$0 - 4], extends: $$[$0 - 2] });
               break;
             case 394:
-              self.$ = new yy.ClassDeclaration(null, $$[$0 - 1], $$[$0]).set({ keyword: $$[$0 - 3] });
+              self.$ = new yy.ClassDeclaration(null, $$[$0 - 1], $$[$0]).set({ keyword: $$[$0 - 3], extends: $$[$0 - 2] });
               break;
             case 401:
               self.$ = new yy.ClassBody([]).indented($$[$0 - 1], $$[$0]);
@@ -11891,7 +12089,7 @@ var require_sourcemap = __commonJS({
     };
     SourceMap.prototype.parse = function() {
       var self = this;
-      var matcher = /\/\*\%([\w\|]*)?\$\*\//;
+      var matcher2 = /\/\*\%([\w\|]*)?\$\*\//;
       var replacer = /^(.*?)\/\*\%([\w\|]*)\$\*\//;
       var prejs = self._script.js;
       var lines = self._script.js.split(/\n/g);
@@ -11912,7 +12110,7 @@ var require_sourcemap = __commonJS({
         var col = 0;
         var caret = -1;
         self._maps[i] = [];
-        while (line.match(matcher)) {
+        while (line.match(matcher2)) {
           line = line.replace(replacer, function(m, pre, meta) {
             var grp;
             if (meta == "") {
@@ -15041,7 +15239,7 @@ var init_styler = __esm({
     };
     Color = _Color;
     (() => {
-      register$(_Color, $113, "Color");
+      register$(_Color, $113, "Color", 16);
     })();
     _NamedColor = class extends Color {
       toVar() {
@@ -15050,7 +15248,7 @@ var init_styler = __esm({
     };
     NamedColor = _NamedColor;
     (() => {
-      register$(_NamedColor, $212, "NamedColor");
+      register$(_NamedColor, $212, "NamedColor", 0);
     })();
     _Tint = class extends Color {
       alpha(a = 1) {
@@ -15072,7 +15270,7 @@ var init_styler = __esm({
     };
     Tint = _Tint;
     (() => {
-      register$(_Tint, $36, "Tint");
+      register$(_Tint, $36, "Tint", 0);
     })();
     _Length = class {
       static parse(value) {
@@ -15111,7 +15309,7 @@ var init_styler = __esm({
     };
     Length = _Length;
     (() => {
-      register$(_Length, $42, "Length");
+      register$(_Length, $42, "Length", 16);
     })();
     _Var = class {
       constructor(name, fallback) {
@@ -15124,7 +15322,7 @@ var init_styler = __esm({
     };
     Var = _Var;
     (() => {
-      register$(_Var, $52, "Var");
+      register$(_Var, $52, "Var", 16);
     })();
     _Calc = class {
       constructor(expr) {
@@ -15155,7 +15353,7 @@ var init_styler = __esm({
     };
     Calc = _Calc;
     (() => {
-      register$(_Calc, $62, "Calc");
+      register$(_Calc, $62, "Calc", 16);
     })();
     defaultPalette = {
       current: { string: "currentColor", c: function() {
@@ -16015,7 +16213,7 @@ var init_styler = __esm({
     };
     StyleTheme = _StyleTheme;
     (() => {
-      register$(_StyleTheme, $72, "StyleTheme");
+      register$(_StyleTheme, $72, "StyleTheme", 16);
     })();
     StyleExtenders = {
       transform: {
@@ -16192,7 +16390,7 @@ var init_styler = __esm({
     };
     StyleSheet = _StyleSheet;
     (() => {
-      register$(_StyleSheet, $82, "StyleSheet");
+      register$(_StyleSheet, $82, "StyleSheet", 16);
     })();
     _StyleRule = class {
       constructor(parent, selector, content, options = {}) {
@@ -16395,7 +16593,7 @@ var init_styler = __esm({
     };
     StyleRule = _StyleRule;
     (() => {
-      register$(_StyleRule, $92, "StyleRule");
+      register$(_StyleRule, $92, "StyleRule", 16);
     })();
   }
 });
@@ -16467,7 +16665,7 @@ var require_nodes = __commonJS({
     function len$(a) {
       return a && (a.len instanceof Function ? a.len() : a.length) || 0;
     }
-    function idx$(a, b) {
+    function idx$2(a, b) {
       return b && b.indexOf ? b.indexOf(a) : [].indexOf.call(a, b);
     }
     function subclass$(obj, sup) {
@@ -16505,6 +16703,7 @@ var require_nodes = __commonJS({
     var toCustomTagIdentifier2 = imba$.toCustomTagIdentifier;
     var Compilation2 = (init_compilation(), __toCommonJS2(compilation_exports)).Compilation;
     var SourceMapper2 = (init_sourcemapper(), __toCommonJS2(sourcemapper_exports)).SourceMapper;
+    var HAS2 = (init_runtime(), __toCommonJS2(runtime_exports)).HAS;
     var extractGenericNames2 = (init_utils2(), __toCommonJS2(utils_exports2)).extractGenericNames;
     function MappedString(value, source) {
       this._value = value;
@@ -16520,7 +16719,7 @@ var require_nodes = __commonJS({
       return this._value;
     };
     MappedString.prototype.c = function() {
-      return this._value;
+      return M2(this._value, this);
     };
     function InternalName(value, source) {
       this._source = source || value;
@@ -16647,12 +16846,15 @@ var require_nodes = __commonJS({
       DIFF_MODIFIERS: 2 ** 4,
       DIFF_INLINE: 2 ** 5
     };
-    var TPL = exports.TPL = function(vars, string2, o) {
+    var NESTED_TPL_REGEX = /@\{(@(\!?\w+)\?)?([^{}]*(:?\{([^{}]*(:?\{[^{}]*\}[^{}]*)*)\}[^{}]*)*)\}/g;
+    var TPL = exports.TPL = function(vars, string2, o, d) {
       if (o === void 0)
         o = {};
+      if (d === void 0)
+        d = 0;
       return STACK.call({ template: string2 }, function() {
         string2 = string2.replace(/\%/g, "@");
-        string2 = string2.replace(/\@\{(\@(\!?\w+)\? )?([^\}]+)\}/g, function(m, g, cond, subtpl) {
+        string2 = string2.replace(NESTED_TPL_REGEX, function(m, g, cond, subtpl) {
           if (cond) {
             if (cond[0] == "!") {
               if (vars[cond.slice(1)]) {
@@ -16669,8 +16871,8 @@ var require_nodes = __commonJS({
           }
           ;
           let o2 = {};
-          let sub = TPL(vars, subtpl, o2);
-          return o2.replaced ? sub : "";
+          let sub = TPL(vars, subtpl, o2, d + 1);
+          return o2.replaced || cond ? sub : "";
         });
         string2 = string2.replace(/\@(\w+)\|?/g, function(m, k) {
           let v = vars[k];
@@ -16687,9 +16889,14 @@ var require_nodes = __commonJS({
             o.replaced = true;
           }
           ;
-          return v || "";
+          return v || "\u03B5\u03B5";
         });
-        string2 = string2.replace(/^[ ]+/mg, "");
+        string2 = string2.replace(/(^|\s)(εε[ ]?)*/mg, "$1").replace(/εε/g, "");
+        string2 = string2.replace(/(^[ ]+)/mg, "");
+        if (d == 0) {
+          string2 = string2.trim();
+        }
+        ;
         return string2;
       });
     };
@@ -16946,7 +17153,11 @@ var require_nodes = __commonJS({
       }
       ;
     };
-    var LIT = function(val) {
+    var LIT = function(val, src) {
+      if (src) {
+        return new MappedString(val, src);
+      }
+      ;
       return val instanceof RawScript ? val : new RawScript(val);
     };
     var KEY = function(val) {
@@ -17351,7 +17562,7 @@ var require_nodes = __commonJS({
       return this._root.runtime();
     };
     Stack.prototype.corelib = function() {
-      return this._root.importProxy("core", "imba/runtime").proxy();
+      return this._root.importProxy("core", "imba/runtime", "").proxy();
     };
     Stack.prototype.cssns = function() {
       return this._root.cssns();
@@ -17373,6 +17584,7 @@ var require_nodes = __commonJS({
     Stack.prototype.generateId = function(ns) {
       if (ns === void 0)
         ns = "oid";
+      return AST.counterToShortRef(STACK.tsc() ? 1 : STACK.incr(ns));
       return AST.counterToShortRef(STACK.incr(ns));
     };
     Stack.prototype.getSymbol = function(ref, alias, name) {
@@ -17380,14 +17592,14 @@ var require_nodes = __commonJS({
         alias = null;
       if (name === void 0)
         name = "";
-      let key = ref || this.incr("symbols");
+      let key = ref || (STACK.tsc() ? 1 : this.incr("symbols"));
       return this._symbols[key] || (this._symbols[key] = this._root.declare(alias || ref, LIT("Symbol(" + (name ? helpers2.singlequote(name) : "") + ")"), { system: true, alias: alias || ref }).resolve().c());
     };
     Stack.prototype.symbolFor = function(name) {
       return this._root.symbolRef(name);
     };
     Stack.prototype.imbaSymbol = function(name) {
-      return STACK.isStdLib() ? this.symbolFor("#" + name) : this.corelib()[name];
+      return STACK.isStdLib() ? this.symbolFor("#" + name) : this.corelib()[name + "$"];
     };
     Stack.prototype.toInternalName = function(name) {
       let base = name;
@@ -17542,6 +17754,8 @@ var require_nodes = __commonJS({
       } else if (key == "NODE") {
         this._meta.universal = false;
         return this.isNode();
+      } else if (key == "TSC") {
+        return this.tsc();
       } else if (key == "WORKER") {
         this._meta.universal = false;
         return this.platform() && this.platform().indexOf("worker") >= 0;
@@ -18114,6 +18328,9 @@ var require_nodes = __commonJS({
     };
     Node2.prototype.alias = function() {
       return null;
+    };
+    Node2.prototype.mo = function(val) {
+      return M2(val, this._options && this._options[val]);
     };
     Node2.prototype.warn = function(message, opts) {
       if (opts === void 0)
@@ -19032,7 +19249,7 @@ var require_nodes = __commonJS({
       if (node instanceof TagLike) {
         let real = this.expressions();
         this._nodes = this._nodes.map(function(child) {
-          if (idx$(child, real) >= 0 && !(child instanceof Assign)) {
+          if (idx$2(child, real) >= 0 && !(child instanceof Assign)) {
             return child.consume(node);
           } else {
             return child;
@@ -19222,7 +19439,14 @@ var require_nodes = __commonJS({
           this._getter = LIT("(){ return " + op.c() + ".$get(" + args + ") }");
           this._setter = LIT("(val){ " + op.c() + ".$set(val," + args + ") }");
           if (STACK.tsc()) {
-            inner = "return " + this.runtime().accessor + "(" + this.wrapper().c({ expression: true }) + "," + args + "," + metasym + "," + context + ")";
+            this._getter = LIT("():ReturnType<typeof " + op.c() + ".$get> { return " + op.c() + ".$get(" + args + ") }");
+            this._setter = LIT("(val:Parameters<typeof " + op.c() + ".$set>[0]){ " + op.c() + ".$set(val," + args + ") }");
+            let pars = [this.wrapper().c({ expression: true }), args, metasym, context];
+            inner = "const self = this;return " + this.runtime().accessor + "(" + pars.join(",") + ")";
+            if (this.wrapper()._callback) {
+              inner += ".$function(" + this.wrapper()._callback.c() + ")";
+            }
+            ;
           } else {
             inner = "return this[" + metasym + "] || " + this.runtime().accessor + "(" + this.wrapper().c({ expression: true }) + "," + args + "," + metasym + "," + context + ")";
           }
@@ -19252,13 +19476,9 @@ var require_nodes = __commonJS({
             let getval = "null";
             let setval = "";
             let sym = this.osym();
-            if (true) {
-              out = "declare " + prefix + " " + M2(name, this._name);
-              if (typ) {
-                out = "" + out + ":" + C(typ);
-              }
-              ;
-              return out;
+            out = "declare " + prefix + " " + M2(name, this._name);
+            if (typ) {
+              out = "" + out + ":" + C(typ);
             }
             ;
             return out;
@@ -19325,7 +19545,7 @@ var require_nodes = __commonJS({
         if (up instanceof InstancePatchBlock) {
           rest = ctor._params.at(restIndex, true, "$$", LIT("{}"));
           access = OP(".", rest, this.name());
-          access.cache({ reuse: true, name: "v" });
+          access.cache({ reuse: true, name: "vsds", safe: true });
           let right = OP("=", OP(".", THIS, this.name()), access);
           if (this.wrapper()) {
             right = CALL(
@@ -19348,7 +19568,7 @@ var require_nodes = __commonJS({
           rest = ctor._params.at(restIndex, true, "$$", LIT("null"));
           access = OP(".", rest, this.name());
           if (this.value()) {
-            access.cache({ reuse: true, name: "v" });
+            access.cache({ reuse: true, name: "v", safe: true });
             val = If.ternary(OP("&&", rest, OP("!==", access, UNDEFINED)), access, val);
           } else {
             val = If.ternary(rest, access, UNDEFINED);
@@ -20844,11 +21064,6 @@ var require_nodes = __commonJS({
       return this._inits || this._supernode && this._supernode.isInitingFields && this._supernode.isInitingFields();
     };
     ClassDeclaration.prototype.visit = function() {
-      if (this.isGlobal() && this.isExported()) {
-        this.warn("exporting global classes not supported", { loc: this.option("global") });
-        true;
-      }
-      ;
       this._body._delimiter = "";
       let blk = STACK.up(Block);
       this._decorators = blk && blk.collectDecorators();
@@ -21041,7 +21256,10 @@ var require_nodes = __commonJS({
             }
             ;
           } else if (!node.option("declareOnly")) {
-            inits.add(node);
+            if (!node.option("wrapper") || node instanceof ClassProperty) {
+              inits.add(node);
+            }
+            ;
             patches.add(node);
           }
           ;
@@ -21123,6 +21341,7 @@ var require_nodes = __commonJS({
         ctor.body().add([LIT("super()"), BR], 0);
       }
       ;
+      let cflags = 0;
       if (!tsc) {
         let hasInitedHook = !!instanceMethodMap["#__inited__"];
         let hasDecorators = allDecorators.length > 0;
@@ -21138,34 +21357,14 @@ var require_nodes = __commonJS({
         }
         ;
         if (ctor && !this.isTag() && !STACK.isStdLib()) {
-          let ctorsym = STACK.imbaSymbol("__initor__");
-          let initsym = STACK.imbaSymbol("__inited__");
-          let hooksym = STACK.imbaSymbol("__hooks__");
-          let initedHook = LIT("this[" + hooksym + "]&&this[" + hooksym + "].inited(this)");
-          if (supers) {
-            let refsym = this.refSym();
-            staticInits.unshift(LIT("this.prototype[" + ctorsym + "] = " + refsym), 0);
-            if (hasInitedHook) {
-              ctor.inject(LIT("if(this[" + ctorsym + "]===" + refsym + ") (" + initedHook + ",this[" + initsym + "]());"));
-            } else {
-              ctor.inject(LIT("this[" + ctorsym + "]===" + refsym + " && (" + initedHook + ",this[" + initsym + "] && this[" + initsym + "]())"));
-            }
-            ;
-          } else {
-            if (hasInitedHook) {
-              ctor.inject(LIT("if(!this[" + ctorsym + "]) (" + initedHook + ",this[" + initsym + "]());"));
-            } else if (hasDecorators) {
-              ctor.inject(LIT("!this[" + ctorsym + "] && this[" + hooksym + "].inited(this);"));
-            }
-            ;
-          }
-          ;
+          ctor.inject(CALL(STACK.corelib().inited$, [THIS, this.refSym()]));
         }
         ;
-      }
-      ;
-      if (!tsc) {
-        staticInits.add(CALL(STACK.corelib().register$, [THIS, this.refSym(), this._realName ? this._realName.toStr() : NULL]));
+        if (ctor) {
+          cflags = cflags | HAS2.CONSTRUCTOR;
+        }
+        ;
+        staticInits.add(CALL(STACK.corelib().register$, [THIS, this.refSym(), this._realName ? this._realName.toStr() : NULL, LIT(cflags)]));
       }
       ;
       if (!staticInits.isEmpty() && !tsc) {
@@ -21203,16 +21402,12 @@ var require_nodes = __commonJS({
       var origName = this._name instanceof Access ? this._name.right() : this._name;
       var initor = null;
       var sup = this.superclass();
-      var tpl = {
-        supr: sup
-      };
       if (typeof cname != "string" && cname) {
         cname = cname.c({ mark: true });
       }
       ;
       this._cname = cname;
       var externalAccess = LIT(cname);
-      var supAccess = null;
       let jsbody = this.body().c();
       let jshead = M2("class", this.keyword());
       if (this.name()) {
@@ -21228,40 +21423,9 @@ var require_nodes = __commonJS({
         ;
       }
       ;
-      if (this._mixins.length) {
-        let all = [];
-        for (let i = 0, items = iter$(this._mixins), len = items.length; i < len; i++) {
-          all.push(items[i]);
-        }
-        ;
-        all.unshift(sup || NULL);
-        sup = null;
-        all.unshift(this.refSym());
-        jshead += " extends " + CALL(STACK.corelib().multi$, all).c();
-      }
-      ;
-      if (sup) {
-        supAccess = M2(sup);
-        jshead += " extends " + supAccess;
-      }
-      ;
-      if (this.name() instanceof Access && !this.exportForDts() && !this.isExtension()) {
-        jshead = "" + this.name().c() + " = " + jshead;
-      }
-      ;
-      if (this.option("export")) {
-        if (this.option("default")) {
-          jshead = "" + M2("export", this.option("export")) + " " + M2("default", this.option("default")) + " " + jshead;
-        } else {
-          jshead = "" + M2("export", this.option("export")) + " " + jshead;
-        }
-        ;
-      }
-      ;
-      let js = "" + jshead + " {" + jsbody + "}";
       if (tsc) {
         let up2 = STACK.parent();
-        let tpl2 = {
+        let tpl = {
           body: jsbody,
           name: this._cname,
           localName: this._cname,
@@ -21270,38 +21434,59 @@ var require_nodes = __commonJS({
           mixins: AST.cary(this._mixins).join(", ") || null,
           generics: this._name && this._name.option("generics"),
           supr: this.superclass(),
-          iife: up2 instanceof Instantiation
+          iife: up2 instanceof Instantiation,
+          "return": this.option("return"),
+          unsafe: false
         };
-        if (tpl2.generics) {
-          tpl2.suprGenerics = tpl2.generics.asGenericNames();
+        if (tpl.generics) {
+          tpl.suprGenerics = tpl.generics.asGenericNames();
         }
         ;
         let str;
         try {
-          tpl2.ref = this._name.variable()._value;
+          tpl.ref = this._name.variable()._value;
         } catch (e) {
         }
         ;
         try {
-          tpl2.export = this.option("export") || !!this._name.variable()._value.isExported();
+          tpl.export = this.option("export") || !!this._name.variable()._value.isExported();
         } catch (e) {
         }
         ;
         try {
-          tpl2.global = this.option("global") || this._name && !this._name.variable() || !!this._name.variable()._value.isGlobal();
+          tpl.global = this.option("global") || this._name && !this._name.variable() || !!this._name.variable()._value.isGlobal();
         } catch (e) {
         }
         ;
         try {
-          tpl2.path = this.isExtension() && this._name.variable().importPath();
+          tpl.path = this.isExtension() && this._name.variable().importPath();
         } catch (e) {
         }
         ;
-        tpl2;
-        str = !this._name || tpl2.iife ? "class @name @{extends @supr }{ %body }" : this.isExtension() && tpl2.path ? "%declareName\ndeclare module %path {\n	interface %declareName@generics extends %localName@generics {}\n	// interface %declareName|Constructor extends %localName|Constructor {}\n}\n// type %localName|Constructor = typeof %localName\nclass %localName@generics { %body }" : this.isExtension() && tpl2.global ? "declare global {\n	interface %declareName@generics extends %localName@generics {}\n	// class %declareName@generics extends %localName@generics {}\n	// interface %declareName|Constructor extends %localName|Constructor {}\n}\n// type %localName|Constructor = typeof %localName\nclass %localName@generics { %body }" : this.isExtension() ? "// %export interface %declareName|Constructor extends %localName|Constructor {}\n// type %localName|Constructor = typeof %localName\n%export %default interface %declareName@generics extends %localName@generics {}\nclass %localName@generics { %body }" : this.isGlobal() ? 'declare global {\n	// namespace @declareName {}\n	// interface @declareName|Constructor extends @localName|Constructor {\n	// 	@{@!supr? prototype: @declareName;}\n	// 	@{@!supr? new(...args:ConstructorParameters<@localName|Constructor>): @declareName;}\n	// }\n	interface @declareName@generics extends @localName@suprGenerics {}\n	class @declareName@generics extends @localName@suprGenerics {}\n	// var @declareName: @declareName|Constructor;\n}\n// type @localName|Constructor = typeof @localName\ninterface @localName@generics @{extends @mixins }{ [index:string]: any }\nclass @localName@generics @{extends @supr }{\n	// declare ["constructor"]: typeof @declareName;\n	@body\n}' : '%export %default interface %localName@generics @{extends %mixins }{ [index:string]: any }\n%export %default class %localName@generics @{extends %supr }{\n	declare ["constructor"]: typeof @localName;\n	@body\n}';
-        return TPL(tpl2, str);
+        str = !this._name || tpl.iife ? "class @name@generics @{extends @supr }{ @body }" : this.isExtension() && tpl.path ? "@declareName\ndeclare module @path {\n	interface @declareName@generics extends @localName@generics {}\n}\nclass @localName@generics { @body }" : this.isExtension() && tpl.global ? "declare global {\n	interface @declareName@generics extends @localName@generics {}\n}\nclass @localName@generics { %body }" : this.isExtension() ? "@export @default interface @declareName@generics extends @localName@generics {}\nclass @localName@generics { %body }" : this.isGlobal() ? "declare global {\n	class @declareName@generics extends @localName@suprGenerics {}\n}\n@{@mixins? interface @localName@generics @{extends @mixins }{ @{@unsafe? [index:string]: any } }}\nclass @localName@generics @{extends @supr }{ @body }\n@{@export? export {@localName as @declareName}}" : "@{@mixins? %export %default interface %localName@generics @{extends %mixins }{ @{@unsafe? [index:string]: any } }}\n%export %default class %localName@generics @{extends %supr }{ @body }";
+        return TPL(tpl, str);
       }
       ;
+      if (this._mixins.length) {
+        jshead += " " + this.mo("extends") + " " + CALL(STACK.corelib().multi$, [this.refSym(), sup || NULL].concat(this._mixins)).c();
+      } else if (sup) {
+        jshead += " " + this.mo("extends") + " " + M2(sup);
+      }
+      ;
+      if (this.name() instanceof Access && !this.exportForDts() && !this.isExtension()) {
+        jshead = "" + this.name().c() + " = " + jshead;
+      }
+      ;
+      if (this.option("export")) {
+        if (this.option("default")) {
+          jshead = "" + this.mo("export") + " " + this.mo("default") + " " + jshead;
+        } else {
+          jshead = "" + this.mo("export") + " " + jshead;
+        }
+        ;
+      }
+      ;
+      let js = "" + jshead + " {" + jsbody + "}";
       if (this.isExtension()) {
         let extTarget = this instanceof ExtendDeclaration ? LIT(this._className.c()) : LIT("" + this._className.c() + ".prototype");
         if (this._virtualSuper) {
@@ -21459,7 +21644,8 @@ var require_nodes = __commonJS({
       let sup = this.superclass();
       let anonGlobalTag = !this.option("extension") && !this.name().isClass() && tsc;
       let tpl = {
-        name: this.name()._str
+        name: this.name()._str,
+        mixins: AST.cary(this._mixins).join(", ") || null
       };
       if (tsc) {
         tpl.declareName = tpl.localName = new MappedString(className, this.name());
@@ -21480,11 +21666,12 @@ var require_nodes = __commonJS({
       if (tsc) {
         sup = this.superclass() ? this.superclass().toClassName() : LIT("imba.Component");
         if (!this.isExtension()) {
-          this.body().unshift(LIT("declare $$TAG$$\n"));
-          this.body().unshift(LIT("static $$TAG$$\n"));
+          this.body().unshift(LIT("static $$TAG$$"), true);
+          this.body().unshift(LIT("constructor(){ super() }", this._name), true);
         }
         ;
         tpl.body = this.body().c();
+        tpl.default = this.option("default");
         tpl.superName = sup;
         try {
           tpl.export = this.option("export") || !!this._name.variable()._value.isExported();
@@ -21505,9 +21692,9 @@ var require_nodes = __commonJS({
           ;
           return TPL(tpl, "%export interface %declareName extends %localName {}\nclass %localName { %body }");
         } else if (this.isGlobal()) {
-          return TPL(tpl, 'declare global {\n	interface %declareName extends %localName {}\n	class %declareName {}\n	interface HTMLElementTagNameMap { "%name": %declareName }\n}\nclass %localName extends %superName { %body }');
+          return TPL(tpl, 'declare global {\n	class %declareName extends %localName {}\n	interface HTMLElementTagNameMap { "%name": %declareName }\n}\n@{@mixins? interface %localName extends @mixins { }}\nclass %localName extends %superName { %body }');
         } else {
-          return TPL(tpl, "%export interface %localName extends %superName { }\n%export class %localName { %body }");
+          return TPL(tpl, "@{@mixins? %export %default interface %localName extends @mixins { }}\n%export %default class %localName extends %superName { %body }");
         }
         ;
       } else if (this.option("extension")) {
@@ -21529,12 +21716,18 @@ var require_nodes = __commonJS({
       ;
       let closure = this.scope__().parent();
       let jsbody = this.body().c();
-      let jshead = "" + M2("class", this.keyword()) + " " + M2(className, this.name()) + " extends " + M2(sup, this.superclass());
+      let jshead = "" + M2("class", this.keyword()) + " " + M2(className, this.name()) + " " + this.mo("extends") + " ";
+      if (this._mixins.length) {
+        jshead += "" + CALL(STACK.corelib().multi$, [this.refSym(), sup || NULL].concat(this._mixins)).c();
+      } else if (sup) {
+        jshead += "" + M2(sup);
+      }
+      ;
       if (this.option("export")) {
         if (this.option("default")) {
-          jshead = "" + M2("export", this.option("export")) + " " + M2("default", this.option("default")) + " " + jshead;
+          jshead = "" + this.mo("export") + " " + this.mo("default") + " " + jshead;
         } else {
-          jshead = "" + M2("export", this.option("export")) + " " + jshead;
+          jshead = "" + this.mo("export") + " " + jshead;
         }
         ;
       }
@@ -21657,45 +21850,6 @@ var require_nodes = __commonJS({
     };
     Func.prototype.jsdoc = function() {
       return "";
-      let o = [];
-      if (this._desc) {
-        this._desc._skip = true;
-        o.push(this._desc.toString());
-      }
-      ;
-      for (let i = 0, items = iter$(this._params.nodes()), len = items.length, item; i < len; i++) {
-        item = items[i];
-        if (!(item instanceof Param)) {
-          continue;
-        }
-        ;
-        if (item.datatype()) {
-          o.push(item.jsdoc());
-        }
-        ;
-      }
-      ;
-      if (this.option("inExtension") && this._target) {
-        let kls = this._context.node();
-        let name = this._context.node()._className;
-        if (name && STACK.tsc()) {
-          let thistype = name.c();
-          if (kls.option("instanceOnly")) {
-            thistype = "typeof " + thistype;
-          } else {
-            thistype = "InstanceType<typeof " + thistype + ">";
-          }
-          ;
-        }
-        ;
-      }
-      ;
-      if (this.option("jsdocthis")) {
-        o.push("@this " + this.option("jsdocthis"));
-      }
-      ;
-      let doc = o.join("\n");
-      return doc ? "/**\n" + doc + "\n*/\n" : "";
     };
     Func.prototype.js = function(s, o) {
       if (!this.option("noreturn")) {
@@ -22132,12 +22286,14 @@ var require_nodes = __commonJS({
         async: self2.option("async"),
         code,
         key: M2(name, null, { as: "field" }),
+        name: self2._name,
         get: self2.isGetter() ? self2.option("keyword") : null,
         set: self2.isSetter() ? self2.option("keyword") : null,
         returnType: self2.returnType(),
         params: self2.params(),
         generics: self2._name && self2._name.option("generics"),
-        function: !self2.option("inClassBody") && !self2.option("inObject")
+        function: !self2.option("inClassBody") && !self2.option("inObject"),
+        decorators: self2._decorators
       };
       if (tsc) {
         let generics = {};
@@ -22193,11 +22349,25 @@ var require_nodes = __commonJS({
         true;
       }
       ;
-      if (tsc && (self2.returnType() || tpl.generics)) {
-        let str = "@export @default @async @static @get @set @function @key@generics(@params)@{:@returnType} @code";
-        if (tpl.static && self2.returnType().hasSelfReference()) {
+      if (tsc && (self2.returnType() || tpl.generics || true)) {
+        if (self2._decorators) {
+          tpl.decorators = AST.cary(self2._decorators).join("\n");
+        }
+        ;
+        let str = "@export @default @static @async @get @set @function @key@generics(@params)@{:@returnType} @code";
+        if (tpl.static && self2.returnType() && self2.returnType().hasSelfReference()) {
           tpl.returnType = self2.returnType().withReplacedThis("THIS");
-          str = "%async %static @function %key<THIS extends abstract new (...args: any) => any>(this:THIS@{, @params})@{:@returnType};\n%async %static %get %set @function %key(%params) %code";
+          str = "@static @async @function @key<THIS extends abstract new (...args: any) => any>(this:THIS@{, @params})@{:@returnType};\n@static @async @get @set @function @key(@params) @code";
+        }
+        ;
+        if (self2._decorators) {
+          tpl.decorators = AST.cary(self2._decorators).join("\n");
+          str = "@decorators\n" + str;
+        }
+        ;
+        if (self2.isGlobal()) {
+          tpl.localName = new InternalName(self2._name);
+          str += "\ntype @localName = typeof @name;\ndeclare global { var @name : @localName }";
         }
         ;
         return TPL(tpl, str);
@@ -23462,8 +23632,17 @@ var require_nodes = __commonJS({
     subclass$(InstanceOf, Op);
     exports.InstanceOf = InstanceOf;
     InstanceOf.prototype.js = function(s, o) {
-      if (String(this._op) == "instanceof") {
-        let out = "" + this.left().c() + " instanceof " + this.right().c();
+      if (this.right() instanceof Str) {
+        let out = "typeof " + this.left().c() + "===" + this.right().c();
+        if (s.parent() instanceof Op) {
+          out = helpers2.parenthesize(out);
+        }
+        ;
+        return out;
+      }
+      ;
+      if (String(this._op) == "instanceof" || STACK.tsc()) {
+        let out = "" + this.left().c() + " " + M2("instanceof", this._opToken) + " " + this.right().c();
         if (s.parent() instanceof Op) {
           out = helpers2.parenthesize(out);
         }
@@ -25022,6 +25201,7 @@ var require_nodes = __commonJS({
     };
     Decorator.prototype.visit = function() {
       var block;
+      this._token = this._value;
       this._variable = this.scope__().lookup(this.name());
       this._value._variable || (this._value._variable = this._variable);
       if (!this._variable) {
@@ -25064,7 +25244,13 @@ var require_nodes = __commonJS({
         return;
       }
       ;
-      let out = this._value.c();
+      let out;
+      if (STACK.tsc()) {
+        out = "@" + M2(this._value, this._token);
+      } else {
+        out = this._value.c();
+      }
+      ;
       if (this._params) {
         out += ".bind([" + this._params.c({ expression: true }) + "])";
       } else {
@@ -25229,9 +25415,7 @@ var require_nodes = __commonJS({
     Descriptor.prototype.add = function(item, type) {
       if (item instanceof ArgList) {
         if (item._generated) {
-          let part = new DescriptorPart(KEY("callback"));
-          part.setParams(item);
-          this._chain.push(this._last = part);
+          this.set({ callback: item });
         } else {
           if (type == "=") {
             (this._last || this).setValue(item._nodes[0]);
@@ -25265,7 +25449,7 @@ var require_nodes = __commonJS({
         parts.add(LIT("" + ref.c() + ".default.literal = " + this._literal.c()));
       }
       ;
-      if (this._callback) {
+      if (this._callback && !STACK.tsc()) {
         parts.add(LIT("" + ref.c() + ".callback = " + this._callback.c()));
       }
       ;
@@ -26625,7 +26809,7 @@ var require_nodes = __commonJS({
         }
         ;
       } else {
-        self2.setSource(vars.source = STACK.tsc() ? o.source : self2.util().iterable(o.source));
+        self2.setSource(vars.source = self2.util().iterable(o.source));
         vars.value = o.value = o.name;
         let declvars = self2.scope__().captureVariableDeclarations(function() {
           var value_;
@@ -27289,7 +27473,7 @@ var require_nodes = __commonJS({
       ;
       if (STACK.tsc()) {
         let path = this.nameIdentifier().c();
-        if (path == "value" && idx$(this._tag._tagName, ["input", "textarea", "select", "option", "button"]) >= 0) {
+        if (path == "value" && idx$2(this._tag._tagName, ["input", "textarea", "select", "option", "button"]) >= 0) {
           val = "/**@type {any}*/(" + val + ")";
         }
         ;
@@ -27302,7 +27486,7 @@ var require_nodes = __commonJS({
         key = "tabIndex";
       }
       ;
-      if (key == "value" && idx$(this._tag._tagName, ["input", "textarea", "select", "option", "button"]) >= 0 && !STACK.isNode()) {
+      if (key == "value" && idx$2(this._tag._tagName, ["input", "textarea", "select", "option", "button"]) >= 0 && !STACK.isNode()) {
         key = "richValue";
       }
       ;
@@ -28005,7 +28189,7 @@ var require_nodes = __commonJS({
     };
     TagLike.prototype.tagvar = function(name) {
       name = InternalPrefixes2[name] || name;
-      return this._tagvars[name] || (this._tagvars[name] = this.scope__().closure().temporary(null, { reuse: false, alias: "" + name + this.tagvarprefix() }, "" + name + this.tagvarprefix()));
+      return this._tagvars[name] || (this._tagvars[name] = this.scope__().closure().temporary(null, { nodecl: STACK.tsc(), reuse: false, alias: "" + name + this.tagvarprefix() }, "" + name + this.tagvarprefix()));
     };
     TagLike.prototype.tagvarprefix = function() {
       return "";
@@ -28915,32 +29099,30 @@ var require_nodes = __commonJS({
       }
       ;
       if (tsc) {
+        let up = STACK.parent();
+        let safe = up instanceof Block || up instanceof Tag;
         if (this.type() instanceof TagTypeIdentifier && !this.isSelf()) {
           if (this.type().isAsset()) {
-            add("" + this.tvar() + " = new " + M2("SVGSVGElement", this.type()));
+            add("var " + this.tvar() + " = new " + M2("SVGSVGElement", this.type()));
           } else if (this.type().isClass()) {
-            this.tvar()._datatype = new MappedString(this.type().toClassName(), this.type());
-            add(M2("" + this.tvar() + ".$$TAG$$", this.type()));
+            add(M2("var " + this.tvar() + " = new " + M2(this.type().toClassName(), this.type()) + ";" + this.tvar(), this.type()));
           } else {
             this.tvar()._datatype = new MappedString(this.type().toClassName(), this.type());
-            add("" + this.tvar() + " = " + M2("new " + this.type().toClassName(), this.type()));
+            add(M2("var " + this.tvar() + " = new " + M2(this.type().toClassName(), this.type()) + ";" + this.tvar(), this.type()));
           }
           ;
         } else if (this.isSelf()) {
           this.tvar()._datatype = "this";
-          add("" + this.tvar() + " = " + this.type().c());
+          add("var " + this.tvar() + " = " + this.type().c());
         } else if (this.isDynamicType()) {
           if (this._options.dynamic) {
-            add("" + this.tvar() + " = new \u0393any");
-            add("" + this.type().c());
+            add("var " + this.tvar() + " = " + this.type().c() + ";" + this.tvar());
           } else {
-            add("" + this.tvar() + " = new " + M2("\u0393any", this.type()));
-            add("" + this.type().c());
+            add("var " + this.tvar() + " = new " + M2("\u0393any", this.type()));
           }
           ;
         } else {
-          add("" + this.tvar() + " = new " + M2("HTMLElement", this.type()));
-          add("" + this.type().c());
+          add("var " + this.tvar() + " = new " + M2("HTMLElement", this.type()));
         }
         ;
         for (let i = 0, items = iter$(this._attributes), len = items.length, item; i < len; i++) {
@@ -28958,7 +29140,12 @@ var require_nodes = __commonJS({
           add(items[i].c());
         }
         ;
-        if (o.inline || isExpression) {
+        if (!safe) {
+          add("return " + this.tvar());
+          let sep2 = o.inline || isExpression ? "," : ";\n";
+          sep2 = ";\n";
+          return "(()=>{" + out.join(sep2) + "})()";
+        } else if (false) {
           add(this.option("return") ? "return " + this.tvar() : "" + this.tvar());
           let js2 = "(" + out.join(",\n") + ")";
           return js2;
@@ -31141,7 +31328,7 @@ var require_nodes = __commonJS({
         return this.number() * 4 + "px";
       } else if (this.unit() == null) {
         return this.number();
-      } else if (idx$(this.unit(), VALID_CSS_UNITS2) >= 0) {
+      } else if (idx$2(this.unit(), VALID_CSS_UNITS2) >= 0) {
         return String(this._value);
       } else if (this.number() == 1) {
         return "var(--u_" + this.unit() + ",1" + this.unit() + ")";
@@ -31217,12 +31404,8 @@ var require_nodes = __commonJS({
       return CALL(OP(".", obj, slice), AST.compact([a, b]));
     };
     Util.iterable = function(obj, cache) {
-      if (STACK.tsc()) {
-        return obj;
-      }
-      ;
       var node = new Util.Iterable([obj]);
-      if (cache) {
+      if (cache && !STACK.tsc()) {
         node.cache({ force: true, pool: "iter" });
       }
       ;
@@ -31778,7 +31961,10 @@ var require_nodes = __commonJS({
       ;
       var item = new SystemVariable(this, name, decl, o);
       this._varpool.push(item);
-      this._vars.push(item);
+      if (!o.nodecl) {
+        this._vars.push(item);
+      }
+      ;
       if (name && o.reuse) {
         this._vars["_temp_" + name] = item;
       }
@@ -31977,8 +32163,10 @@ var require_nodes = __commonJS({
       this._document = v;
       return this;
     };
-    RootScope.prototype.importProxy = function(name, path) {
-      return this._importProxies[name] || (this._importProxies[name] = this.register("$" + name + "$", this, { type: "global", varclass: ImportProxy, path: path || name }));
+    RootScope.prototype.importProxy = function(name, path, pre) {
+      if (pre === void 0)
+        pre = "$" + name + "$";
+      return this._importProxies[name] || (this._importProxies[name] = this.register(pre, this, { type: "global", varclass: ImportProxy, path: path || name }));
     };
     RootScope.prototype.runtime = function() {
       return this._runtime;
@@ -32743,7 +32931,7 @@ var require_nodes = __commonJS({
         return this;
       }
       ;
-      let sysnr = STACK.incr("sysvar");
+      let sysnr = STACK.tsc() || o.safe ? this._scope.incr("sysvar") : STACK.incr("sysvar");
       this._name = "$" + sysnr;
       return this;
       o = this._options;
@@ -32907,7 +33095,8 @@ var require_nodes = __commonJS({
       ;
       if (keys.length > 0) {
         let out = keys.map(function(a) {
-          return "" + a + " as " + self2._exports[a].c();
+          let name = self2._exports[a].c();
+          return name == a ? a : "" + a + " as " + name;
         }).join(", ");
         js.push("import {" + out + "} from " + pathjs + ";");
       }
@@ -32928,7 +33117,7 @@ var require_nodes = __commonJS({
       }
       ;
       let raw = C(key, { mark: false });
-      return this._exports[raw] || (this._exports[raw] = new ImportProxyAccess("" + this._name + "_" + raw));
+      return this._exports[raw] || (this._exports[raw] = new ImportProxyAccess(this._name ? "" + this._name + "_" + raw : raw));
     };
     ImportProxy.prototype.c = function() {
       if (!this._importAll) {
@@ -33088,6 +33277,10 @@ var require_nodes = __commonJS({
       ;
       if (this._method) {
         this._class = STACK.up(ClassDeclaration);
+        if (this._class && this._method.isConstructor()) {
+          this._class.set({ calledSuper: true });
+        }
+        ;
       }
       ;
       if (this.args()) {
@@ -33422,7 +33615,7 @@ var _Monarch = class {
 };
 var Monarch = _Monarch;
 (() => {
-  register$(_Monarch, $114, "Monarch");
+  register$(_Monarch, $114, "Monarch", 0);
 })();
 function iter$__3(a) {
   let v;
