@@ -3765,7 +3765,7 @@ export class ClassDeclaration < Code
 					if node.value
 						node.@name.warn "field with value not supported in class extension"
 				elif !node.option(:declareOnly)
-					if !node.option(:wrapper)
+					if !node.option(:wrapper) or node isa ClassProperty
 						inits.add(node)
 					patches.add(node)
 
@@ -3875,7 +3875,7 @@ export class ClassDeclaration < Code
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
-		
+
 		var tsc = STACK.tsc
 		var up = STACK.up
 		var o = @options or {}
