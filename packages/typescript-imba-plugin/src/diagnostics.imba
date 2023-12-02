@@ -53,9 +53,13 @@ const Rules = [
 	code: 2339
 	test: do({message},item)
 		return no unless typeof message == 'string'
+
 		if message.match(/^Property 'Ψ/u)
-			item.category = 0
+			# item.category = 0
 			return yes # configurable in plugin?
+		
+		# Setting as warning now -- will re-evaluate
+		item.category = 0
 		return no
 	---
 	code: 2339 # option allow array properties
@@ -66,6 +70,11 @@ const Rules = [
 	---
 	code: 2339 # option allow array properties
 	message: /on type 'Window & typeof globalThis'/
+	---
+	code: 2359 # instanceof - will be supported in ts 5.3
+	test: do({message},item)
+		item.category = 0
+		return no
 	---
 	code: 2425
 	message: /./
@@ -112,6 +121,7 @@ export def filter item
 	msg = msg.messageText or msg or ''
 	item.#suppress = yes
 
+	# Allow converting to warning instead?
 	for rule in Rules
 		if rule.code == item.code
 			if rule.text isa RegExp
@@ -120,6 +130,8 @@ export def filter item
 				return if rule.message.test(msg)
 			if rule.test isa Function
 				return if rule.test({message: msg, text: item.#otext},item)
+
+	# item.category = 0 # convert to warning?
 
 	item.#suppress = no
 	return item

@@ -1,14 +1,23 @@
-export const __init__ = Symbol.for('#__init__')
-export const __initor__ = Symbol.for('#__initor__')
-export const __inited__ = Symbol.for('#__inited__')
-export const __hooks__ = Symbol.for('#__hooks__')
-export const __patch__ = Symbol.for('#__patch__')
-export const __has__ = Symbol.for('#has')
-export const __meta__ = Symbol.for('#meta')
-export const __imba__ = Symbol.for('imba')
-export const __mixin__ = Symbol.for('#__mixin__')
+export const __init__$  = Symbol.for('#__init__')
+export const __initor__$	 = Symbol.for('#__initor__')
+export const __inited__$	 = Symbol.for('#__inited__')
+export const __hooks__$	 = Symbol.for('#__hooks__')
+export const __patch__$	 = Symbol.for('#__patch__')
+export const __has__$	 = Symbol.for('#has')
+export const __meta__$	 = Symbol.for('#meta')
+export const __imba__$	 = Symbol.for('imba')
+export const __mixin__$	 = Symbol.for('#__mixin__')
+
 export const matcher = Symbol.for('#matcher')
-const state = globalThis[__imba__] ||= {
+
+export const HAS = {
+	DECORATORS: 1 << 0,
+	ACCESSORS: 1 << 2,
+	FIELDS: 1 << 3,
+	CONSTRUCTOR: 1 << 4
+}
+
+const state = globalThis[__imba__$] ||= {
 	counter: 0,
 	classes: {}
 };
@@ -25,7 +34,7 @@ export function isa$(a,b){
 };
 
 export function has$(a,b){	
-	return ((b?.[__has__]?.(a) ?? b?.includes?.(a) ?? b?.has?.(a)) ?? false);
+	return ((b?.[__has__$]?.(a) ?? b?.includes?.(a) ?? b?.has?.(a)) ?? false);
 }
 
 export function idx$(a,b){
@@ -36,6 +45,8 @@ export function statics$(scope){
 	return statics.get(scope) || statics.set(scope,{}).get(scope);
 }
 
+
+// $1 extends {$accessor: (...args: any[]) => infer X} ? X : $1
 export function iterable$(a){
 	return a?.toIterable?.() || a;
 }
@@ -70,15 +81,15 @@ export function extend$(target,ext,descs){
 
 	delete descs.constructor;
 
-	if (descs[__init__]) {
+	if (descs[__init__$]) {
 		// Only with non descriptor fields
 		// console.warn(`Cannot define plain fields when extending class ${klass.name}`);
-		delete descs[__init__];
+		delete descs[__init__$];
 	};
 
 	Object.defineProperties(target,descs);
 
-	let meta = klass[__meta__];
+	let meta = klass[__meta__$];
 	if(meta && meta.augments){
 		for(let target of meta.augments){
 			let current = Object.getOwnPropertyDescriptors(target.prototype);
@@ -98,8 +109,8 @@ export function extend$(target,ext,descs){
 }
 
 export function augment$(klass,mixin,meta){
-	meta ||= klass[__meta__]
-	let mix = mixin[__meta__];
+	meta ||= klass[__meta__$]
+	let mix = mixin[__meta__$];
 	
 	meta.uses ||= []
 	meta.inits ||= []
@@ -143,9 +154,9 @@ export function augment$(klass,mixin,meta){
 	delete descs.constructor
 	delete descs.name
 
-	if(descs[__init__]){
-		meta.inits.push(mixin.prototype[__init__]);
-		delete descs[__init__];
+	if(descs[__init__$]){
+		meta.inits.push(mixin.prototype[__init__$]);
+		delete descs[__init__$];
 	}
 	
 	Object.defineProperties(klass.prototype,descs);
@@ -156,7 +167,7 @@ export function augment$(klass,mixin,meta){
 
 export function multi$(symbol,sup,...mixins){	
 	let Mixins = sup ? (class extends sup {}) : (class {});
-	let meta = Mixins[__meta__] = meta$(sup,symbol);
+	let meta = Mixins[__meta__$] = meta$(sup,symbol);
 	meta.parent = sup || false;
 
 	// When looping over the mixins - ensure that they are not also
@@ -176,7 +187,7 @@ export function multi$(symbol,sup,...mixins){
 export const mixes = multi$;
 
 function meta$(up,symbol) {
-	let mup = up && up[__meta__] || null;
+	let mup = up && up[__meta__$] || null;
 	if(mup?.symbol == symbol) return mup;
 	// Store using weakprop?
 	let meta = Object.create(mup)
@@ -192,11 +203,11 @@ function meta$(up,symbol) {
 	return meta
 }
 
-export function register$(klass,symbol,name) {
+export function register$(klass,symbol,name,flags) {
 	// Look for the actual superclass excluding mixins
 	let supr = Object.getPrototypeOf(klass.prototype)?.constructor;
-	let meta = klass[__meta__] = meta$(supr,symbol);
-	// (smeta?.symbol == symbol) ? smeta : Object.create(supr[__meta__] || null);
+	let meta = klass[__meta__$] = meta$(supr,symbol);
+	// (smeta?.symbol == symbol) ? smeta : Object.create(supr[__meta__$] || null);
 
 	if(meta.parent)
 		supr = meta.parent
@@ -208,12 +219,25 @@ export function register$(klass,symbol,name) {
 	// What if this is an extension instead?
 	meta.id = state.counter++;
 	meta.parent = supr;
+	meta.flags = flags;
 	meta.name = klass.name;
 	meta.symbol = symbol;
 	let own = meta[symbol] ||= {};
 	own.parent ??= supr;
 	meta.top.version++;
 	// Call inherited?
+
+	if(flags & HAS.CONSTRUCTOR)
+		klass.prototype[__initor__$] = symbol;
+
 	if(supr?.inherited instanceof Function) supr.inherited(klass)
 	return klass;
+}
+
+export function inited$(obj,symbol){
+	if(obj[__initor__$]===symbol){
+		// init potential hooks
+		obj[__inited__$]?.();
+		obj[__hooks__$]&&obj[__hooks__$].inited(obj);
+	}
 }

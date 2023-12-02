@@ -16,6 +16,8 @@ import Compilation from './compilation'
 
 import SourceMapper from './sourcemapper'
 
+import {HAS} from '../imba/runtime.mjs'
+
 import extractGenericNames from './utils'
 
 class MappedString
@@ -205,11 +207,20 @@ export var F =
 	DIFF_MODIFIERS: 2 ** 4
 	DIFF_INLINE: 2 ** 5
 
-export var TPL = do |vars,string,o = {}|
+var NESTED_TPL_REGEX = ///
+	@\{(@(\!?\w+)\? )?
+	([^{}]*(:?\{
+		([^{}]*(:?\{[^{}]*\}[^{}]*)*)	
+	\}[^{}]*)*)
+	\}
+///g
+
+export var TPL = do |vars,string,o = {}, d = 0|
 	STACK.call(template: string) do
 		string = string.replace(/\%/g,'@')
 
-		string = string.replace(/\@\{(\@(\!?\w+)\? )?([^{}]*(:?\{[^{}]*\}[^{}]*)*)\}/g) do|m,g,cond,subtpl|
+		# lazy to use regex but it works for these simple templates
+		string = string.replace(NESTED_TPL_REGEX) do|m,g,cond,subtpl|
 			if cond
 				if cond[0] == '!'
 					return '' if vars[cond.slice(1)]
@@ -217,8 +228,8 @@ export var TPL = do |vars,string,o = {}|
 					return '' unless vars[cond]
 
 			let o = {}
-			let sub = TPL(vars,subtpl,o)
-			o:replaced ? sub : ''
+			let sub = TPL(vars,subtpl,o,d + 1)
+			(o:replaced or cond) ? sub : ''
 
 		string = string.replace(/\@(\w+)\|?/g) do|m,k|	
 			let v = vars[k]
@@ -227,16 +238,14 @@ export var TPL = do |vars,string,o = {}|
 				o:replaced = yes
 				return k
 			
-			if v
-				v = M(v)
+			v = M(v) if v
+			o:replaced = yes if v
 
-			if v
-				o:replaced = yes
+			return v or 'εε'
 
-			return v or ''
-
-		# leading spaces
-		string = string.replace(/^[ ]+/mg,'')
+		string = string.replace(/(^|\s)(εε[ ]?)*/mg,'$1').replace(/εε/g,'')
+		string = string.replace(/(^[ ]+)/mg,'')
+		string = string.trim() if d == 0
 		string
 
 export var DECLARE = do |node,keyword|
@@ -744,7 +753,7 @@ export class Stack
 		@root.runtime
 
 	def corelib
-		@root.importProxy('core','imba/runtime').proxy
+		@root.importProxy('core','imba/runtime','').proxy
 
 	def cssns
 		@root.cssns
@@ -778,7 +787,7 @@ export class Stack
 		@root.symbolRef(name)
 
 	def imbaSymbol name
-		STACK.isStdLib ? symbolFor('#' + name) : corelib[name]
+		STACK.isStdLib ? symbolFor('#' + name) : corelib[name + '$']
 
 	def toInternalName name
 		let base = name
@@ -2181,6 +2190,7 @@ export class ClassField < Node
 
 		if wrapper
 			# worth of a full function
+			# dont add these in tsc?
 			@vslot = osym('slot',String(@name))
 			@fslot = osym('meta')
 			@fname = @name.metaIdentifier
@@ -2188,9 +2198,6 @@ export class ClassField < Node
 			wrapper.@scope = @vscope = FieldScope.new(wrapper)
 			wrapper.@scope.@parent = scope__
 			wrapper.traverse
-
-			# @vslot = osym('meta')
-			# @getter = CALL(OP('.',THIS,@name),[])
 		self
 
 	def value
@@ -2305,21 +2312,11 @@ export class ClassField < Node
 					let getval = 'null'
 					let setval = ''
 					let sym = osym
-
-					if true
-						out = "declare {prefix} {M(name,@name)}"
-						out = "{out}:{C(typ)}" if typ
-						return out
-					else
-						out = "{prefix} get {M(name,@name)}"
-						out += "{out}:{C(typ)}" if typ
-						out += ' {}'
-						out += "\n{prefix} set {M(name,@name)}(val)" + '{}'
-					
+					out = "declare {prefix} {M(name,@name)}"
+					out = "{out}:{C(typ)}" if typ
 					return out
 
 				else
-
 					out = "{prefix}{M(name,@name)}" # the value scope?
 					out += ":{C(typ)}" if typ
 					out += " = {value.c}" if value
@@ -2366,10 +2363,11 @@ export class ClassField < Node
 			let rest
 
 			if up isa InstancePatchBlock
-
+				# Dropped the patch block now
 				rest = ctor.@params.at(restIndex,yes,'$$',LIT('{}'))
 				access = OP('.',rest,name)
-				access.cache(reuse: yes, name: 'v')
+				access.cache(reuse: yes, name: 'vsds',safe: yes)
+
 				let right = OP('=',OP('.',THIS,name),access)
 
 				if wrapper
@@ -2392,7 +2390,7 @@ export class ClassField < Node
 				access = OP('.',rest,name)
 
 				if value
-					access.cache(reuse: yes, name: 'v')
+					access.cache(reuse: yes, name: 'v', safe: yes)
 					val = If.ternary(OP('&&',rest,OP('!==',access,UNDEFINED)),access,val)
 				else
 					val = If.ternary(rest,access,UNDEFINED)
@@ -3600,10 +3598,9 @@ export class ClassDeclaration < Code
 		@inits or (@supernode and @supernode:isInitingFields and @supernode.isInitingFields)
 
 	def visit
-
-		if isGlobal and isExported
-			warn "exporting global classes not supported", loc: option(:global)
-			yes
+		# if isGlobal and isExported
+		# 	warn "exporting global classes not supported", loc: option(:global)
+		# 	yes
 		# replace with some advanced lookup?
 		@body.@delimiter = ''
 		let blk = STACK.up(Block)
@@ -3735,9 +3732,10 @@ export class ClassDeclaration < Code
 
 			for item in add.reverse
 				body.unshift(item)
-
+		
+		# See if we called super anywhere
 		body.traverse
-
+		# console.log "Called?",option(:calledSuper)
 		var ctor = body.option(:ctor)
 
 		let tsc = STACK.tsc
@@ -3767,7 +3765,8 @@ export class ClassDeclaration < Code
 					if node.value
 						node.@name.warn "field with value not supported in class extension"
 				elif !node.option(:declareOnly)
-					inits.add(node)
+					if !node.option(:wrapper)
+						inits.add(node)
 					patches.add(node)
 
 			if !node.isStatic and restIndex != null
@@ -3834,9 +3833,11 @@ export class ClassDeclaration < Code
 
 		if tsc and ctor and @autosuper
 			ctor.body.add([LIT("super()"),BR],0)
-
+		
+		let cflags = 0
 
 		if !tsc
+			
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
 			let hasDecorators = allDecorators:length > 0
 
@@ -3844,39 +3845,17 @@ export class ClassDeclaration < Code
 				STACK.use('hooks')
 				let decosym = STACK.imbaSymbol('__hooks__')
 				staticInits.unshift LIT("this.prototype[{decosym}] = {runtime:hooks}"), yes
-				# staticInit.inject LIT("this.prototype[{decosym}] = {runtime:hooks}"), 0
-
-			if !isTag and !ctor and (hasInitedHook or hasDecorators)
+			
+			if !isTag and !ctor and (hasInitedHook or hasDecorators) # or anything else
 				let ops = sup ? [Super.new(),BR] : [BR]
 				ctor = addMethod('constructor',[],ops,{})
 
 			if ctor and !isTag and !STACK.isStdLib
-				# if we are in stdlib we should import from ./symbols
-				let ctorsym = STACK.imbaSymbol('__initor__')				
-				let initsym = STACK.imbaSymbol('__inited__')
+				ctor.inject CALL(STACK.corelib['inited$'],[THIS,refSym])
 
-				let hooksym = STACK.imbaSymbol('__hooks__')
-				let initedHook = LIT("this[{hooksym}]&&this[{hooksym}].inited(this)")
-
-				# console.log "emitInited",initedHook,hasDecorators,hasInitedHook,STACK.imbaPath
-
-				if supers
-					let refsym = refSym
-					staticInits.unshift LIT("this.prototype[{ctorsym}] = {refsym}"), 0
-					if hasInitedHook
-						ctor.inject LIT("if(this[{ctorsym}]==={refsym}) ({initedHook},this[{initsym}]());")
-					else
-						ctor.inject LIT("this[{ctorsym}]==={refsym} && ({initedHook},this[{initsym}] && this[{initsym}]())")
-				else
-					# if hasDecorators
-					# 	staticInit.inject LIT("this.prototype[{decosym}] = true"), 0
-					if hasInitedHook
-						ctor.inject LIT("if(!this[{ctorsym}]) ({initedHook},this[{initsym}]());")
-					elif hasDecorators
-						ctor.inject LIT("!this[{ctorsym}] && this[{hooksym}].inited(this);")
-
-		if !tsc
-			staticInits.add CALL(STACK.corelib['register$'],[THIS,refSym,@realName ? @realName.toStr : NULL])
+			if ctor
+				cflags = cflags | HAS.CONSTRUCTOR
+			staticInits.add CALL(STACK.corelib['register$'],[THIS,refSym,@realName ? @realName.toStr : NULL,LIT(cflags)])
 
 		if !staticInits.isEmpty and !tsc
 			body.add([BR,staticInits])
@@ -3893,27 +3872,19 @@ export class ClassDeclaration < Code
 		return func
 
 	def js o
-
 		scope.virtualize # is this always needed?
 		scope.context.value = name
 		scope.context.reference = name
+		
 		var tsc = STACK.tsc
 		var up = STACK.up
 		var o = @options or {}
 
-		
-
 		var cname = @ownName isa Access ? @ownName.right : @ownName
 		var origName = @name isa Access ? @name.right : @name
 
-
-		# var namespaced = name != cname
 		var initor = null
 		var sup = superclass
-
-		var tpl = {
-			supr: sup
-		}
 
 		if typeof cname != 'string' and cname
 			cname = cname.c(mark: yes)
@@ -3921,10 +3892,9 @@ export class ClassDeclaration < Code
 		@cname = cname
 
 		var externalAccess = LIT(cname)
-		var supAccess = null
 
 		let jsbody = body.c()
-		let jshead = M('class',keyword) # "{C(keyword,mark: yes)}"
+		let jshead = M('class',keyword)
 
 		if name
 			jshead += " {M cname, name}"
@@ -3944,67 +3914,59 @@ export class ClassDeclaration < Code
 				generics: @name and @name.option('generics')
 				supr: superclass
 				iife: up isa Instantiation
+				"return": option(:return)
+				unsafe: no
 			}
 
 			if tpl:generics
 				tpl:suprGenerics = tpl:generics.asGenericNames
 
 			let str
+
 			try tpl:ref = @name.variable.@value
 			try tpl:export = option(:export) or !!@name.variable.@value.isExported
 			try tpl:global = option(:global) or (@name and !@name.variable) or !!@name.variable.@value.isGlobal
 			try tpl:path = isExtension and @name.variable.importPath
 
-			tpl
 			# only if the target is originally global
 			str = if !@name or tpl:iife
-				'''
-				class @name @{extends @supr }{ %body }
-				'''
+				'class @name@generics @{extends @supr }{ @body }'
 			
 			elif isExtension and tpl:path
 				'''
-					%declareName
-					declare module %path {
-						interface %declareName@generics extends %localName@generics {}
+					@declareName
+					declare module @path {
+						interface @declareName@generics extends @localName@generics {}
 					}
-					class %localName@generics { %body }
+					class @localName@generics { @body }
 				'''
 			elif isExtension and tpl:global
 				'''
 				declare global {
-					interface %declareName@generics extends %localName@generics {}
+					interface @declareName@generics extends @localName@generics {}
 				}
-				class %localName@generics { %body }
+				class @localName@generics { %body }
 				'''
 			elif isExtension
-				# what if the receiver is default?
-				#
-				# So - even if this is extending the local
-				# console.log @name,tpl:ref and tpl:ref.isGlobal
 				'''
-					%export %default interface %declareName@generics extends %localName@generics {}
-					class %localName@generics { %body }
+					@export @default interface @declareName@generics extends @localName@generics {}
+					class @localName@generics { %body }
 				'''
 			elif isGlobal
-				# dont add constructor if mixin?
 				'''
 				declare global {
-					interface @declareName@generics extends @localName@suprGenerics {}
 					class @declareName@generics extends @localName@suprGenerics {}
 				}
-				interface @localName@generics @{extends @mixins }{ [index:string]: any }
-				class @localName@generics @{extends @supr }{
-					@body
-				}
+				@{@mixins? interface @localName@generics @{extends @mixins }{ @{@unsafe? [index:string]: any } }}
+				class @localName@generics @{extends @supr }{ @body }
+				@{@export? export {@localName as @declareName}}
 				'''
 			else
 				'''
-				%export %default interface %localName@generics @{extends %mixins }{ [index:string]: any }
-				%export %default class %localName@generics @{extends %supr }{
-					@body
-				}
+				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{ @{@unsafe? [index:string]: any } }}
+				%export %default class %localName@generics @{extends %supr }{ @body }
 				'''
+
 			return TPL(tpl,str)
 
 		if @mixins:length
@@ -4675,13 +4637,15 @@ export class MethodDeclaration < Func
 			default: option(:default)
 			async: option(:async)
 			code: code # with braces
-			key: M(name, null, as: 'field')
+			key: M(name, null, as: 'field') # should not be precompiled
+			name: @name
 			get: isGetter ? option(:keyword) : null
 			set: isSetter ? option(:keyword) : null
 			returnType: returnType
 			params: params
 			generics: @name and @name.option('generics')
 			function: !option(:inClassBody) and !option(:inObject)
+			decorators: @decorators
 		}
 
 		if tsc
@@ -4717,28 +4681,36 @@ export class MethodDeclaration < Func
 							generics[key] = param.datatype.makeGeneric(key)
 						catch e
 							console.log "error",e
-						# console.log "make generic",key,!!param,generics
-						# try generics.push(param.datatype.makeGeneric('$' + $1))
 
 			let vals = Object.values(generics)
 			if vals:length
 				tpl:generics ||= '<'+AST.cary(vals).join(',')+'>'
-			# extract the types
 			yes
 
-		if tsc and (returnType or tpl:generics)
+		if tsc and (returnType or tpl:generics or true)
+			# should this not be for all methods?
 			# TODO need to work together with the one above
 			# Reference to the class name
+			if @decorators
+				tpl:decorators = AST.cary(@decorators).join('\n')
 			let str = '''
-				@export @default @async @static @get @set @function @key@generics(@params)@{:@returnType} @code
+				@export @default @static @async @get @set @function @key@generics(@params)@{:@returnType} @code
 			'''
 
-			if tpl:static and returnType.hasSelfReference
+			if tpl:static and returnType and returnType.hasSelfReference
 				tpl:returnType = returnType.withReplacedThis('THIS')
 				str = '''
-					%async %static @function %key<THIS extends abstract new (...args: any) => any>(this:THIS@{, @params})@{:@returnType};
-					%async %static %get %set @function %key(%params) %code
+				@static @async @function @key<THIS extends abstract new (...args: any) => any>(this:THIS@{, @params})@{:@returnType};
+				@static @async @get @set @function @key(@params) @code
 				'''
+
+			if @decorators
+				tpl:decorators = AST.cary(@decorators).join('\n')
+				str = '@decorators\n' + str
+
+			if isGlobal
+				tpl:localName = InternalName.new(@name)
+				str += '\ntype @localName = typeof @name;\ndeclare global { var @name : @localName }'
 
 			return TPL tpl,str
 
@@ -4790,7 +4762,8 @@ export class MethodDeclaration < Func
 			else
 				let k = OP('.',target,@name)
 				out = "{k.c} = {funcKeyword} {func}"
-
+			
+			# should never use non es syntax anymore?
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
@@ -7239,6 +7212,7 @@ export class Decorator < ValueNode
 		@name ||= @value.js
 
 	def visit
+		@token = @value
 		@variable = scope__.lookup(name)
 		@value.@variable ||= @variable
 
@@ -7271,7 +7245,12 @@ export class Decorator < ValueNode
 		# should return other places as well...
 		return if STACK.current isa ClassBody
 
-		let out = @value.c
+		let out
+
+		if STACK.tsc
+			out = '@' + M(@value,@token)
+		else
+			out = @value.c
 
 		if @params
 			out += ".bind([{@params.c(expression: yes)}])"
@@ -10460,7 +10439,10 @@ export class Tag < TagLike
 				slotPath = "{fn}({STR(option(:name)).c})"
 
 		if tsc
-			# console.log tvar
+			let up = STACK.parent
+			let safe = up isa Block or up isa Tag
+			# if not we need to wrap the whole thing in an iife
+			# let up = STACK.
 			if type isa TagTypeIdentifier and !isSelf
 				if type.isAsset
 					add "var {tvar} = new {M("SVGSVGElement",type)}"
@@ -10490,8 +10472,13 @@ export class Tag < TagLike
 			let nodes = body ? body.values : []
 			for item in nodes
 				add item.c
-
-			if o:inline or isExpression
+			
+			if !safe
+				add "return {tvar}"
+				let sep = o:inline or isExpression ? ',' : ';\n'
+				sep = ';\n'
+				return '(()=>{' + out.join(sep) + '})()'
+			elif false and (o:inline or isExpression)
 				# o:inline = wasInline
 				add option(:return) ? "return {tvar}" : "{tvar}"
 				let js = '(' + out.join(',\n') + ')'
@@ -13037,8 +13024,8 @@ export class RootScope < Scope
 		@runtime = @imba.proxy
 		self
 
-	def importProxy name, path
-		@importProxies[name] ||= register("${name}$", self, type: 'global', varclass: ImportProxy, path: path or name)
+	def importProxy name, path, pre = "${name}$"
+		@importProxies[name] ||= register(pre, self, type: 'global', varclass: ImportProxy, path: path or name)
 
 	def runtime
 		@runtime
@@ -13614,7 +13601,7 @@ export class SystemVariable < Variable
 			@name = "{o:gsym.replace(/\#/g,'$')}$"
 			return self
 
-		let sysnr = STACK.tsc ? @scope.incr('sysvar') : STACK.incr('sysvar')
+		let sysnr = (STACK.tsc or o:safe) ? @scope.incr('sysvar') : STACK.incr('sysvar')
 		@name = "${sysnr}"
 		return self
 
@@ -13738,7 +13725,11 @@ export class ImportProxy < Variable
 			js.push("import * as {@name} from {pathjs};")
 
 		if keys:length > 0
-			let out = keys.map(do |a| "{a} as {@exports[a].c}").join(", ")
+			let out = keys.map(do |a|
+				let name = @exports[a].c
+				name == a ? a : "{a} as {name}"
+			).join(", ")
+
 			js.push "import \{{out}\} from {pathjs};"
 
 		if touches:length
@@ -13750,8 +13741,10 @@ export class ImportProxy < Variable
 		if @globalName
 			return LIT("{M(@globalName,ctx)}.{C(key)}")
 		let raw = C(key,mark: false)
-		
-		@exports[raw] ||= ImportProxyAccess.new("{@name}_{raw}")
+
+		# what if this 
+		# TODO what if there are collisions?
+		@exports[raw] ||= ImportProxyAccess.new(@name ? "{@name}_{raw}" : raw)
 
 	def c
 		if !@importAll
@@ -13885,6 +13878,9 @@ export class Super < Node
 
 		if @method # and @method.option('inExtension')
 			@class = STACK.up(ClassDeclaration)
+			
+			if @class and @method.isConstructor
+				@class.set(calledSuper: yes)
 
 		args.traverse if args	
 		self

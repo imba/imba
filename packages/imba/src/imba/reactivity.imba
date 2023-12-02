@@ -274,7 +274,7 @@ let SET = do(target,key,vsym,value,meta,bsym)
 
 	return
 
-class Ref
+export class Ref
 
 	def constructor kind, type, val, name
 		id = NEXT_REF_ID++
@@ -304,7 +304,7 @@ class Ref
 			CTX.flush!
 		return
 
-	def invalidated level, source
+	def invalidated level\number?, source\any?
 		v++
 
 		observer.invalidated(level + 1,this) if observer

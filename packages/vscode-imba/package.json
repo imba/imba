@@ -146,6 +146,12 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Enable/disable semantic checking of Imba files. Existing imbaconfig.json overrides this setting."
+				},
+				"imba.reportUndeclaredProperties": {
+					"type": "string",
+					"default": "error",
+					"enum": ["never","info","warn","error"],
+					"description": "Should non-existent properties be reported by tooling?"
 				}
 			}
 		},
