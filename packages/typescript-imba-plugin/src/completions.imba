@@ -229,7 +229,7 @@ export class Completion
 			if edits.changes.length
 				item.additionalTextEdits = edits.changes
 
-		elif ii
+		elif ii.moduleSpecifier
 			let path = ii.moduleSpecifier
 			let name = importName
 			let edits = script.doc.createImportEdit(path,util.toImbaIdentifier(name),util.toImbaIdentifier(name),false)
@@ -398,7 +398,7 @@ export class SymbolCompletion < Completion
 
 	def resolve
 		try
-			let details = checker.getSymbolDetails(sym)
+			let details = checker.getSymbolDetails(sym,item)
 
 			item.markdown = details.markdown
 
@@ -409,8 +409,10 @@ export class SymbolCompletion < Completion
 				unless cat.indexOf('style') >= 0
 					item.detail = util.displayPartsToString(util.toImbaDisplayParts(dp))
 
-			util.log 'resolve completion',item
+			util.log 'resolve completion',item,details,self
 			resolveImportEdits!
+		catch e
+			util.log 'error when resolving completion',e,self
 		self
 
 export class AutoImportCompletion < SymbolCompletion

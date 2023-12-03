@@ -135,9 +135,12 @@ export default class ImbaTypeChecker
 	def findClosestContext dpos
 		self
 
-	def getSymbolDetails symbol
+	def getSymbolDetails symbol,completion\any?
+		let orig = symbol
 		symbol = sym(symbol)
-		let details = ts.Completions.createCompletionDetailsForSymbol(symbol,checker,sourceFile,sourceFile)
+		# unclear how precise we can get?
+		util.log('getSymbolDetails',symbol,orig,completion)
+		let details = ts.Completions.createCompletionDetailsForSymbol(symbol,symbol.name or "",checker,sourceFile,sourceFile)
 		let tags = symbol.getJsDocTags!
 		let md = []
 
