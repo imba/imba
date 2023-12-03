@@ -3956,6 +3956,7 @@ export class ClassDeclaration < Code
 				'''
 				declare global {
 					class @declareName@generics extends @localName@suprGenerics {}
+					interface GlobalClassMap {@declareName:@declareName}
 				}
 				@{@mixins? interface @localName@generics @{extends @mixins }{ @{@unsafe? [index:string]: any } }}
 				class @localName@generics @{extends @supr }{ @body }

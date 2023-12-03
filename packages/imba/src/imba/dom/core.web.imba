@@ -149,13 +149,13 @@ extend class Node
 	@custom
 	@summary Reference to the parentNode even before element has been attached
 	###
-	get #parent
-		##parent or this.parentNode or ##up
+	get #parent\ParentNode
+		##parent or self.parentNode or ##up
 
 	get #closestNode
 		self
 
-	get #parentNode
+	get #parentNode\ParentNode
 		#parent.#closestNode
 
 	get #context
@@ -635,3 +635,12 @@ export def defineTag name, klass, options = {}
 
 let instance = global.imba ||= {}
 instance.document = global.document
+
+declare extend class Element
+	###
+	Gives dynamic elements and elements inside lists a stable identity.
+	Any value (both objects and primitive values) may be used as a key.
+	@idl
+	###
+	set key value\any
+		self

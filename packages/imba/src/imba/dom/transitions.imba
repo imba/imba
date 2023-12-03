@@ -1,7 +1,8 @@
 # imba$stdlib=1
 
-import {Element,get_document} from './core'
+import {get_document} from './core'
 import {Emitter} from '../utils'
+$node$ import {Element} from './core'
 
 class Transitions < Emitter
 	selectors = {}
@@ -320,6 +321,11 @@ extend class Element
 	get ease
 		#_easer_ ||= new Easer(self)
 
+	###
+	Enable transitions for when element is attached / detached
+	@see[Transitions](https://imba.io/css/transitions)
+	@idl
+	###
 	set ease value\any
 		if value == no
 			#_easer_..disable!
