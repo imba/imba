@@ -40,13 +40,13 @@ test "same superclass" do
 		def @stuff
 			{}
 
-	global class B < A
+	class B < A
 		b = 1
 		item @stuff
 
 	try
 		# should not work because A is not in chain
-		global class C
+		class C
 			isa B
 
 		let item = new C

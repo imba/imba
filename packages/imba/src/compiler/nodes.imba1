@@ -16,7 +16,7 @@ import Compilation from './compilation'
 
 import SourceMapper from './sourcemapper'
 
-import {HAS} from '../imba/runtime.mjs'
+import {ClassFlags} from '../imba/runtime.mjs'
 
 import extractGenericNames from './utils'
 
@@ -36,6 +36,18 @@ class MappedString
 
 	def c
 		M(@value,self)
+
+class Templated
+	def initialize template, options, source
+		@template = template
+		@options = options
+		@source = source
+
+	def c
+		TPL(@options,@template)
+
+	def toString
+		c
 
 class InternalName
 
@@ -223,13 +235,13 @@ export var TPL = do |vars,string,o = {}, d = 0|
 		string = string.replace(NESTED_TPL_REGEX) do|m,g,cond,subtpl|
 			if cond
 				if cond[0] == '!'
-					return '' if vars[cond.slice(1)]
+					return 'εε' if vars[cond.slice(1)]
 				else
-					return '' unless vars[cond]
+					return 'εε' unless vars[cond]
 
 			let o = {}
 			let sub = TPL(vars,subtpl,o,d + 1)
-			(o:replaced or cond) ? sub : ''
+			(o:replaced or cond) ? sub : 'εε'
 
 		string = string.replace(/\@([\w\-]+)\|?/g) do|m,k|
 			if k == 'ts-ignore'
@@ -246,6 +258,7 @@ export var TPL = do |vars,string,o = {}, d = 0|
 
 			return v or 'εε'
 
+		string = string.replace(/(\n\s*)(εε)\s*(?=\n)/g,'') # .replace(/εε/g,'')
 		string = string.replace(/(^|\s)(εε[ ]?)*/mg,'$1').replace(/εε/g,'')
 		string = string.replace(/(^[ ]+)/mg,'')
 		string = string.trim() if d == 0
@@ -1074,6 +1087,9 @@ export class Stack
 				return @nodes[i]
 			i--
 		return
+
+	def prependInBlock node
+		block.add([node,BR], before: blockpart)
 
 	def lastImport
 		let scopes = self.scopes
@@ -2151,22 +2167,18 @@ export class Block < ListNode
 		super
 		if a isa Token and a.@type == 'INDENT'
 			if let post = (a.@meta and a.@meta:post)
-				let br = Token.new('TERMINATOR',post)
-				@nodes.unshift(Terminator.new(br))
-				a.@meta:post = ''
+				a.@meta:post = post.trim + '\n'
+				
 		return self
 
 class ClassInitBlock < Block
 
 	def c o
-		# @options ||= {}
-		# @options:braces = yes
 		let out = super
-		return 'static {\n' + helpers.indent(out) + '}'
-
-	# def js o, opts
-	#	let out = super(o,opts)
-	#	return 'static {\n' + out + '}'
+		if @nodes:length > 1
+			return 'static {\n' + helpers.indent(out) + '\n}'
+		else
+			return 'static { ' + out.replace(/\;$/,'') + ' }'
 
 class InstanceInitBlock < Block
 
@@ -2174,8 +2186,6 @@ class InstancePatchBlock < InstanceInitBlock
 
 export class ClassField < Node
 	prop name
-
-	
 
 	def initialize name
 		super
@@ -3590,7 +3600,7 @@ export class ClassDeclaration < Code
 		let fn = addMethod(initKey,[],(isTag or @superclass) ? [call,BR] : '',{}) do |fun|
 			yes
 		fn.set(noreturn: yes)
-		fn.params.at(0,yes,'$$',LIT('null')) # (restIndex,yes,'$$',LIT('{}'))
+		fn.params.at(0,yes,'$$',LIT('null'))
 		fn.params.at(1,yes,'deep',LIT('true'))
 		fn.params.at(2,yes,'fields',LIT('true'))
 		@instanceInit = fn
@@ -3617,14 +3627,15 @@ export class ClassDeclaration < Code
 		@inits or (@supernode and @supernode:isInitingFields and @supernode.isInitingFields)
 
 	def visit
-		# if isGlobal and isExported
-		# 	warn "exporting global classes not supported", loc: option(:global)
-		# 	yes
-		# replace with some advanced lookup?
+		let upscope = STACK.scope(1)
+		let up = STACK.up
+		let refvar = SystemVariable.new(upscope,null,null,{type: 'let', ns: 'c', safe: yes})
+		STACK.prependInBlock(Templated.new('let @name = Symbol()',name: refvar))
+		@refSym = refvar
+
 		@body.@delimiter = ''
 		let blk = STACK.up(Block)
 		@decorators = blk and blk.collectDecorators
-		# console.log "FOUND DECORATORS FOR CLASS?",@decorators and @decorators:length
 
 		STACK.pop(self)
 		let sup = @superclass
@@ -3632,9 +3643,6 @@ export class ClassDeclaration < Code
 		@path = @name
 		@ownName = @name
 		@realName = @name isa Access ? @name.right : @name
-		# @internalName = STACK.toInternalClassName(@name)
-
-		# let dtsify = STACK.tsc and (isGlobal or isExtension or (isNamespaced and  )
 
 		if sup
 			sup.traverse()
@@ -3645,13 +3653,8 @@ export class ClassDeclaration < Code
 					if val isa ClassDeclaration
 						@supernode = val
 				elif sup.symbol == 'Object'
-					if !STACK.tsc
-						sup = @superclass = null
-					else
-						@autosuper = yes
-						try
-							sup.@identifier.@symbol = 'ΤObject'
-							# sup.@value = 'AnyObject'
+					set(implicitAny: yes)
+					sup = @superclass = null
 
 		if isExtension and @name
 			@name.traverse()
@@ -3855,12 +3858,22 @@ export class ClassDeclaration < Code
 		
 		let cflags = 0
 
+		if self isa ExtendDeclaration
+			cflags = cflags | ClassFlags.IsObjectExtension
+
+		if isTag
+			cflags = cflags | ClassFlags.IsTag
+
+		if isExtension
+			cflags = cflags | ClassFlags.IsExtension
+
 		if !tsc
 			
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]
 			let hasDecorators = allDecorators:length > 0
 
 			if hasDecorators
+				cflags = cflags | ClassFlags.HasDecorators
 				STACK.use('hooks')
 				let decosym = STACK.imbaSymbol('__hooks__')
 				staticInits.unshift LIT("this.prototype[{decosym}] = {runtime:hooks}"), yes
@@ -3873,8 +3886,22 @@ export class ClassDeclaration < Code
 				ctor.inject CALL(STACK.corelib['inited$'],[THIS,refSym])
 
 			if ctor
-				cflags = cflags | HAS.CONSTRUCTOR
-			staticInits.add CALL(STACK.corelib['register$'],[THIS,refSym,@realName ? @realName.toStr : NULL,LIT(cflags)])
+				cflags = cflags | ClassFlags.HasConstructor
+				
+			if option(:calledSuper)
+				cflags = cflags | ClassFlags.HasSuperCalls
+
+			let pars = [THIS,refSym,(@realName ? @realName.toStr : NULL),LIT(String(cflags))]
+			if isExtension
+				if isTag
+					let namevar = @name.@variable
+					let cls = namevar or CALL(runtime:getTagType,[name,STR(name.toClassName)])
+					# if className == 'ImbaElement' or className == 'imba.Component'
+					#	cls = runtime:Component
+					pars.push(cls)
+				else
+					pars.push(@className)
+			staticInits.add CALL(STACK.corelib['register$'],pars)
 
 		if !staticInits.isEmpty and !tsc
 			body.add([BR,staticInits])
@@ -3935,8 +3962,7 @@ export class ClassDeclaration < Code
 				supr: superclass
 				iife: up isa Instantiation
 				"return": option(:return)
-				unsafe: no
-				
+				unsafe: option(:implicitAny)
 			}
 
 			if tpl:generics
@@ -3951,7 +3977,11 @@ export class ClassDeclaration < Code
 
 			# only if the target is originally global
 			str = if !@name or tpl:iife
-				'class @name@generics @{extends @supr }{ @body }'
+				'''
+				class @name@generics @{extends @supr }{@{@unsafe? 
+					[index:string]: any;}@body
+				}
+				'''
 			
 			elif isExtension and tpl:path
 				'''
@@ -3980,8 +4010,9 @@ export class ClassDeclaration < Code
 					class @declareName@generics extends @localName@suprGenerics {}
 					type Any@declareName = ImbaAny<@localName>;
 				}
-				@{@mixins? interface @localName@generics @{extends @mixins }{ @{@unsafe? [index:string]: any } }}
+				@{@mixins? interface @localName@generics @{extends @mixins }{ }}
 				class @localName@generics @{extends @supr }{
+					@{@unsafe? [index:string]: any; }
 					declare protected static AnyType: Any@declareName
 					@body
 				}
@@ -3989,8 +4020,11 @@ export class ClassDeclaration < Code
 				'''
 			else
 				'''
-				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{ @{@unsafe? [index:string]: any } }}
-				%export %default class %localName@generics @{extends %supr }{ @body }
+				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{}}
+				%export %default class %localName@generics @{extends %supr }{
+					@{@unsafe? [index:string]: any;}
+					@body
+				}
 				'''
 
 			return TPL(tpl,str)
@@ -4012,14 +4046,14 @@ export class ClassDeclaration < Code
 
 		let js = "{jshead} \{{jsbody}\}"
 
-		if isExtension
-			let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
-
-			if @virtualSuper
-				let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
-				extTarget = LIT("({wrap.c},{extTarget.c})")
-
-			js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
+		# if isExtension
+		# 	let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
+		# 
+		# 	if @virtualSuper
+		# 		let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
+		# 		extTarget = LIT("({wrap.c},{extTarget.c})")
+		# 		js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
+		
 
 		if option(:global)
 			let access = name isa Access
@@ -4138,6 +4172,7 @@ export class TagDeclaration < ClassDeclaration
 		let tsc = STACK.tsc
 		let className = name.toClassName
 		let sup = superclass
+
 		let anonGlobalTag = !option(:extension) and (!name.isClass) and tsc
 
 		let tpl = {
@@ -4212,16 +4247,28 @@ export class TagDeclaration < ClassDeclaration
 			if className == 'ImbaElement' or className == 'imba.Component'
 				cls = runtime:Component
 			let tagname = TagTypeIdentifier.new(name)
+			# @className = LIT('1232')
 
-			let js = "(class \{{body.c}\}).prototype"
-			return util.extend("{cls.c}.prototype",LIT(js)).c
+			return "({M('class',option(:keyword))} \{{body.c}\})"
 
 		else
 			if name.isNative
 				name.error "tag {name.symbol} already exists"
 
 		let closure = scope__.parent
+		# console.log @cssns,@cssid
+		@config:cssns = cssns if @cssns
+		@config:cssid = cssid if @cssid
+		@config:name = name.symbol if name.isClass
+		tpl:config = Obj.wrap(@config)
+
+		@staticInits.add([BR,CALL(runtime:defineTag,[name,THIS,tpl:config])])
+
+		if @staticInit
+			@staticInits.add([BR,CALL(OP('.',THIS,initKey),[])])
+			
 		let jsbody = body.c()
+		
 		let jshead = "{M 'class', keyword} {M className, name} {mo('extends')} "
 
 		if @mixins:length
@@ -4235,20 +4282,7 @@ export class TagDeclaration < ClassDeclaration
 			else
 				jshead = "{mo 'export'} {jshead}"
 
-		let js = "{jshead} \{{jsbody}\}"
-
-		@config:cssns = cssns if @cssns
-		@config:cssid = cssid if @cssid
-
-		if @staticInit
-			js += "; {OP('.',LIT(className),initKey).c}()"
-		# let ext = (option(:extends) or LIT('{}')).c
-		let ext = Obj.wrap(@config).c
-		if name.isClass
-			@config:name = name.symbol
-		js += "; {runtime:defineTag}({name.c},{className},{ext})"
-
-		return js
+		return "{jshead} \{{jsbody}\}"
 
 export class Func < Code
 
@@ -4317,12 +4351,6 @@ export class Func < Code
 		body.@indentation = null if ind and ind.isGenerated
 		var code = scope.c(indent: (!ind or !ind.isGenerated), braces: yes)
 
-		# args = params.map do |par| par.name
-		# head = params.map do |par| par.c
-		# code = [head,body.c(expression: no)].AST.flatten.compact.join("\n").wrap
-		# FIXME creating the function-name this way is prone to create naming-collisions
-		# will need to wrap the value in a FunctionName which takes care of looking up scope
-		# and possibly dealing with it
 		var name = typeof @name == 'string' ? @name : @name.c
 		name = name ? ' ' + name.replace(/\./g,'_') : ''
 		var keyword = o and o:keyword != undefined ? o:keyword : funcKeyword
@@ -4689,7 +4717,6 @@ export class MethodDeclaration < Func
 					if typ.@genericWrap
 						let key = '$' + (i + 1)
 						generics[key] = typ.makeGeneric(key)
-					
 
 			for typ in all
 				continue unless typ isa TypeAnnotation
@@ -4712,12 +4739,8 @@ export class MethodDeclaration < Func
 			let vals = Object.values(generics)
 			if vals:length
 				tpl:generics ||= '<'+AST.cary(vals).join(',')+'>'
-			yes
 
-		if tsc and (returnType or tpl:generics or true)
-			# should this not be for all methods?
-			# TODO need to work together with the one above
-			# Reference to the class name
+
 			if @decorators
 				tpl:decorators = AST.cary(@decorators).join('\n')
 			let str = '''
@@ -4754,9 +4777,6 @@ export class MethodDeclaration < Func
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
 			out = "{prefix}{M name, null, as: 'field'}({params.c})"
-
-			if tsc and returnType
-				out += ':' + returnType.c + ' '
 		
 			out += code
 			return out
@@ -4770,10 +4790,6 @@ export class MethodDeclaration < Func
 			localName: fname
 			declareName: fname
 		}
-
-		if STACK.tsc and isGlobal
-			fname = tpl:localName = STACK.toInternalName(tpl:localName)
-
 			
 		if target
 			# TODO make this work with SymbolIdentifier
@@ -4801,11 +4817,7 @@ export class MethodDeclaration < Func
 				out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 
 		if o:global
-			if STACK.tsc
-				out = "{out};" + TPL(tpl,'declare global { var %declareName : typeof %localName }')
-			else
-				out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
-			# out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
+			out = "{out}; {scope__.root.globalRef}.{fname} = {fname};"
 
 		if option(:return)
 			out = "return {out}"
@@ -7772,13 +7784,9 @@ export class Call < Node
 			if arg isa Str
 				# TODO remove need for ImbaAsset type
 				# callee = runtime:asset
-				if STACK.tsc and false # (false or arg.raw == './ns')
-					yes
-					callee = callee.left
-				else
-					callee = LIT('')
-					let asset = STACK.root.registerAsset(arg.raw,"{kind}",self,arg)
-					args.replace(arg,asset:ref)
+				callee = LIT('')
+				let asset = STACK.root.registerAsset(arg.raw,"{kind}",self,arg)
+				args.replace(arg,asset:ref)
 
 		elif callee.isGlobal('import')
 
@@ -13636,8 +13644,10 @@ export class SystemVariable < Variable
 			@name = "{o:gsym.replace(/\#/g,'$')}$"
 			return self
 
-		let sysnr = (STACK.tsc or o:safe) ? @scope.incr('sysvar') : STACK.incr('sysvar')
-		@name = "${sysnr}"
+		let ns = o:ns or ''
+
+		let sysnr = (STACK.tsc or o:safe) ? @scope.incr('sysvar' + ns) : STACK.incr('sysvar' + ns)
+		@name = "{ns}${sysnr}"
 		return self
 
 		# unless @name
@@ -13914,7 +13924,7 @@ export class Super < Node
 		if @method # and @method.option('inExtension')
 			@class = STACK.up(ClassDeclaration)
 			
-			if @class and @method.isConstructor
+			if @class and !@method.isConstructor
 				@class.set(calledSuper: yes)
 
 		args.traverse if args	
@@ -13941,8 +13951,8 @@ export class Super < Node
 
 		# need to know if our method is in the initial declaration
 		if virtual and @class
-
-			sup = CALL(@class.virtualSuper,[slf])
+			sup = CALL(STACK.corelib['sup$'],[THIS,@class.refSym])
+			# sup = CALL(@class.virtualSuper,[slf])
 
 		# when super is written all by itself - it means to do the default action
 		unless (up isa Access) or (up isa Call)

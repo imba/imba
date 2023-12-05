@@ -452,14 +452,16 @@ global class SpecAssert < SpecComponent
 		else
 			"ok"
 
-global.spec = global.SPEC = new Spec
-global.test = global.spec.test
+const spec = global.spec = global.SPEC = new Spec
 global.describe = global.spec.describe
 
-global def before name, blk do SPEC.before(name,blk)
-global def eq actual, expected, o do  SPEC.eq(actual, expected, o)
-global def ok actual, o do SPEC.eq(!!actual, true, o)
-global def nok actual, o do SPEC.eq(!!actual, false, o)
+global def test ...args
+	spec.test(...args)
+
+global def before name, blk do spec.before(name,blk)
+global def eq actual, expected, o\any? do  spec.eq(actual, expected, o)
+global def ok actual, o\any? do spec.eq(!!actual, true, o)
+global def nok actual, o\any? do spec.eq(!!actual, false, o)
 
 global def eqcss el, match,sel,o = {}
 	if typeof el == 'string'

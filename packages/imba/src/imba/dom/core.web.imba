@@ -142,8 +142,10 @@ extend class Document
 	def emit ...params
 		self.documentElement.emit(...params)
 
-extend class Node
+# @ts-ignore
+Node.prototype.#__init__ = do this
 
+extend class Node
 
 	###
 	@custom
@@ -160,9 +162,6 @@ extend class Node
 
 	get #context
 		##context ||= new Proxy(self,contextHandler)
-
-	def #__init__
-		self
 
 	def ##inited
 		self

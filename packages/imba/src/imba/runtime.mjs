@@ -11,10 +11,21 @@ export const __mixin__$	 = Symbol.for('#__mixin__')
 export const matcher = Symbol.for('#matcher')
 
 export const HAS = {
-	DECORATORS: 1 << 0,
-	ACCESSORS: 1 << 2,
-	FIELDS: 1 << 3,
+	SUPERCALLS: 1 << 3,
 	CONSTRUCTOR: 1 << 4
+}
+
+export const ClassFlags = {
+	IsExtension: 1 << 0,
+	IsTag: 1 << 1,
+	HasDescriptors: 1 << 2,
+	HasSuperCalls: 1 << 3,
+	HasConstructor: 1 << 4,
+	HasFields: 1 << 5,
+	HasMixins: 1 << 6,
+	HasInitor: 1 << 7,
+	HasDecorators: 1 << 8,
+	IsObjectExtension: 1 << 9
 }
 
 const state = globalThis[__imba__$] ||= {
@@ -203,8 +214,45 @@ function meta$(up,symbol) {
 	return meta
 }
 
-export function register$(klass,symbol,name,flags) {
+let sup = {
+	cache: {},
+	self: null,
+	target: null,
+	proxy: new Proxy({},{
+		apply: (_, key, ...params) => {
+			return sup.target[key].apply(sup.self, params)
+		},
+		get: (_, key) => {
+			return Reflect.get(sup.target, key, sup.self);
+		},
+		set: (_, key, value, receiver) => {
+			return Reflect.set(sup.target, key, value, sup.self);
+		}
+	})
+}
+
+export function sup$(self,symbol) {
+	sup.self = self;
+	sup.target = sup.cache[symbol];
+	return sup.proxy;
+}
+
+export function register$(klass,symbol,name,flags,into = null) {
 	// Look for the actual superclass excluding mixins
+	if(into){
+		let target = flags & ClassFlags.IsObjectExtension ? into : into.prototype;
+		// Create fake super now
+		if(flags & ClassFlags.HasSuperCalls){
+			sup.cache[symbol] = Object.create(
+				Object.getPrototypeOf(target),
+				Object.getOwnPropertyDescriptors(target)
+			)
+		}
+
+		extend$(target,klass.prototype);
+		return into;
+	}
+
 	let supr = Object.getPrototypeOf(klass.prototype)?.constructor;
 	let meta = klass[__meta__$] = meta$(supr,symbol);
 	// (smeta?.symbol == symbol) ? smeta : Object.create(supr[__meta__$] || null);
@@ -227,7 +275,7 @@ export function register$(klass,symbol,name,flags) {
 	meta.top.version++;
 	// Call inherited?
 
-	if(flags & HAS.CONSTRUCTOR)
+	if(flags & ClassFlags.HasConstructor)
 		klass.prototype[__initor__$] = symbol;
 
 	if(supr?.inherited instanceof Function) supr.inherited(klass)

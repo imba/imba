@@ -56,12 +56,12 @@ describe "dynamic extend" do
 		def two
 			2
 
-	test do
+	test "basics" do
 		let item = new Hello
 		eq item.one!, 1
 		eq item.two!, 2
 
-	test do
+	test "extend in loop" do
 		# now extend the class
 		let updates = {one: 10, two: 20}
 		let stuff = []
@@ -81,7 +81,7 @@ describe "dynamic extend" do
 		eq item2.one!, 11
 		eq item2.two!, 22
 
-	test do
+	test "extend in function" do
 		# fully dynamic extend
 		class Item
 			def one
