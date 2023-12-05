@@ -2,7 +2,7 @@
 	"name": "vsimba",
 	"displayName": "Imba",
 	"description": "Language support for Imba",
-	"version": "3.5.1",
+	"version": "4.0.0-alpha.0",
 	"publisher": "scrimba",
 	"main": "./dist/index.js",
 	"icon": "assets/imba.png",
@@ -150,7 +150,12 @@
 				"imba.reportUndeclaredProperties": {
 					"type": "string",
 					"default": "error",
-					"enum": ["never","info","warn","error"],
+					"enum": [
+						"never",
+						"info",
+						"warn",
+						"error"
+					],
 					"description": "Should non-existent properties be reported by tooling?"
 				}
 			}
