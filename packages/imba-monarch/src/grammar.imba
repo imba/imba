@@ -434,13 +434,14 @@ export const states = {
 	]
 
 	class_: [
-		[/(extend)(?=\s+(global )?class )/,'keyword.$1']
-		[/(global)(?=\s+class )/,'keyword.$1']
+		[/(extend)(?=\s+(global )?(class|interface) )/,'keyword.$1']
+		[/(global)(?=\s+(class|interface|abstract) )/,'keyword.$1']
+		[/(abstract)(?=\s+(class|interface) )/,'keyword.$1']
 		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
-		[/(class)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
+		[/(class|interface)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
 
-		[/(class)(\s)(@classid)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
-		[/(class)(?=\n)/, 'keyword.$1','@>_class&class=']
+		[/(class|interface)(\s)(@classid)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
+		[/(class|interface)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
 
 	classname_start: [
@@ -457,9 +458,10 @@ export const states = {
 		'access_'
 		[/\s+|\n/,'@rematch','@pop']
 	]
-
+	
+	# Is this not covered by class_?
 	extend_class_: [
-		[/(extend)(\s)(class)(\s)/,
+		[/(extend)(\s)(class|interface)(\s)/,
 			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
 		]
 	]
@@ -526,7 +528,8 @@ export const states = {
 
 	export_: [
 		[/(export)( +)(default)@B/,['keyword.export','white','keyword.default']] # ,'@>import_body'
-		[/(export)(?= +(let|const|var|class|tag)@B)/,'keyword.export'] # ,'@>import_body'
+		[/(export)( +)(abstract)@B/,['keyword.export','white','keyword.abstract']] # ,'@>import_body'
+		[/(export)(?= +(let|const|var|class|tag|interface)@B)/,'keyword.export'] # ,'@>import_body'
 		[/(export)( +)(global)@B/,['keyword.export','white','keyword.global']] # ,'@>import_body'
 
 		[/(export)(\s+\*\s+)(from)@B/,['keyword.export','operator.star','keyword.from','@>import_source']]
@@ -568,6 +571,7 @@ export const states = {
 	member_: [
 		# [/static(?=\s+(get|set|def) )/,'keyword.static'] # only in class and tagclass?
 		[/(constructor)@B/, 'entity.name.constructor','@>def_params&def/def=decl-param']
+		[/(protected|private)(\s)(?=def|get|set)/, ['keyword.$1','white.entity']]
 		[/(def|get|set)(\s)(@defid)/, ['keyword.$1','white.entity','entity.name.$1','@>def_params&$1/$1=decl-param']]
 		[/(def|get|set)(\s)(\[)/, ['keyword.$1','white.entity','$$','@>def_dynamic_name/$1']]
 	]

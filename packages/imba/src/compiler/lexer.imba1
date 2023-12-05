@@ -56,10 +56,10 @@ var CONTEXTUAL_KEYWORDS = {
 	LET: {'global': 1, 'declare': 1, static: 1}
 	CONST: {'global': 1, 'declare': 1, static: 1}
 	VAR: {'global': 1, 'declare': 1, static: 1}
-	CLASS: {'global': 1, 'declare': 1, static: 1, extend: 1, strict: 1}
+	CLASS: {'global': 1, 'declare': 1, static: 1, extend: 1, strict: 1, abstract: 1}
 	INTERFACE: {'global': 1, 'declare': 1, extend: 1, strict: 1}
-	TAG: {'global': 1, 'declare': 1, extend: 1, strict: 1}
-	DEF: {'global': 1, 'declare': 1}
+	TAG: {'global': 1, 'declare': 1, extend: 1, strict: 1, abstract: 1}
+	DEF: {'global': 1, 'declare': 1, protected: 1}
 	PROP: {'static': 1}
 	CSS: {'global': 1}
 }
@@ -1246,6 +1246,9 @@ export class Lexer
 			# see if previous was catch -- belongs in rewriter?
 			if lastTyp == 'CATCH'
 				typ = 'CATCH_VAR'
+
+			if @lastVal == 'protected' and lastTyp == 'IDENTIFIER'
+				tTs(prev,'PROTECTED')
 
 		if (lastTyp == 'NUMBER' or lastTyp == ')') and !prev:spaced and (typ == 'IDENTIFIER' or id == '%')
 			typ = 'UNIT'

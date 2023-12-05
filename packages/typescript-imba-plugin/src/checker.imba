@@ -3,6 +3,7 @@ import {Sym as ImbaSymbol,Node as ImbaNode, Token as ImbaToken, SymbolFlags as I
 import AutoImportContext from './importer'
 const Globals = "global imba module window document exports console process parseInt parseFloat setTimeout setInterval setImmediate clearTimeout clearInterval clearImmediate globalThis isNaN isFinite __dirname __filename".split(' ')
 
+
 extend class ImbaSymbol
 	get tsFlags
 		let f = 0
@@ -51,6 +52,11 @@ class ImbaMappedLocation
 class SetProxy
 
 export default class ImbaTypeChecker
+
+	declare checker\(ts.TypeChecker)
+	declare program\(ts.Program)
+	declare project\(ts.ConfiguredProject)
+
 	constructor project, program, checker, script
 		project = project
 		program = program
@@ -688,9 +694,15 @@ export default class ImbaTypeChecker
 				type(item)
 		return props
 
-	def valueprops item, withTypes = no
+	###
+	Props to be displayed for autocompletion
+	###
+	def valueprops item, withTypes = no, inClass = no
 		let all = self.props(item,withTypes)
 		all = all.filter do !$1.isDecorator
+		unless inClass
+			all = all.filter do !$1.isProtected and !$1.isHashed and !$1.isPrivate
+		util.log(item,all)
 		return all
 
 	def ownprops item, withTypes = no

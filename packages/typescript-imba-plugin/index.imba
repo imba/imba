@@ -1,5 +1,6 @@
-import * as util from './src/util'
+# <reference path="./src/ts.d.ts" />
 
+import * as util from './src/util'
 import Compiler from './src/compiler'
 import Service from './src/service'
 import ImbaScript from './src/script'
@@ -20,7 +21,9 @@ def patch ts
 	Object.defineProperty(ts.server.ScriptInfo.prototype,'im',{get: do this.#imba})
 
 def init modules = {}
-	let ts = global.ts = global.TS = modules.typescript
+	let str = 'TS'
+	let ts = global.ts = modules.typescript
+	global[str] = ts
 	# don't patch if there are no imba files here?
 	try
 		if ts.#patched =? yes

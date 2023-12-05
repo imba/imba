@@ -346,12 +346,19 @@ declare module "data:text/asset;*" {
     export const path: string;
 }
 
+type ImbaConstructor = new (...args:any[]) => any;
+type ImbaClassMap<C,T = GlobalClassMap> = { [K in keyof T & string as T[K] extends C ? K : never]: T[K] }
+type ImbaAny<C,T = GlobalClassMap> = ImbaClassMap<C,T>[keyof ImbaClassMap<C,T>]
+
+
 declare module "imba/compiler" {
     export function compile(fileName: string, options: any): any;
 }
 
 declare module "imba/runtime" {
     export function iterable$<T>(a:T):(T extends {toIterable: (...args: any[]) => infer X} ? X : T);
+
+    export function isa$<T>(a:T):(T extends {[Symbol.hasInstance]: (...args: any[]) => infer X} ? T : false);
 }
 
 declare module "imba/typings" {

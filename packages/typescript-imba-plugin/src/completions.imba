@@ -197,7 +197,10 @@ export class Completion
 		if o..commitCharacters
 			item.commitCharacters = o.commitCharacters
 		if #weight != undefined
-			item.sortText ||= util.zerofill(#weight)
+			let w = #weight
+			if item..label..name..match(/^[\W]+\w/)
+				w += 5
+			item.sortText ||= util.zerofill(w)
 			data.nr = id
 		# item.data.id ||= "{#context.file.id}|{#context.id}|{id}"
 		return item
@@ -646,12 +649,12 @@ export default class Completions
 		if flags & CT.Access
 			if ctx.target == null
 				let selfpath = ctx.selfPath
-				let selfprops = checker.valueprops(selfpath)
+				let selfprops = checker.valueprops(selfpath,no,yes)
 				# || checker.props(loc.thisType)
 				add(selfprops,kind: 'implicitSelf', weight: 300, matchRegex: prefixRegex)
 			else
 				let typ = checker.inferType(ctx.target,script.doc)
-
+				# see if we are inside the correct type?
 				if typ
 					let props = checker.valueprops(typ).filter do !$1.isWebComponent
 					add props, kind: 'access', matchRegex: prefixRegex

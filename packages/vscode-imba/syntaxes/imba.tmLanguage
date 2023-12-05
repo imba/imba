@@ -64,6 +64,10 @@
           </dict>
           <dict>
             <key>include</key>
+            <string>#generics-literal</string>
+          </dict>
+          <dict>
+            <key>include</key>
             <string>#tag-literal</string>
           </dict>
           <dict>
@@ -111,6 +115,10 @@
           <dict>
             <key>include</key>
             <string>#object-keys</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#generics-literal</string>
           </dict>
           <dict>
             <key>include</key>
@@ -189,6 +197,10 @@
           <dict>
             <key>include</key>
             <string>#type-literal</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#generics-literal</string>
           </dict>
           <dict>
             <key>include</key>
@@ -324,7 +336,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|finally|rescue|throw|as|continue|break|extend|augment)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|rescue|finally|throw|as|continue|break|extend|augment)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
@@ -342,7 +354,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(extend|global)\s+(?=class|tag)</string>
+            <string>(extend|global|abstract)\s+(?=class|tag|abstract)</string>
           </dict>
           <dict>
             <key>name</key>
@@ -355,6 +367,12 @@
             <string>storage.type.function.imba</string>
             <key>match</key>
             <string>(def|get|set)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+          </dict>
+          <dict>
+            <key>name</key>
+            <string>keyword.control.imba</string>
+            <key>match</key>
+            <string>(protected|private)\s+(?=def|get|set)</string>
           </dict>
           <dict>
             <key>name</key>
@@ -2325,6 +2343,38 @@
           </dict>
         </array>
       </dict>
+      <key>generics-literal</key>
+      <dict>
+        <key>name</key>
+        <string>meta.generics.annotation.imba</string>
+        <key>begin</key>
+        <string>(?&lt;=[\w\]\)])\&lt;</string>
+        <key>beginCaptures</key>
+        <dict>
+          <key>1</key>
+          <dict>
+            <key>name</key>
+            <string>meta.generics.annotation.open.imba</string>
+          </dict>
+        </dict>
+        <key>end</key>
+        <string>\&gt;</string>
+        <key>endCaptures</key>
+        <dict>
+          <key>0</key>
+          <dict>
+            <key>name</key>
+            <string>meta.generics.annotation.close.imba</string>
+          </dict>
+        </dict>
+        <key>patterns</key>
+        <array>
+          <dict>
+            <key>include</key>
+            <string>#type-brackets</string>
+          </dict>
+        </array>
+      </dict>
       <key>type-brackets</key>
       <dict>
         <key>patterns</key>
@@ -2828,6 +2878,10 @@
           <dict>
             <key>include</key>
             <string>#type-literal</string>
+          </dict>
+          <dict>
+            <key>include</key>
+            <string>#generics-literal</string>
           </dict>
         </array>
       </dict>
@@ -3533,6 +3587,39 @@
                 <string>punctuation.definition.comment.imba</string>
               </dict>
             </dict>
+          </dict>
+          <dict>
+            <key>name</key>
+            <string>ts.block.imba</string>
+            <key>begin</key>
+            <string>(### \@ts(?=\s|$))</string>
+            <key>beginCaptures</key>
+            <dict>
+              <key>1</key>
+              <dict>
+                <key>name</key>
+                <string>punctuation.definition.comment.imba</string>
+              </dict>
+            </dict>
+            <key>end</key>
+            <string>###</string>
+            <key>contentName</key>
+            <string>source.ts.embedded.imba</string>
+            <key>endCaptures</key>
+            <dict>
+              <key>0</key>
+              <dict>
+                <key>name</key>
+                <string>punctuation.definition.comment.imba</string>
+              </dict>
+            </dict>
+            <key>patterns</key>
+            <array>
+              <dict>
+                <key>include</key>
+                <string>source.ts</string>
+              </dict>
+            </array>
           </dict>
           <dict>
             <key>name</key>

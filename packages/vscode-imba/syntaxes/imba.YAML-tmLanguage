@@ -91,6 +91,7 @@ repository:
     - include: '#style-declaration'
     - include: '#mixin-declaration'
     - include: '#object-keys'
+    - include: '#generics-literal'
     - include: '#tag-literal'
     - include: '#regex'
     - include: '#keywords'
@@ -105,6 +106,7 @@ repository:
     patterns:
     - include: '#style-declaration'
     - include: '#object-keys'
+    - include: '#generics-literal'
     - include: '#tag-literal'
     - include: '#regex'
     - include: '#keywords'
@@ -127,6 +129,7 @@ repository:
     - include: '#global-literal'
     - include: '#super-literal'
     - include: '#type-literal'
+    - include: '#generics-literal'
     - include: '#string'
 
   pairs:
@@ -181,7 +184,7 @@ repository:
       match: '(?<=import)\s+(type)(?=\s+[\w\{\$\_])'
 
     - name: keyword.control.imba
-      match: '(extend|global)\s+(?=class|tag)'
+      match: '(extend|global|abstract)\s+(?=class|tag|abstract)'
       
 
     - name: keyword.control.imba
@@ -189,6 +192,9 @@ repository:
 
     - name: storage.type.function.imba
       match: '(def|get|set){{endOfIdentifier}}'
+
+    - name: keyword.control.imba
+      match: '(protected|private)\s+(?=def|get|set)'
 
     - name: storage.type.class.imba
       match: '(tag|class|struct){{endOfIdentifier}}'
@@ -939,6 +945,17 @@ repository:
     patterns:
     - include: '#type-brackets'
     # - include: '#punctuation-comma'
+  
+  generics-literal:
+    name: meta.generics.annotation.imba
+    begin: '(?<=[\w\]\)])\<'
+    beginCaptures:
+      '1': { name: meta.generics.annotation.open.imba }
+    end: '\>'
+    endCaptures:
+      '0': { name: meta.generics.annotation.close.imba }
+    patterns:
+    - include: '#type-brackets'
 
   type-brackets:
    patterns:
@@ -1102,6 +1119,7 @@ repository:
       match: 'require'
     - include: '#plain-identifiers'
     - include: '#type-literal'
+    - include: '#generics-literal'
 
   #type annotation
   type-annotation:
@@ -1329,6 +1347,17 @@ repository:
       end: \*/
       endCaptures:
         '0': { name: punctuation.definition.comment.imba }
+    - name: ts.block.imba
+      begin: (### \@ts(?=\s|$))
+      beginCaptures:
+        '1': { name: punctuation.definition.comment.imba }
+      end: '###'
+      contentName: 'source.ts.embedded.imba'
+      endCaptures:
+        '0': { name: punctuation.definition.comment.imba }
+      patterns:
+      - include: 'source.ts'
+
     - name: comment.block.imba
       begin: (###)
       beginCaptures:

@@ -552,7 +552,7 @@ export class ScriptVersionCache
 	def forwardOffset offset, fromVersion
 		getAdjustedOffset(offset,fromVersion,syncedVersion,yes)
 
-export class TS
+export class TSBase
 
 	def resolveImportPath path, src, project, withAssets = null
 		L 'resolveImportPath',path
@@ -599,6 +599,7 @@ export def subclasses ts
 	return O
 
 export default def patcher ts
+	# global.TS = ts
 	util.extend(ts.server.Session.prototype,Session)
 	util.extend(ts.server.ScriptInfo.prototype,ScriptInfo)
 	util.extend(ts.server.TextStorage.prototype,TextStorage)
@@ -607,7 +608,7 @@ export default def patcher ts
 	util.extend(ts.server.Project.prototype,Project)
 	util.extend(ts.sys,System)
 	ts.sys.readFile = ts.sys.readFile.bind(ts.sys)
-	util.extend(ts,TS)
+	util.extend(ts,TSBase)
 
 	let subs = subclasses(ts)
 
@@ -719,16 +720,22 @@ export default def patcher ts
 			escapedName[0] == 'Γ'
 
 		get isReadonly
-			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Readonly
+			valueDeclaration.modifierFlagsCache & TS.ModifierFlags.Readonly
 
 		get isDeprecated
-			valueDeclaration.modifierFlagsCache & ts.ModifierFlags.Deprecated
+			valueDeclaration.modifierFlagsCache & TS.ModifierFlags.Deprecated
 
 		get isPrivate
-			valueDeclaration..modifierFlagsCache & ts.ModifierFlags.Private
+			valueDeclaration..modifierFlagsCache & TS.ModifierFlags.Private
+
+		get isProtected
+			valueDeclaration..modifierFlagsCache & TS.ModifierFlags.Protected
 
 		get isDecorator
 			escapedName[0] == 'α'
+		
+		get isHashed
+			escapedName[0] == 'Ψ'
 
 		get isMetaSymbol
 			parent..parent..escapedName == 'imbameta'
@@ -744,7 +751,7 @@ export default def patcher ts
 
 		get isTagAttr
 			return no if isDeprecated
-			(flags & (ts.SymbolFlags.Property | ts.SymbolFlags.SetAccessor)) && (flags & ts.SymbolFlags.Function) == 0 && !isReadonly && !escapedName.match(/^on\w/)
+			(flags & (TS.SymbolFlags.Property | TS.SymbolFlags.SetAccessor)) && (flags & TS.SymbolFlags.Function) == 0 && !isReadonly && !escapedName.match(/^on\w/)
 
 		get method?
 			flags & ts.SymbolFlags.Method

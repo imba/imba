@@ -231,7 +231,10 @@ export var TPL = do |vars,string,o = {}, d = 0|
 			let sub = TPL(vars,subtpl,o,d + 1)
 			(o:replaced or cond) ? sub : ''
 
-		string = string.replace(/\@(\w+)\|?/g) do|m,k|	
+		string = string.replace(/\@([\w\-]+)\|?/g) do|m,k|
+			if k == 'ts-ignore'
+				return '@ts-ignore'
+
 			let v = vars[k]
 
 			if v === yes
@@ -389,8 +392,10 @@ var M = do |val,mark,o|
 		let m1 = ''
 
 		if start === MPREV[0] and end === MPREV[1] and ref == (MPREV[2] + 1) and val.startsWith('/*%')
-			STACK.decr('sourcePair')
-			return val
+			if true # val.indexOf("/*%{start}|{MPREV[2]}") >= 0 and false
+				STACK.decr('sourcePair')
+				# only if the value contains this, no?
+				return val
 
 		if start == 0 or start > 0
 			m0 = end >= start ? "/*%{start}|{ref}$*/" : "/*%{start}$*/"
@@ -1422,8 +1427,9 @@ export class Node
 
 	# Shorthand for outputting sourcemapped keywords where it looks
 	# for an option with the same name in options
-	def mo val
-		M(val,@options and @options[val])
+	def mo val,optional = no
+		let src = @options and @options[val]
+		optional and !src ? '' : M(val,src)
 
 	def warn message, opts = {}
 		let loc = opts:loc or self.loc or [0,0]
@@ -2292,34 +2298,47 @@ export class ClassField < Node
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
 			if STACK.tsc
+				let vars = {
+					name: @name
+					static: option(:static)
+					declare: option(:declareOnly)
+					protected: option(:protected)
+					type: datatype
+					value: value
+				}
+				let tpl
 				if wrapper
-					let setter = "{prefix}set {M(name,@name)}{self.setter.c(keyword: '')}"
-					let getter = "{prefix}get {M(name,@name)}{self.getter.c(keyword: '')}"
+					# vars:getter = self.getter.c(keyword: '')
+					# vars:setter = self.setter.c(keyword: '')
 
+					let setter = "{mo('protected',yes)} {prefix}set {M(@name)}{self.setter.c(keyword: '')}"
+					let getter = "{mo('protected',yes)} {prefix}get {M(@name)}{self.getter.c(keyword: '')}"
+					# console.log @name,setter,getter,name
 					if typ
 						getter = "{getter}:{typ.c}"
 
 					out = "{setter}\n{getter}\n{prefix}get {@handler.c}"
 
-					if !isStatic
-						# how would this fare with class extensions?
-						out += "\nstatic get {M(@metaname.c(as: 'field'),@name)}()\{ return {OP('.',LIT('this.prototype'),@metaname).c} \}"
+					# if !isStatic
+					# 	# how would this fare with class extensions?
+					# 	out += "\nstatic get {M(@metaname.c(as: 'field'),@name)}()\{ return {OP('.',LIT('this.prototype'),@metaname).c} \}"
+
 					return out
 
-				if self isa ClassAttribute or (@decorators and @decorators:length)
-					let val = value ? value.c : ''
-					let field = ''
-					let getval = 'null'
-					let setval = ''
+				elif self isa ClassAttribute or (@decorators and @decorators:length)
 					let sym = osym
 					out = "declare {prefix} {M(name,@name)}"
 					out = "{out}:{C(typ)}" if typ
 					return out
 
 				else
+					tpl = '@declare @protected @static @name@{:@type} @{ = @value}'
 					out = "{prefix}{M(name,@name)}" # the value scope?
 					out += ":{C(typ)}" if typ
 					out += " = {value.c}" if value
+
+				if tpl
+					return TPL(vars,tpl)
 
 
 			elif self isa ClassAttribute or (@decorators && @decorators:length > 0 and false) or wrapper
@@ -3910,12 +3929,14 @@ export class ClassDeclaration < Code
 				localName: @cname
 				declareName: origName
 				default: option(:default)
+				abstract: option(:abstract)
 				mixins: AST.cary(@mixins).join(', ') or null
 				generics: @name and @name.option('generics')
 				supr: superclass
 				iife: up isa Instantiation
 				"return": option(:return)
 				unsafe: no
+				
 			}
 
 			if tpl:generics
@@ -3955,11 +3976,15 @@ export class ClassDeclaration < Code
 			elif isGlobal
 				'''
 				declare global {
+					@{@!abstract? interface GlobalClassMap {@declareName:@declareName}}
 					class @declareName@generics extends @localName@suprGenerics {}
-					interface GlobalClassMap {@declareName:@declareName}
+					type Any@declareName = ImbaAny<@localName>;
 				}
 				@{@mixins? interface @localName@generics @{extends @mixins }{ @{@unsafe? [index:string]: any } }}
-				class @localName@generics @{extends @supr }{ @body }
+				class @localName@generics @{extends @supr }{
+					declare protected static AnyType: Any@declareName
+					@body
+				}
 				@{@export? export {@localName as @declareName}}
 				'''
 			else
@@ -4636,6 +4661,7 @@ export class MethodDeclaration < Func
 			static: option(:static)
 			export: option(:export)
 			default: option(:default)
+			protected: option(:protected)
 			async: option(:async)
 			code: code # with braces
 			key: M(name, null, as: 'field') # should not be precompiled
@@ -4695,14 +4721,16 @@ export class MethodDeclaration < Func
 			if @decorators
 				tpl:decorators = AST.cary(@decorators).join('\n')
 			let str = '''
-				@export @default @static @async @get @set @function @key@generics(@params)@{:@returnType} @code
+				@export @default @protected @static @async @get @set @function @key@generics(@params)@{:@returnType} @code
 			'''
 
 			if tpl:static and returnType and returnType.hasSelfReference
-				tpl:returnType = returnType.withReplacedThis('THIS')
+
+				tpl:returnType = returnType.withReplacedThis('self')
 				str = '''
-				@static @async @function @key<THIS extends abstract new (...args: any) => any>(this:THIS@{, @params})@{:@returnType};
-				@static @async @get @set @function @key(@params) @code
+				// @ts-ignore
+				@protected @static @async @function @key<self extends abstract new (...args: any) => any>(this:self@{, @params})@{:@returnType};
+				@protected @static @async @get @set @function @key(@params) @code
 				'''
 
 			if @decorators
@@ -5849,6 +5877,7 @@ export class Access < Op
 		var lft = left
 		var rgt = right
 		var rgtexpr = null
+		var tsc = STACK.tsc
 
 		if lft isa VarOrAccess and lft.@variable isa ImportProxy
 			return lft.@variable.access(rgt,lft).c
@@ -5902,12 +5931,17 @@ export class Access < Op
 		elif rgt isa Identifier and rgt.isValidIdentifier
 			raw = rgt.c
 
+		if tsc
+			if rgt isa Identifier and rgt.isPredicate
+				let out = "('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}.{rgt.c}"
+				return out
+
 		# really?
 		# var ctx = (left || scope__.context)
 		var out = if raw
 			# see if it needs quoting
 			# need to check to see if it is legal
-			let opjs = STACK.tsc ? M('.',@optok) : '.'
+			let opjs = tsc ? M('.',@optok) : '.'
 			ctx ? "{safeop}{opjs}{raw}" : raw
 		else
 			var r = rgt isa Node ? rgt.c(expression: yes, as: 'value') : rgt
@@ -5917,7 +5951,7 @@ export class Access < Op
 
 		# let typ = datatype
 		let up = stack.up
-		let typ = STACK.tsc and option(:datatype)
+		let typ = tsc and option(:datatype)
 
 		if ctx
 			out = ctx.c + out
@@ -6686,7 +6720,7 @@ export class TypeAnnotation < Node
 		@parts.push(item)
 
 	def startLoc
-		(@source or @value).startLoc + 1
+		(@source or @value).startLoc
 
 	def endLoc
 		(@source or @value).endLoc
@@ -6705,10 +6739,10 @@ export class TypeAnnotation < Node
 
 
 	def hasSelfReference
-		@value.match(/(^|[\[\,\<])self([\]\,\)\>]|$)/g)
+		@value.match(/(^|[\\\[\,\<])self([\[\<\]\,\)\>]|$)/g)
 
 	def withReplacedThis val
-		c.replace(/(^|[\[\,\<])this([\]\,\)\>]|$)/g,"$1" + val + "$2")
+		c.replace(/(^|[\[\,\<\\\/])this([\[\]\,\)\>]|$)/g,"$1" + val + "$2")
 
 	def makeGeneric name
 		unless @generic
@@ -6753,7 +6787,7 @@ export class TypeAnnotation < Node
 			return m if isGeneric and !pre
 			pre + (TagTypeIdentifier.new(name)).toClassName
 
-		raw = raw.replace(/(^|[\[\,\<])self([\]\,\)\>]|$)/g) do |m,pre,post|
+		raw = raw.replace(/(^|[\[\,\<\\])self([\[\]\,\)\>]|$)/g) do |m,pre,post|
 			pre + "this" + post
 
 		raw = raw.replace(/(^|[\[\,\<\(\s])(\$\d*)(?=[\=\[\s\]\,\)\>]|$)/g) do |m,pre,ref,post|

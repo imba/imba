@@ -40,6 +40,9 @@
           "include": "#object-keys"
         },
         {
+          "include": "#generics-literal"
+        },
+        {
           "include": "#tag-literal"
         },
         {
@@ -75,6 +78,9 @@
         },
         {
           "include": "#object-keys"
+        },
+        {
+          "include": "#generics-literal"
         },
         {
           "include": "#tag-literal"
@@ -133,6 +139,9 @@
         },
         {
           "include": "#type-literal"
+        },
+        {
+          "include": "#generics-literal"
         },
         {
           "include": "#string"
@@ -234,7 +243,7 @@
         },
         {
           "name": "keyword.control.imba",
-          "match": "(extend|global)\\s+(?=class|tag)"
+          "match": "(extend|global|abstract)\\s+(?=class|tag|abstract)"
         },
         {
           "name": "keyword.control.imba",
@@ -243,6 +252,10 @@
         {
           "name": "storage.type.function.imba",
           "match": "(def|get|set)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
+        },
+        {
+          "name": "keyword.control.imba",
+          "match": "(protected|private)\\s+(?=def|get|set)"
         },
         {
           "name": "storage.type.class.imba",
@@ -1465,6 +1478,26 @@
         }
       ]
     },
+    "generics-literal": {
+      "name": "meta.generics.annotation.imba",
+      "begin": "(?<=[\\w\\]\\)])\\<",
+      "beginCaptures": {
+        "1": {
+          "name": "meta.generics.annotation.open.imba"
+        }
+      },
+      "end": "\\>",
+      "endCaptures": {
+        "0": {
+          "name": "meta.generics.annotation.close.imba"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#type-brackets"
+        }
+      ]
+    },
     "type-brackets": {
       "patterns": [
         {
@@ -1782,6 +1815,9 @@
         },
         {
           "include": "#type-literal"
+        },
+        {
+          "include": "#generics-literal"
         }
       ]
     },
@@ -2233,6 +2269,27 @@
               "name": "punctuation.definition.comment.imba"
             }
           }
+        },
+        {
+          "name": "ts.block.imba",
+          "begin": "(### \\@ts(?=\\s|$))",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.comment.imba"
+            }
+          },
+          "end": "###",
+          "contentName": "source.ts.embedded.imba",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.imba"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.ts"
+            }
+          ]
         },
         {
           "name": "comment.block.imba",

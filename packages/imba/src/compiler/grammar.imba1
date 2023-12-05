@@ -894,6 +894,7 @@ var grammar =
 	# might as well handle this in the lexer instead
 	Class: [
 		o 'ClassStart' do A1
+		o 'ABSTRACT ClassStart' do A2.set(abstract: A1)
 		o 'EXTEND ClassStart' do A2.set(extension: A1)
 		o 'LOCAL ClassStart' do A2.set(local: A1) # deprecated
 		# o 'GLOBAL ClassStart' do A2.set(global: A1)
@@ -957,6 +958,7 @@ var grammar =
 		o 'STATIC MethodDeclaration' do A2.set(static: A1)
 		o 'MethodDeclaration'
 		o 'ClassFieldDeclaration'
+		o 'PROTECTED ClassDeclLine' do A2.set(protected: A1)
 		o 'DECLARE ClassDeclLine' do AST.DECLARE(A2,A1)
 	]
 
