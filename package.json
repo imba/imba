@@ -6,6 +6,6 @@
     },
     "scripts": {
         "release": "lerna publish",
-        "prerelease": "lerna publish --force-publish --canary --preid next-$(git log -1 --format=%at) --dist-tag next --pre-dist-tag next"
+        "prereleasez": "lerna publish --force-publish --canary --preid next-$(git log -1 --format=%at) --dist-tag next --pre-dist-tag next"
     }
 }
