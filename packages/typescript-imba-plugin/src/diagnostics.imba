@@ -20,7 +20,7 @@ const Rules = [
 	message: /./
 	---
 	code: 2322 # should only be for dom nodes?
-	message: /^Type '(boolean|string|number|ImbaAsset|typeof import\("data:text\/asset;\*"\))' is not assignable to type '(string|number|boolean)'/
+	message: /^Type '(boolean|string|number|ImbaAsset|typeof import\("data:text\/asset;\*"\))' is not assignable to type '(string|number|boolean|object)'/
 	---
 	code: 2308
 	message: /exported a member named 'Ω/
