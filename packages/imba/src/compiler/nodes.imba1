@@ -3867,6 +3867,9 @@ export class ClassDeclaration < Code
 		if isExtension
 			cflags = cflags | ClassFlags.IsExtension
 
+		if @mixins:length
+			cflags = cflags | ClassFlags.HasMixins
+
 		if !tsc
 			
 			let hasInitedHook = !!instanceMethodMap["#__inited__"]

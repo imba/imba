@@ -26,4 +26,7 @@ extend class Model
 
 ok item.log isa Function
 
-SPEC.run!
+test do
+	ok item.log isa Function
+
+# SPEC.run!

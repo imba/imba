@@ -14,4 +14,4 @@ test do
 	let el = new <SpecialMarker>
 	ok el.warn isa Function
 
-SPEC.run!
+# SPEC.run!

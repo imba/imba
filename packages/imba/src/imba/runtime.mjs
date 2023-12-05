@@ -7,7 +7,6 @@ export const __has__$	 = Symbol.for('#has')
 export const __meta__$	 = Symbol.for('#meta')
 export const __imba__$	 = Symbol.for('imba')
 export const __mixin__$	 = Symbol.for('#__mixin__')
-
 export const matcher = Symbol.for('#matcher')
 
 export const HAS = {
@@ -28,10 +27,26 @@ export const ClassFlags = {
 	IsObjectExtension: 1 << 9
 }
 
+const mmap = new Map;
+
 const state = globalThis[__imba__$] ||= {
 	counter: 0,
-	classes: {}
+	classes: mmap
 };
+
+function meta$(klass,defaults = {}){
+	mmap.has(klass) || mmap.set(klass,{
+		symbol: Symbol(),
+		parent: Object.getPrototypeOf(klass.prototype)?.constructor,
+		for:klass,
+		uses:[],
+		inits:[],
+		id: state.counter++,
+		...defaults
+	});
+	return mmap.get(klass)
+}
+
 const statics = new WeakMap;
 
 const L = function(){ }
@@ -56,24 +71,18 @@ export function statics$(scope){
 	return statics.get(scope) || statics.set(scope,{}).get(scope);
 }
 
-
 // $1 extends {$accessor: (...args: any[]) => infer X} ? X : $1
 export function iterable$(a){
 	return a?.toIterable?.() || a;
 }
 
-export function decorate$(decorators,target,key,desc){
-	let c = arguments.length;
-	let r = (c < 3) ? target : (((desc === null) ? (desc = Object.getOwnPropertyDescriptor(target,key)) : desc));
-	let d;
-	
-	let i = decorators.length;
+export function decorate$(ds,t,k,desc){
+	let d,c = arguments.length,i = ds.length;
+	let r = (c < 3) ? t : (((desc === null) ? (desc = Object.getOwnPropertyDescriptor(t,k)) : desc));
 	while (i > 0){
-		if (d = decorators[--i]) {
-			r = (c < 3 ? d(r) : (c > 3 ? d(target,key,r) : d(target,key))) || r;
-		};
+		if (d = ds[--i]) { r = (c < 3 ? d(r) : (c > 3 ? d(t,k,r) : d(t,k))) || r };
 	};
-	c > 3 && r && Object.defineProperty(target,key,r);
+	c > 3 && r && Object.defineProperty(t,k,r);
 	return r;
 }
 
@@ -84,23 +93,20 @@ function isSameDesc(a,b){
 	if(a.value) return a.value === b.value;
 }
 
-// Mixin support
 export function extend$(target,ext,descs){
 	const klass = target.constructor;
 	descs ??= Object.getOwnPropertyDescriptors(ext);
 	const originals = Object.getOwnPropertyDescriptors(target);
-
 	delete descs.constructor;
 
 	if (descs[__init__$]) {
-		// Only with non descriptor fields
 		// console.warn(`Cannot define plain fields when extending class ${klass.name}`);
 		delete descs[__init__$];
 	};
 
 	Object.defineProperties(target,descs);
 
-	let meta = klass[__meta__$];
+	let meta = meta$(klass);
 	if(meta && meta.augments){
 		for(let target of meta.augments){
 			let current = Object.getOwnPropertyDescriptors(target.prototype);
@@ -112,20 +118,18 @@ export function extend$(target,ext,descs){
 			}
 
 			if(Object.keys(defines).length) extend$(target.prototype,null,defines)
-			// Object.defineProperties(target.prototype,defines);
 		}
 	}
 
 	return target;
 }
 
-export function augment$(klass,mixin,meta){
-	meta ||= klass[__meta__$]
-	let mix = mixin[__meta__$];
-	
-	meta.uses ||= []
-	meta.inits ||= []
 
+
+export function augment$(klass,mixin){
+	let meta = meta$(klass);
+	let mix = meta$(mixin);
+	
 	if(mix.parent){
 		if(!(klass.prototype instanceof mix.parent)){
 			// For better error reports we could delay this message...
@@ -134,7 +138,6 @@ export function augment$(klass,mixin,meta){
 	}
 
 	if(!mix.augments){
-		// What if an inheritor of the mixin starts using this?
 		mix.augments = new Set;
 		let ref = mix.ref = Symbol();
 		mixin.prototype[ref] = true;
@@ -148,16 +151,8 @@ export function augment$(klass,mixin,meta){
 		return klass;
 	}
 
-	for(let v of (mix.uses || [])) {
-		augment$(klass,v,meta);
-	}
+	for(let v of mix.uses) augment$(klass,v,meta);
 
-	// for(var k in mix){
-	//	if(k.match(/^\d+$/)) augment$(klass,mix[k],meta);
-	// }
-
-	// Find the mixins for this klass as welll
-	// meta[sym] = meta[mixmeta.id] = mixin;
 	mix.augments.add(klass);
 	meta.uses.push(mixin);
 
@@ -172,22 +167,17 @@ export function augment$(klass,mixin,meta){
 	
 	Object.defineProperties(klass.prototype,descs);
 	// TODO Should also run a method / trigger a hook
-	meta.top.version++;
+	try { meta.top.version++; } catch(e) { }
 	return klass;
 };
 
 export function multi$(symbol,sup,...mixins){	
 	let Mixins = sup ? (class extends sup {}) : (class {});
-	let meta = Mixins[__meta__$] = meta$(sup,symbol);
-	meta.parent = sup || false;
+	let meta = meta$(Mixins,{symbol});
 
-	// When looping over the mixins - ensure that they are not also
-	for(let mixin of mixins){
-		augment$(Mixins,mixin,meta);
-	}	
+	for(let mixin of mixins) augment$(Mixins,mixin);
 
 	Mixins.prototype[symbol] = function(o,deep,fields) {
-		// Anything that is inherited through the superclass should not count?
 		if(meta.inits)
 			for(let init of meta.inits){ init.call(this,o,false,fields) }
 		return
@@ -195,24 +185,6 @@ export function multi$(symbol,sup,...mixins){
 	
 	return Mixins
 };
-export const mixes = multi$;
-
-function meta$(up,symbol) {
-	let mup = up && up[__meta__$] || null;
-	if(mup?.symbol == symbol) return mup;
-	// Store using weakprop?
-	let meta = Object.create(mup)
-	meta.top ||= {version: 0}
-	meta.parent = null
-	meta.own = {}
-	meta.up = mup
-	meta.symbol = symbol
-	meta.augments = null
-	meta.inits = null
-	meta.uses = null
-	meta.top[symbol] = meta
-	return meta
-}
 
 let sup = {
 	cache: {},
@@ -239,8 +211,20 @@ export function sup$(self,symbol) {
 
 export function register$(klass,symbol,name,flags,into = null) {
 	// Look for the actual superclass excluding mixins
+	let proto = Object.getPrototypeOf(klass.prototype)
+	if(flags & ClassFlags.HasMixins) {
+		mmap.set(klass,mmap.get(proto.constructor))
+		proto = Object.getPrototypeOf(proto)
+	}
+
 	if(into){
 		let target = flags & ClassFlags.IsObjectExtension ? into : into.prototype;
+		let meta = meta$(klass);
+
+		if(meta.uses?.length){
+			if(into === target) console.warn("Cannot extend object with mixins");
+			for(let mixin of meta.uses) augment$(into,mixin);
+		}
 		// Create fake super now
 		if(flags & ClassFlags.HasSuperCalls){
 			sup.cache[symbol] = Object.create(
@@ -253,27 +237,14 @@ export function register$(klass,symbol,name,flags,into = null) {
 		return into;
 	}
 
-	let supr = Object.getPrototypeOf(klass.prototype)?.constructor;
-	let meta = klass[__meta__$] = meta$(supr,symbol);
-	// (smeta?.symbol == symbol) ? smeta : Object.create(supr[__meta__$] || null);
-
-	if(meta.parent)
-		supr = meta.parent
+	let supr = proto?.constructor;
+	let meta = meta$(klass,{symbol})
 
 	// Override name of class
-	if(klass.name !== name && name){
+	if(name && klass.name !== name){
 		Object.defineProperty(klass,"name",{value: name,configurable: true})
 	}
-	// What if this is an extension instead?
-	meta.id = state.counter++;
-	meta.parent = supr;
 	meta.flags = flags;
-	meta.name = klass.name;
-	meta.symbol = symbol;
-	let own = meta[symbol] ||= {};
-	own.parent ??= supr;
-	meta.top.version++;
-	// Call inherited?
 
 	if(flags & ClassFlags.HasConstructor)
 		klass.prototype[__initor__$] = symbol;

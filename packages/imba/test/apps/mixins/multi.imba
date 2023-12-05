@@ -87,7 +87,6 @@ test do
 		let up1 = Object.getPrototypeOf(cls.prototype) # mixins
 		let up2 = Object.getPrototypeOf(up1)
 		ok up2.constructor == Base
-		ok Multi.#meta.parent == Base
 
 		let d1 = Object.getOwnPropertyDescriptor(up1,'left')
 		let d2 = Object.getOwnPropertyDescriptor(Left.prototype,'left')
@@ -103,4 +102,4 @@ test do
 	eq obj2.lft,1
 	eq obj2.lft,1
 
-SPEC.run!
+# SPEC.run!
