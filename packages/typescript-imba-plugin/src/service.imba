@@ -132,6 +132,9 @@ export default class Service < EventEmitter
 		if bridge
 			bridge.emit('status',o)
 	
+	def refreshConfigFile
+		let src = self..cp..canonicalConfigFilePath
+		ps.onConfigFileChanged(src,0) if src
 
 	def createVirtualProjectConfig proj, inferred = no
 		util.log 'create Virtual config',!!cp,tsversion,ps,ps..inferredProjects..slice(0),ip,ip..shouldSupportImba!
@@ -235,6 +238,9 @@ export default class Service < EventEmitter
 				isMixedContent: false # Unclear what this entails
 				scriptKind: 7
 			})
+
+		if #first =? yes
+			setTimeout(&,200) do refreshConfigFile!
 
 		for script in imbaScripts
 			script.wake!
