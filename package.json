@@ -2,7 +2,7 @@
     "name": "imba-monorepo",
     "private": true,
     "devDependencies": {
-        "lerna": "^6.0.1"
+        "lerna": "^8.0.0"
     },
     "scripts": {
         "release": "lerna publish",
