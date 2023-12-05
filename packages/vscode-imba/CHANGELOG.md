@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.0.0
+
+* Imba definitions for events, modifiers etc will now jump to the actual imba sourcecode instead of an undefined `_generated.d.ts` file :D Over the next few minor versions we will move documentation out of .d.ts and into the imba codebase again.
+
+* Support for features introduced in the latest version of imba
+
+* Much better typescript support
+
+* Various stability improvements 
+
+Make sure vscode uses typescript 5.2+. **Remove your `typescript.tsdk` setting from vscode** if that refers to an older version.
+
 ## 3.5.0
 
 * Updated to work with TypeScript 5.x. Basic tooling now works with latest versions of vscode and TypeScript. Some functionality may still be broken / less functional than before but this allows us to ship more new versions in the future. For those who worked around the issue by pointing vscode to an older version of TypeScript: **Remove your `typescript.tsdk` setting from vscode**

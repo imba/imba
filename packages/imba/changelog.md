@@ -1,5 +1,104 @@
 # Changelog
 
+## 2.0.0-alpha.232
+
+* Lots of internal changes preparing for beta launch.
+
+* Small utility functions are now defined in a single file and imported from 'imba/runtime' in compiled output. This allows the bundlers to much more efficiently deduplicate the output.
+
+### Typescript output for tooling
+
+Now outputting typescript instead of jsdoc-laden javascript to improve consistency, performance, and functionality of the tooling (languageservice). It will now be trivial to allow defining types and interfaces directly in imba files.
+
+As a temporary solution to not depend on typescript you can add raw complex types in multiline block comments starting with @ts:
+
+```imba
+### @ts
+type FirstType = { prop1: number; };
+type SecondType = { prop2: string;};
+type CombinedType = FirstType & SecondType;
+declare global { var SomeGlobalNumber: number; }
+###
+
+# Use the types in code
+let item\CombinedType
+```
+
+Generic arguments are also supported (experimental). Looking at a better syntax, currently it just accepts raw typescript generics.
+
+```
+# define generics for classes
+class Wrapper<T=any>
+# type arguments
+let items = new Array<Model>
+# Typed spawner method
+def spawn<Type>\InstanceType<Type> type\Type
+    return new type
+
+###
+This type of pattern is really common in typescript. In imba you can
+refer to $1,$2,$3... to refer to argument _type_ 1,2,3,... just like
+$1 in code refers to argument _value_. So that type of function can
+in Imba be written as:
+###
+def spawn\InstanceType<$1> type
+    return new type
+```
+
+### Experimental support for mixins / multiple inheritance
+
+Will be refined and improved closer to final 2.0 launch. The best thing about mixins is that in combination with the new tooling all typings and completions should just work, consistently.
+
+```imba
+# Any class can be used as a mixin
+class Logger
+    def log ...vals
+        console.log(self,...vals)
+
+class Model
+    isa Logger # injects Logger functionality
+
+let model = new Model
+model.log(123) # logs out
+
+# Reopening the logger to add functionality
+extend class Logger
+    def warn ...vals
+        console.warn(self,...vals)
+
+model.warn(123) # classes are kept in sync with mixins
+
+# You can even open existing classes and add mixins
+class Inspectable
+    isa Logger
+    def inspect
+        log "inspect",some-info
+
+# Extend all elements
+extend tag element
+    isa Inspectable
+
+```
+
+### Support for `static let/const`
+
+Add support for `static let/const` variables inside of methods. These variables will stay alive across multiple calls. When used on instances, they are scoped to their instance. Example:
+
+```
+# useful for memoization - w/o cluttering up the global namespace
+def slugify str
+    static let map = {}
+    map[str] ||= complexSlugifyOperation(str)
+
+class Item
+    def tap
+        static let count = 0
+        count++
+        console.log "You tapped 100 times!" if count == 100
+```
+
+
+
 ## 2.0.0-alpha.231
 
 * Allow using `$vite$` in compiler for vite-only code.
@@ -32,6 +131,10 @@
     But this only worked for assignments, and try/catch did not consistently
     work inside of expressions. Syntactically rescue acts just as a regular
     function call like `update(id, rescue(validate!))`
+
+* Accessors are no longer inited in constructor
+
+* Runtime helpers are imported instead of inlined - so bundling will not lead to many duplicated tiny functions.
 
 ## 2.0.0-alpha.230
 

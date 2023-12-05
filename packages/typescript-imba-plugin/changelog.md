@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3
+
+* Now treating all compiled imba files as typescript internally. Should make the tooling more robust.
+* Improved typings for classes, mixins, class extensions etc across files.
+* Optimizations
+
 ## 1.2.14
 
 * Improve generated typings for `extend class` statements
