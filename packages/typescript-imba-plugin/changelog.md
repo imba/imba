@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3
+## 1.6
 
 * Now treating all compiled imba files as typescript internally. Should make the tooling more robust.
 * Improved typings for classes, mixins, class extensions etc across files.
