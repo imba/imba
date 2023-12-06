@@ -15,7 +15,12 @@ const ImbaOptions = {
 
 export class Compilation
 
-	constructor script, snapshot
+	declare fileName\string
+
+	# original imba code to compile
+	declare body\string
+
+	def constructor script, snapshot
 		script = script
 		fileName = script.fileName
 		input = snapshot
@@ -44,7 +49,10 @@ export class Compilation
 	def otext start, end
 		js.slice(start,end)
 
-	def o2iRange start, end, fuzzy = yes
+	###
+	Convert from position in compiled ts back to input at time of compilation
+	###
+	def o2iRange start\number, end\number, fuzzy = yes, tstext = null
 		# the whole body of the file
 		if start == 0 and end == js.length
 			return [0,body.length]
@@ -78,6 +86,12 @@ export class Compilation
 			let i1 = o2i(end)
 			return [i0,i1]
 			# return doc.rangeAt(i0,i1)
+
+		# if we found no direct match and the tstext ends with a semicolon
+		# try to rerun a shorter version
+		if tstext and tstext[-1] == ';'
+			return o2iRange(start,end - 1,fuzzy,tstext.slice(0,-1))
+		
 		return []
 
 	def o2dRange start, end, fuzzy = yes

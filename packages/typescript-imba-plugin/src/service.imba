@@ -23,6 +23,8 @@ export default class Service < EventEmitter
 	ipcid
 	counter = 0
 
+	declare ps\(TS.server.ProjectService)
+
 	get ts
 		global.ts
 
@@ -268,71 +270,18 @@ export default class Service < EventEmitter
 			span.length = end - start
 		return span
 
-	def convertImbaDtsDefinition item
-		try
-
-			let file = item.fileName.replace("._.d.ts",'')
-			let gdts = item.fileName == dts..fileName
-			let found
-			item.#gdts = true
-			item.#name = item.name
-			let imbaname = util.toImbaIdentifier(item.name)
-			let fullname = "{item.containerName}.{item.name}"
-
-			if gdts
-
-				if found = (imbaGlobals[fullname] or imbaGlobals[item.name] or imbaGlobals[imbaname])
-					# util.log "found definition",found
-					item.textSpan = found.textSpan
-					item.contextSpan = found.contextSpan
-					item.fileName = found.doc.fileName
-					item.#scope = found
-					return item
-				item.#skip = yes
-				return item
-
-			let script = getImbaScript(file)
-			let path = "{item.containerName}.prototype.{item.name}"
-			let token = script.doc.findPath(util.toImbaIdentifier(path))
-			# util.log "converting path!?",item,path,token
-			if token
-				item.textSpan = token.span
-				item.contextSpan = token.body ? script.doc.expandSpanToLines(token.body.contextSpan) : token.span
-			else
-				let find = '-----'
-				if item.kind == 'getter'
-					find = "get {item.name}"
-
-				let idx = script.content.indexOf(find)
-				# look for tokens with this name
-				let kind = ''
-				let name = util.toImbaIdentifier(item.name)
-				item.#name = item.name
-				# if item.containerName == 'globalThis'
-
-				let hit = script.doc.findNodeForTypeScriptDefinition(item)
-
-				if hit
-					item.#token = !!hit
-					item.textSpan = hit.textSpan or hit.span
-					item.contextSpan = hit.contextSpan or hit.span
-
-			item.#dts = yes
-
-			item.fileName = file
-		catch e
-			util.log 'error',e
-
-		return item
-
 	def convertLocationsToImba res, ls, filename, kind = null
+		
 		if res isa Array
 			for item in res
 				convertLocationsToImba(item,ls,item.fileName)
 
+
 		if !res
 			return res
 
+		util.log('convertLocationsToImba',res,filename)
+		
 		if util.isImba(filename)
 			let script = getImbaScript(filename)
 			# let imbaname = util.toImbaIdentifier(res.name)
@@ -383,11 +332,6 @@ export default class Service < EventEmitter
 			for item in res.changes
 				for tc in item.textChanges
 					tc.newText = util.toImbaString(tc.newText)
-
-		# convert definitions from _.d.ts
-		if util.isImbaDts(res.fileName)
-			if res.containerName != undefined
-				convertImbaDtsDefinition(res)
 
 		if res.fileName and typeof res.name == 'string'
 			res.name = util.toImbaString(res.name)

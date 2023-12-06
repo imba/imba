@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Improved sourcemapping from ts to imba
+
 ## 1.6
 
 * Now treating all compiled imba files as typescript internally. Should make the tooling more robust.

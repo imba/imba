@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Fixed sourcemapping for import/export declarations to improve tooling hints
+
 ## 2.0.0-alpha.232
 
 * Lots of internal changes preparing for beta launch.

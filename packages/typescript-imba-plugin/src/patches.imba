@@ -154,11 +154,12 @@ export class Session
 					item.#otext = mapper.otext(opos[0],opos[1])
 					Diagnostics.filter(item,project,kind)
 					continue if item.#suppress
-
+					
 					# for rel in item.relatedInformation
 					#	rel.messageText = util.toImbaMessageText(rel.messageText)
 
-					let range = mapper.o2iRange(item.start,item.start + item.length,no)
+					# should be a tiny bit fuzzy, no?
+					let range = mapper.o2iRange(item.start,item.start + item.length,no,item.#otext)
 					# let start = mapper.o2d(item.start)
 					# let end = mapper.o2d(item.start + item.length)
 					if range.length

@@ -1528,7 +1528,8 @@ export class ValueNode < Node
 	prop value
 
 	def startLoc
-		@startLoc or (@value and @value:startLoc ? @value.startLoc : -1)
+		let loc = @startLoc
+		(typeof loc == 'number') ? loc : (@value and @value:startLoc ? @value.startLoc : -1)
 
 	def initialize value
 		setup
@@ -2321,13 +2322,13 @@ export class ClassField < Node
 					# vars:getter = self.getter.c(keyword: '')
 					# vars:setter = self.setter.c(keyword: '')
 
-					let setter = "{mo('protected',yes)} {prefix}set {M(@name)}{self.setter.c(keyword: '')}"
 					let getter = "{mo('protected',yes)} {prefix}get {M(@name)}{self.getter.c(keyword: '')}"
+					let setter = "{mo('protected',yes)} {prefix}set {M(@name)}{self.setter.c(keyword: '')}"
 					# console.log @name,setter,getter,name
 					if typ
 						getter = "{getter}:{typ.c}"
 
-					out = "{setter}\n{getter}\n{prefix}get {@handler.c}"
+					out = "{getter}\n{setter}\n{prefix}get {@handler.c}"
 
 					# if !isStatic
 					# 	# how would this fare with class extensions?
@@ -11387,15 +11388,11 @@ export class AssetReference < ValueNode
 
 export class ImportDeclaration < ESMDeclaration
 
-
 	def sourcePath
 		@source and @source.c()
 
-	
-
 	def ownjs
 		var src = @source and @source.c()
-		# console.log("importing {@source:constructor} {src}")
 
 		if STACK.tsc
 			# let raw = src.slice(1,-1)
@@ -11424,6 +11421,7 @@ export class ImportDeclaration < ESMDeclaration
 		@up.replace curr, [curr,BR,@next = next]
 
 	def visit
+		setEnds(@keyword,@source)
 		return if isExcluded
 
 		for item in @specifiers
