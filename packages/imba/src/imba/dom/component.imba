@@ -197,6 +197,9 @@ export class Component < HTMLElement
 	get ssr?
 		return (__F & $EL_SSR$) != 0
 
+	get scheduler
+		scheduler
+
 	def schedule
 		scheduler.on('commit',self)
 		__F |= $EL_SCHEDULED$
