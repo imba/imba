@@ -6,6 +6,8 @@
 
 * Fixed issue with super() being injected too late in classes using mixins
 
+* Fixed issue with `instanceof` operator for mixins
+
 ## 2.0.0-alpha.232
 
 * Lots of internal changes preparing for beta launch.

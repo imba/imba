@@ -139,10 +139,11 @@ export function augment$(klass,mixin){
 
 	if(!mix.augments){
 		mix.augments = new Set;
-		let ref = mix.ref = Symbol();
+		const ref = mix.ref = Symbol();
+		const native = Object[Symbol.hasInstance];
 		mixin.prototype[ref] = true;
 		Object.defineProperty(mixin,Symbol.hasInstance,{
-			value: function(rel) { return rel && !!rel[ref] }
+			value: function(rel) { return (this === mixin) ? (rel && !!rel[ref]) : native.call(this,rel) }
 		})
 	}
 	
