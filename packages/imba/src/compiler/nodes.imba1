@@ -3531,6 +3531,9 @@ export class ClassDeclaration < Code
 	def isStruct
 		keyword and String(keyword) == 'struct'
 
+	def hasMixins
+		@mixins and @mixins:length > 0
+
 	def isExtension
 		option(:extension)
 
@@ -3820,7 +3823,7 @@ export class ClassDeclaration < Code
 				# tags always call init from outside the actual construction
 				yes
 
-			elif !supers
+			elif !@superclass
 				let initop = OP('.',THIS,initKey)
 				if !ctor
 					ctor = addMethod('constructor',[],[],{})
@@ -4564,6 +4567,7 @@ export class MethodDeclaration < Func
 
 		var o = @options
 		scope.visit
+		let scop = scope
 
 		if isSetter and @params.len > 1
 			if @params.len > 2
@@ -4642,13 +4646,16 @@ export class MethodDeclaration < Func
 		# traverse returnType
 		returnType.traverse if returnType
 
-		if isConstructor and option(:supr)
+		if isConstructor
+			if !@class.@superclass and @class.hasMixins and !STACK.tsc
+				scope.head.unshift(LIT('super()'))
+			
 			let ref = scope__.context.@reference
 			let supr = option(:supr)
-			let node = supr:node
-			let block = supr:block
+			let node = supr and supr:node
+			let block = supr and supr:block
 
-			if ref
+			if ref and node
 				ref.declarator.@defaults = null
 				let op = OP('=',ref,This.new)
 				block.replace node, [node,op]
@@ -4669,9 +4676,9 @@ export class MethodDeclaration < Func
 			return ''
 
 		# need to have collected them already?
-		if isConstructor and !option(:supr) and @class and @class.@mixins:length and !tsc
-			# not in tsc?
-			body.add(LIT('super(...arguments)'),0)
+		# if isConstructor and !option(:supr) and @class and @class.@mixins:length and !tsc
+		# 	# Must happen above the potential first reference to this
+		# 	body.add(LIT('super(...arguments)'),0)
 
 		# FIXME Do this in the grammar - remnants of old implementation
 		unless type == :constructor or option(:noreturn) or isSetter()
@@ -12690,11 +12697,11 @@ export class Scope
 
 	def initialize node, parent
 		@nr = STACK.incr('scopes')
-		@head = []
 		@node = node
 		@parent = parent
 		@vars = ScopeVariables.new([])
 		@entities = Entities.new(self)
+		@head = [@vars]
 		@meta = {}
 		@annotations = []
 		@closure = self
@@ -12708,6 +12715,11 @@ export class Scope
 		@declListeners = []
 		@level = (parent ? parent.@level : -1) + 1
 		setup
+
+	def params= val
+		@params = val
+		@head.push(val) if @head.indexOf(val) == -1
+		return val
 
 	def runtime
 		root.runtime
@@ -12960,12 +12972,8 @@ export class Scope
 			return scope if scope isa ClassScope
 		return null
 
-	def head
-		[@vars,@params]
-
 	def c o = {}
 		o:expression = no
-		# need to fix this
 		node.body.head = head
 		var body = node.body.c(o)
 

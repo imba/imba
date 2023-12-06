@@ -74,3 +74,33 @@ test do
 	eq item.base,1
 	eq item.mixin,1
 	eq item.model,1
+
+test "call super" do
+	class Mixin
+		def hello
+			yes
+
+	class Other
+		isa Mixin
+
+		def constructor
+			[1,2,3].map do hello!
+	
+	ok (new Other) isa Mixin
+
+test "fix super" do
+	class Mixin
+		def hello
+			yes
+	class Item
+		isa Mixin
+
+		b = a + 2
+
+		def constructor
+			a = 1
+			super
+	
+	let item = new Item
+	eq item.a,1
+	eq item.b,3

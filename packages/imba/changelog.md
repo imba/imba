@@ -4,6 +4,8 @@
 
 * Fixed sourcemapping for import/export declarations to improve tooling hints
 
+* Fixed issue with super() being injected too late in classes using mixins
+
 ## 2.0.0-alpha.232
 
 * Lots of internal changes preparing for beta launch.
