@@ -70,6 +70,9 @@ export def hydrate
 	hydrator.flush!
 
 export class Component < HTMLElement
+
+	declare data\any?
+
 	def constructor
 		super()
 		if flags$ns

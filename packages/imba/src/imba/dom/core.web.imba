@@ -311,7 +311,7 @@ extend class Element
 	get focin?
 		contains(document.activeElement)
 
-	def emit name, detail, o = {bubbles: true, cancelable: true}
+	def emit name, detail\any?, o = {bubbles: true, cancelable: true, detail: null}
 		o.detail = detail if detail != undefined
 		let event = new CustomEvent(name, o)
 		let res = self.dispatchEvent(event)
