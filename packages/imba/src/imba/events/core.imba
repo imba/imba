@@ -22,7 +22,7 @@ extend class CustomEvent
 # this should clearly much rather export the real one
 extend class Event
 
-	get original
+	get original\this
 		originalEvent or self
 
 	get #modifierState
