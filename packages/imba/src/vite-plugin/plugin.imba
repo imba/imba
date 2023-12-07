@@ -123,11 +123,21 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 
 		try compiledData = await compileImba(imbaRequest, code, options) catch e
 			cache.setError(imbaRequest, e);
-			throw toRollupError(e, options);
-		logCompilerWarnings
-			imbaRequest,
-			compiledData.compiled.warnings,
-			options,
+			throw toRollupError(e);
+
+		const { warnings, errors } = compiledData.compiled
+
+		if Array.isArray(warnings) and warnings.length > 0
+			logCompilerWarnings imbaRequest, warnings, options
+
+		if Array.isArray(errors) and errors.length > 0
+			# shape the object that `toRollupError` expects
+			throw toRollupError({
+				errors,
+				options: { filename: id },
+				sourceCode: code
+			})
+
 		cache.update(compiledData)
 		if compiledData.dependencies.length and options.server
 			compiledData.dependencies.forEach do(d)
@@ -225,7 +235,7 @@ export default def imbaPlugin(inlineOptions\Partial<Options> = {})
 			try
 				await handleImbaHotUpdate(compileImba, ctx, imbaRequest, cache, options)
 			catch e
-				throw toRollupError(e, options)
+				throw toRollupError(e)
 
 	plugins.push svgPlugin!
 	plugins.push
