@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.233
 
 * Fixed sourcemapping for import/export declarations to improve tooling hints
 
