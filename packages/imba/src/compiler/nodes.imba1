@@ -765,6 +765,7 @@ export class Stack
 		@meta = {}
 		# @css = ''
 		@runtime
+		MPREV = [-1,-1,-1]
 		self
 
 	def runtime
