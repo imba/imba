@@ -98,11 +98,28 @@ export class Component < HTMLElement
 		self.className = flags$ext = str
 		return
 
-	# called immediately after construction
+	###
+	@summary called immediately after construction
+	@lifecycle
+	@abstract
+	###
 	def build\any
 		self
 
-	# called before the first mount
+	###
+	Called the first time component is added to the dom tree, after properties are set
+	@lifecycle
+	@abstract
+	###
+	declare def setup\any
+		self
+
+
+	###
+	called before the first mount
+	@lifecycle
+	@abstract
+	###
 	def awaken\any
 		self
 
@@ -128,7 +145,7 @@ export class Component < HTMLElement
 		autoschedule = yes
 		self
 
-	def tick\any
+	def tick\any dt\number?, scheduler\any?
 		commit()
 
 	# called when component is (re-)rendered from its parent
