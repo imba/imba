@@ -3,12 +3,14 @@ import { ResolvedOptions, Warning } from './options';
 import { buildExtendedLogMessage } from './log';
 import { PartialMessage } from 'esbuild';
 
+const defaultSource = "Compilation Error"
+
 /**
  * convert an error thrown by imba.compile to a RollupError so that vite displays it in a user friendly way
  * @param error a imba compiler error, which is a mix of Warning and an error
  * @returns {RollupError} the converted error
  */
-export function toRollupError(error: Warning & Error, options: ResolvedOptions): RollupError {
+export function toRollupError(error: Warning & Error): RollupError {
 	if(!error?.errors?.length){
 		return {
 			name: "Compilation error",
@@ -18,37 +20,33 @@ export function toRollupError(error: Warning & Error, options: ResolvedOptions):
 		} as RollupError;
 	}
 	const actualError = error?.errors?.length ? error.errors[0] : {
-		diagnostics: [{source: "Compilation Error"}],
+		diagnostics: [{source: defaultSource}],
 		options: {filename: error._sourcePath},
 		range: {start: {line: 1, column: 1} },
 		message: error?.toString!,
 	}
-	const name = `${error.diagnostics[0].source} error`
+	const source = actualError.source ||
+		actualError?.diagnostics[0]?.source ||
+		defaultSource
+	const name = `${source} error`
 	const id = error.options.filename
 	const {line, character: column} = actualError.range.start
-	const start = { line: line + 1, column, file: id }
+	// include filename:line:column so that it's clickable
+	const loc = { line: line + 1, column, file: id }
 	const message = buildExtendedLogMessage({message: actualError.message})
 	const code = error.sourceCode + "\n"
-	const frame = formatFrameForVite(code, start)
-	let stack = ''
-	const stacks = [{
-		sourcePos: start,
-		file: id
-	}]
-	const r = /^(?:>?\s+\d+\s+\|.*|\s+\|\s*\^.*)\r?\n/gm
-	let a = r.test(frame)
-	// stack = options.isBuild || options.isDebug || !frame ? stack : ''
-	const rollupError: RollupError = {
+	const frame = formatFrameForVite(code, loc)
+	// the format this object is RollupError and vite's ErrorPayload.err
+	// https://github.com/rollup/rollup/blob/master/src/rollup/types.d.ts#L12
+	// https://github.com/vitejs/vite/blob/96591bf9989529de839ba89958755eafe4c445ae/packages/vite/types/hmrPayload.d.ts#L41C18-L41C30
+	return {
 		name,
+		message,
 		id,
-		message, // include filename:line:column so that it's clickable
 		frame,
 		code,
-		// stack
-		// stacks,
-		loc: start
-	};
-	return rollupError;
+		loc
+	} as RollupError;
 }
 
 /**

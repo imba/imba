@@ -45,10 +45,12 @@ test do
 	item.load!
 	ok !item.loaded
 	await item.load!
+	ok item.loaded
+	ok item.then
 	await item
+	ok !item.then
 	ok item.loaded
 	eq item.value, 2
-	ok !item.then
 
 test do
 	let el = new <MainPanel>
