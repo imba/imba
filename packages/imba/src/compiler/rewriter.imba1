@@ -178,7 +178,7 @@ var LOGIC   = ['&&', '||', '&', '|', '^']
 
 # optimize for fixed arrays
 var NO_IMPLICIT_BLOCK_CALL = [
-	'CALL_END','=','DEF_BODY','(','CALL_START',',',':','RETURN'
+	'CALL_END','=','DEF_BODY','(','CALL_START',',',':','RETURN','DEF_EMPTY',
 	'-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=', '**='
 ] # .concat(COMPOUND_ASSIGN)
 
@@ -193,7 +193,7 @@ var NO_CALL_TAG_MAP = arrayToHash(NO_CALL_TAG)
 var IMPLICIT_COMMA = ['DO']
 
 # Tokens that always mark the end of an implicit call for single-liners.
-var IMPLICIT_END     = ['POST_IF', 'POST_UNLESS', 'POST_FOR', 'WHILE', 'UNTIL', 'WHEN', 'BY', 'LOOP', 'TERMINATOR','DEF_BODY']
+var IMPLICIT_END     = ['POST_IF', 'POST_UNLESS', 'POST_FOR', 'WHILE', 'UNTIL', 'WHEN', 'BY', 'LOOP', 'TERMINATOR','DEF_BODY','DEF_EMPTY']
 
 var IMPLICIT_END_MAP =
 	POST_IF: yes
@@ -206,6 +206,7 @@ var IMPLICIT_END_MAP =
 	LOOP: yes
 	TERMINATOR: yes
 	DEF_BODY: yes
+	DEF_EMPTY: yes
 
 # Single-line flavors of block expressions that have unclosed endings.
 # The grammar can't disambiguate them, so we insert the implicit indentation.

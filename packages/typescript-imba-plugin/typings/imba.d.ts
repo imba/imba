@@ -346,8 +346,16 @@ declare module "data:text/asset;*" {
     export const path: string;
 }
 
+
+
+interface GlobalClassMap {
+
+}
+type ImbaClasses = GlobalClassMap[keyof GlobalClassMap];
+type ImbaAnyGlobal<Key extends PropertyKey,T=ImbaClasses> = T extends Record<Key, any> ? T : never;
 type ImbaConstructor = new (...args:any[]) => any;
 type ImbaClassMap<C,T = GlobalClassMap> = { [K in keyof T & string as T[K] extends C ? K : never]: T[K] }
+
 type ImbaAny<C,T = GlobalClassMap> = ImbaClassMap<C,T>[keyof ImbaClassMap<C,T>]
 
 
@@ -359,6 +367,9 @@ declare module "imba/runtime" {
     export function iterable$<T>(a:T):(T extends {toIterable: (...args: any[]) => infer X} ? X : T);
 
     export function isa$<T>(a:T):(T extends {[Symbol.hasInstance]: (...args: any[]) => infer X} ? T : false);
+    // type Narrow<T,R> = R extends {Ψmatcher: (item: T) => infer X} ? X : String;
+    // export function is$<T,R>(a:T,b:R):a is Narrow<T,R>;
+    export function is$<T,R>(a:T,b:R):a is R;
 }
 
 declare module "imba/typings" {

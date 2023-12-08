@@ -9,6 +9,12 @@ export const __imba__$	 = Symbol.for('imba')
 export const __mixin__$	 = Symbol.for('#__mixin__')
 export const matcher = Symbol.for('#matcher')
 
+export const appendChild$	 = Symbol.for('#appendChild')
+export const afterVisit$	 = Symbol.for('#afterVisit')
+export const beforeReconcile$	 = Symbol.for('#beforeReconcile')
+export const afterReconcile$	 = Symbol.for('#afterReconcile')
+export const up$	 = Symbol.for('##up')
+
 export const HAS = {
 	SUPERCALLS: 1 << 3,
 	CONSTRUCTOR: 1 << 4
@@ -159,13 +165,12 @@ export function augment$(klass,mixin){
 
 	let descs = Object.getOwnPropertyDescriptors(mixin.prototype);
 	delete descs.constructor
-	delete descs.name
 
 	if(descs[__init__$]){
 		meta.inits.push(mixin.prototype[__init__$]);
 		delete descs[__init__$];
 	}
-	
+
 	Object.defineProperties(klass.prototype,descs);
 	// TODO Should also run a method / trigger a hook
 	try { meta.top.version++; } catch(e) { }

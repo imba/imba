@@ -184,7 +184,7 @@ repository:
       match: '(?<=import)\s+(type)(?=\s+[\w\{\$\_])'
 
     - name: keyword.control.imba
-      match: '(extend|global|abstract)\s+(?=class|tag|abstract)'
+      match: '(extend|global|abstract)\s+(?=class|tag|abstract|mixin|interface)'
       
 
     - name: keyword.control.imba
@@ -197,7 +197,7 @@ repository:
       match: '(protected|private)\s+(?=def|get|set)'
 
     - name: storage.type.class.imba
-      match: '(tag|class|struct){{endOfIdentifier}}'
+      match: '(tag|class|struct|mixin|interface){{endOfIdentifier}}'
 
     - name: storage.type.imba
       match: '(let|const|constructor){{endOfIdentifier}}'
@@ -220,7 +220,7 @@ repository:
       match: (\>\=?|\<\=?)
   
     - name: keyword.operator.imba
-      match: '(of|delete|\!?isa|typeof|in|new|is|isnt){{endOfIdentifier}}'
+      match: '(of|delete|\!?isa|typeof|\!?in|new|\!?is|isnt){{endOfIdentifier}}'
 
   ops:
     patterns:

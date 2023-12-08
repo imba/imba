@@ -232,7 +232,7 @@ var grammar =
 	ImportSpecifier: [
 		o 'Identifier' do ImportSpecifier.new(A1)
 		o 'DecoratorIdentifier' do ImportSpecifier.new(A1)
-		o 'MixinIdentifier' do ImportSpecifier.new(A1)
+		o 'StyleMixinIdentifier' do ImportSpecifier.new(A1)
 		o 'Identifier AS Identifier' do ImportSpecifier.new(A1, A3)
 		o 'DEFAULT' do ImportSpecifier.new(Literal.new(A1))
 		o 'DEFAULT AS Identifier' do ImportSpecifier.new(Literal.new(A1), A3)
@@ -289,8 +289,8 @@ var grammar =
 		o 'DECORATOR' do DecoratorIdentifier.new A1
 	]
 
-	MixinIdentifier: [
-		o 'MIXIN' do MixinIdentifier.new A1
+	StyleMixinIdentifier: [
+		o 'CSS_MIXIN' do MixinIdentifier.new A1
 	]
 
 	Key: [
@@ -505,7 +505,7 @@ var grammar =
 		o 'TagOptions STYLE_START STYLE_END' do A1
 		o 'TagOptions STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A3),AST.TagFlag)
 		o 'TagOptions T. STYLE_START StyleBody STYLE_END' do A1.addPart(StyleRuleSet.new(null,A4),AST.TagFlag)
-		o 'TagOptions MIXIN' do A1.addPart(MixinIdentifier.new(A2),AST.TagFlag)
+		o 'TagOptions CSS_MIXIN' do A1.addPart(MixinIdentifier.new(A2),AST.TagFlag)
 		o 'TagOptions T: TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T@ TagIdentifier' do A1.addPart(A3,AST.TagHandler)
 		o 'TagOptions T. @ TAG_LITERAL' do A1.addPart(A4.prepend('_'),AST.TagFlag) # not supported anymore
@@ -895,12 +895,11 @@ var grammar =
 	# Class definitions have optional bodies of prototype property assignments,
 	# and optional references to the superclass.
 	# might as well handle this in the lexer instead
+
 	Class: [
 		o 'ClassStart' do A1
 		o 'ABSTRACT ClassStart' do A2.set(abstract: A1)
 		o 'EXTEND ClassStart' do A2.set(extension: A1)
-		o 'LOCAL ClassStart' do A2.set(local: A1) # deprecated
-		# o 'GLOBAL ClassStart' do A2.set(global: A1)
 	]
 
 	ClassStart: [
@@ -916,21 +915,31 @@ var grammar =
 		o 'CLASS COMPARE Expression ClassBody' do ClassDeclaration.new(null, A3, A4).set(keyword: A1, extends: A2)
 	]
 
+	Class2: [
+		o 'CLASS ClassStart' do A2.set(keyword: A1)
+		o 'ABSTRACT Class' do A2.set(abstract: A1)
+		o 'EXTEND Class' do A2.set(extension: A1)
+	]
+
+	ClassStart2: [
+		# o 'CLASS ClassName ClassConstructorParams ClassBody' do ClassDeclaration.new(A2, null, A4).set(keyword: A1,params: A3)
+		# o 'CLASS ClassName ClassConstructorParams' do ClassDeclaration.new(A2, null, []).set(keyword: A1,params: A3)
+		o 'ClassName ClassBody' do ClassDeclaration.new(A1, null, A2)
+		o 'ClassName' do ClassDeclaration.new(A1, null, [])
+		o 'ClassBody' do ClassDeclaration.new(null, null, A1)
+		# o 'CLASS ClassName ClassConstructorParams COMPARE Expression ClassBody' do ClassDeclaration.new(A2, A5, A6).set(keyword: A1, params: A3)
+		# o 'CLASS ClassName ClassConstructorParams COMPARE Expression' do ClassDeclaration.new(A2, A6, []).set(keyword: A1, params: A3)
+		o 'ClassName COMPARE Expression' do ClassDeclaration.new(A1, A3, []).set(extends: A2)
+		o 'ClassName COMPARE Expression ClassBody' do ClassDeclaration.new(A1, A3, A4).set(extends: A2)
+		o 'COMPARE Expression ClassBody' do ClassDeclaration.new(null, A2, A3).set(extends: A1)
+	]
+
 	ClassName: [
-		# o '' do null
-		# o 'SYMBOLID'
-		# o 'Identifier' # do ClassIdentifier.new(A1)
-		# o 'Self' # not sure if self should be assignable really
-		# o 'Identifier' do VarOrAccess.new(A1) # LocalIdentifier.new(A1)
-		# o 'SymbolIdentifier' do Access.new('.',null,A1) # LocalIdentifier.new(A1)
 		o 'DecoratorIdentifier'
 		o 'Identifier' do VarOrAccess.new(A1) # do ClassName.new(A1)
 		o 'SymbolIdentifier' do Access.new('.',null,A1) # IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
 		o 'ClassName . Identifier' do AST.OP(A2,A1,A3)
 		o 'ClassName . SymbolIdentifier' do IndexAccess.new(A2,A1,A3) # AST.OP(A2,A1,A3)
-		# ClassName.new(A3,A1) # AST.OP(A2,A1,A3)
-		# o 'Value . SymbolIdentifier' do IndexAccess.new(A2,A1,A3)
-		# Worth testing?
 		o 'ClassName Type' do AST.SETTYPE(A1,A2)
 	]
 
@@ -1329,7 +1338,7 @@ var operators = [
 	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
 	['right',     'TAG_END']
-	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER','CLASS', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
+	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER','CLASS', 'MIXIN','INTERFACE', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']
 	['right',     'POST_IF','POST_FOR']
 	['right', 'NEW_TAG']
 	['right', 'TAG_ATTR_SET']

@@ -182,7 +182,13 @@ export class Session
 			catch e
 				util.log('error',e)
 
-		# util.log('filterDiagnostics',file,diagnostics)
+		if ils..config..debugLevel >= 2
+			for item in diagnostics
+				if item.#suppress
+					item.category = 1
+					item.#suppress = no
+
+		util.log('filterDiagnostics',file,diagnostics)
 		return diagnostics.filter do !$1.#suppress
 
 	def sendDiagnosticsEvent(file, project, diags, kind)

@@ -15,6 +15,7 @@ import {createEdits} from './diff'
 
 export default class ImbaScript
 	constructor info
+		self.nr = ++global.ils.counter
 		self.info = info
 		self.diagnostics = []
 		self.saveCompiledOutput = no

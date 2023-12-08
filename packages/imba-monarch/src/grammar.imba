@@ -434,14 +434,14 @@ export const states = {
 	]
 
 	class_: [
-		[/(extend)(?=\s+(global )?(class|interface) )/,'keyword.$1']
-		[/(global)(?=\s+(class|interface|abstract) )/,'keyword.$1']
+		[/(extend)(?=\s+(global )?(class|interface|mixin) )/,'keyword.$1']
+		[/(global)(?=\s+(class|interface|mixin|abstract) )/,'keyword.$1']
 		[/(abstract)(?=\s+(class|interface) )/,'keyword.$1']
 		# [/(class)(\s)(@id)(\.)(@id)/, ['keyword.$1','white.$1name','entity.name.namespace','punctuation.accessor', 'entity.name.class','@class_start=']]
-		[/(class|interface)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
+		[/(class|interface|mixin)(\s)(?=@id\.@id)/, ['keyword.$1','white.$1name','@classname_start/$3']]
 
-		[/(class|interface)(\s)(@classid)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
-		[/(class|interface)(?=\n)/, 'keyword.$1','@>_class&class=']
+		[/(class|interface|mixin)(\s)(@classid)/, ['keyword.$1','white.$1name','entity.name.class.decl-const','@class_start=']]
+		[/(class|interface|mixin)(?=\n)/, 'keyword.$1','@>_class&class=']
 	]
 
 	classname_start: [
@@ -461,7 +461,7 @@ export const states = {
 	
 	# Is this not covered by class_?
 	extend_class_: [
-		[/(extend)(\s)(class|interface)(\s)/,
+		[/(extend)(\s)(class|interface|mixin)(\s)/,
 			['keyword.$1','white.$1','keyword.$3','white.extendclass','@classname_start/$3']
 		]
 	]

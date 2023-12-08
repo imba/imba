@@ -56,12 +56,20 @@ var CONTEXTUAL_KEYWORDS = {
 	LET: {'global': 1, 'declare': 1, static: 1}
 	CONST: {'global': 1, 'declare': 1, static: 1}
 	VAR: {'global': 1, 'declare': 1, static: 1}
-	CLASS: {'global': 1, 'declare': 1, static: 1, extend: 1, strict: 1, abstract: 1}
-	INTERFACE: {'global': 1, 'declare': 1, extend: 1, strict: 1}
+	CLASS: {'global': 1, 'declare': 1, static: 1, extend: 1, strict: 1, abstract: 1, mixin: 1}
+	MIXIN: {'global': 1, 'declare': 1, extend: 1, strict: 1, abstract: 1}
+	INTERFACE: {'global': 1, 'declare': 1, extend: 1, strict: 1, mixin: 1}
 	TAG: {'global': 1, 'declare': 1, extend: 1, strict: 1, abstract: 1}
 	DEF: {'global': 1, 'declare': 1, protected: 1}
 	PROP: {'static': 1}
-	CSS: {'global': 1}
+	ATTR: {'static': 1}
+	CSS: {'global': 1, export: 1}
+}
+
+var MEMBER_KEYWORDS = {
+	DEF: 1
+	PROP: 1
+	ATTR: 1
 }
 
 # FixedArray for performance
@@ -432,6 +440,8 @@ export class Lexer
 		parse(code)
 		closeIndentation unless o:inline
 
+		
+
 		if @ends:length
 			error("missing {@ends.pop}")
 
@@ -446,8 +456,8 @@ export class Lexer
 	def parse code
 		var i = 0
 		var pi = 0
-		@loc = @locOffset + i
 
+		@loc = @locOffset + i
 
 		while @chunk = code.slice(i)
 			let ctx = @context
@@ -582,7 +592,7 @@ export class Lexer
 				typ = 'TAG_REF'
 
 			if chr == '%'
-				typ = 'MIXIN'
+				typ = 'CSS_MIXIN'
 
 			if chr == '#'
 				typ = 'TAG_SYMBOL_ID'
@@ -928,7 +938,11 @@ export class Lexer
 			return ctx0 == 'TAG_END' or (ctx1 == 'TAG_END' and ctx0 == 'OUTDENT')
 		return false
 
-	def isKeyword id
+	def isKeyword id, next = ''
+		if id == 'mixin' and (!next or next == ' ')
+			return no if MEMBER_KEYWORDS[@lastTyp]
+			return yes
+
 		if @lastTyp == 'ATTR' or @lastTyp == 'PROP' or @lastTyp == 'DEF'
 			return false
 
@@ -1067,7 +1081,7 @@ export class Lexer
 				token('CSS', id,0)
 				queueScope('CSS')
 				return lexStyleRule(0,true)
-			typ = 'MIXIN'
+			typ = 'CSS_MIXIN'
 
 		elif typ == '$' and !colon
 			typ = 'IDENTIFIER'
@@ -1080,7 +1094,7 @@ export class Lexer
 			typ = 'IDENTIFIER'
 
 		# this catches all
-		if !forcedIdentifier and isKeyword = self.isKeyword(id)
+		if !forcedIdentifier and isKeyword = self.isKeyword(id,@chunk[id:length])
 			# (id in JS_KEYWORDS or id in IMBA_KEYWORDS)
 
 			if typeof isKeyword == 'string'
@@ -1101,6 +1115,8 @@ export class Lexer
 				typ = 'FALSE'
 			elif typ == 'NIL'
 				typ = 'NULL'
+			elif (typ == 'MIXIN' or typ == 'INTERFACE')
+				typ = 'CLASS'
 
 			elif typ == 'VAR' or typ == 'CONST' or typ == 'LET'
 				let ltyp = @lastTyp
@@ -1200,7 +1216,7 @@ export class Lexer
 		elif typ == 'IF'
 			queueScope(typ)
 
-		elif typ == 'EXTEND' and !@chunk.match(/^extend (class|tag)(\s|\n|$)/)
+		elif typ == 'EXTEND' and !@chunk.match(/^extend (class|tag|interface|mixin)(\s|\n|$)/)
 			queueScope(typ)
 
 		elif typ == 'IMPORT'
@@ -1680,6 +1696,10 @@ export class Lexer
 	def outdentToken moveOut, noNewlines, newlineCount
 		# here we should also take care to pop / reset the scope-body
 		# or context-type for indentation
+		# console.log 'outdent!',@chunk,@loc,context == 'DEF'
+		if context == 'DEF'
+			closeDef
+
 		var dent = 0
 		while moveOut > 0
 			var len = @indents:length - 1
@@ -1716,6 +1736,7 @@ export class Lexer
 		token('TERMINATOR','\n',0) unless lastTokenType == 'TERMINATOR' or noNewlines
 		# capping scopes so they dont hang around
 		@scopes:length = @indents:length
+		
 		closeDef
 		var ctx = context
 		pair(ctx) if ctx == '%' or ctx == 'TAG' or ctx == 'IMPORT' or ctx == 'EXPORT' # or ctx == 'CSS' # really?

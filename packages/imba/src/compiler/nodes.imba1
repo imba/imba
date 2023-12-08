@@ -3531,6 +3531,12 @@ export class ClassDeclaration < Code
 	def isStruct
 		keyword and String(keyword) == 'struct'
 
+	def isMixin
+		keyword and String(keyword) == 'mixin'
+	
+	def isInterface
+		keyword and String(keyword) == 'interface'
+
 	def hasMixins
 		@mixins and @mixins:length > 0
 
@@ -3548,6 +3554,9 @@ export class ClassDeclaration < Code
 	
 	def isLoose
 		!isStrict
+
+	def tsId
+		@tsId ||= '$$' + STACK.sourceId + 'C' + STACK.incr('cls') + '$$'	
 
 	def isNamespaced
 		@name isa Access
@@ -3963,17 +3972,21 @@ export class ClassDeclaration < Code
 				localName: @cname
 				declareName: origName
 				default: option(:default)
-				abstract: option(:abstract)
+				abstract: option(:abstract) or isMixin or isInterface
 				mixins: AST.cary(@mixins).join(', ') or null
 				generics: @name and @name.option('generics')
 				supr: superclass
+				oid: tsId
 				iife: up isa Instantiation
 				"return": option(:return)
 				unsafe: option(:implicitAny)
+				exportName: option(:default) or origName
 			}
 
 			if tpl:generics
 				tpl:suprGenerics = tpl:generics.asGenericNames
+			elif !tpl:abstract
+				tpl:mapped = yes
 
 			let str
 
@@ -4012,18 +4025,23 @@ export class ClassDeclaration < Code
 				'''
 			elif isGlobal
 				'''
-				declare global {
-					@{@!abstract? interface GlobalClassMap {@declareName:@declareName}}
-					class @declareName@generics extends @localName@suprGenerics {}
-					type Any@declareName = ImbaAny<@localName>;
-				}
-				@{@mixins? interface @localName@generics @{extends @mixins }{ }}
+				
+				
 				class @localName@generics @{extends @supr }{
 					@{@unsafe? [index:string]: any; }
+					@oid:true;
 					declare protected static AnyType: Any@declareName
 					@body
 				}
-				@{@export? export {@localName as @declareName}}
+				@{@mixins? interface @localName@generics @{extends @mixins }{ }}
+				@{@export? export {@localName as @exportName}}
+				declare global {
+					class @declareName@generics extends @localName@suprGenerics {}
+					@{@mapped? interface GlobalClassMap {@declareName:@declareName}}
+					type Any@declareName|Map = ImbaClassMap<{@oid:true}>
+					type Any@declareName = Any@declareName|Map[keyof Any@declareName|Map]
+					// namespace @declareName {export type Any = Any@declareName;}
+				}
 				'''
 			else
 				'''
@@ -4205,7 +4223,7 @@ export class TagDeclaration < ClassDeclaration
 			sup = superclass ? superclass.toClassName : LIT('imba.Component')
 
 			if !isExtension
-				body.unshift(LIT('static $$TAG$$'),yes)
+				body.unshift(LIT('static $$TAG$$:true'),yes)
 				body.unshift(LIT('constructor(){ super() }',@name),yes)
 
 			tpl:body = body.c
@@ -4699,6 +4717,7 @@ export class MethodDeclaration < Func
 			kind: option(:keyword)
 			static: option(:static)
 			export: option(:export)
+			declare: option(:declareOnly)
 			default: option(:default)
 			protected: option(:protected)
 			async: option(:async)
@@ -4715,6 +4734,13 @@ export class MethodDeclaration < Func
 		}
 
 		if tsc
+			if (@class and @class.isInterface)
+				tpl:code = ';'
+			elif tpl:declare
+				console.log [tpl:code]
+				tpl:code = '{ return }' if SourceMapper.strip(tpl:code).replace(/[\s\n\t]/g,'') == '{}'
+				
+
 			let generics = {}
 			let ret = returnType
 			let paramtypes = params.map do $1.datatype
@@ -4754,6 +4780,7 @@ export class MethodDeclaration < Func
 
 			if @decorators
 				tpl:decorators = AST.cary(@decorators).join('\n')
+
 			let str = '''
 				@export @default @protected @static @async @get @set @function @key@generics(@params)@{:@returnType} @code
 			'''
@@ -6800,6 +6827,11 @@ export class TypeAnnotation < Node
 		let raw = String(@value)
 		
 		raw = raw.slice(1) if raw[0] == '\\'
+
+		# unwrap the parens?
+		if raw[0] == '(' and raw[raw:length - 1] == ')'
+			raw = raw.slice(1,-1)
+
 		let end = raw.slice(-1)
 
 		if end == '?'

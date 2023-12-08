@@ -409,7 +409,7 @@ export class SymbolCompletion < Completion
 				item.documentation = docs # global.session.mapDisplayParts(docs,checker.project)
 
 			if let dp = details.displayParts
-				unless cat.indexOf('style') >= 0
+				unless cat and cat.indexOf('style') >= 0
 					item.detail = util.displayPartsToString(util.toImbaDisplayParts(dp))
 
 			util.log 'resolve completion',item,details,self

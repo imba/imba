@@ -851,6 +851,10 @@ export def @autorun target, key, desc
 	schema[key] = options
 	return desc
 
+###
+Mark methods as actions to delay any reaction caused by
+observables changing during this method
+###
 export def @action target, key, desc
 	if desc.value
 		let action = new Action(desc.value,null)

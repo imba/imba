@@ -64,7 +64,7 @@ test do
 		base = (val += 1)
 
 	class Mixin < Base
-		mixin = 1
+		prop mixin = 1
 
 	class Model < Base
 		model = 1

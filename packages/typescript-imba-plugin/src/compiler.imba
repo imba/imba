@@ -33,7 +33,8 @@ export class Compilation
 		# d2o - live doc to frozen output
 		# d2i - live doc to frozen input
 		# o2d - frozen output to live doc
-		options = {...ImbaOptions, fileName: fileName, sourcePath: fileName}
+		
+		options = {...ImbaOptions, fileName: fileName, sourcePath: fileName, sourceId: script.im.nr.toString(32)}
 
 	def getCompiler
 		if !global.ils

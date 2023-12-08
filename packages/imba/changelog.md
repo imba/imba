@@ -8,6 +8,12 @@
 
 * Fixed issue with `instanceof` operator for mixins
 
+* Fixed `export default global class` typescript output
+
+* Allow `def` / `get` / `set` declarations without body
+
+* Prepare support for `mixin` and `interface` keywords
+
 ## 2.0.0-alpha.232
 
 * Lots of internal changes preparing for beta launch.

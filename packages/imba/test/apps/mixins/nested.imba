@@ -16,7 +16,8 @@ global class Logger
 
 global class Mixin < Base
 	isa Logger
-	mixin = 1
+
+	prop mixin = 1
 	get mixed
 		'mixed'
 

@@ -354,7 +354,7 @@
             <key>name</key>
             <string>keyword.control.imba</string>
             <key>match</key>
-            <string>(extend|global|abstract)\s+(?=class|tag|abstract)</string>
+            <string>(extend|global|abstract)\s+(?=class|tag|abstract|mixin|interface)</string>
           </dict>
           <dict>
             <key>name</key>
@@ -378,7 +378,7 @@
             <key>name</key>
             <string>storage.type.class.imba</string>
             <key>match</key>
-            <string>(tag|class|struct)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(tag|class|struct|mixin|interface)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
           <dict>
             <key>name</key>
@@ -424,7 +424,7 @@
             <key>name</key>
             <string>keyword.operator.imba</string>
             <key>match</key>
-            <string>(of|delete|\!?isa|typeof|in|new|is|isnt)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(of|delete|\!?isa|typeof|\!?in|new|\!?is|isnt)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
           </dict>
         </array>
       </dict>
