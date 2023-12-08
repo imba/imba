@@ -486,14 +486,14 @@ declare namespace imba {
         unschedule(): this;
 
         /**
-         * @summary Called before any properties are set
+         * @summary Called right when an element is created, before any properties are set from the outside
          * @lifecycle
          * @abstract
          */
         build(): any;
 
         /**
-         * @summary Called before any properties are set
+         * @summary Called after properties are set for the first time from the outside
          * @lifecycle
          * @abstract
          */
