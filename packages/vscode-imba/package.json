@@ -14,7 +14,7 @@
 		"directory": "packages/vsimba"
 	},
 	"engines": {
-		"vscode": "^1.77.0"
+		"vscode": "^1.80.0"
 	},
 	"categories": [
 		"Programming Languages"
@@ -271,16 +271,5 @@
 		"build-syntax": "node scripts/compile-syntaxes.js",
 		"publish": "node scripts/vsce-publish.js",
 		"prepublish": "npm run build"
-	},
-	"__metadata": {
-		"id": "ba4eb175-f037-43f0-8c9a-aa92adaabdce",
-		"publisherDisplayName": "Scrimba",
-		"publisherId": "d9260c1d-7c6a-483e-ae32-9e6d2314dff0",
-		"targetPlatform": "undefined",
-		"isApplicationScoped": false,
-		"updated": true,
-		"isPreReleaseVersion": false,
-		"installedTimestamp": 1691143173202,
-		"preRelease": false
 	}
 }
