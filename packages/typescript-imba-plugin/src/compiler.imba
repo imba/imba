@@ -243,6 +243,7 @@ export class Compilation
 			out.push([ts0,ts1,imba0,imba1,tstr,istr,ipre])
 		return out
 
+	# Not used now
 	def compileAsync
 		#compiling ||= new Promise do(resolve)
 			ioptions.sourceId = "aa"
@@ -275,12 +276,20 @@ export class Compilation
 			done = yes
 			let t0 = started = Date.now!
 			let compiler = getCompiler!
-			self.result = compiler.compile(body,options)
+			let res = compiler.compile(body,options)
+			
+			if res..js
+				self.js = res.js
+				self.locs = res.locs
+
+			self.diagnostics = res.diagnostics
+			# delete self.result.rawResult # not needed - takes memory
 			#compiling = Promise.resolve(self)
 			L("compiled {fileName} in {Date.now! - t0}ms")
 		catch e
 			util.log 'compiler crashed',script.fileName,e
-			self.result = {diagnostics: []}
+			
+			self.diagnostics = {diagnostics: []}
 			yes
 		finally
 			ended = Date.now!

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.234
+
+* Improve memory efficiency for tooling
+
 ## 2.0.0-alpha.233
 
 * Fixed sourcemapping for import/export declarations to improve tooling hints

@@ -3434,10 +3434,15 @@ export class Root < Code
 				if o:debug or true
 					script:js += '\n/*\n' + script:css + '\n*/\n' # this we should only include when debugging
 
-		# always create the sourcemap?
-		if o:sourcemap or STACK.tsc # should handle sourcemap no matter what?
-			let map = SourceMap.new(script,o).generate
-			script:sourcemap = map.result
+		if o:sourcemap or STACK.tsc
+			let map = SourceMap.new(script,o)
+
+			# sourcemap is not needed in tsc - only need to generate the ranges
+			if STACK.tsc
+				map.parse()
+			else
+				map.generate()
+				script:sourcemap = map.result
 
 			if o:sourcemap == 'inline'
 				script:js += map.inlined
@@ -7488,6 +7493,7 @@ export class Descriptor < Node
 
 		if STACK.tsc
 			parts.add(LIT("${ref.c}"))
+			# if mixin?
 			return "((self,${ref.c}={val.c(mark: yes)},{ref.c}=imba.descriptor(${ref.c}))=>({parts.c}))(this)"
 
 		parts.add(ref)

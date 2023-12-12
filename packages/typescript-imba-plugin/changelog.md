@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.6.3
 
 * Improved sourcemapping from ts to imba
+* Improved memory efficiency
 
 ## 1.6
 

@@ -127,8 +127,8 @@ export class SourceMap
 
 		@script:js = lines.join('\n')
 		@script:locs = {
-			map: locmap
-			generated: @locs
+			# map: locmap
+			# generated: @locs
 			spans: Object.values(groups)
 		}
 
