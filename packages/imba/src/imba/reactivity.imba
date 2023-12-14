@@ -347,7 +347,7 @@ export def createAtom name
 ###
 Array
 ###
-export class ObservableArray < Array
+export class ObservableArray<T=any> < Array<T>
 
 	def push do CHANGED(this,super)
 	def pop do CHANGED(this,super)
@@ -394,7 +394,7 @@ extend class Array<T>
 Set
 ###
 const Set_has = Set.prototype.has
-class ObservableSet < Set
+class ObservableSet<T=any> < Set<T>
 	def has do OBSERVED(this,super)
 	def keys do OBSERVED(this,super)
 	def values do OBSERVED(this,super)
@@ -406,7 +406,7 @@ class ObservableSet < Set
 
 const SetExtensions = getExtensions(ObservableSet)
 
-extend class Set
+extend class Set<T>
 	get ##reactive do REFERENCED(this,null,SetExtensions)
 	def ##referenced ref do REFERENCED(this,ref,SetExtensions)
 	def ##dereferenced ref do DEREFERENCED(this,ref)
