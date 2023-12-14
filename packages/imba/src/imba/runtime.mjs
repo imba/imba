@@ -218,10 +218,13 @@ export function sup$(self,symbol) {
 export function register$(klass,symbol,name,flags,into = null) {
 	// Look for the actual superclass excluding mixins
 	let proto = Object.getPrototypeOf(klass.prototype)
-	if(flags & ClassFlags.HasMixins) {
+	let mixed = flags & ClassFlags.HasMixins
+	if(mixed) {
 		mmap.set(klass,mmap.get(proto.constructor))
 		proto = Object.getPrototypeOf(proto)
 	}
+
+	
 
 	if(into){
 		let target = flags & ClassFlags.IsObjectExtension ? into : into.prototype;
@@ -246,6 +249,9 @@ export function register$(klass,symbol,name,flags,into = null) {
 	let supr = proto?.constructor;
 	let meta = meta$(klass,{symbol})
 
+	// All classes defined in imba get the Class.meta getter to access metadata for class
+	Object.defineProperty(klass,__meta__$,{value: meta, enumerable: false, configurable: true})
+
 	// Override name of class
 	if(name && klass.name !== name){
 		Object.defineProperty(klass,"name",{value: name,configurable: true})
@@ -254,6 +260,8 @@ export function register$(klass,symbol,name,flags,into = null) {
 
 	if(flags & ClassFlags.HasConstructor)
 		klass.prototype[__initor__$] = symbol;
+
+	if(meta.uses) for(let mixin of meta.uses) mixin.mixes?.(klass)
 
 	if(supr?.inherited instanceof Function) supr.inherited(klass)
 	return klass;

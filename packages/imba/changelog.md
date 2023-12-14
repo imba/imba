@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.235
+
+* Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).
+
 ## 2.0.0-alpha.234
 
 * Improve memory efficiency for tooling
