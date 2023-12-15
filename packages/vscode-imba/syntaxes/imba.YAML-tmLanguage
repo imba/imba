@@ -175,7 +175,7 @@ repository:
   keywords:
     patterns:
     - name: keyword.control.imba
-      match: '(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|try|catch|await|rescue|finally|throw|as|continue|break|extend|augment){{endOfIdentifier}}'
+      match: '(if|elif|else|unless|switch|when|then|do|import|export|for own|for|while|until|return|yield|try|catch|await|rescue|finally|throw|as|continue|break|extend|augment){{endOfIdentifier}}'
 
     - name: keyword.control.imba
       match: '(?<=export)\s+(default){{endOfIdentifier}}'

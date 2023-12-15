@@ -186,7 +186,11 @@ export const states = {
 	]
 
 	return_: [
-		[/return@B/,'keyword.new']
+		[/return@B/,'keyword.return']
+	]
+
+	yield_: [
+		[/yield/,'keyword.yield']
 	]
 
 	primitive_: [
@@ -212,6 +216,7 @@ export const states = {
 		'comment_'
 		'inline_var_'
 		'return_'
+		'yield_'
 		'value_'
 		'tag_'
 		'op_'
