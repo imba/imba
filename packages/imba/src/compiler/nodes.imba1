@@ -4805,7 +4805,7 @@ export class MethodDeclaration < Func
 				tpl:decorators = AST.cary(@decorators).join('\n')
 
 			let str = '''
-				@export @default @protected @static @async @get @set @function @key@generics(@params)@{:@returnType} @code
+				@export @default @protected @static @async @get @set @function @yield@key@generics(@params)@{:@returnType} @code
 			'''
 
 			if tpl:static and returnType and returnType.hasSelfReference
@@ -4813,8 +4813,8 @@ export class MethodDeclaration < Func
 				tpl:returnType = returnType.withReplacedThis('self')
 				str = '''
 				// @ts-ignore
-				@protected @static @async @function @key<self extends abstract new (...args: any) => any>(this:self@{, @params})@{:@returnType};
-				@protected @static @async @get @set @function @key(@params) @code
+				@protected @static @async @function @yield@key<self extends abstract new (...args: any) => any>(this:self@{, @params})@{:@returnType};
+				@protected @static @async @get @set @function @yield@key(@params) @code
 				'''
 
 			if @decorators
