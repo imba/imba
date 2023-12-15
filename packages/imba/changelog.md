@@ -4,6 +4,8 @@
 
 * Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).
 
+* Add support for generator functions. Any method that contains a `yield` statement is compiled to a generator function.
+
 ## 2.0.0-alpha.234
 
 * Improve memory efficiency for tooling

@@ -2688,6 +2688,22 @@ export class ImplicitReturn < Return
 
 export class GreedyReturn < ImplicitReturn
 
+export class Yield < Statement
+
+	def visit
+		@method = STACK.method
+		@method.set(yield: yes, noreturn: yes)
+
+
+	def startLoc
+		let l = (keyword or @value)
+		l ? l.startLoc : null
+
+	def js
+		var v = @value
+		let k = M('yield',keyword)
+		return "{k} {v.c(expression: yes)}"
+
 # cannot live inside an expression(!)
 export class Throw < Statement
 
@@ -4716,7 +4732,7 @@ export class MethodDeclaration < Func
 
 		var code = scope.c(indent: yes, braces: yes)
 		var name = typeof @name == 'string' ? @name : @name.c(as: 'field')
-
+		var star = option(:yield) ? '*' : ''
 		var out = ""
 
 		var tpl = tsc and {
@@ -4733,6 +4749,7 @@ export class MethodDeclaration < Func
 			get: isGetter ? option(:keyword) : null
 			set: isSetter ? option(:keyword) : null
 			returnType: returnType
+			yield: option(:yield) && LIT('*')
 			params: params
 			generics: @name and @name.option('generics')
 			function: !option(:inClassBody) and !option(:inObject)
@@ -4820,7 +4837,7 @@ export class MethodDeclaration < Func
 
 			prefix = "async {prefix}" if option(:async)
 			prefix = "{M('static',option(:static))} {prefix}" if option(:static)
-			out = "{prefix}{M name, null, as: 'field'}({params.c})"
+			out = "{prefix}{star}{M name, null, as: 'field'}({params.c})"
 		
 			out += code
 			return out
@@ -4856,7 +4873,10 @@ export class MethodDeclaration < Func
 			if o:export
 				out = "exports.{o:default ? 'default' : fname} = {out}"
 		else
-			out = "{M funcKeyword, keyword} {M fname, @name}{func}"
+			# Should really use TPL for this too
+			
+
+			out = "{M funcKeyword, keyword}{star} {M fname, @name}{func}"
 			if o:export
 				out = "{M('export',o:export)} {o:default ? M('default ',o:default) : ''}{out}"
 

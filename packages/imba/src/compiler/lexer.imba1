@@ -21,7 +21,7 @@ var JS_KEYWORDS = [
 	'delete', 'typeof', 'in', 'instanceof'
 	'throw', 'break', 'continue', 'debugger'
 	'if', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally'
-	'class', 'extends', 'super', 'return'
+	'class', 'extends', 'super', 'return', 'yield'
 ]
 
 var TSC_CARET_BEFORE = {
@@ -47,7 +47,7 @@ var TYPE_GENERICS_AFTER = /\w|\]|\)$/
 # some words (like tokid) should be context-specific
 var IMBA_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
-	'when','def','tag','do','elif','begin','var','let','const','await','import','module','export','static','extend'
+	'when','def','tag','do','elif','begin','var','let','const','await','import','module','export','static','extend','yield'
 ]
 
 var IMBA_CONTEXTUAL_KEYWORDS = ['extend','local','global','prop']
@@ -83,6 +83,7 @@ export var ALL_KEYWORDS = [
 	'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by',
 	'when','def','tag','do','elif','begin','var','let','const','await','import',
 	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static','extend'
+	'yield'
 ]
 
 # The list of keywords that are reserved by JavaScript, but not used, or are

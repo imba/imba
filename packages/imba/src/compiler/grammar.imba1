@@ -131,6 +131,7 @@ var grammar =
 	# Pure statements which cannot be expressions.
 	Statement: [
 		o 'Return'
+		o 'Yield'
 		o 'Throw'
 		o 'STATEMENT' do Literal.new A1
 
@@ -363,6 +364,12 @@ var grammar =
 		o 'RETURN Expression' do Return.new(A2).set(keyword: A1)
 		o 'RETURN Arguments' do Return.new(A2).set(keyword: A1) # should probably force as array
 		o 'RETURN' do Return.new().set(keyword: A1)
+	]
+
+	Yield: [
+		o 'YIELD Expression' do Yield.new(A2).set(keyword: A1)
+		o 'YIELD Arguments' do Yield.new(A2).set(keyword: A1) # should probably force as array
+		o 'YIELD' do Yield.new().set(keyword: A1)
 	]
 
 	Selector: [
@@ -1335,7 +1342,7 @@ var operators = [
 	['left',      'LOGIC']
 	['right',      '?']
 	['nonassoc',  'INDENT', 'OUTDENT']
-	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN', 'THROW', 'EXTENDS']
+	['right',     '=', ':', 'COMPOUND_ASSIGN', 'RETURN','YIELD', 'THROW', 'EXTENDS']
 	['right',     'FORIN', 'FOROF', 'BY', 'WHEN']
 	['right',     'TAG_END']
 	['right',     'IF', 'ELSE', 'FOR', 'DO', 'WHILE', 'UNTIL', 'LOOP', 'SUPER','CLASS', 'MIXIN','INTERFACE', 'MODULE', 'TAG', 'EVENT', 'TRIGGER', 'TAG_END', 'IMPORT', 'EXPORT']

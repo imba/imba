@@ -94,6 +94,7 @@ var IMPLICIT_FUNC_MAP =
 	'BREAK': 1
 	'CONTINUE': 1
 	'RETURN': 1
+	'YIELD': 1
 	'INDEX_END': 1
 	']': 1
 	'BANG': 1
@@ -156,7 +157,7 @@ var IDENTIFIERS = ['IDENTIFIER', 'IVAR', 'DECORATOR', 'ARGVAR']
 # Tokens that, if followed by an `IMPLICIT_CALL`, indicate a function invocation.
 var IMPLICIT_FUNC    = ['IDENTIFIER', 'SYMBOLID', 'SUPER', # ')', 'INDEX_END', #  'CALL_END',
 	'@', 'THIS','SELF', 'EVENT','TRIGGER','TAG_END', 'IVAR', 'CVAR',
-	'ARGVAR', 'BREAK', 'CONTINUE','RETURN','BANG'
+	'ARGVAR', 'BREAK', 'CONTINUE','RETURN','BANG','YIELD'
 ]
 
 var IMPLICIT_INDENT_CALL = [
@@ -178,7 +179,7 @@ var LOGIC   = ['&&', '||', '&', '|', '^']
 
 # optimize for fixed arrays
 var NO_IMPLICIT_BLOCK_CALL = [
-	'CALL_END','=','DEF_BODY','(','CALL_START',',',':','RETURN','DEF_EMPTY',
+	'CALL_END','=','DEF_BODY','(','CALL_START',',',':','RETURN','DEF_EMPTY','YIELD'
 	'-=', '+=', '/=', '*=', '%=', '||=', '&&=', '?=', '<<=', '>>=', '>>>=', '&=', '^=', '|=', '**='
 ] # .concat(COMPOUND_ASSIGN)
 
