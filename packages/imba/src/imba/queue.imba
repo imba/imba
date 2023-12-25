@@ -40,3 +40,6 @@ export class Queue < Set
 	get idle
 		#idler ||= new Promise do(resolve)
 			#resolve = resolve
+
+	def then ok, err\any?
+		idle.then(ok,err)
