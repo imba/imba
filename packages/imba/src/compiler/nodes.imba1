@@ -1146,6 +1146,11 @@ export class Node
 	def safechain
 		no
 
+	def addEnv env
+		@envs ||= []
+		@envs.push( EnvFlag.new env)
+		self
+
 	def sourcecode
 		let src = STACK.SOURCECODE
 		let start = startLoc
@@ -2193,7 +2198,13 @@ export class ClassField < Node
 		super
 		@name = name
 
+	def isExcluded
+		if @envs
+			return !@envs.find(do $1.isTruthy)
+		return false
+
 	def visit
+		return if isExcluded
 		@decorators = up?.collectDecorators
 		@classdecl = STACK.up(ClassDeclaration)
 		@name.traverse if @name and @name:traverse
@@ -2265,8 +2276,10 @@ export class ClassField < Node
 
 	def c
 		return if option(:struct)
+		return if isExcluded
 
 		let up = STACK.current
+		let tsc = STACK.tsc
 		let out
 
 		if up isa ClassBody
@@ -2293,13 +2306,12 @@ export class ClassField < Node
 				@getter = LIT("()\{ return {op.c}.$get({args}) \}")
 				@setter = LIT("(val)\{ {op.c}.$set(val,{args}) \}")
 
-				if STACK.tsc
+				if tsc
 					@getter = LIT("():ReturnType<typeof {op.c}.$get> \{ return {op.c}.$get({args}) \}")
 					@setter = LIT("(val:Parameters<typeof {op.c}.$set>[0])\{ {op.c}.$set(val,{args}) \}")
 					
 					let pars = [wrapper.c(expression: yes),args,metasym,context]
-					
-					inner = "const self = this;return {runtime:accessor}({pars.join(',')})"
+					inner = "const self = this;const slf = {context};return {runtime:accessor}({pars.join(',')})"
 
 					if wrapper.@callback
 						inner += '.$function(' + wrapper.@callback.c + ')'
@@ -2309,7 +2321,7 @@ export class ClassField < Node
 					# inner = STACK.tsc ? "return {inner}" : "return this[{metasym}] || {inner}"
 				@handler = LIT("{M(meta.c(as: 'field'),@name)}()\{ {inner} \}")
 
-			if STACK.tsc
+			if tsc
 				let vars = {
 					name: @name
 					static: option(:static)
@@ -4232,7 +4244,6 @@ export class TagDeclaration < ClassDeclaration
 
 			if isGlobal or isExtension
 				className = tpl:localName = InternalName.new(name)
-				# STACK.toInternalClassName(name)
 
 		if sup and sup.@variable
 			sup = sup.@variable
@@ -4250,14 +4261,14 @@ export class TagDeclaration < ClassDeclaration
 
 			tpl:body = body.c
 			tpl:default = option(:default)
-			tpl:superName = sup
+			tpl:superName = superclass ? MappedString.new(sup,superclass) : sup
 
 			try tpl:export = option(:export) or !!@name.variable.@value.isExported
 
 			if isExtension and isGlobal
 				return TPL tpl, '''
-					declare global { interface %declareName extends %localName {} }
 					class %localName { %body }
+					declare global { interface %declareName extends %localName {} }
 				'''
 			elif isExtension
 				try tpl:path = @name.variable.importPath
@@ -4270,8 +4281,8 @@ export class TagDeclaration < ClassDeclaration
 					'''
 
 				return TPL tpl,'''
-					%export interface %declareName extends %localName {}
 					class %localName { %body }
+					%export interface %declareName extends %localName {}
 				'''
 			elif isGlobal
 				return TPL tpl,'''
@@ -4547,6 +4558,11 @@ export class MethodDeclaration < Func
 			return self
 		super
 
+	def isExcluded
+		if @envs
+			return !@envs.find(do $1.isTruthy)
+		return false
+
 	def identifier
 		@name
 
@@ -4604,6 +4620,8 @@ export class MethodDeclaration < Func
 	def visit
 		@type = option(:type) or (option(:def)?.@value or 'def')
 		@decorators = up?.collectDecorators
+
+		return if isExcluded
 
 		var o = @options
 		scope.visit
@@ -4713,6 +4731,9 @@ export class MethodDeclaration < Func
 		var tsc = STACK.tsc
 
 		if option(:declareOnly) and !tsc
+			return ''
+
+		if isExcluded
 			return ''
 
 		# need to have collected them already?
@@ -7439,7 +7460,11 @@ export class Descriptor < Node
 			@value.@variable ||= @variable
 
 			unless @variable
-				@value = OP('.',THIS,@name)
+				let cls = stack.up(ClassDeclaration)
+				if STACK.tsc and cls and cls.isExtension
+					@value = OP('.',LIT('slf'),@name)
+				else
+					@value = OP('.',THIS,@name)
 
 		else
 			@value.traverse if @value
@@ -7494,6 +7519,8 @@ export class Descriptor < Node
 
 	def js
 		let ref = scope__.root.declare('desc',null,system: yes)
+		let tsc = STACK.tsc
+
 		let val = @variable ? Instantiation.new(CALL(@value,params or [])) : (@name ? CALL(@value,params or []) : @value)
 
 		let parts = AST.blk([])
@@ -7508,10 +7535,10 @@ export class Descriptor < Node
 			# TODO rename to primitive instead
 			parts.add LIT("{ref.c}.default.literal = {@literal.c}")
 
-		if @callback and !STACK.tsc
+		if @callback and !tsc
 			parts.add LIT("{ref.c}.callback = {@callback.c}")
 
-		if STACK.tsc
+		if tsc
 			parts.add(LIT("${ref.c}"))
 			# if mixin?
 			return "((self,${ref.c}={val.c(mark: yes)},{ref.c}=imba.descriptor(${ref.c}))=>({parts.c}))(this)"

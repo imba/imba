@@ -139,7 +139,7 @@ export function augment$(klass,mixin){
 	if(mix.parent){
 		if(!(klass.prototype instanceof mix.parent)){
 			// For better error reports we could delay this message...
-			throw new Error(`Mixin ${mix.name} has superclass not present in target class`);
+			throw new Error(`Mixin ${mixin.name} has superclass not present in target class`);
 		}
 	}
 

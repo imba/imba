@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+* Fix sourcemapping for tag declaration superclass
+
+* Allow compile-time env flags in front of class fields and methods.
+
+```imba
+class Something
+    $node$ def onlyForNode
+        yes
+
+    $web$ def onlyForWeb
+        yes
+```
+
 ## 2.0.0-alpha.235
 
 * Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).
