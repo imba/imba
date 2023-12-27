@@ -1,6 +1,6 @@
 global css body c:warm2 bg:warm8 ff:Arial inset:0 d:vcc
 
-tag app
+tag App
 	count = 0
 	<self>
 		<%counter @click=count++>
@@ -9,4 +9,4 @@ tag app
 			<img[s:20px] src="https://imba.io/logo.svg">
 			"count is {count}"
 
-imba.mount <app>
+imba.mount <App>

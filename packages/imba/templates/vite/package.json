@@ -2,13 +2,12 @@
   "name": "imba-project",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "imba serve",
+    "build": "imba build",
+    "preview": "imba preview"
   },
   "devDependencies": {
     "vite": "*",
-    "imba": "*",
-    "vite-plugin-imba": "*"
+    "imba": "*"
   }
 }
