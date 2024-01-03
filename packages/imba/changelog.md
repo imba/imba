@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix tooling for `item isa (a or b or c)` syntax
+
 * Fix sourcemapping for tag declaration superclass
 
 * Allow compile-time env flags in front of class fields and methods.

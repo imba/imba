@@ -5879,22 +5879,22 @@ export class InstanceOf < Op
 	def js s,o
 
 		if right instanceof Str
-			let out = "typeof {left.c}==={right.c}"
+			let out = "typeof ({left.c})==={right.c}"
 			out = helpers.parenthesize(out) if s.parent isa Op
+			return out
+
+		# fix checks for String and Number
+		if right isa Parens
+			let out = right.consume(Util.Isa.new([STACK.tsc ? left : left.cache,null,@op])).c
+			out = helpers.parenthesize(out) # if o.parent isa Op
 			return out
 
 		if String(@op) == 'instanceof' or STACK.tsc
 			let out = "{left.c} {M('instanceof',@opToken)} {right.c}"
 			out = helpers.parenthesize(out) if s.parent isa Op
 			return out
-
-		# fix checks for String and Number
-		if right isa Parens
-			let out = right.consume(Util.Isa.new([left.cache,null])).c
-			out = helpers.parenthesize(out) # if o.parent isa Op
-			return out
 		
-		return Util.Isa.new([left,right]).js(s,o)
+		return Util.Isa.new([left,right,@op]).js(s,o)
 
 export class TypeOf < Op
 
@@ -12643,12 +12643,15 @@ export class Util.Is < Util
 
 	def right
 		args[1]
+
+	def op
+		args[2]
 		
 	def helper
 		'// @ts-ignore\nfunction is$(a,b){ return a === b || ' + "b?.[{symbolRef('#matcher')}]?.(a) || false" + '}'
 
 	def clone b
-		constructor.new([args[0],b])
+		constructor.new([args[0],b,args[2]])
 
 	def js o
 		return called(args,'is$','is$')
@@ -12660,7 +12663,11 @@ export class Util.Isa < Util.Is
 
 	def js
 		if right instanceof Str
-			return "typeof {left.c}==={right.c}"
+			# only need parens if left is caching...
+			return "typeof ({left.c})==={right.c}"
+		
+		if String(op) == 'instanceof'
+			return "({left.c}) instanceof {right.c}"
 
 		return called([left,right],'isa$','isa$')
 
