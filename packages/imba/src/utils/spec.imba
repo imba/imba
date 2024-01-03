@@ -453,10 +453,9 @@ global class SpecAssert < SpecComponent
 			"ok"
 
 const spec = global.spec = global.SPEC = new Spec
-global.describe = global.spec.describe
 
-global def test ...args
-	spec.test(...args)
+global.describe = spec.describe
+global.test = spec.test
 
 global def before name, blk do spec.before(name,blk)
 global def eq actual, expected, o\any? do  spec.eq(actual, expected, o)
