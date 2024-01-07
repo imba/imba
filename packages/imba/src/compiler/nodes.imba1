@@ -10051,7 +10051,8 @@ export class TagSwitchFragment < TagLike
 					item.@tvar.@stylerule = item
 					stylenr++
 				else
-					item.@tvar = root.getInsertVar(nr)
+					if !STACK.tsc
+						item.@tvar = root.getInsertVar(nr)
 					item.set(detached: yes)
 					nr++
 
