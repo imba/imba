@@ -2,9 +2,21 @@
 
 ## Unreleased
 
+* Major performance fix for certain css selectors.
+
+    When using selectors like `^@hover prop:value` Imba would compile
+    the selector to `:is(:hover).some-class > target { prop:value }`.
+    The fact that `:is(:hover)` is placed before the class can cause
+    the browser to recalculate styles for a huge part of the document
+    when pointer crosses between elements.
+
+    Rewriting the compiled selector to `.some-class:is(:hover) > target`
+    makes this issue go away completely. If you ever use selectors like
+    this it is highly recommended to update.
+
 * Fix tooling for `item isa (a or b or c)` syntax
 
-* Fix tooling for tags inside if/else trees
+* Fix tooling for tags inside
 
 * Fix sourcemapping for tag declaration superclass
 

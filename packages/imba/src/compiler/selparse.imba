@@ -4,7 +4,7 @@ import {modifiers} from './theme.imba'
 
 def addClass rule, name
 	# TODO check for negs as well?
-	rule.push({flag: name})
+	rule.unshift({flag: name})
 	# rule.classNames ||= []
 	# if rule.classNames.indexOf(name) == -1
 	# 	rule.classNames.push(name)
