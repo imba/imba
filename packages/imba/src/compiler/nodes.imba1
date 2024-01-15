@@ -85,6 +85,8 @@ var TAG_TYPES = {}
 var TAG_ATTRS = {}
 var TSC = no
 
+var USE_SAFE_RENDER_SELF = yes
+
 var CONTEXT = {}
 
 var GLOBAL_INTERFACES = {
@@ -4448,7 +4450,7 @@ export class IsolatedFunc < Func
 		if let leaks = @scope.@leaks
 			@leaks = []
 			leaks.forEach do |shadow,source|
-				if shadow.@name == 'self'
+				if shadow.@name == 'self' and USE_SAFE_RENDER_SELF
 					@useSelf = shadow
 				else
 					shadow.@proxy = @params.at(@params.count,yes)
@@ -9378,7 +9380,7 @@ export class TagModifier < TagPart
 			@value = @name
 
 			let root = STACK.parents(TagLike)[0]
-			if root
+			if root and USE_SAFE_RENDER_SELF and !(root:isSelf and root.isSelf)
 				root.set(memoSelf: yes)
 				# should only be needed _if_ self is referenced? But this is a micro optimization
 				let op = @value.@scope.@context = OP('.',root.parentCache,STR('this'))
@@ -10783,8 +10785,8 @@ export class Tag < TagLike
 
 		# console.log "IS INLINE? {o:inline} {STACK.isExpression} {!!@consumedBy} {!!@parent} {isDetached}"
 
-		# if option(:memoSelf)
-		if !parent and option(:memoSelf) # scope__.@context # and scope__.@context.@reference
+		if !parent and option(:memoSelf) and !isSelf # scope__.@context # and scope__.@context.@reference
+			# what if there is no parent cache here?
 			add "{parentCache}.this=this"
 
 		if !@consumedBy

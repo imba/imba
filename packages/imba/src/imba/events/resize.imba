@@ -9,6 +9,7 @@ export def use_events_resize
 
 let resizeObserver = null
 
+
 class ResizeEvent < CustomEvent
 	def @css wunit = '1elw', hunit = '1elh', sel = ''
 		const target = entry..target
@@ -41,7 +42,9 @@ def getResizeObserver
 			console.warn(':resize not supported in this browser')
 			resizeObserver = {observe: (do yes)}
 
-	resizeObserver ||= new ResizeObserver do(entries)
+	global.imbaResizeObserver = resizeObserver ||= new ResizeObserver do(entries)
+		# console.warn('resized',entries)
+		# setTimeout(&,0) do
 		for entry in entries
 			let e = new CustomEvent('resize', bubbles: false, detail: entry)
 			e.entry = entry
@@ -57,6 +60,9 @@ def getResizeObserver
 
 extend class Element
 	def on$resize(chain, context, handler,o)
-		getResizeObserver!.observe(this)
+		# Are references kept here?
+		let observer = getResizeObserver!
+		observer.observe(this)
+		# oh, should we not remove the listener on unmount?!
 		self.addEventListener('resize',handler,o)
 		return handler
