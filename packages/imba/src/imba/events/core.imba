@@ -201,6 +201,7 @@ export def use_events
 	yes
 
 # could cache similar event handlers with the same parts
+# Should be possible to remove closure from EventHandler
 export class EventHandler
 	def constructor params,closure
 		self.params = params

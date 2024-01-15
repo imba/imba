@@ -4448,8 +4448,11 @@ export class IsolatedFunc < Func
 		if let leaks = @scope.@leaks
 			@leaks = []
 			leaks.forEach do |shadow,source|
-				shadow.@proxy = @params.at(@params.count,yes)
-				@leaks.push(source)
+				if shadow.@name == 'self'
+					@useSelf = shadow
+				else
+					shadow.@proxy = @params.at(@params.count,yes)
+					@leaks.push(source)
 		self
 
 export class IifeFunc < Func
@@ -9373,6 +9376,13 @@ export class TagModifier < TagPart
 
 		if @name isa IsolatedFunc
 			@value = @name
+
+			let root = STACK.parents(TagLike)[0]
+			if root
+				root.set(memoSelf: yes)
+				# should only be needed _if_ self is referenced? But this is a micro optimization
+				let op = @value.@scope.@context = OP('.',root.parentCache,STR('this'))
+
 			@name = STR('$_')
 			@params = ListNode.new([@value].concat(@value.leaks or []))
 
@@ -9590,6 +9600,7 @@ export class TagHandlerCallback < ValueNode
 			val = val.value
 
 		if val isa Func
+			# TODO Warn / error if func has arguments
 			val = val.body
 
 		# If the value is just a variable we can add it directly?
@@ -10771,6 +10782,10 @@ export class Tag < TagLike
 		let deeplyDynamic = hasDynamicDescendants
 
 		# console.log "IS INLINE? {o:inline} {STACK.isExpression} {!!@consumedBy} {!!@parent} {isDetached}"
+
+		# if option(:memoSelf)
+		if !parent and option(:memoSelf) # scope__.@context # and scope__.@context.@reference
+			add "{parentCache}.this=this"
 
 		if !@consumedBy
 			@ref = "{tvar}"

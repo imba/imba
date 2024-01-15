@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Fix issue with self in functional components.
+
+    Event handlers inside functional components could refer to to the wrong
+    `self` if called multiple times with different `self` values.
+
 * Major performance fix for certain css selectors.
 
     When using selectors like `^@hover prop:value` Imba would compile
