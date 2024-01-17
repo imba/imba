@@ -3,14 +3,38 @@ import nfs from 'node:fs'
 // do not remove
 import url from 'node:url'
 
+async function getModulePath(moduleName) {
+    let modulePath;
+
+    if (typeof require !== 'undefined' && require.resolve) {
+        // CommonJS context
+        modulePath = require.resolve(moduleName);
+    } else if (typeof import.meta.url !== 'undefined') {
+        // ESM context
+        const createRequire = (await import('module')).createRequire;
+        const require = createRequire(import.meta.url);
+        modulePath = require.resolve(moduleName);
+    } else {
+        throw new Error('Unable to determine module system');
+    }
+
+    return np.dirname(modulePath)
+}
 const envPrefix = ["VITE_", "IMBA_", "OP_"]
 
 const extensions = ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
-const setupFiles = ['node_modules/imba/bin/test-setup.all.mjs']
+
 
 let userTestConfig = {}
 
 export default async function({mode, command}){
+	const imbaPath = await getModulePath('imba')
+
+	function fromBin(path){
+		return np.join(imbaPath, 'bin', path)
+	}
+
+	const setupFiles = [fromBin('test-setup.all.mjs')]
 	const lazy = await import('imba/plugin')
 	const imbaPlugin = lazy.default
 	const vitePluginEnvironment = lazy.vitePluginEnvironment;
@@ -52,7 +76,7 @@ export default async function({mode, command}){
 			if(process.env.CI){
 				rootResolve.extensions.unshift(...['.ci.vitest.web.imba', '.ci.vitest.imba'])
 			}
-			setupFiles.unshift('node_modules/imba/bin/test-setup.browser.mjs')
+			setupFiles.unshift(fromBin('test-setup.browser.mjs'))
 		}else{
 			rootResolve.extensions = ['.vitest.node.imba', '.vitest.imba', '.node.imba', ...extensions]
 			if(process.env.CI){
