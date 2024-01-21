@@ -966,7 +966,6 @@ var grammar =
 		o 'Decorators'
 		o 'ClassDeclLine'
 		o 'Decorators ClassDeclLine' do A1.concat([A2])
-		o 'ENV_FLAG ClassDeclLine' do A2.addEnv(A1)
 		o 'CSSDeclaration'
 		o 'RELATION ClassName' do ClassRelation.new(A2).set(keyword: A1)
 		o 'Comment'
@@ -980,6 +979,7 @@ var grammar =
 		o 'ClassFieldDeclaration'
 		o 'PROTECTED ClassDeclLine' do A2.set(protected: A1)
 		o 'DECLARE ClassDeclLine' do AST.DECLARE(A2,A1)
+		o 'ENV_FLAG ClassDeclLine' do A2.addEnv(A1)
 	]
 
 	ClassFieldDeclaration: [

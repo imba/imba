@@ -953,6 +953,10 @@ export class Stack
 		elif key == 'NODE'
 			@meta:universal = no
 			return isNode
+		elif key == 'NODEISH'
+			@meta:universal = no
+			return isNode or !!tsc
+
 		elif key == 'TSC'
 			return self.tsc
 
@@ -1152,6 +1156,9 @@ export class Node
 		@envs ||= []
 		@envs.push( EnvFlag.new env)
 		self
+
+	def isExcluded
+		no
 
 	def sourcecode
 		let src = STACK.SOURCECODE
@@ -3743,6 +3750,7 @@ export class ClassDeclaration < Code
 		ROOT.entities.add(namepath,self)
 		scope.visit
 		set(iife: STACK.up isa Instantiation)
+
 		var separateInitChain = true
 		var fields = []
 		var mixins = @mixins = []
@@ -3823,6 +3831,9 @@ export class ClassDeclaration < Code
 		let allDecorators = []
 
 		for node in fieldNodes
+			if node.isExcluded
+				continue
+				
 			if node.watchBody
 				addMethod(node.watcherSymbol,[],[node.watchBody],{}) do |fn|
 					node.@watchMethod = fn
@@ -3849,7 +3860,8 @@ export class ClassDeclaration < Code
 			allDecorators.push(@decorators)
 
 		for node,i in body
-			if node.@decorators
+			if node.@decorators and !node.isExcluded
+
 				let target = node.option(:static) ? THIS : PROTO
 				let desc = LIT('null')
 				let op = util.decorate(Arr.new(node.@decorators),target,node.name,desc)

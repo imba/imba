@@ -25,6 +25,22 @@
 
 * Fix sourcemapping for tag declaration superclass
 
+* Allow multiple env flags
+
+```imba
+# conditionally import based on compile-time flags
+$web$ import React from 'verbose-libs'
+
+class App    
+    $node$ def only-on-node
+        # method is only included when compiling for node
+        yes
+    
+    $web$ $worker$ def workers-and-web
+        # can use multiple flags
+        yes
+```
+
 * Allow compile-time env flags in front of class fields and methods.
 
 ```imba
