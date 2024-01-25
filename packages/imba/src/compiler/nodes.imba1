@@ -11709,7 +11709,7 @@ export class EnvFlag < ValueNode
 				out = "{val}"
 
 		else
-			out = "ENV_{@key}"
+			out = "globalThis.IMBA_ENV_{@key}"
 
 		return M(out,@value)
 

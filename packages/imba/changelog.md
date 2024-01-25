@@ -52,6 +52,8 @@ class Something
         yes
 ```
 
+* Make runtime `$someflag$` compile to `globalThis.IMBA_ENV_SOMEFLAG`
+
 ## 2.0.0-alpha.235
 
 * Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).
