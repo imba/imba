@@ -9,7 +9,7 @@ const E = do
 	console.error String($1).red
 	process.exit!
 
-const devlog = /^\s*\bL\b.*$/
+const devlog = /^(\s*)\b(L)\b(.*)$/
 const extra-lines = /\n\n\n+/gm
 const commented-log = /^\s*#\s+(console\.|L)\b.*\n/gm
 const comment = /^\s*#/
@@ -45,7 +45,7 @@ def remove-devlogs contents, filename
 
 		continue if pt is ct or ct is nt
 
-		result.push line
+		result.push line.replace(devlog,'$1LL$3')
 
 	result.join("\n")
 
@@ -116,11 +116,6 @@ export default def fmt args, opts
 			contents = contents.replaceAll commented-log, ''
 			contents = contents.replaceAll trailing-whitespace, ''
 			contents = contents.replaceAll extra-lines, '\n\n'
-
-		if args.includes('devlogs') or !args.length
-			for line,i in contents.split('\n')
-				if devlog.test line
-					console.warn "Unable to remove devlog in {filename}:{i+1}:{line.indexOf('L')+1} due to indent".yellow
 
 		continue if prev is contents
 		fs.writeFileSync filename, contents
