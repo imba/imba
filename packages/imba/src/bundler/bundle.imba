@@ -377,6 +377,10 @@ export default class Bundle < Component
 		defines["globalThis.IMBA_DEV"] ||= String(hmr?)
 		defines["globalThis.IMBA_RUN"] ||= String(run?)
 
+		defines["globalThis.IMBA_ENV_DEV"] ||= String(!production?)
+		defines["globalThis.IMBA_ENV_PROD"] ||= String(production?)
+		defines["globalThis.IMBA_ENV_DEBUG"] ||= String(!production? and run?)
+
 		if nodeish? and main? and esm?
 			# backwards compatibility with other things?
 			# only if there is no other require already imported this is a bit risky
@@ -1105,7 +1109,7 @@ export default class Bundle < Component
 			urls: {}
 		}
 
-		if process.env.DEBUG or false
+		if process.env.DEBUG
 
 			let tmpsrc = np.resolve(fs.cwd,'dist')
 			meta.entryPoints = esoptions.entryPoints
