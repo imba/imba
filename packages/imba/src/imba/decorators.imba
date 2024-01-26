@@ -47,6 +47,7 @@ export def @thenable target, key, desc
 
 		Object.defineProperty(target,'then',{
 			enumerable: no,
+			configurable: yes,
 			value: do(ok,err)
 				let that = this
 

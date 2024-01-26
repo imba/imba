@@ -56,6 +56,8 @@ class Something
 
 * Make `$dev$`, `$prod$` and `$debug$` env flags work with bundler
 
+* Make `@thenable` work for static methods
+
 ## 2.0.0-alpha.235
 
 * Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).
