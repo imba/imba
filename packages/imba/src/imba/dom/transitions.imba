@@ -291,31 +291,31 @@ export class Easer < Emitter
 extend class Element
 
 	# called when element is getting ready to enter
-	def transition-in-init transition
+	def transition-in-init\any transition
 		yes
 
 	# called when element is ready to enter
-	def transition-in transition
+	def transition-in\any transition
 		yes
 
 	# called when element has finished entering
-	def transition-in-end transition
+	def transition-in-end\any transition
 		yes
 
 	# called when element has been asked to leave while entering
-	def transition-in-cancel transition
+	def transition-in-cancel\any transition
 		yes
 
 	# called when element starts to leave
-	def transition-out transition
+	def transition-out\any transition
 		yes
 
 	# called when element is done leaving
-	def transition-out-end transition
+	def transition-out-end\any transition
 		yes
 
 	# called when element re-enters while leaving
-	def transition-out-cancel transition
+	def transition-out-cancel\any transition
 		yes
 
 	get ease
