@@ -6049,6 +6049,8 @@ export class Access < Op
 			if rgt isa Identifier and rgt.isPredicate
 				let out = "('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}.{rgt.c}"
 				return out
+			elif safeop and rgt isa Identifier
+				return "('{rgt.c(mark: false)}' in {ctx.c} && {ctx.c}?.{rgt.c})"
 
 		# really?
 		# var ctx = (left || scope__.context)

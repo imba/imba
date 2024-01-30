@@ -27,6 +27,8 @@
 
 * Allow multiple env flags
 
+* Allow optional chaining to narrow type in tooling
+
 ```imba
 # conditionally import based on compile-time flags
 $web$ import React from 'verbose-libs'
