@@ -928,6 +928,8 @@ export class Stack
 	def isNode
 		platform == 'node'
 
+
+
 	def isVite
 		!!@options:vite
 
@@ -3833,7 +3835,7 @@ export class ClassDeclaration < Code
 		for node in fieldNodes
 			if node.isExcluded
 				continue
-				
+
 			if node.watchBody
 				addMethod(node.watcherSymbol,[],[node.watchBody],{}) do |fn|
 					node.@watchMethod = fn
@@ -5937,15 +5939,14 @@ export class Delete < Op
 
 export class In < Op
 
-	def invert
-		@invert = !@invert
-		self
+	def js s,o
 
-	def js o
-		# var cond = @invert ? "== -1" : ">= 0"
-		# var idx = Util.indexOf(left,right)
-		var out = util.contains(left,right)
-		"{@invert ? '!' : ''}{out.c}"
+		if right isa Parens
+			let out = right.consume(Util.In.new([STACK.tsc ? left : left.cache,null])).c
+			out = helpers.parenthesize(out)
+			return out
+
+		return Util.In.new([left,right]).js(s,o)
 
 # ACCESS
 
@@ -6080,10 +6081,8 @@ export class Access < Op
 			
 			if up isa Block and (self isa ImplicitAccess or lft isa Self)
 				out = out + ' as ' + typ.c
-				# out = typ.c + ' ' + out
 			else
 				out = out + ' as ' + typ.c
-				# out = typ.c + '(' + out + ')'
 
 		out = pre + out
 
@@ -9622,18 +9621,22 @@ export class TagHandlerCallback < ValueNode
 		# If the value is just a variable we can add it directly?
 
 		if val isa Access or val isa VarOrAccess
-			# let e = Token.new('IDENTIFIER','e')
+			# Need to potentially cache the self value here.
 			let target = val
 			val = CALL(val,[LIT('e')])
 			val.@args.@startLoc = target.endLoc
 			val.@args.@endLoc = target.endLoc
-		# console.log 'is stack tsc?'
+
+
 		# TODO don't generate this until visiting the taghandler
 
 		# if this is a plain access it should be enough to set a reference
 		# to the function once?
 
 		value = (STACK.tsc ? Func : IsolatedFunc).new([],[val],null,{})
+
+		if value isa IsolatedFunc
+			yes
 
 		if value isa Func
 			let evparam = value.params.at(0,yes,'e')
@@ -10805,6 +10808,8 @@ export class Tag < TagLike
 
 		if !@consumedBy
 			@ref = "{tvar}"
+
+			
 
 			if isSelf
 				add "{tvar}=this"
@@ -12678,15 +12683,26 @@ export class Util.Is < Util
 
 	def op
 		args[2]
+
+	def stdfn
+		'is$'
 		
 	def helper
 		'// @ts-ignore\nfunction is$(a,b){ return a === b || ' + "b?.[{symbolRef('#matcher')}]?.(a) || false" + '}'
 
 	def clone b
-		constructor.new([args[0],b,args[2]])
+		constructor.new(args[2] ? [args[0],b,args[2]] : [args[0],b])
 
 	def js o
-		return called(args,'is$','is$')
+		return called(args,stdfn,stdfn)
+
+export class Util.In < Util.Is
+
+	def stdfn
+		'has$'
+		
+	def helper
+		'// @ts-ignore\nfunction has$(a,b){ const sym = Symbol.for("#has"); return b && ( b[sym]?.(a) ?? b.includes?.(a) ?? b.has?.(a) ?? false); }'
 
 export class Util.Isa < Util.Is
 

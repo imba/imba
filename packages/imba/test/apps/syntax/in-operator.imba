@@ -4,6 +4,7 @@ let jane = {id: 2, name: 'jane', age: 32}
 let pete = {id: 3, name: 'pete', age: 15}
 let mike = {id: 4, name: 'mike', age: 30}
 let arr = [joe, jane, pete]
+let empty = []
 let set = new Set(arr)
 let map = new Map(arr.map(do [$1,1]))
 
@@ -18,7 +19,8 @@ test 'in' do
 	ok joe in arr
 	ok joe in set
 	ok joe in map
-	ok mike not in arr
+	ok joe in (empty or arr)
+	ok mike !in arr
 	ok mike not in set
 	ok mike not in map
 

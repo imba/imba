@@ -21,6 +21,14 @@ test do
 	ok arr isa 'object'
 
 test do
+	ok bool isa (String or 'boolean')
+	ok str !isa ('number' or Array)
+	ok arr instanceof Array
+	ok arr instanceof (Number or Array)
+	ok bool !instanceof Array
+	ok bool !instanceof (Number or Array)
+
+test do
 	ok arr isa Array
 	ok one isa ('string' or One)
 	ok num isa OddNumber
