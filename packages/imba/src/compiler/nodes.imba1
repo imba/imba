@@ -12719,7 +12719,7 @@ export class Util.Isa < Util.Is
 			# only need parens if left is caching...
 			return "typeof ({left.c})==={right.c}"
 		
-		if String(op) == 'instanceof'
+		if String(op) == 'instanceof' or STACK.tsc
 			return "({left.c}) instanceof {right.c}"
 
 		return called([left,right],'isa$','isa$')
