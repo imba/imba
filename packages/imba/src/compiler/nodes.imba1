@@ -1019,6 +1019,10 @@ export class Stack
 	def current
 		@nodes[@nodes:length - 1]
 
+	def indexOf test
+		let res = up(test)
+		res ? @nodes.indexOf(res) : -1
+
 	def up test
 		test ||= do |v| !(v isa VarOrAccess)
 
@@ -4397,8 +4401,9 @@ export class Func < Code
 	def visit stack, o
 		# any function inside descriptors should compile as strong scopes
 		if stack.@descriptor and !stack.tsc
-			@scope = MethodScope.new(self) # (o and o:scope) || typ.new(self)
-			@scope.params = @params # = ParamList.new([])
+			unless stack.indexOf(Func) > stack.indexOf(Descriptor)
+				@scope = MethodScope.new(self) # (o and o:scope) || typ.new(self)
+				@scope.params = @params # = ParamList.new([])
 
 		scope.visit
 

@@ -60,6 +60,8 @@ class Something
 
 * Make `@thenable` work for static methods
 
+* Fixed issue with `self` inside nested descriptor callbacks
+
 ## 2.0.0-alpha.235
 
 * Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).
