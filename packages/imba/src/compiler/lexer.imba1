@@ -1255,8 +1255,7 @@ export class Lexer
 		# if id == 'new'
 		#	console.log 'new keyword', @chunk.slice(0,5),@chunk.match(/^new\s+[\w\$\(]/)
 
-		if id == 'new' and (@lastTyp != '.' and @chunk.match(/^new\s+[\w\$\(\<\#]/))
-			# console.log 'is new keyword!!'
+		if id == 'new' and (@lastTyp != '.' and @chunk.match(/^new\s+[\w\$\(\<\#]/)) and @lastTyp != 'DEF'
 			typ = 'NEW'
 
 		if typ == 'IDENTIFIER'
