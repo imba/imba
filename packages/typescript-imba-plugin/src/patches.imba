@@ -377,6 +377,8 @@ export class Project
 		return res
 
 	def setCompilerOptions value
+		unless shouldSupportImba!
+			return #setCompilerOptions(value)
 		# TODO should only be for a project that uses Imba for sure
 		# If this project is for imba - ensure that we include this data
 		# let imbadir = resolveImbaDir!
@@ -411,8 +413,8 @@ export class Project
 			util.log("no imbaPath!",value)
 
 		let res = #setCompilerOptions(value)
-		util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
-		return
+		# util.log('setCompilerOptions',this,value,JSON.parse(JSON.stringify(value)))
+		return res
 
 	def onPluginConfigurationChanged name, data
 		util.log('configChanged',name,data)

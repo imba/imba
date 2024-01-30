@@ -169,6 +169,9 @@ export default class Service < EventEmitter
 		return script
 
 	def resolveImbaDirForProject proj
+		if proj isa ts.server.InferredProject
+			return null
+
 		let imbadir = ts.resolveImportPath('imba',proj.getConfigFilePath!,proj)
 		if imbadir and imbadir.resolvedModule
 			return np.dirname(imbadir.resolvedModule.resolvedFileName)
