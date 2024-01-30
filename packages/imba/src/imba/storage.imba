@@ -4,6 +4,9 @@ import {commit} from './scheduler'
 const fn = do yes
 
 class Storage
+	declare cache\{raw:any,rich:any}
+	declare store\Storage
+	
 	def constructor store, ns = ''
 		self.store = store or {}
 		self.cache = {raw:{},rich:{}}
