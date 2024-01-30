@@ -643,3 +643,5 @@ declare extend class Element
 	###
 	set key value\any
 		self
+
+	declare data\any
