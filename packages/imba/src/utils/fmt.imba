@@ -53,7 +53,7 @@ export default def fmt args, opts
 
 	unless opts.force
 		try
-			if cp.execSync("git status --porcelain").toString!
+			if cp.execSync("git status --porcelain --ignore-submodules").toString!
 				E "Git working directory is not clean"
 		catch e
 			E "Failed to check git status"
