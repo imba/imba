@@ -5527,7 +5527,7 @@ export class ObjAttr < Node
 			kjs = key.asObjectKey
 		elif key isa InterpolatedString
 			kjs = "[{key.c}]"
-		elif key.isReserved
+		elif key isa Num or key.isReserved
 			kjs = "'{key.c}'"
 		elif key isa Str and key.isValidIdentifier
 			kjs = key.raw
