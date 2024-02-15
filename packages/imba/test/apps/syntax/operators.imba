@@ -86,11 +86,21 @@ test '|=?' do
 	eq (a |=? F.DONE), yes
 	eq (a |=? F.DONE), no
 
+	# also for multiple flags
+test '|=? multi' do
+	let a = 1
+	let b = 1
+	let c = 1 | 2
+	eq (a |=? b), no
+	eq (a |=? c), yes
+
+
 test '~=' do
 	let a = F.DONE
 	eq a,2
 	a ~= F.DONE
 	eq a,0
+
 
 test '~=?' do
 	let a = 7
@@ -98,6 +108,19 @@ test '~=?' do
 	eq (a ~=? F.DONE), yes
 	eq a & F.DONE,0
 	eq (a ~=? F.DONE), no
+
+test '~=? multi' do
+	let a = 0b11001
+	let b = 0b00010
+	eq (a ~=? b), no
+
+	let c = 0b00001
+	eq (a ~=? c), yes
+
+	let d = 0b10100
+	eq (a ~=? d), yes
+	eq a,0b01000
+	# eq (a |=? c), yes
 
 test '^=' do
 	let a = 7
