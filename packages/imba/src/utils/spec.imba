@@ -378,6 +378,7 @@ global class SpecExample < SpecComponent
 			failed: failed
 			messages: assertions.filter(do $1.critical).map(do $1.toString!)
 			error: error && error.message
+			#error: error
 		}
 
 	def fail
