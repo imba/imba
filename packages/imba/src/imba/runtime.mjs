@@ -8,6 +8,7 @@ export const __meta__$	 = Symbol.for('#meta')
 export const __imba__$	 = Symbol.for('imba')
 export const __mixin__$	 = Symbol.for('#__mixin__')
 export const matcher = Symbol.for('#matcher')
+const L = Symbol.for('#L');
 
 export const appendChild$	 = Symbol.for('#appendChild')
 export const afterVisit$	 = Symbol.for('#afterVisit')
@@ -55,8 +56,6 @@ function meta$(klass,defaults = {}){
 
 const statics = new WeakMap;
 
-const L = function(){ }
-
 export function is$(a,b){
 	return a === b || b?.[matcher]?.(a);
 };
@@ -71,6 +70,12 @@ export function has$(a,b){
 
 export function idx$(a,b){
 	return b?.indexOf ? b.indexOf(a) : Array.prototype.indexOf.call(a,b);
+}
+
+export function devlog$(args,self,...rest){
+	if(self && self[L] instanceof Function)
+		args = self[L](args,self,...rest)
+	return args;
 }
 
 export function statics$(scope){
