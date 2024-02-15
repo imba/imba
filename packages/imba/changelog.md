@@ -62,6 +62,8 @@ class Something
 
 * Fixed issue with `self` inside nested descriptor callbacks
 
+* Fix `a |=? b` operator to work as expected. It will now set bits and evaluate to true when `b` has multiple bits set and a has some but not all.
+
 ## 2.0.0-alpha.235
 
 * Call MyMixin.mixes(class) for every class that mixes in MyMixin (if mixes function is defined).

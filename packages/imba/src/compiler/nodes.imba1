@@ -5719,9 +5719,8 @@ export class Op < Node
 			return "({C l} {M op,@opToken} {C r})"
 
 		elif op == '|=?'
-			return If.ternary(OP('!&',l,r.cache),
-				Parens.new([OP('|=',l,r),TRUE]),
-				FALSE
+			return If.ternary(OP('==',Parens.new([OP('&',l,r.cache)]),r),
+				FALSE,Parens.new([OP('|=',l,r),TRUE])
 			).c
 
 		elif op == '~=?'
