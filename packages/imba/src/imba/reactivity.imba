@@ -15,6 +15,7 @@ const F = {
 
 let TRACKING = 0
 let ACTIVATED = no
+let ATOMICS = null
 let V = 0
 let RUN_ID = 0
 let NEXT_REF_ID = 1
@@ -143,7 +144,7 @@ def activateHooks
 	hooks.on('inited') do(instance)
 		let meta = instance[METAREF]
 		if meta
-			let istag = instance isa global.Node
+			let istag = global.Node and instance isa global.Node
 			let obj = instance[OWNREF] ||= {}
 			for own k,v of meta
 				let reaction = obj[k] = new Reaction(instance[k],instance,v)
@@ -305,6 +306,10 @@ export class Ref
 		return
 
 	def invalidated level\number?, source\any?
+		if ATOMICS
+			ATOMICS.add(self)
+			return yes
+
 		v++
 
 		observer.invalidated(level + 1,this) if observer
@@ -567,8 +572,6 @@ class Memo
 			observer.invalidated(stack,this)
 		self
 
-	def lazyvalue
-
 	def value
 		CTX.add(self) if TRACKING
 
@@ -794,6 +797,30 @@ export def awaits cb, options = {}
 export def observable object
 	object.##reactive
 
+export def atomic cb
+	let prev = ATOMICS
+	let res
+	unless prev
+		let all = ATOMICS = new Set
+
+		try
+			res = cb()
+		catch e
+			console.log 'error in atomics',e
+			ATOMICS = null
+			beacon.invalidated(0) for beacon of all
+			throw e
+
+		ATOMICS = null
+		beacon.invalidated(0) for beacon of all		
+		return res
+	else
+		return cb()
+		
+
+###
+
+###
 export def run cb
 	let action = new Action(cb,global)
 	return action.run!
