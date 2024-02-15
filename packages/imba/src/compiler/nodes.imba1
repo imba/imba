@@ -511,6 +511,9 @@ var CALL = do |callee,pars = []|
 	# possibly return instead(!)
 	Call.new(callee,pars)
 
+var STDCALL = do |name,pars = []|
+	CALL(STACK.corelib[name],pars)
+
 var IIFE = do |body|
 	# possibly return instead(!)
 	IifeFunc.new([],body)
@@ -8027,6 +8030,9 @@ export class Call < Node
 			let fmts = ["%s"]
 			let result = [LIT("\'{dim}::{reset}\'")]
 
+			let devargs = []
+			let devlog = no
+
 			for arg in args
 				# INFO leave for debugging purposes
 				# console.log arg:constructor:name
@@ -8040,17 +8046,33 @@ export class Call < Node
 					.replace(/\n/g, "\\n")
 					.replace(/\r/g, "\\r")
 					.replace(/\t/g, "\\t")
-				if arg isa Literal and !(arg isa Self or arg isa This or arg isa Arr)
-					fmts.push "%s"
-					result.push LIT("'{bg-black}{green}{s}{reset}'")
-				else
-					fmts.push "%s"
-					const formatter = STACK.isWeb ? "%o" : "%O"
-					fmts.push formatter
-					result.push LIT("'{bg-blue}{white}{s}{reset}'")
-					result.push arg
 
-			args = ArgList.new ["\"{fmts.join(' ')}\"", *result]
+				if devlog
+					if arg isa Str or arg isa Num
+						devargs.push(Arr.new [arg])
+					else
+						devargs.push(Arr.new [arg,STR(s)])
+				else
+					
+					if arg isa Literal and !(arg isa Self or arg isa This or arg isa Arr)
+						fmts.push "%s"
+						result.push LIT("'{bg-black}{green}{s}{reset}'")
+					else
+						fmts.push "%s"
+						const formatter = STACK.isWeb ? "%o" : "%O"
+						fmts.push formatter
+						result.push LIT("'{bg-blue}{white}{s}{reset}'")
+						result.push arg
+			
+			if devlog
+				# devargs.push(scope__.context)
+				let pars = [Arr.new(devargs),scope__.context]
+				let meth = STACK.up(MethodDeclaration)
+				if meth
+					pars.push(STR meth.rawName)
+				args = ArgList.new [Splat.new(STDCALL('devlog$',pars))]
+			else
+				args = ArgList.new ["\"{fmts.join(' ')}\"", *result]
 
 		let safeop = ''
 		if callee isa Access and callee.op == '?.'
