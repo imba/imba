@@ -31,7 +31,8 @@ def run
 	def findPos file, pos
 		if typeof pos == 'string'
 			let off = pos.indexOf('~')
-			let index = file.content.indexOf(pos.replace('~',''))
+			let index = file..content..indexOf(pos.replace('~',''))
+			
 			pos = pos.replace(/\#\s.*/,'')
 			pos = index + (off >= 0 ? off : Math.floor(pos.length * 0.5))
 		return pos
@@ -66,7 +67,7 @@ def run
 		o.triggerCharacter ??= ''
 		file = findFile(file)
 		let inpos = pos
-		let src = file.fileName or file
+		let src = file..fileName or file
 		pos = findPos(file,pos)
 		let ctx = file.doc.getContextAtOffset(pos)
 		# let res = x.ls.getQuickInfoAtPosition(src,pos)
