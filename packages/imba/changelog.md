@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.236
 
 * Fix issue with self in functional components.
 
