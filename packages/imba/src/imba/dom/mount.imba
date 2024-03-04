@@ -1,6 +1,7 @@
 # imba$stdlib=1
 import {renderContext,RenderContext} from './context'
 import {scheduler} from '../scheduler'
+import {emit,listen} from '../utils'
 
 export def render blk, ctx = {}
 	let prev = renderContext.context
@@ -28,6 +29,11 @@ export def mount mountable, into\Element?
 				renderContext.context = prev
 			return res
 		element = tick()
+
+		if element
+			listen(element,'unmount') do
+				scheduler.unlisten('commit',tick)
+
 		# TODO Allow unscheduling this?
 		scheduler.listen('commit',tick)
 	else
