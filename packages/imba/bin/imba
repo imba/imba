@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require("./imba.imba.js");
+new (require("./imba.imba.js"))();
