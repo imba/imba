@@ -31,6 +31,7 @@ export def mount mountable, into\Element?
 		element = tick()
 
 		if element
+			element.#ticker = tick
 			listen(element,'unmount') do
 				scheduler.unlisten('commit',tick)
 
