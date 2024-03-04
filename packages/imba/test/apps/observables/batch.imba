@@ -1,5 +1,3 @@
-import 'imba/spec'
-
 let calls = 0
 let runs = 0
 
@@ -27,5 +25,3 @@ test do
 	eq base.size, 100
 	ok calls == 2
 	eq runs, 2
-
-SPEC.run!

@@ -54,7 +54,7 @@ test do
 
 	while i++ < 50
 		router.go("/url{i}",{nr: i})
-		await imba.commit
+		await imba.commit!
 
 	let start = global.history.length
 	eq history.length,i
