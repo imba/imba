@@ -51,9 +51,13 @@ class PupMouse
 	def type text, options
 		puppy('keyboard.type',[text,options])
 
-	def down x = 0, y = 0
+	def down x = 0, y = 0, cb = null
 		await move(x,y)
-		await puppy('mouse.down',[])
+		let res = await puppy('mouse.down',[])
+		if cb isa Function
+			res = await cb()
+			await puppy('mouse.up',[])
+		return res
 
 	def move x = 0, y = 0
 		await puppy('mouse.move',[x,y])

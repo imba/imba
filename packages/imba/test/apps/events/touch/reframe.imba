@@ -12,14 +12,14 @@ describe "@touch" do
 
 	test "start" do
 		await imba.commit!
-		await spec.mouse.down(30,30)
-		await imba.commit!
-		eq res.x,1
-		eq res.y,1
+		await spec.mouse.down(30,30) do
+			await imba.commit!
+			eq res.x,1
+			eq res.y,1
 
-		await spec.mouse.move(40,40)
-		eq res.x,2
-		eq data.x,1
+			await spec.mouse.move(40,40)
+			eq res.x,2
+			eq data.x,1
 
 describe "@touch no rounding" do
 	let data = {x:0,y:0}

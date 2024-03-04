@@ -90,6 +90,10 @@ def releaseRunner runner, page, close
 	runner.HANDLERS = null
 	runner.page = null
 
+	if runner.pup.mousedown > 0
+		runner.mouse.up!
+		runner.pup.mousedown = 0
+
 	if close
 		runner.close!
 	else
@@ -105,6 +109,9 @@ def spawnRunner
 	runner.setViewport({width: 800, height: 600})
 	runner.nr = counter++
 	runner.meta = []
+	runner.pup = {
+		mousedown: 0
+	}
 
 	# let t = Date.now!
 	await runner.exposeFunction('puppy') do(str,params)
@@ -119,6 +126,12 @@ def spawnRunner
 		if rpc[meth]
 			rpc[meth].apply(runner.page,params)
 			return
+
+		if str == 'mouse.down'
+			runner.pup.mousedown++
+
+		if str == 'mouse.up'
+			runner.pup.mousedown--
 
 		while path.length
 			receiver = receiver[path.shift()]
