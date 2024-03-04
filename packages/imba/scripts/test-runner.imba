@@ -43,6 +43,7 @@ let consoleMapping = {
 }
 
 let parseRemoteObject = do(obj)
+	return if obj === undefined
 	let result = obj.value or obj
 	if obj.type == 'object'
 		if obj.value
@@ -129,14 +130,14 @@ def spawnRunner
 		return receiver[meth].apply(receiver,params)
 
 	runner.on 'console' do(msg)
-		let params = msg.args().filter(Boolean).map do |x|
-			parseRemoteObject(x._remoteObject)
+		let params = msg.args().map do |x|
+			parseRemoteObject(x.remoteObject())
 
 		let str = String(params[0]) # .replace(':','')
 		if runner.HANDLERS and runner.HANDLERS[str]
 			runner.HANDLERS[str](*params.slice(1))
 
-		if msg._type == 'debug'
+		if msg.type() == 'debug'
 			console.debug.apply(console, params)
 
 		if options.console
@@ -338,7 +339,7 @@ def serve
 				res.setHeader("Content-Type", "application/javascript")
 				res.write(compiled.js)
 			else
-				console.warn "NOT HANDLING REQUEST {src}"
+				# console.warn "NOT HANDLING REQUEST {src}"
 				res.write('')
 		res.end!
 
