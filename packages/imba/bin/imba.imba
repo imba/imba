@@ -273,6 +273,9 @@ def run entry, o, extras
 	let out
 	out = await bundle.build! unless o.vite
 
+	if const p = o.writeBundlePathTo
+		try nfs.writeFileSync(p, bundle.outdir)
+
 	if o.vite
 		let Vite = await import("vite")
 		if o.command == 'preview'
@@ -435,6 +438,7 @@ def common cmd
 		.option("--assets-dir <url>", "Base dir for assets","assets")
 		.option("--web","Build entrypoints for the browser")
 		.option("--esm","Output module files")
+		.option("--writeBundlePathTo <url>", "Write bundle path to a file")
 
 common(cli.command('run [script]', { isDefault: true }).description('Imba'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
