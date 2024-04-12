@@ -439,12 +439,9 @@ extend class Element
 
 	def on$ type, mods, scope
 		let check = 'on$' + type
-		let handler
-
-		handler = new EventHandler(mods,scope)
-
 		let capture = mods.capture or no
 		let passive = mods.passive
+		let handler
 
 		let o = capture
 
@@ -453,8 +450,12 @@ extend class Element
 
 		# check if a custom handler exists for this type?
 		if self[check] isa Function
+			if self[check].length > 2
+				handler = new EventHandler(mods,scope)
+
 			handler = self[check](mods,scope,handler,o)
 		else
+			handler = new EventHandler(mods,scope)
 			self.addEventListener(type,handler,o)
 		return handler
 
