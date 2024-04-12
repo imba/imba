@@ -830,6 +830,7 @@ export class HTMLStyleElement < HTMLElement
 ### Event ###
 export class Event
 export class UIEvent < Event
+export class FocusEvent < UIEvent
 export class MouseEvent < UIEvent
 export class PointerEvent < MouseEvent
 export class KeyboardEvent < UIEvent

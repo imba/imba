@@ -1,6 +1,6 @@
 # imba$imbaPath=global
 # imba$stdlib=1
-$node$ import {Element,Event,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
+$node$ import {Element,Event,FocusEvent,KeyboardEvent,MouseEvent,CustomEvent} from '../dom/core'
 import {listen,once,emit,unlisten,parseTime} from '../utils'
 import {scheduler} from '../scheduler'
 
@@ -193,6 +193,28 @@ extend class Event
 
 	def @fetch url, o = {}
 		await global.fetch url, o
+
+
+extend class FocusEvent
+
+	# Override .self modifier for focusin/focusout events.
+	# @focusin.self will only trigger when focus moves from something
+	# outside self to something inside. Without .self the focusin
+	# event will trigger whenever focus changes inside.
+	
+	###
+	Only trigger when focus moves between the element (or its children)
+	and something outside of the element.
+	###
+	def @self
+		let el = #context.element
+
+		if type == 'focusout'
+			return relatedTarget and !el.contains(relatedTarget)
+		elif type == 'focusin'
+			return !relatedTarget or !el.contains(relatedTarget)
+
+		return target == el
 
 export const events = {}
 

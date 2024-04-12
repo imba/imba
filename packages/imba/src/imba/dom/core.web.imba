@@ -6,6 +6,7 @@ import {RenderContext,createRenderContext} from './context'
 
 const IEvent = window.Event
 const IUIEvent = window.UIEvent
+const IFocusEvent = window.FocusEvent
 const IMouseEvent = window.MouseEvent
 const IPointerEvent = window.PointerEvent
 const IKeyboardEvent = window.KeyboardEvent
@@ -32,6 +33,7 @@ const IcustomElements = window.customElements
 export {
 	IEvent as Event,
 	IUIEvent as UIEvent,
+	IFocusEvent as FocusEvent,
 	IMouseEvent as MouseEvent,
 	IPointerEvent as PointerEvent,
 	IKeyboardEvent as KeyboardEvent,
