@@ -307,6 +307,23 @@ extend class Element
 			return false
 		return parentElement..hidden? ?? true
 
+	###
+	Is the element visible inside viewport and clickable?
+	###
+	get unobstructed?
+		let box = getBoundingClientRect!
+		let vp = window.visualViewport
+		let x = box.left + box.width * 0.5
+		let y = box.top + box.height * 0.5
+
+		if vp.width > x > 0 and vp.height > y > 0
+			let hit = document.elementFromPoint(x,y)
+			return no unless hit and (hit.contains(self) or self.contains(hit))
+			return yes
+
+		return no
+		
+
 	get focus?
 		document.activeElement == self
 

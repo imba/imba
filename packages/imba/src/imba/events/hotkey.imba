@@ -152,6 +152,9 @@ class HotKeyManager
 					if handler.params.local and !handler.#target.contains(source)
 						continue
 
+					if handler.params.unobstructed
+						continue unless receiver.unobstructed?
+
 					if !e.#inEditable or (handler.capture? or handler.params.force)
 						let el = handler.#target
 						if group.contains(el) or el.contains(group) or (handler.global?)
