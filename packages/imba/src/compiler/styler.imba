@@ -1569,6 +1569,9 @@ export class StyleRule
 
 			elif key.match(/^__ease__$/)
 				yes
+			elif key.match(/^raw-/)
+				parts.push "{key.slice(4)}: {value}{important};"
+				yes
 			elif key.match(/^__outline__$/)
 				meta.outline = yes
 
