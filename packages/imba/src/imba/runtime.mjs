@@ -179,6 +179,9 @@ export function augment$(klass,mixin){
 	Object.defineProperties(klass.prototype,descs);
 	// TODO Should also run a method / trigger a hook
 	try { meta.top.version++; } catch(e) { }
+
+	if(mixin?.mixed instanceof Function) mixin.mixed(klass)
+	
 	return klass;
 };
 
