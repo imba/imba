@@ -30,6 +30,7 @@ let imbapkg = resolvePackage(np.resolve(__dirname,'..')) or {}
 
 const overrides = {}
 let argv = process.argv.slice(0)
+let nodeflags = []
 
 const overrideAliases = {
 	M: {minify: false}
@@ -45,10 +46,20 @@ const valueMap = {
 	'undefined': undefined
 }
 
+const KnownNodeFlags = {
+	'--trace-gc': yes
+}
+
+let argvpre = argv.slice(0)
+
 for item,i in argv
 	continue unless item
 
-	if item.match(/^\-\-(\w+)(\.\w+)+$/)
+	if KnownNodeFlags[item]
+		nodeflags.push(item)
+		argv[i] = null
+
+	elif item.match(/^\-\-(\w+)(\.\w+)+$/)
 		let val = argv[i+1]
 		let path = item.slice(2).split('.')
 		let cfg = overrides
@@ -87,6 +98,7 @@ def parseOptions options, extras = []
 		dir = np.dirname file
 
 	options.imbaPath ||= np.resolve(__dirname,'..')
+	options.nodeflags = nodeflags.slice(0)
 	options.command = command
 	options.extras = extras
 	options.config = await resolveConfig(options)

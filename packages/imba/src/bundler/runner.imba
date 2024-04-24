@@ -72,6 +72,7 @@ class WorkerInstance
 				o.inspect and '--inspect',
 				(o.sourcemap or bundle.sourcemapped?) and '--enable-source-maps'
 				o.memlimit and `--max_old_space_size={o.memlimit}`
+				...o.nodeflags
 			].filter do $1
 		}
 
