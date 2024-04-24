@@ -1,9 +1,11 @@
 import 'imba/spec'
 # test do
-let val = 0
+let val
 
 # Should this only be run once?
 class Base
+	static def mixed
+		val = 'mixed'
 
 class Action < Base
 
@@ -19,3 +21,4 @@ test do
 	ok (new Widget) !isa Action
 	ok (new Widget) isa Base
 	ok (new User) isa Base
+	ok val, 'mixed'
