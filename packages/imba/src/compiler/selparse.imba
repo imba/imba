@@ -169,7 +169,7 @@ export def rewrite rule,ctx,o = {}
 			let name = mod.pseudo
 			let meta = modifiers[mod.pseudo]
 
-			const container_regex = /^\!?c-([a-zA-Z-_]+)(\d+)$/
+			const container_regex = /^\!?cq-([a-zA-Z-_]*)(\d+)$/
 
 			if const match = name..match container_regex
 				let num = parseInt(match[2])
