@@ -730,16 +730,16 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
       }
       let media = entity.media && entity.media.length ? ` @media ${entity.media.join(' and ')}` : ''
 
-			let container = entity.container && entity.container.length ? ` @container ${entity.container.join(' and ')}` : ''
+      let container = entity.container && entity.container.length ? ` @container ${entity.container.join(' and ')}` : ''
 
-			let suffix = ''
-			if (media && container){
-				suffix = ` ${container} and ${media}`
-			} else if (media){
-				suffix = media
-			} else if (container){
-				suffix = container
-			}
+      let suffix = ''
+      if (media && container){
+        suffix = ` ${container} and ${media}`
+      } else if (media){
+        suffix = media
+      } else if (container){
+        suffix = container
+      }
 
       res = parts.join(' ') + suffix;
       break;

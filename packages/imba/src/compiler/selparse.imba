@@ -168,19 +168,25 @@ export def rewrite rule,ctx,o = {}
 		for mod,mi in items
 			let name = mod.pseudo
 			let meta = modifiers[mod.pseudo]
+			let mqcheck = /^(\!)?(\d+)([a-z]+)?$/
 
-			const container_regex = /^\!?cq-([a-zA-Z-_]*)(\d+)$/
 
-			if const match = name..match container_regex
-				let num = parseInt(match[2])
-				mod.not = !mod.not if name.match(/\!/)
-				const container-name = match[1]
-				mod.container = "{container-name} " + (mod.not ? "(max-width: {num - 1}px)" : "(min-width: {num}px)")
 
-			if name..match(/^\!?\d+$/)
-				let num = parseInt(name.replace(/\!/,''))
-				mod.not = !mod.not if name[0] == '!'
-				mod.media = mod.not ? "(max-width: {num - 1}px)" : "(min-width: {num}px)"
+			if let m = name..match(mqcheck)
+				# let [m,neg,num,typ] = name.match(mqcheck)
+				let num = parseInt(m[2])
+				mod.not = !mod.not if m[1] == '!'
+				let kind = {
+					'w': 'width'
+					'h': 'height'
+					'': 'width'
+				}[m[3] or '']
+
+				let cond = mod.not ? "(max-{kind}: {num - 1}px)" : "(min-{kind}: {num}px)"
+				if mod.closest
+					mod.container = cond
+				else
+					mod.media = cond
 
 			if name == 'important' or name == 'force'
 				mod.pseudo = null

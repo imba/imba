@@ -12439,7 +12439,7 @@ export class StyleVar < StyleTerm
 	def c o
 		toString
 
-var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz'.split(' ')
+var VALID_CSS_UNITS = 'cm mm Q in pc pt px em ex ch rem vw vh vmin vmax % s ms fr deg rad grad turn Hz kHz cqw cqh cqi cqb cqmin cqmax'.split(' ')
 
 export class StyleDimension < StyleTerm
 
