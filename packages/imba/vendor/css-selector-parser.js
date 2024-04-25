@@ -729,7 +729,19 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
         currentEntity = currentEntity.rule;
       }
       let media = entity.media && entity.media.length ? ` @media ${entity.media.join(' and ')}` : ''
-      res = parts.join(' ') + media;
+
+			let container = entity.container && entity.container.length ? ` @container ${entity.container.join(' and ')}` : ''
+
+			let suffix = ''
+			if (media && container){
+				suffix = ` ${container} and ${media}`
+			} else if (media){
+				suffix = media
+			} else if (container){
+				suffix = container
+			}
+
+      res = parts.join(' ') + suffix;
       break;
     case 'selectors':
       res = entity.selectors.map(this._renderEntity, this).join(', ');
@@ -786,7 +798,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
 
         // Identify numeric media here?
 
-        if(part.media || part.skip){
+        if(part.media || part.skip || part.container){
           // console.log('media',rootSelector);
           continue;
         }

@@ -65,6 +65,7 @@ export def rewrite rule,ctx,o = {}
 
 	rule.meta = {}
 	rule.media = []
+	rule.container = []
 
 	let parts = []
 	let curr = rule.rule
@@ -168,6 +169,14 @@ export def rewrite rule,ctx,o = {}
 			let name = mod.pseudo
 			let meta = modifiers[mod.pseudo]
 
+			const container_regex = /^\!?cq-([a-zA-Z-_]*)(\d+)$/
+
+			if const match = name..match container_regex
+				let num = parseInt(match[2])
+				mod.not = !mod.not if name.match(/\!/)
+				const container-name = match[1]
+				mod.container = "{container-name} " + (mod.not ? "(max-width: {num - 1}px)" : "(min-width: {num}px)")
+
 			if name..match(/^\!?\d+$/)
 				let num = parseInt(name.replace(/\!/,''))
 				mod.not = !mod.not if name[0] == '!'
@@ -185,6 +194,13 @@ export def rewrite rule,ctx,o = {}
 						mod.media = meta.medianeg
 				else
 					mod.media = meta.media
+
+			if meta..container
+				if mod.not
+					if meta.containerneg
+						mod.container = meta.containerneg
+				else
+					mod.container = meta.media
 
 			if mod.pseudo == 'media'
 				mod.media = "({mod.value})"
@@ -204,6 +220,9 @@ export def rewrite rule,ctx,o = {}
 
 			if mod.media
 				rule.media.push(mod.media)
+
+			if mod.container
+				rule.container.push(mod.container)
 
 			if name is 'odd' or name is 'even'
 				Object.assign(mod,meta)
@@ -284,6 +303,7 @@ export def render root, content, options = {}
 	for rule in rules
 		let sel = selparser.render(rule)
 		let [base,media = ''] = sel.split(' @media ')
+		let [cbase,container = ''] = sel.split(' @container ')
 		rule.#string = base
 
 		# can we really group them this way?
@@ -291,8 +311,16 @@ export def render root, content, options = {}
 		if media
 			rule.#media = media = '@media ' + media
 
-		if media != group[0]
-			groups.push(group = [media])
+			if media != group[0]
+				groups.push(group = [media])
+
+		elif container
+			rule.#container = container = '@container  ' + container
+
+			if container != group[0]
+				groups.push(group = [container])
+
+			base = cbase
 
 		group.push(base)
 		root.#rules.push(rule)
