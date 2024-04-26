@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Fix issue where `<tag bind=value>` may not work outside of `<self>`
+
 ## 2.0.0-alpha.236
 
 * Fix issue with self in functional components.

@@ -11104,6 +11104,9 @@ export class Tag < TagLike
 						let alit = target and target.isConstant #  isa Literal or target isa ScopeContext
 						let blit = key and key.isConstant # isa Literal or key isa SymbolIdentifier
 
+						if target isa Self and !root.isSelf
+							alit = false
+
 						if alit and blit
 							bval = "[{target.c(o)},{key.c(o)}]"
 
@@ -11112,10 +11115,11 @@ export class Tag < TagLike
 
 						add "{vvar}={iref} || ({iref}={ref}.bind$('{item.key}',{bval}))"
 
-						for part,i in val
-							unless part and part.isConstant # isa Literal
-								add "{vvar}[{i}]={part.c(o)}"
-						# add "({vvar}={rawVal.c(o)},{vvar}=={ref}.value || ({iref}={ref}.bind$('{item.key}',{mods},{bval}))"
+						if target and !alit
+							add "{vvar}[0]={target.c(o)}"
+						if key and !blit
+							add "{vvar}[0]={key.c(o)}"
+
 					elif val isa Variable
 						let getter = "function()\{ return {val.c(o)} \}"
 						let setter = "function(v$)\{ {val.c(o)} = v$ \}"
