@@ -608,7 +608,7 @@ class Memo
 		TRACKING--
 		return res
 
-class ComputedType
+export class ComputedType
 	def constructor name,func
 		self.name = name
 		const bkey = REFSYM(name)
@@ -623,6 +623,7 @@ class ComputedType
 
 		const lazy = self.lazyDescriptor = {
 			enumerable: no
+			configurable: yes
 			get: do
 				let wrapper = this[bkey] = new Memo(this,func,vkey,type)
 				Object.defineProperty(this,name,descriptor)
