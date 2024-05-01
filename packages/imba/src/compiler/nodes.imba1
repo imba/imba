@@ -11118,7 +11118,7 @@ export class Tag < TagLike
 						if target and !alit
 							add "{vvar}[0]={target.c(o)}"
 						if key and !blit
-							add "{vvar}[0]={key.c(o)}"
+							add "{vvar}[1]={key.c(o)}"
 
 					elif val isa Variable
 						let getter = "function()\{ return {val.c(o)} \}"
