@@ -386,7 +386,13 @@ def isNumber val
 		return true
 	return false
 
-export def parseColorString str
+def parseColorPart part
+	let num = parseFloat(part)
+	if typeof part == 'string' and part.indexOf('%') > 0
+		num = num / 100
+	return num
+
+export def parseColorString str, to = 'hsl'
 	if named_colors[str]
 		str = named_colors[str]
 
@@ -395,17 +401,29 @@ export def parseColorString str
 		return conv.rgb.hsl(hex)
 
 	if let m = str.match(/^(hsla?|rgba?)\((.+)\)$/)
-		let [a,b,c,d = ''] = m[2].replace(/[\,\/]g/,' ').split(/\s+/g)
+		let [a,b,c,d = ''] = m[2].replace(/[\,\/]/g,' ').split(/\s+/g)
 
-		let hsl
+		let out
+
+		console.log 'parsing',str,a,b,c,m,m[2].replace(/[,\/]/g,' ')
+
+		let parse
+
+		a=parseColorPart(a)
+		b=parseColorPart(b)
+		c=parseColorPart(c)
+
+		if to == 'lch'
+			return conv.rgb.lch([a,b,c])
+
 
 		if m[1] == 'rgb' or m[1] == 'rgba'
-			hsl = conv.rgb.hsl([parseFloat(a),parseFloat(b),parseFloat(c)])
+			out = conv.rgb.hsl([parseFloat(a),parseFloat(b),parseFloat(c)])
 
 		if m[1] == 'hsl' or m[1] == 'hsla'
-			hsl = [parseFloat(a),parseFloat(b),parseFloat(c)]
+			out = [parseFloat(a),parseFloat(b),parseFloat(c)]
 
-		return hsl
+		return out
 
 	return null
 
@@ -429,6 +447,10 @@ export class Color
 		s = s
 		l = l
 		a = a
+		lch = conv.hsl.lch([h,s,l])
+
+	def lcha
+		#lcha ||= conv.hsl.lch([h,s,l]).concat(a)
 
 	def alpha a = 1
 		new Color(name,h,s,l,a)
@@ -452,6 +474,10 @@ export class Color
 	def toVar round = 2
 		"{Math.round(h)},{Math.round(s)}%,{Math.round(l)}%"
 		# "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
+
+	def toLchString
+		let [l,c,h] = lch
+		`lcha({l.toFixed(2)} {c.toFixed(2)} {h.toFixed(2)}% / {a})`
 
 	def c
 		toString!
@@ -1083,6 +1109,7 @@ export class StyleTheme
 
 	def hue [v]
 		let o = {'--hue': v}
+		
 		for i in [0 ... 10]
 			o["--hue{i}"] = "/*##*/{v}{i}"
 			# new Tint("v{i}")
@@ -1090,6 +1117,39 @@ export class StyleTheme
 
 	# def shadow ...params
 	#	{}
+
+	def colormix name, expr
+		let o = {}
+		let pre = "--c_{name}"
+
+		let val = expr[0][0]
+		let [l,c,h,a] = [null,null,null,1]
+
+		let color
+
+		if val..lcha
+			[l,c,h,a] = val.lcha!
+		elif val.._resolvedValue isa Color
+			color = val.._resolvedValue
+
+		if color
+			[l,c,h] = color.lch
+
+		if typeof l == 'number'
+			l = Math.round(l * 10) / 10
+		if typeof c == 'number'
+			c = Math.round(c * 10) / 10
+		if typeof h == 'number'
+			h = Math.round(h * 10) / 10
+
+		if l != null
+			o[`--u_{name}L`] = l
+			o[`--u_{name}C`] = c
+			o[`--u_{name}H`] = h.._resolvedValue ?? h # no?
+			o[`--u_{name}A`] = a ?? 1
+			# o[pre] = color.toLchString()
+
+		return o
 
 	def $color name
 		let m = name.match(/^([A-Za-z\-]+)(\d)(\d*)$/)

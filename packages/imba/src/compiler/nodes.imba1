@@ -5,6 +5,7 @@
 var helpers = require './helpers'
 var constants = require './constants'
 var fspath = require 'path'
+import {conv} from '../../vendor/colors'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -4808,7 +4809,6 @@ export class MethodDeclaration < Func
 			if (@class and @class.isInterface)
 				tpl:code = ';'
 			elif tpl:declare
-				console.log [tpl:code]
 				tpl:code = '{ return }' if SourceMapper.strip(tpl:code).replace(/[\s\n\t]/g,'') == '{}'
 				
 
@@ -12020,7 +12020,6 @@ export class StyleDeclaration < StyleNode
 		let list = stack.parent
 		let name = String(@property.name)
 		let alias = theme.expandProperty(name)
-
 		if @expr
 			@expr.traverse(
 				rule: o:rule
@@ -12037,28 +12036,35 @@ export class StyleDeclaration < StyleNode
 
 		let method = String(alias or name).replace(/-/g,'_')
 
+		
 		@expr.traverse(decl: self, property: @property) if @expr
 
-		if theme[method] and !option(:plain)
-			let res = theme[method].apply(theme,@expr.toArray)
-			let expanded = []
 
-			if res isa Array
-				@expr = StyleExpressions.new(res)
-			elif res isa Object
-				# console.log 'theme has method',method,res
-				for own k,v of res
-					if k.indexOf('&') >= 0
-						let body = StyleBody.new([])
-						let rule = StyleRuleSet.new(LIT(k),body)
-						expanded.push(rule)
-						for own k2,v2 of v
-							# need recursive thing here
-							body.add(clone(k2,v2))
-					else
-						expanded.push clone(k,v).set(plain: (k == name) or (k == alias))
-				list.replace(self,expanded)
-				return
+		let res
+		let expanded = []
+		if @property:isColor and @property.isColor
+			res = theme.colormix(name.slice(1),@expr.toArray)
+			# console.log "prop is color!!!",res
+
+		elif theme[method] and !option(:plain)
+			res = theme[method].apply(theme,@expr.toArray)
+
+		if res isa Array
+			@expr = StyleExpressions.new(res)
+		elif res isa Object
+			# console.log 'theme has method',method,res
+			for own k,v of res
+				if k.indexOf('&') >= 0
+					let body = StyleBody.new([])
+					let rule = StyleRuleSet.new(LIT(k),body)
+					expanded.push(rule)
+					for own k2,v2 of v
+						# need recursive thing here
+						body.add(clone(k2,v2))
+				else
+					expanded.push clone(k,v).set(plain: (k == name) or (k == alias))
+			list.replace(self,expanded)
+			return
 
 		if @expr
 			@expr.traverse(decl: self, property: @property)
@@ -12066,6 +12072,7 @@ export class StyleDeclaration < StyleNode
 
 		if o:styles
 			let key = @property.toKey
+			
 			let val = @expr
 			if o:selector
 				key = JSON.stringify([o:selector,key])
@@ -12102,8 +12109,6 @@ export class StyleProperty < StyleNode
 		let raw = String(@token)
 
 		if raw[0] == '#'
-			# console.log 'color property!!',raw
-			# raw = raw.slice(1)
 			@kind = 'color'
 		# also split
 		@parts = raw.replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
@@ -12144,7 +12149,7 @@ export class StyleProperty < StyleNode
 		@unit
 
 	def isColor
-		@kind == 'color'
+		@kind == 'color' or @name[0] == '#'
 
 	def modifiers
 		@parts.slice(1)
@@ -12157,8 +12162,7 @@ export class StyleProperty < StyleNode
 
 	def toKey
 		let name = isUnit ? "--u_{@unit}" : (isColor ? "--c_{@name.slice(1)}" : self.name)
-		[name].concat(modifiers).join('§')
-		# @parts.join('.')
+		return [name].concat(modifiers).join('§')
 
 	def c
 		toString
@@ -12365,7 +12369,48 @@ export class StyleFunction < Node
 		@property = o:property
 		@propname = o:property and o:property.@name
 		@params.traverse if @params and @params:traverse
+
+		let name = String(@name)
+		let parts = @params.toArray.flat
+
+		if @property.isColor and name.match(/^(lch|rgba?|hsla?)$/)
+
+			@lcha = []	
+			for part,i in parts
+				if part.@value == '/'
+					continue
+				@lcha.push(part)
+
+			unless name == 'lch'
+				let nums = []
+				let alpha = @lcha[3]
+				let kind = name.slice(0,3)
+
+				let fmt = {
+					rgb: [2.55,2.55,2.55]
+					hsl: [1,1,1]
+				}[kind] or [0.01,0.01,0.01]
+
+				for part,i in @lcha
+					unless part isa StyleDimension
+						unless i > 2 # alpha channel can be dynamic
+							error("Dynamic part not allowed in non-lch #color definitions", loc: part)
+
+					if i < 3
+						nums.push(part.toFloat(fmt[i]))
+
+				let converter = conv[name]
+
+				unless converter and converter:lch
+					error("Cannot convert {name} to lch", loc: @name)
+
+				@lcha = converter.lch(nums)
+				@lcha.push(alpha) if alpha
+
 		self
+
+	def lcha
+		@lcha or [0,0,0,1]
 
 	def toString
 		c
@@ -12400,13 +12445,28 @@ export class StyleIdentifier < StyleTerm
 
 	def visit stack
 		let raw = toString
-		if raw.match(/^([a-zA-Z]+\d+|black|white)$/)
+		
+		super
+
+		if raw.match(/^[lcha]$/)
+			let mix = stack.up(StyleColorMix)
+			@colormix = mix
+			@resolvedValue = "var(--u_{@colormix.@name}{raw.toUpperCase()})"
+
+		elif raw.match(/^([a-zA-Z]+\d+|black|white)$/)
 			color = "{raw}"
 			if self:param
 				color += "/" + self:param.toAlpha
-		super
+			
+		
 
 	def c o
+		if @resolvedValue
+			return @resolvedValue
+
+		if @colormix
+			return "var(--u_{@colormix.@name}{toString.toUpperCase()})"
+
 		if color
 			let val = color.toString
 			let asvar = option(:parameterize) or (@property and @property.isColor)
@@ -12424,11 +12484,49 @@ export class StyleIdentifier < StyleTerm
 export class StyleString < StyleTerm
 
 export class StyleColor < StyleTerm
+
+	def visit
+		super
+		let name = @name = toRaw.slice(1)
+
+		if true # @property and @property.isColor
+			# only needed for the property color?
+			if let m = name.match(/^([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?)$/)
+				let a = m[2] ? (parseInt(m[2],16) / 255) : 1
+				let lch = conv:hex.lch(name.slice(0,6))
+
+				# Rounding conversion to nearest .1
+				for num,i in lch
+					lch[i] = Math.floor(num * 10) / 10
+
+				if name[0].match(/\d/)
+					@lcha = lch
+					@lcha.push(a)
+				else
+					# Cannot know for sure that a color name is not really a hex color
+					@lcha = [
+						"var(--u_{name}L,{lch[0]})"
+						"var(--u_{name}C,{lch[1]})"
+						"var(--u_{name}H,{lch[2]})"
+						"var(--u_{name}A,{a})"
+					]
+
+			else
+				@lcha = [
+					"var(--u_{name}L)"
+					"var(--u_{name}C)"
+					"var(--u_{name}H)"
+					"var(--u_{name}A,1)"
+				]
+
+	def lcha
+		@lcha
+
 	def c o
 		let raw = toRaw
 		let name = raw.slice(1)
 		let rich = Color.from(raw)
-		let a = self:param ? self:param.toAlpha : 1
+		let a = self:param ? self:param.toAlpha : "var(--u_{name}A,1)"
 
 		if a[0] == '$'
 			a = "var(--{a.slice(1)},100%)"
@@ -12436,7 +12534,40 @@ export class StyleColor < StyleTerm
 		if @property and @property.isColor
 			return rich.toVar
 
-		return "hsla({rich.toVar},{a})"
+		return "lch(var(--u_{name}L) var(--u_{name}C) var(--u_{name}H) / {a})"
+
+		return "hsla2({rich.toVar},{a})"
+
+export class StyleColorMix < StyleTerm
+
+	def params
+		option('params')
+
+	def lcha
+		return @lcha
+
+	def visit
+		let pars = params.toArray.flat
+		let name = @name = toRaw.slice(1)
+		params.traverse
+		super
+
+		@lcha = []
+
+		for part,i in pars
+			if part.@value == '/'
+				continue
+			@lcha.push(part)
+
+		if @lcha:length == 3
+			@lcha.push LIT("var(--u_{name}A,1)")
+		self
+
+	def c o
+		let raw = toRaw
+		let name = raw.slice(1)
+		let [l,c,h,a] = AST.cary(self.lcha())
+		return "lch({l} {c} {h} / {a})"
 
 export class StyleVar < StyleTerm
 
@@ -12462,8 +12593,24 @@ export class StyleDimension < StyleTerm
 		cloned.@number = num
 		return cloned
 
+	def visit stack
+		if @unit and @unit.match(/^[lcha]$/)
+			if @colormix = stack.up(StyleColorMix)
+				@unit = "{@colormix.@name}{@unit.toUpperCase()}"
+			# if par isa StyleDimension
+			# 		let u = par:_unit
+			# 		if u and regex.test(u)
+			# 			par:_unit = "{@name}{u.toUpperCase()}"
+		super
+
 	def toString
 		"{@number}{@unit or ''}"
+
+	def toFloat pct = 0.01
+		let num = @number
+		if @unit == '%'
+			num = num * pct
+		return num
 
 	def toRaw
 		@unit ? toString : @number
@@ -12474,17 +12621,20 @@ export class StyleDimension < StyleTerm
 		out
 
 	def valueOf
+		
 		if unit == 'u'
 			return number * 4 + 'px'
 		elif unit == null
 			return number
 		elif unit in VALID_CSS_UNITS
 			return String(@value)
-		elif number == 1
-			return "var(--u_{unit},1{unit})"
 		else
-			return "calc(var(--u_{unit},1{unit}) * {@number})"
-			# return String(@value)
+			let fallback = @colormix ? '' : ",1{unit}"
+			if number == 1
+				return "var(--u_{unit}{fallback})"
+			else
+				return "calc(var(--u_{unit}{fallback}) * {@number})"
+				# return String(@value)
 
 	def toAlpha
 		unless unit

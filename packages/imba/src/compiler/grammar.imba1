@@ -486,11 +486,17 @@ var grammar =
 		o 'StyleParens CSSUNIT' do A1.set(unit: A2)
 	]
 
+	StyleColor: [
+		o 'COLOR' do StyleColor.new(A1)
+		o 'COLORMIX ( StyleFunctionArgs )' do StyleColorMix.new(A1,A3).set(params: A3)
+	]
+
 	StyleTerm: [
 		o 'StyleParens'
 		o 'CSSVAR' do StyleVar.new(A1)
 		o 'DIMENSION' do StyleDimension.new(A1)
-		o 'COLOR' do StyleColor.new(A1)
+		# o 'COLOR ( StyleFunctionArgs )' do StyleColor.new(A1,A3).set(params: A3)
+		o 'StyleColor'
 		o 'PERCENTAGE' do StyleDimension.new(A1)
 		o 'NUMBER' do StyleNumber.new(A1)
 		o 'String' do A1

@@ -200,6 +200,14 @@ convert.rgb.lab = function (rgb) {
 	return [l, a, b];
 };
 
+convert.rgb.lch = function (rgb) {
+	return convert.lab.lch(convert.rgb.lab(rgb));
+};
+
+convert.hsl.lch = function (hsl) {
+	return convert.rgb.lch(convert.hsl.rgb(hsl));
+};
+
 convert.hsl.rgb = function (hsl) {
 	const h = hsl[0] / 360;
 	const s = hsl[1] / 100;
@@ -602,6 +610,10 @@ convert.hex.rgb = function (args) {
 convert.hex.hsl = function(args){
 	return convert.rgb.hsl(convert.hex.rgb(args));
 }
+
+convert.hex.lch = function(args){
+	return convert.rgb.lch(convert.hex.rgb(args));
+} 
 
 convert.rgb.hcg = function (rgb) {
 	const r = rgb[0] / 255;

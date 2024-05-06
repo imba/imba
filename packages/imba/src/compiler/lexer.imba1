@@ -783,7 +783,9 @@ export class Lexer
 			return styleprop[0]:length
 
 		if chr[0] == '#' and m = STYLE_HEX.exec(@chunk)
-			token 'COLOR', m[0], m[0]:length
+			let next = @chunk[m[0]:length]
+			let typ = next == '(' ? 'COLORMIX' : 'COLOR'
+			token typ, m[0], m[0]:length
 			return m[0]:length
 
 		if chr == '/' and !@last:spaced
