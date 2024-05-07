@@ -488,7 +488,7 @@ var grammar =
 
 	StyleColor: [
 		o 'COLOR' do StyleColor.new(A1)
-		o 'COLORMIX ( StyleFunctionArgs )' do StyleColorMix.new(A1,A3).set(params: A3)
+		o 'COLORMIX ( StyleFunctionArgs )' do StyleColorMix.new(A1,A3.setEnds(A2,A4)).set(params: A3).setEnds(A1,A4)
 	]
 
 	StyleTerm: [
@@ -502,7 +502,7 @@ var grammar =
 		o 'String' do A1
 		o 'StyleTermPlaceholder' do A1
 		o 'CSSURL' do StyleURL.new(A1)
-		o 'CSSFUNCTION ( StyleFunctionArgs )' do StyleFunction.new(A1,A3)
+		o 'CSSFUNCTION ( StyleFunctionArgs )' do StyleFunction.new(A1,A3.setEnds(A2,A4)).setEnds(A1,A4)
 		o 'CSSIDENTIFIER' do StyleIdentifier.new(A1)
 		o 'COMPARE StyleTerm' do A2.set(op: A1)
 	]

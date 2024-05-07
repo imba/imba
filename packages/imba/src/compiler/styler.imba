@@ -2,6 +2,7 @@
 # var conv = require('../../vendor/colors')
 import * as selparser from './selparse'
 import {conv} from '../../vendor/colors'
+import {colord,toLchArray} from './colord.imba'
 import {fonts,colors,variants,named_colors} from './theme.imba'
 import * as theme from  './theme.imba'
 
@@ -396,6 +397,9 @@ export def parseColorString str, to = 'hsl'
 	if named_colors[str]
 		str = named_colors[str]
 
+	if to == 'lch'
+		return toLchArray(str)
+
 	if str[0] == '#'
 		let hex = conv.hex.rgb(str)
 		return conv.rgb.hsl(hex)
@@ -404,18 +408,13 @@ export def parseColorString str, to = 'hsl'
 		let [a,b,c,d = ''] = m[2].replace(/[\,\/]/g,' ').split(/\s+/g)
 
 		let out
-
-		console.log 'parsing',str,a,b,c,m,m[2].replace(/[,\/]/g,' ')
-
-		let parse
-
 		a=parseColorPart(a)
 		b=parseColorPart(b)
 		c=parseColorPart(c)
 
 		if to == 'lch'
+			
 			return conv.rgb.lch([a,b,c])
-
 
 		if m[1] == 'rgb' or m[1] == 'rgba'
 			out = conv.rgb.hsl([parseFloat(a),parseFloat(b),parseFloat(c)])
@@ -447,10 +446,9 @@ export class Color
 		s = s
 		l = l
 		a = a
-		lch = conv.hsl.lch([h,s,l])
 
 	def lcha
-		#lcha ||= conv.hsl.lch([h,s,l]).concat(a)
+		#lcha ||= toLchArray("hsla({h} {s}% {l}% / {a})")
 
 	def alpha a = 1
 		new Color(name,h,s,l,a)
@@ -476,7 +474,7 @@ export class Color
 		# "{h.toFixed(2)},{s.toFixed(2)}%,{l.toFixed(2)}%"
 
 	def toLchString
-		let [l,c,h] = lch
+		let [l,c,h,a] = lcha!
 		`lcha({l.toFixed(2)} {c.toFixed(2)} {h.toFixed(2)}% / {a})`
 
 	def c
@@ -1125,15 +1123,10 @@ export class StyleTheme
 		let val = expr[0][0]
 		let [l,c,h,a] = [null,null,null,1]
 
-		let color
-
 		if val..lcha
 			[l,c,h,a] = val.lcha!
 		elif val.._resolvedValue isa Color
-			color = val.._resolvedValue
-
-		if color
-			[l,c,h] = color.lch
+			[l,c,h,a] = val._resolvedValue.lcha!
 
 		if typeof l == 'number'
 			l = Math.round(l * 10) / 10
@@ -1142,10 +1135,12 @@ export class StyleTheme
 		if typeof h == 'number'
 			h = Math.round(h * 10) / 10
 
+
 		if l != null
 			o[`--u_{name}L`] = l
 			o[`--u_{name}C`] = c
 			o[`--u_{name}H`] = h.._resolvedValue ?? h # no?
+			# o[`--u_{name}N`] = l > 50 ? 0 : 100
 			o[`--u_{name}A`] = a ?? 1
 			# o[pre] = color.toLchString()
 
@@ -1157,6 +1152,7 @@ export class StyleTheme
 
 		# aliased colors
 		if ns and typeof palette[ns] == 'string'
+			
 			return $color(palette[ns] + name.slice(ns.length))
 
 		if ns == 'hue'

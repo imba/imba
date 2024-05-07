@@ -6,6 +6,7 @@ var helpers = require './helpers'
 var constants = require './constants'
 var fspath = require 'path'
 import {conv} from '../../vendor/colors'
+import {colord} from './colord'
 
 import ImbaParseError,ImbaTraverseError from './errors'
 import Token from './token'
@@ -1756,7 +1757,7 @@ export class ListNode < Node
 
 	def initialize list
 		setup
-		@nodes = load(list or [])
+		@nodes = load(list == null ? [] : list)
 		@indentation = null
 
 	# PERF acces @nodes directly?
@@ -12006,12 +12007,11 @@ export class StyleDeclaration < StyleNode
 		self
 
 	def clone name, params
-		params = @expr.clone unless params
+		params = @expr.clone if params == null
 		if typeof params == 'string' or typeof params == 'number'
 			params = [params]
 		if !(params isa Array) and (!(params isa ListNode) or params isa StyleOperation)
 			params = [params]
-
 		StyleDeclaration.new(@property.clone(name),params)
 
 	def visit stack, o
@@ -12052,7 +12052,6 @@ export class StyleDeclaration < StyleNode
 		if res isa Array
 			@expr = StyleExpressions.new(res)
 		elif res isa Object
-			# console.log 'theme has method',method,res
 			for own k,v of res
 				if k.indexOf('&') >= 0
 					let body = StyleBody.new([])
@@ -12108,15 +12107,19 @@ export class StyleProperty < StyleNode
 		@token = token
 		let raw = String(@token)
 
-		if raw[0] == '#'
-			@kind = 'color'
 		# also split
 		@parts = raw.replace(/(^|\b)\$/g,'--').split(/\b(?=[\^\.\@\!])/g) # .split(/[\.\@]/g)
 
 		for part,i in @parts
 			@parts[i] = part.replace(/^\.(?=[^\.])/,'@.')
 
-		@name  = String(@parts[0])
+		@name = String(@parts[0])
+
+		if raw[0] == '#'
+			@kind = 'color'
+			if constants.HEX_REGEX.test(@name)
+				error("Color name {@name} cannot be identical to valid hex color",loc: token[0] or token)
+
 
 		if let m = @name.match(/^(\d+)([a-zA-Z]+)$/)
 			@number = parseInt(m[1])
@@ -12382,31 +12385,24 @@ export class StyleFunction < Node
 				@lcha.push(part)
 
 			unless name == 'lch'
-				let nums = []
 				let alpha = @lcha[3]
 				let kind = name.slice(0,3)
 
-				let fmt = {
-					rgb: [2.55,2.55,2.55]
-					hsl: [1,1,1]
-				}[kind] or [0.01,0.01,0.01]
-
 				for part,i in @lcha
-					unless part isa StyleDimension
-						unless i > 2 # alpha channel can be dynamic
-							error("Dynamic part not allowed in non-lch #color definitions", loc: part)
+					if !(part isa StyleDimension) and i < 3
+						return error("Dynamic part not allowed in non-lch #color definitions", loc: part)
 
-					if i < 3
-						nums.push(part.toFloat(fmt[i]))
+				try
+					let inside = @params.c
+					if alpha and !(alpha isa StyleDimension)
+						inside = inside.replace(alpha.c,'1')
+					let full = "{name}({inside})"
 
-				let converter = conv[name]
-
-				unless converter and converter:lch
-					error("Cannot convert {name} to lch", loc: @name)
-
-				@lcha = converter.lch(nums)
-				@lcha.push(alpha) if alpha
-
+					let col = colord(full).toLch()
+					@lcha = [col:l,col:c,col:h,col:a]
+					@lcha[3] = alpha if alpha
+				catch e
+					error("Failed to parse color", loc: self)
 		self
 
 	def lcha
@@ -12445,25 +12441,20 @@ export class StyleIdentifier < StyleTerm
 
 	def visit stack
 		let raw = toString
-		
-		super
-
+	
 		if raw.match(/^[lcha]$/)
+			super
 			let mix = stack.up(StyleColorMix)
 			@colormix = mix
 			@resolvedValue = "var(--u_{@colormix.@name}{raw.toUpperCase()})"
-
-		elif raw.match(/^([a-zA-Z]+\d+|black|white)$/)
-			color = "{raw}"
-			if self:param
-				color += "/" + self:param.toAlpha
-			
-		
+		else
+			if raw.match(/^([a-zA-Z]+\d+|black|white)$/)
+				color = "{raw}"
+				if self:param
+					color += "/" + self:param.toAlpha
+			super
 
 	def c o
-		if @resolvedValue
-			return @resolvedValue
-
 		if @colormix
 			return "var(--u_{@colormix.@name}{toString.toUpperCase()})"
 
@@ -12487,37 +12478,26 @@ export class StyleColor < StyleTerm
 
 	def visit
 		super
-		let name = @name = toRaw.slice(1)
+		let raw = toRaw
+		let name = @name = raw.slice(1)
 
-		if true # @property and @property.isColor
-			# only needed for the property color?
-			if let m = name.match(/^([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6}([A-Fa-f0-9]{2})?)$/)
-				let a = m[2] ? (parseInt(m[2],16) / 255) : 1
-				let lch = conv:hex.lch(name.slice(0,6))
-
-				# Rounding conversion to nearest .1
-				for num,i in lch
-					lch[i] = Math.floor(num * 10) / 10
-
-				if name[0].match(/\d/)
-					@lcha = lch
-					@lcha.push(a)
-				else
-					# Cannot know for sure that a color name is not really a hex color
-					@lcha = [
-						"var(--u_{name}L,{lch[0]})"
-						"var(--u_{name}C,{lch[1]})"
-						"var(--u_{name}H,{lch[2]})"
-						"var(--u_{name}A,{a})"
-					]
-
-			else
-				@lcha = [
-					"var(--u_{name}L)"
-					"var(--u_{name}C)"
-					"var(--u_{name}H)"
-					"var(--u_{name}A,1)"
-				]
+		# only needed for the property color?
+		if let m = raw.match(constants.HEX_REGEX)
+			@hex = yes
+			let col = colord(raw).toLch()
+			@lcha = [col:l,col:c,col:h,col:a]
+		else
+			@lcha = [
+				"var(--u_{name}L)"
+				"var(--u_{name}C)"
+				"var(--u_{name}H)"
+				"var(--u_{name}A,1)"
+			]
+		
+		let a = self:param and self:param.toAlpha
+		if a != null
+			a = "var(--{a.slice(1)},100%)" if a[0] == '$'
+			@lcha[3] = a
 
 	def lcha
 		@lcha
@@ -12526,17 +12506,16 @@ export class StyleColor < StyleTerm
 		let raw = toRaw
 		let name = raw.slice(1)
 		let rich = Color.from(raw)
-		let a = self:param ? self:param.toAlpha : "var(--u_{name}A,1)"
-
-		if a[0] == '$'
-			a = "var(--{a.slice(1)},100%)"
 
 		if @property and @property.isColor
+			console.log 'deprecated'
 			return rich.toVar
 
-		return "lch(var(--u_{name}L) var(--u_{name}C) var(--u_{name}H) / {a})"
+		let [l,c,h,a] = @lcha
+		if @hex and a == 1
+			return raw
 
-		return "hsla2({rich.toVar},{a})"
+		return "lch({l} {c} {h} / {a})"
 
 export class StyleColorMix < StyleTerm
 
