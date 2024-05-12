@@ -669,11 +669,11 @@ export default class Bundle < Component
 				let res = await esb.resolve(pathname,opts)
 				return {path: res.path}
 
-			if q == 'external' and (!nodeish? or !run?)
+			if q == 'external' and !nodeish?
 				return {path: pathname, external: true}
 
 			# should this be the default for all external modules?
-			if pkg? and nodeish? and run? and !standalone? # and !program.tmpdir
+			if pkg? and nodeish? and ((run? and !standalone?) or q == 'external')
 				if externs.indexOf("!{path}") >= 0 and q != 'external'
 					return null
 
@@ -702,6 +702,8 @@ export default class Bundle < Component
 					return {external: true, path: pathname}
 
 				if external?
+					if !run?
+						log.info "Building with absolute external path {pathname} => {res.path}"
 					return {external: true, path: res.path}
 
 			if external?
