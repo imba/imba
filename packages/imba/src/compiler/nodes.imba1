@@ -4528,7 +4528,7 @@ export class AmperFunc < Func
 
 		unless walker.deopt
 			let raw = body.sourcecode
-			let sym = raw.replace(/[\"]/g,"'").replace
+			let sym = raw.replace(/[\"]/g,"'")
 			let pars = [LIT('"' + sym + '"'),walker.@self or LIT('globalThis'),LIT("(v$)=>{out}")]
 
 			return "{runtime:memofunc}({pars.map(do $1.c).join(',')})"

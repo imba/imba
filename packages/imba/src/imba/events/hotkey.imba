@@ -157,7 +157,7 @@ class HotKeyManager
 
 					if !e.#inEditable or (handler.capture? or handler.params.force)
 						let el = handler.#target
-						if group.contains(el) or el.contains(group) or (handler.global?)
+						if (group and (group.contains(el) or el.contains(group))) or (handler.global?)
 							handlers.push(handler)
 
 		let handled = []
