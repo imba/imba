@@ -159,7 +159,7 @@ export default class Cache
 		# let file = program.fs.lookup(np.resolve(dir,key))
 		# let mtime = file.mtimesync
 
-		if keytime > time
+		if (keytime > time) and !process.env.CI
 			let promise = getKeyValue(key).catch do(error)
 				console.warn "Error compiling file in getKeyValue name: {name}, key: {key}", error
 				cb!.then do(val) setKeyValue(key,val)
