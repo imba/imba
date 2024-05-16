@@ -160,21 +160,22 @@ export default class Cache
 		# let mtime = file.mtimesync
 
 		if keytime > time
-			try
-				cached = cache[key] = {
-					time: Date.now!
-					promise: getKeyValue(key)
-				}
-				return cached.promise
-			catch error
+			let promise = getKeyValue(key).catch do(error)
 				console.warn "Error compiling file in getKeyValue name: {name}, key: {key}", error
+				cb!.then do(val) setKeyValue(key,val)
 
-		cached = cache[key] = {
-			time: Date.now!
-			promise: cb!
-		}
+			cached = cache[key] = {
+				time: Date.now!
+				promise: promise
+			}
+			return cached.promise
+		else
+			cached = cache[key] = {
+				time: Date.now!
+				promise: cb!
+			}
 
-		cached.promise.then do(val)
-			setKeyValue(key,val)
+			cached.promise.then do(val)
+				setKeyValue(key,val)
 
-		return cached.promise
+			return cached.promise
