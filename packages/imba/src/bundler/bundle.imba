@@ -134,7 +134,7 @@ export default class Bundle < Component
 	# optional prefix prepended to all asset url references
 	get baseurl
 		# TODO use base instead of baseurl
-		#baseurl ||= ((program.baseurl or program.base or '') + '/').replace(/\/+/g,'/')
+		#baseurl ||= ((program.baseurl or program.base or '') + '/').replace(/\/+$/g,'/')
 
 	get fs
 		program.fs
@@ -1559,7 +1559,7 @@ export default class Bundle < Component
 					continue
 
 				let file = outfs.lookup(asset.fullpath)
-				await file.write(asset.#contents,asset.hash)
+				await file.write(asset.#contents,asset.hash,asset)
 
 			if staticFilesPath and !program.tmpdir
 				await copyPublicFiles!

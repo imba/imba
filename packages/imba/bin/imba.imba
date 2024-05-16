@@ -442,6 +442,7 @@ def common cmd
 		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
+		.option("--br", "Compress assets with brotli")
 		.option("--vite", "Use Vite as a bundler")
 		.option("--esbuild", "Use the built-in bundler")
 		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")

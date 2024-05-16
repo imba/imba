@@ -8,6 +8,7 @@ import Component from './component'
 import ChangeLog from './changes'
 
 import imgsize from 'image-size'
+import zlib from "zlib"
 
 const blankStat = {
 	size: 0,
@@ -212,12 +213,26 @@ export class FileNode < FSNode
 			return root.lookup(res.#abs)
 		return null
 
-	def write body, hash
+	def write body, hash, asset = null
 		if !hash or (#hash =? hash)
 			await nodefs.promises.mkdir(absdir,recursive: true)
-			if rel.indexOf('../') != 0 or true
-				let dir = program.outdir + '/'
-				let color = LOG_COLORS[ext] or 'green'
+			let dir = program.outdir + '/'
+			let color = LOG_COLORS[ext] or 'green'
+
+			await nodefs.promises.writeFile(abs,body)
+
+			if program.br and ext.match(/\.([mc]?js|css|map|txt|md|json)/) and asset..public
+				await new Promise do(resolve)
+					zlib.brotliCompress(body,{
+						params: {
+							[zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
+							[zlib.constants.BROTLI_PARAM_QUALITY]: (ext == '.map' or program.command == 'run') ? 3 : 10
+						}
+					}) do(err,res)
+						log.success "%dim%{color} %kb → %kb",dir,rel,body.length,res.length
+						await nodefs.promises.writeFile(abs + '.br',res)
+						resolve()
+			else
 				log.success "%dim%{color} %kb",dir,rel,body.length
 
 			nodefs.promises.writeFile(abs,body)
