@@ -235,8 +235,6 @@ export class FileNode < FSNode
 			else
 				log.success "%dim%{color} %kb",dir,rel,body.length
 
-			nodefs.promises.writeFile(abs,body)
-
 	def writeSync body, hash
 		if !hash or (#hash =? hash)
 			if rel.indexOf('../') != 0 or true
