@@ -8017,7 +8017,7 @@ export class Call < Node
 		# 	arg.option(:assertion,yes)
 		# 	args.@nodes[0] = AssertionNode.new(arg)
 
-		# INFO devlogs - can mess things up?
+		# INFO DEVLOGS
 		if variable === ROOT.L
 			let dim = '\x1b[90m'
 			let bg-blue = '\x1b[44m'
@@ -8032,8 +8032,18 @@ export class Call < Node
 			callee = LIT("globalThis.DEBUG_IMBA && console.debug")
 			let src = STACK.SOURCECODE
 
-			let fmts = ["%s"]
-			let result = [LIT("\'{dim}::{reset}\'")]
+			let web = STACK.isWeb
+			let fmts = []
+			let result = []
+
+			if web
+				fmts.push LIT("%c%s%c")
+				result.push LIT("'color:gray'")
+				result.push LIT("'::'")
+				result.push LIT("'color:white'")
+			else
+				fmts.push LIT("%s")
+				result.push LIT("'{dim}::{reset}'")
 
 			let devargs = []
 			let devlog = no
@@ -8057,16 +8067,28 @@ export class Call < Node
 						devargs.push(Arr.new [arg])
 					else
 						devargs.push(Arr.new [arg,STR(s)])
+
 				else
-					
 					if arg isa Literal and !(arg isa Self or arg isa This or arg isa Arr)
-						fmts.push "%s"
-						result.push LIT("'{bg-black}{green}{s}{reset}'")
+						if web
+							fmts.push LIT("%c%s%c")
+							result.push LIT("'background-color:black;color:#56ff89'")
+							result.push LIT("'{s}'")
+							result.push LIT("'background-color:none;color:white'")
+						else
+							fmts.push LIT("%s")
+							result.push LIT("'{bg-black}{green}{s}{reset}'")
 					else
-						fmts.push "%s"
-						const formatter = STACK.isWeb ? "%o" : "%O"
-						fmts.push formatter
-						result.push LIT("'{bg-blue}{white}{s}{reset}'")
+						if web
+							fmts.push LIT("%c%s%c")
+							result.push LIT("'background-color:#4c73e8;color:white'")
+							result.push LIT("'{s}'")
+							result.push LIT("'background-color:none;color:white'")
+							fmts.push LIT("%o")
+						else
+							fmts.push LIT("%s")
+							result.push LIT("'{bg-blue}{white}{s}{reset}'")
+							fmts.push LIT("%O")
 						result.push arg
 			
 			if devlog
