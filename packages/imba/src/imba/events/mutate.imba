@@ -14,7 +14,7 @@ extend class Element
 	def on$mutate(mods, context, handler, opts)
 		# only one observer per element?
 		handler.observer ||= new MutationObserver do(mutations)
-			let e = new CustomEvent('mutate', bubbles: false, detail: mutations)
+			let e = new CustomEvent('mutate', bubbles: (!!mods.bubble), detail: mutations)
 			e.#extendType(MutationEvent)
 			self.dispatchEvent(e)
 
@@ -25,6 +25,9 @@ extend class Element
 
 		if mods.childList
 			o.childList = true
+
+		if mods.attributes
+			o.attributes = true
 
 		if !o.attributes and !o.childList
 			o.childList = true
