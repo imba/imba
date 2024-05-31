@@ -96,7 +96,10 @@ export default class Bundle < Component
 		!!program.web or root.html?
 
 	get minify?
-		o.minify ?? program.minify
+		o.minify ?? program.minify ?? no
+
+	get sourcemap?
+		o.sourcemap ?? program.sourcemap ?? no
 
 	get dev?
 		program.mode == 'development'
@@ -251,7 +254,7 @@ export default class Bundle < Component
 			banner: {js: "//__HEAD__" + (o.banner ? '\n' + o.banner : '')}
 			footer: {js: o.footer or "//__FOOT__"}
 			splitting: o.splitting
-			sourcemap: (program.sourcemap === false ? no : (web? ? yes : yes))
+			sourcemap: sourcemap?
 			minifySyntax: true
 			minifyWhitespace: minify? and o.format != 'html'
 			minifyIdentifiers: minify? and o.format != 'html'

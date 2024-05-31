@@ -112,7 +112,6 @@ export const defaultConfig = {
 			extends: 'base'
 			platform: 'node'
 			format: 'cjs'
-			sourcemap: true
 			target: ['node14.13.0']
 			external: ['dependencies','!imba']
 		}
@@ -126,7 +125,6 @@ export const defaultConfig = {
 		web: {
 			extends: 'base'
 			platform: 'browser'
-			sourcemap: true
 			format: 'esm'
 			splitting: true
 		}
@@ -196,7 +194,7 @@ export const defaultConfig = {
 }
 
 def clone object
-	return object if object == undefined or object == null
+	return object if object == undefined or object == null or object == true or object == false
 	JSON.parse(JSON.stringify(object))
 
 export def merge config, patch, ...up
@@ -213,6 +211,9 @@ export def merge config, patch, ...up
 		return patch
 
 	if otyp == 'string' and vtyp == 'string'
+		return patch
+
+	if vtyp == 'boolean' and (config == null or otyp == 'boolean')
 		return patch
 
 	if otyp == 'array'

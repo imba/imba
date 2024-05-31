@@ -68,16 +68,18 @@ for item,i in argv
 			cfg = cfg[path[0]] ||= {}
 			path.shift!
 
-		let aliased = overrideAliases[path[0]]
-		if aliased
-			Object.assign(cfg,aliased)
+		let k = path[0]
+
+		if k..match(/^[mMsS]+$/)
+			for chr of k
+				Object.assign(cfg,overrideAliases[chr])
 		else
 			if val.indexOf(' ') >= 0
 				val = val.split(/\,\s*|\s+/g)
 
 			val = valueMap[val] or val
 
-			cfg[path[0]] = val
+			cfg[k] = val
 			argv[i] = null
 			argv[i+1] = null
 
@@ -434,12 +436,12 @@ def common cmd
 		.option("-w, --watch", "Continously build and watch project")
 		.option("--loglevel <level>", "Log level: debug|info|success|warning|error|silent")
 		.option("-v, --verbose", "verbosity (repeat to increase)",fmt.v,0)
-		.option("-s, --sourcemap", "verbosity (repeat to increase)",fmt.v,0)
+		.option("-s, --sourcemap", "Enable sourcemaps")
+		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-m, --minify", "Minify generated files")
 		.option("-M, --no-minify", "Disable minifying")
 		.option("-f, --force", "Disregard previously cached outputs")
 		.option("-k, --keep", "Keep existing files in output directory")
-		.option("-S, --no-sourcemap", "Omit sourcemaps")
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
 		.option("--br", "Compress assets with brotli")
