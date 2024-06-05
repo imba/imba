@@ -23,6 +23,7 @@ export class Queue < Set
 				#idler = #resolve = null
 				self.emit('busy',self)
 			self.emit('add',value,self)
+
 		return value
 
 	def delete value
@@ -30,8 +31,8 @@ export class Queue < Set
 			self.emit('delete',value,self)
 			if size == 0
 				if #resolve
-					#resolve(self)
-					#resolve = null
+					#resolve(yes)
+					#resolve = null # why are we setting this back to null?
 				self.emit('idle',self)
 			
 			return true
@@ -39,7 +40,13 @@ export class Queue < Set
 
 	get idle
 		#idler ||= new Promise do(resolve)
-			#resolve = resolve
+			if size == 0
+				resolve(yes)
+			else
+				#resolve = resolve
+
+	get idle?
+		size == 0
 
 	def then ok, err\any?
 		idle.then(ok,err)
