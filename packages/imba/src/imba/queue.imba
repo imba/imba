@@ -16,13 +16,16 @@ export class Queue < Set
 			value = value()
 
 		unless has(value)
-			value.then do self.delete(value)
 			let first = size == 0
+
 			super(value)
 			if first
 				#idler = #resolve = null
 				self.emit('busy',self)
 			self.emit('add',value,self)
+
+			let done = do self.delete(value)
+			value.then(done,done)
 
 		return value
 
