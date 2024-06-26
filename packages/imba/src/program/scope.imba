@@ -161,7 +161,7 @@ export class Scope < Node
 
 		indent = (parts[3] && parts[3][0] == '\t') ? parts[3].length : 0
 		setup!
-		return self
+		self
 
 	def setup
 		if handler?
