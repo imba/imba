@@ -106,7 +106,7 @@ extend class Event
 
 		return yes
 
-	def @throttle time = 250
+	def @throttle time = 250, flag = 'throttled'
 		let o = #sharedModifierState
 
 		if o.active
@@ -119,7 +119,8 @@ extend class Event
 
 		o.active = yes
 		o.el ||= #context.element
-		o.el.flags.incr('throttled')
+		if flag
+			o.el.flags.incr(flag)
 
 		once(#context,'end') do
 			let delay = parseTime(time)
@@ -129,7 +130,8 @@ extend class Event
 					o.next(yes)
 				else
 					clearInterval(o.interval)
-					o.el.flags.decr('throttled')
+					if flag
+						o.el.flags.decr(flag)
 					o.active = no
 				return
 
