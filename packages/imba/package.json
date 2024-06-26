@@ -29,7 +29,8 @@
   "browser": {
     ".": "./dist/imba.mjs",
     "./program": "./program.imba.js",
-    "./compiler": "./dist/compiler.mjs"
+    "./compiler": "./dist/compiler.mjs",
+    "./runtime": "./src/imba/runtime.mjs"
   },
   "files": [
     "bin",
