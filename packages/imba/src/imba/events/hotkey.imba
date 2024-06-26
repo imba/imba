@@ -103,6 +103,7 @@ class HotKeyManager
 		let targets\HTMLElement[] = Array.from(document.querySelectorAll('[data-hotkey]'))
 		let root = source.ownerDocument
 		let group = source
+		let handlers = []
 
 		# find the closest hotkey
 		while group and group != root
@@ -112,12 +113,23 @@ class HotKeyManager
 
 		targets = targets.reverse!.filter do |el|
 			let combos = el.#hotkeyCombos
-			return no unless combos and (combos[combo] or combos['*'])
+			let exact = combos and combos[combo]
+			let catchall = combos and combos['*']
+			return no unless exact or catchall
+			let handlers = el.#hotkeyHandlers
 
 			let par = el
 			while par and par != root
 				if par.hotkeys === false
 					return no
+				elif par.hotkeys === true # this is a group
+					if !par.contains(source)
+						let skip = yes
+						for handler in handlers
+							if (handler.#combos[combo] or handler.#combos['*'])
+								skip = no if handler.global?
+								# FIXME Inconsistent if group contains one non-global as well
+						return no if skip
 				par = par.parentNode
 			return yes
 
@@ -144,7 +156,6 @@ class HotKeyManager
 		event.hotkey = combo
 
 		source.dispatchEvent(event)
-		let handlers = []
 		
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
