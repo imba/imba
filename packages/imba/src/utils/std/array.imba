@@ -42,9 +42,6 @@ extend class Array<T>
 	def has item
 		includes item
 
-	get reversed
-		slice!.reverse!
-
 	def sorted key, reverse = no
 		let items = slice!
 		let cb = key

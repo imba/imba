@@ -6,7 +6,7 @@ test "sorted" do
 	exp = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 	eq exp, arr.sorted!
 	eq exp, arr.sorted do $1
-	eq exp.reversed, arr.sorted(null, yes)
+	eq exp.toReversed!, arr.sorted(null, yes)
 
 	arr = [
 		{ a: 1 }
@@ -28,8 +28,8 @@ test "sorted" do
 	]
 	eq exp, arr.sorted 'a'
 	eq exp, arr.sorted do $1.a
-	eq exp.reversed, arr.sorted('a', yes)
-	eq exp.reversed, arr.sorted((do $1.a), yes)
+	eq exp.toReversed!, arr.sorted('a', yes)
+	eq exp.toReversed!, arr.sorted((do $1.a), yes)
 
 	arr = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
 	let map = {
