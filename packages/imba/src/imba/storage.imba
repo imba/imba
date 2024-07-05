@@ -80,9 +80,14 @@ class Storage
 		return item
 
 	def deleteProperty target, name
-		let key = ns + name
-		delete cache[key]
-		return store.removeItem(key)
+		let key = String(ns) + ':' + name
+
+		delete cache.raw[key]
+		delete cache.rich[key]
+
+		store.removeItem(key)
+		
+		return yes
 
 export const locals = new Proxy(fn,new Storage(global.localStorage))
 
