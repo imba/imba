@@ -807,7 +807,7 @@ export def atomic cb
 		try
 			res = cb()
 		catch e
-			console.log 'error in atomics',e
+			# console.log 'error in atomics',e
 			ATOMICS = null
 			beacon.invalidated(0) for beacon of all
 			throw e
