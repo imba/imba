@@ -25,13 +25,13 @@ test do
 
 test 'input focus' do
 	eq style(app.$input).fontWeight, '400'
-	await new Promise do setTimeout($1,500ms)
-	app.$input.focus()
+	# await new Promise do setTimeout($1,500ms)
+	await app.$input.focus()
 	document.body.offsetWidth
 	eq document.visibilityState,'visible'
 	eq style(app.$input).fontWeight, '600'
 
 test 'button position' do
 	eq style(app.$button).position, 'absolute'
-	app.$button.focus()
+	await app.$button.focus()
 	eq style(app.$button).position, 'relative'

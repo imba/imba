@@ -104,7 +104,7 @@ def spawnRunner
 	if runners[0]
 		return runners.shift!
 
-	let browser = await puppeteer.launch(args: args, headless: true)
+	let browser = await puppeteer.launch(args: args, headless: 'shell')
 	let runner = await browser.newPage!
 	runner.setViewport({width: 800, height: 600})
 	runner.nr = counter++

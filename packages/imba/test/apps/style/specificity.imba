@@ -53,7 +53,7 @@ test do
 	eqcss app.$b1, 400
 	app.$b1.focus!
 	eqcss app.$b1, 500
-	app.focus!
+	await app.focus!
 	app.flags.add('app-on')
 	eqcss app.$b1, 550
 	# app.$b1.flags.add('either-on')
@@ -61,7 +61,7 @@ test do
 
 test 'inline precedence' do
 	eqcss app.$b3, 400
-	app.$b3.focus!
+	await app.$b3.focus!
 	eqcss app.$b3, 400
 
 test 'inline precedence' do
