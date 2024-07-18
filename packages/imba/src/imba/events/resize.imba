@@ -11,8 +11,12 @@ let resizeObserver = null
 
 
 class ResizeEvent < CustomEvent
-	def @css wunit = '1elw', hunit = '1elh', sel = ''
+	def @css wunit = '1elw', hunit = '1elh', sel = '', unit = ''
 		const target = entry..target
+
+		if sel == 'px'
+			unit = sel
+			sel = ''
 
 		if target and target.offsetParent
 			let wu = helpers.parseDimension(wunit)
@@ -25,8 +29,8 @@ class ResizeEvent < CustomEvent
 			let wval = wu ? (self.width / wu[0]) : self.width
 			let hval = hu ? (self.height / hu[0]) : self.height
 
-			el.style.setProperty(wp,wval)
-			el.style.setProperty(hp,hval)
+			el.style.setProperty(wp,wval + unit)
+			el.style.setProperty(hp,hval + unit)
 
 		return yes
 
