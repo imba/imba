@@ -2,9 +2,31 @@
 
 ## Unreleased
 
-* Fix issue where `<tag bind=value>` may not work outside of `<self>`
-
 ## 2.0.0-alpha.236
+
+* Generate brotli compressed assets at build time using `--br` flag
+
+* Use `lch` for `#mycolor` variables to support concise color manipulation
+
+    When you set a `#color:<color>` variable, it is compiled to the `lch`
+    version of that color. When using the variables you can include arguments
+    to manipulate / override individual parts of the color (lightness, chroma, hue).
+
+    Inside the `#color(args)` args you have access to `l`,`c`,`h` and `a` which represents these values from the underlying color. These can also be used as units, so `#color(1.1l c h / 0.5a)` represents the color but with the lightness multiplied by `1.1` and the alpha multiplied by `0.5`.
+
+```imba
+global css @root
+    #mycolor:rgb(255,0,0) # use hex,rgb,lch,hsl++
+
+global css .panel
+    background-color:#mycolor # gets the same color
+    color:#mycolor(90 c h) # override the lightness part of the color
+    border-color:#mycolor(1.1l 0.8c h) # a bit brighter, less colorful
+```
+
+* Basic experimental support for container queries.
+
+* Fix issue where `<tag bind=value>` may not work outside of `<self>`
 
 * Fix issue with self in functional components.
 
