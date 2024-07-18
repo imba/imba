@@ -3,6 +3,10 @@ import {commit} from './scheduler'
 
 const fn = do yes
 
+# Return functions to allow calling the storage for nesting.
+def storetarget
+	return do yes
+
 class Storage
 	declare cache\{raw:any,rich:any}
 	declare store\Storage
@@ -67,6 +71,11 @@ class Storage
 					store.setItem(key,raw)
 					commit!
 
+	def removeItem name
+		let key = String(ns) + ':' + name
+		delete cache[key]
+		store.removeItem(key)
+
 	def get target,key,receiver
 		getItem(key)
 
@@ -76,14 +85,20 @@ class Storage
 
 	def apply target, that, [name]
 		let item = children.get(name)
-		item || children.set(name,item = new Proxy(fn,new Storage(self,name)))
+		item || children.set(name,item = new Proxy(storetarget!,new Storage(self,name)))
 		return item
 
 	def deleteProperty target, name
-		let key = ns + name
-		delete cache[key]
-		return store.removeItem(key)
+		removeItem(name)
+		return yes
 
-export const locals = new Proxy(fn,new Storage(global.localStorage))
+	def ownKeys target
+		let keys = ['prototype']
+		let key = ns + ':'
+		for k in Object.keys(store)
+			if k.indexOf(key) == 0
+				keys.push(k.slice(key.length))
+		return keys
 
-export const session = new Proxy(fn,new Storage(global.sessionStorage))
+export const locals = new Proxy(storetarget!,new Storage(global.localStorage))
+export const session = new Proxy(storetarget!,new Storage(global.sessionStorage))
