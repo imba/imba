@@ -137,16 +137,21 @@ describe "hotkey sequences" do
 		await spec.keyboard.type 'i'
 		eq $1.log,['yes']
 
+###
+If you set hotkeys=(val) on a node it will affect how @hotkey handlers
+inside of this tree works. hotkeys=yes will define a hotkey group. The hotkeys
+inside will only be active if the focused element is also inside this group.
+###
 describe "hotkeys grouping" do
 	tag App
 		navkeys = no
 		mainkeys = yes
 		<self>
-			<main tabIndex=-1 hotkeys=mainkeys>
+			<main$main tabIndex=-1 hotkeys=mainkeys>
 				<div @hotkey('a').log('main-a')>
 				<div @hotkey('d').log('main-d')>
 
-			<nav tabIndex=-1 hotkeys=navkeys>
+			<nav$nav tabIndex=-1 hotkeys=navkeys>
 				<div @hotkey('a').log('nav-a')>
 				<div @hotkey('b').log('nav-b')>
 				<div @hotkey('c').log('nav-c')>
@@ -162,6 +167,16 @@ describe "hotkeys grouping" do
 	test do
 		await imba.commit!
 		await spec.keyboard.type 'a'
+		eq $1.log,[]
+
+		app.$main.focus!
+		await spec.keyboard.type 'a'
+		eq $1.log,['main-a']
+
+
+	test do
+		await imba.commit!
+		await spec.keyboard.type 'a'
 		await spec.keyboard.type 'c'
 		eq $1.log,['main-a']
 
@@ -170,6 +185,9 @@ describe "hotkeys grouping" do
 	# will be enabled
 	test do
 		await imba.commit!
+		app.$footer.focus!
+		await spec.keyboard.type 'd'
+		app.$main.focus!
 		await spec.keyboard.type 'd'
 		eq $1.log,['footer-d','main-d']
 
@@ -183,5 +201,7 @@ describe "hotkeys grouping" do
 		await spec.keyboard.type 'b'
 		eq $1.log,['footer-b']
 		app.$footer.blur!
+
+		# no longer in focus - none of the groups should trigger?
 		await spec.keyboard.type 'd'
-		eq $1.log,['footer-b','footer-d','main-d']
+		eq $1.log,['footer-b']
