@@ -1,4 +1,4 @@
-tag app-root
+tag App
 
 	css button pos:absolute
 		@focus pos:relative
@@ -10,7 +10,7 @@ tag app-root
 			<input$input[fw:400 fw@focus:600]>
 			<button$button>
 
-imba.mount(let app = <app-root>)
+imba.mount(let app = <App>)
 
 def style el
 	if typeof el == 'string'
@@ -25,7 +25,10 @@ test do
 
 test 'input focus' do
 	eq style(app.$input).fontWeight, '400'
+	await new Promise do setTimeout($1,500ms)
 	app.$input.focus()
+	document.body.offsetWidth
+	eq document.visibilityState,'visible'
 	eq style(app.$input).fontWeight, '600'
 
 test 'button position' do
