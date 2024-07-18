@@ -91,7 +91,7 @@ def releaseRunner runner, page, close
 	runner.page = null
 
 	if runner.pup.mousedown > 0
-		runner.mouse.up!
+		await runner.mouse.up!
 		runner.pup.mousedown = 0
 
 	if close
@@ -173,6 +173,7 @@ def run page
 		let runner = await spawnRunner!
 		runner.page = page
 		page.runner = runner
+		# await page.bringToFront!
 
 		let print = do(...params)
 			test.log.push(params)
