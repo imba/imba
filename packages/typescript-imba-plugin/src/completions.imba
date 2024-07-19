@@ -618,6 +618,9 @@ export default class Completions
 		if flags & CT.StyleVar
 			add 'stylevar', kind: 'styleval'
 
+		elif flags & CT.StyleColor
+			add 'stylecolorvar', kind: 'styleval'
+
 		elif flags & CT.StyleValue
 			add 'stylevalue', kind: 'styleval'
 
@@ -701,6 +704,10 @@ export default class Completions
 
 	def stylevar o = {}
 		let found = checker.getStyleVarTokens()
+		add found,o
+
+	def stylecolorvar o = {}
+		let found = checker.getStyleColorVarTokens()
 		add found,o
 
 	def decorators o = {}

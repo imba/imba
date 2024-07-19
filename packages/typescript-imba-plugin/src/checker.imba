@@ -176,7 +176,7 @@ export default class ImbaTypeChecker
 
 	def styleprop name, fallback = yes
 		return null unless name
-		let res = resolve('imbacss').exports.get(name.tojs!)
+		let res = resolve('imbacss')..exports..get(name.tojs!)
 		if res and res.imbaTags.proxy and fallback
 			return styleprop(res.imbaTags.proxy,no)
 
@@ -330,6 +330,22 @@ export default class ImbaTypeChecker
 
 				md.push(`---`) if md.length
 				md.push `**Style variable**`
+				md.push `[Reference](https://imba.io/docs/css/variables)`
+
+			elif symbol.match('style.value.colorvar') or symbol.match('style.property.colorvar')
+				let defs = getStyleColorVarTokens().filter do $1.value == symbol.value
+				let refs = getStyleColorVarReferences().filter do $1.value == symbol.value
+				util.log 'get colorvar',symbol,symbol.value
+				out.definitions = defs.map do getDefinitionForImbaToken($1)
+				out.definition = out.definitions[0]
+				out.references = refs.map do getReferenceForImbaToken($1)
+
+				for item in out.definitions
+					if item.#comment
+						md.push(item.#comment)
+
+				md.push(`---`) if md.length
+				md.push `**Style color variable**`
 				md.push `[Reference](https://imba.io/docs/css/variables)`
 
 			elif symbol.match('style.value.unit') or symbol.match('style.property.unit')
@@ -1028,6 +1044,12 @@ export default class ImbaTypeChecker
 
 	def getStyleVarReferences
 		global.ils.findImbaTokensOfType('style.value.var')
+
+	def getStyleColorVarTokens
+		global.ils.findImbaTokensOfType('style.property.colorvar')
+
+	def getStyleColorVarReferences
+		global.ils.findImbaTokensOfType('style.value.colorvar')
 
 	def getStyleCustomUnits
 		global.ils.findImbaTokensOfType('style.property.unit.name')

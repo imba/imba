@@ -77,7 +77,8 @@ export const RequiredCompilerOptions = {
 	allowArbitraryExtensions: true
 	skipLibCheck: true
 	skipDefaultLibCheck: true
-	importsNotUsedAsValues: 'preserve'
+	# importsNotUsedAsValues: 'preserve'
+	verbatimModuleSyntax: true
 	customConditions: ["tsimba","imba"]
 	moduleSuffixes: Suffixes
 	target: 99
@@ -106,7 +107,8 @@ export const DefaultRichConfig = {
 		suppressExcessPropertyErrors: false
 		suppressImplicitAnyIndexErrors: false
 		customConditions: ["tsimba","imba"]
-		importsNotUsedAsValues: 'preserve'
+		# importsNotUsedAsValues: 'preserve'
+		verbatimModuleSyntax: true
 		declaration: false
 		strict: false
 		resolveJsonModule: true

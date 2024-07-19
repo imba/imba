@@ -461,6 +461,12 @@ export default class ImbaScript
 			if m[0]
 				hit(m[0],'stylevalue')
 
+		if tok.match('style.value.colorvar')
+			# only include this name?
+			let m = checker.getStyleColorVarTokens().filter do $1.value == tok.value
+			if m[0]
+				hit(m[0],'stylevalue')
+
 		if tok.match('tag.mixin.name')
 			# let m = doc.getMatchingTokens('style.selector.mixin.name').filter do $1.value == tok.value
 			# hit(m[0],'mixin') if m[0]

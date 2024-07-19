@@ -136,7 +136,7 @@ export default class Service < EventEmitter
 	
 	def refreshConfigFile
 		let src = self..cp..canonicalConfigFilePath
-		ps.onConfigFileChanged(src,0) if src
+		ps.onConfigFileChanged(src,src,0) if src
 
 	def createVirtualProjectConfig proj, inferred = no
 		util.log 'create Virtual config',!!cp,tsversion,ps,ps..inferredProjects..slice(0),ip,ip..shouldSupportImba!
@@ -150,17 +150,19 @@ export default class Service < EventEmitter
 			util.log('found js/tsconfig')
 			return false
 
-		util.log('createVirtualProjectFile',jspath,tspath)
 
 		# notify about configuring their own tspath
 
 		virtualFiles[jspath] = JSON.stringify(DefaultConfig,null,2)
-		ps.onConfigFileChanged(jspath,0)
+		util.log('createVirtualProjectFile',jspath,tspath,DefaultConfig)
+		# only if ts >= 5.5
+		ps.onConfigFileChanged(jspath,jspath,0)
 		self
 
 	def reloadConfigFile
 		let path = cp.getCompilerOptions!.configFilePath
-		ps.onConfigFileChanged(resolvePath(path),1)
+		let resolved = resolvePath(path)
+		ps.onConfigFileChanged(resolved,resolved,1)
 
 	def setVirtualFile path, body
 		virtualFiles[path] = body

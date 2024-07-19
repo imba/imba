@@ -329,7 +329,7 @@ export class System
 	# readDirectory?(path: string, extensions?: readonly string[], exclude?: readonly string[], include?: readonly string[], depth?: number): string[];
 	def readDirectory path, extensions, exclude, include,depth
 		let res = #readDirectory(path,extensions, exclude, include,depth)
-		L 'readDirectory',path,extensions
+		# L 'readDirectory',path,extensions
 		if false
 			
 			for name,i in res
