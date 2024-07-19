@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.1.0
+
+* Support typescript 5.5+ and vscode 1.91+
+
 ## 4.0.0
 
 * Imba definitions for events, modifiers etc will now jump to the actual imba sourcecode instead of an undefined `_generated.d.ts` file :D Over the next few minor versions we will move documentation out of .d.ts and into the imba codebase again.
