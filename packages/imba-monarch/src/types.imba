@@ -78,6 +78,7 @@ export const CompletionTypes = {
 	StyleUnit: 1 << 22
 	ImportStatement: 1 << 23
 	DecoratorModifier: 1 << 24
+	StyleColor: 1 << 25
 }
 
 export const KeywordTypes = {

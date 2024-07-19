@@ -1,6 +1,6 @@
 import { lexer, Token, LexedLine } from './lexer'
 import { toJSIdentifier,prevToken, fastExtractSymbols, toImbaIdentifier} from './utils'
-import { Assignable, Root, Scope, Group, ScopeTypeMap } from './scope'
+import { Assignable, Root, Scope, Group, ScopeTypeMap, StylePropValue } from './scope'
 import { Sym, SymbolFlags } from './symbol'
 
 import {SemanticTokenTypes,M,CompletionTypes,Keywords} from './types'
@@ -400,11 +400,16 @@ export default class ImbaScriptInfo
 		if tok.match('style.property.operator') or group.closest('stylevalue')
 			flags |= t.StyleValue
 			try
-				suggest.styleProperty = group.closest('styleprop').propertyName
+				let val = group.closest('stylevalue')
+				let pars = group.closest('parens')
+				if pars and pars.parent == val and val.outerText[0] == '#'
+					suggest.styleColor = yes
+				else
+					suggest.styleProperty = group.closest('styleprop').propertyName
 
 		if tok.match('style.open style.property.name')
 			flags |= t.StyleProp
-
+ 
 		if tok.match('style.value.white') or (tok.prev and tok.prev.match('style.value.white'))
 			flags |= t.StyleProp
 
@@ -429,6 +434,9 @@ export default class ImbaScriptInfo
 		if group.match('stylevalue') && before.group.indexOf(' ') == -1
 			flags = t.StyleValue
 
+			if before.token[0] == '#'
+				flags = t.StyleColor
+
 		if tok.match('style.selector.modifier style.property.modifier')
 			flags = t.StyleModifier
 			suggest.stylemodRange = [tok.offset,tok.endOffset]
@@ -440,8 +448,11 @@ export default class ImbaScriptInfo
 			flags |= t.StyleSelector
 			flags ~= t.StyleValue
 
-		if tok.match('style.value') and before.token[0] == '$'
-			flags |= t.StyleVar
+		if tok.match('style.value')
+			if before.token[0] == '$'
+				flags |= t.StyleVar
+			elif before.token[0] == '#'
+				flags |= t.StyleColor
 
 		if tok.match('operator.access accessor white.classname white.tagname')
 			flags ~= t.Value
@@ -946,6 +957,12 @@ export default class ImbaScriptInfo
 
 	def getStyleVarDeclarations
 		getMatchingTokens('style.property.var')
+
+	def getStyleColorVarDeclarations
+		getMatchingTokens('style.property.colorvar')
+
+	def getStyleColorVarReferences
+		getMatchingTokens('style.value.colorvar')
 
 	def getStyleVarReferences
 		getMatchingTokens('style.value.var')

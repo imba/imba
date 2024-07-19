@@ -5,6 +5,17 @@ global css .test
 	w:100px h:10px bg:green
 	@hover d:none
 	s:20px
+	#bg:rgb(255,0,0)
+	c:#bg(l c h / 0.5)
+
+	x
+		$aba:10
+		#aba:#ffffff
+		display:$aba
+		color:#aba
+		bg:#
+	#hello
+		d:none
 
 class Model
 	prop one = op.test

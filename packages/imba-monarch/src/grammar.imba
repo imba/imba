@@ -969,6 +969,7 @@ export const states = {
 		[/\]/,'@rematch','@pop']
 		[/(\d+)(@id)/, ['style.property.unit.number','style.property.unit.name']]
 		[/((--|\$)@id)/, 'style.property.var']
+		[/((\#)@id)/, 'style.property.colorvar']
 		[/(-*@id)/, 'style.property.name']
 		# [/(\@+)([\>\<\!]?[\w\-]+)/, ['style.property.modifier.start','style.property.modifier']]
 		# [/[\^]+/,'style.property.modifier']
@@ -982,7 +983,8 @@ export const states = {
 
 	css_value_: [
 		[/(x?xs|sm\-?|md\-?|lg\-?|xx*l|\dxl|hg|x+h)\b/, 'style.value.size'],
-		[/\#[0-9a-fA-F]+/, 'style.value.color.hex'],
+		[/\#[0-9a-fA-F]{6,8}/, 'style.value.color.hex'],
+		[/\#\w+/, 'style.value.colorvar'],
 		[/((--|\$)@id)/, 'style.value.var']
 		[/(@optid)(\@+|\.+)(@optid)/,['style.property.name','style.property.modifier.prefix','style.property.modifier']]
 		'op_'
@@ -1404,7 +1406,7 @@ export const grammar = {
 	cssPropertyPath: /[\@\.]*[\w\-\$]+(?:[\@\.]+[\w\-\$]+)*/
 
 	cssVariable: /(?:--|\$)[\w\-\$]+/
-	cssPropertyName: /[\w\-\$]+/
+	cssPropertyName: /\#?[\w\-\$]+/
 	# cssModifier: /\@[\w\-\$]+/
 	cssPropertyKey: /(?:@cssPropertyName(?:@cssModifier)*|\^*@cssModifier+)(?:\s*[\:\=])/
 	cssUpModifier: /\.\.[\w\-\$]+/
