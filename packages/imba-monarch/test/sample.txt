@@ -32,10 +32,14 @@ tag app-main
 	get mainbutton
 		self
 
+	$node$ def stuff
+		yes
+
 
 class APPNS.Main
 	def main
 		self
+
 
 def method stuff
 	return stuff

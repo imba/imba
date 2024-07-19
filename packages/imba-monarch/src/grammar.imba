@@ -764,6 +764,7 @@ export const states = {
 		'comment_'
 		'block_comment_'
 		'decorator_'
+		[/@envvar/,'keyword.env.$0']
 		[/(get|set|def|static|prop|attr)@B/,'keyword.$0']
 		'field_'
 		'common_'
