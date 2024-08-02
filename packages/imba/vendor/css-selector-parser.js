@@ -813,6 +813,11 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           entity.pseudoElement ||= '::' + part.pseudo;
         }
 
+        if(desc && desc.type == '@'){
+          pseudo = null;
+          entity.pseudoElement ||= '@' + part.pseudo;
+        }
+
         if(flag){
           out = '.' + this.escapeIdentifier(flag);
         }

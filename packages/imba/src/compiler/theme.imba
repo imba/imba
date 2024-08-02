@@ -16,6 +16,7 @@ export const modifiers =
 
 	'first-child': {}
 	'last-child': {}
+	'font-face': {type:'@'}
 	autofill: {}
 	active: {shim: yes}
 	checked: {shim: yes}
