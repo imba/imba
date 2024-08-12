@@ -154,10 +154,13 @@ def activateHooks
 				listen(instance,'mount') do
 					for item in Object.values(obj)
 						item.activate! if item isa Reaction
+					return
 
 				listen(instance,'unmount') do
 					for item in Object.values(obj)
 						item.deactivate! if item isa Reaction
+					return
+					
 		return
 
 def getSchema target, typ = METAREF
@@ -556,7 +559,7 @@ class Memo
 			return observer = null
 
 		let obs = observers
-		let idx = obs ? obs.indexOf(self) : -1
+		let idx = obs ? obs.indexOf(item) : -1
 		if idx >= 0
 			obs.splice(idx,1)
 		return
