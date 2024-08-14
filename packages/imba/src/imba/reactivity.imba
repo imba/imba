@@ -330,6 +330,9 @@ export class Ref
 
 		v++
 
+		if level > 30
+			console.warn "Ref observer chain too deep",self,source
+			return
 
 		observer.invalidated(level + 1,this) if observer
 
