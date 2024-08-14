@@ -11,6 +11,7 @@ const F = {
 	INVALIDATING: 1 << 5
 	POSSIBLY_STALE: 1 << 6
 	AUTORUN: 1 << 7
+	DEACTIVATED: 1 << 8
 }
 
 let TRACKING = 0
@@ -122,6 +123,8 @@ class ArrayPatcher
 
 			if changed == -1
 				changes.delete(item)
+		
+		return
 
 	def end
 		if array.length >= idx
@@ -173,7 +176,9 @@ class Context
 		depth = depth
 		parent = up
 		target = null
+		spy = null
 		patcher = new ArrayPatcher
+
 
 	get active?
 		CTX == self
@@ -194,17 +199,25 @@ class Context
 		return all
 
 	def reset item
-		tracking = yes
 		target = item
 		beacon = item.beacon
+		let s = spy = item.##spy
+		tracking = s ? (s.tracking ?? yes) : yes
 		patcher.reset(item.observing ||= []) # nah to the action
+		s and s..enter(self)
 		return self
 
-	def add beacon
-		if tracking and beacon
-			patcher.push(beacon)
+	def add ref
+		if tracking and ref and beacon
+			# what if we are 
+			patcher.push(ref)
+		if spy
+			spy..observed(self,ref)
+		return
 
 	def react reaction
+		if spy
+			spy..react(self,reaction)
 		ROOT.reactions.add(reaction)
 
 	def push item
@@ -225,10 +238,12 @@ class Context
 					else
 						item.removeSubscriber(beacon)
 
+		if spy
+			spy..leave(self)
 		# should also clear patcher etc due to memory leaks?
 		patcher.cleanup!
 		target = beacon = null
-		CTX = parent
+		CTX = parent # call re-enter?
 		if CTX == ROOT
 			ROOT.flush!
 		return res
@@ -301,8 +316,8 @@ export class Ref
 		observer.invalidated(level + 1,this,newValue,oldValue) if observer
 
 		if observers
-			for observer in observers
-				observer.invalidated(level + 1,this,newValue,oldValue)
+			for obs of observers
+				obs.invalidated(level + 1,this,newValue,oldValue)
 
 		if CTX == ROOT
 			CTX.flush!
@@ -315,11 +330,12 @@ export class Ref
 
 		v++
 
+
 		observer.invalidated(level + 1,this) if observer
 
 		if observers
-			for observer in observers
-				observer.invalidated(level + 1,this)
+			for obs of observers
+				obs.invalidated(level + 1,this)
 
 		if level == 0 and CTX == ROOT
 			CTX.flush!
@@ -329,18 +345,17 @@ export class Ref
 		unless observer
 			observer = item
 		else
-			observers ||= []
-			observers.push(item)
+			observers ||= new Set
+			observers.add(item)
 		return
 
 	def removeSubscriber item
 		if observer == item
-			return observer = null
+			observer = null
 
-		let obs = observers
-		let idx = obs ? obs.indexOf(item) : -1
-		if idx >= 0
-			obs.splice(idx,1)
+		let obs = observers # should use sorted set? More efficient and faster than splice
+		if obs
+			obs.delete(item)
 		return
 
 	def reportChanged
@@ -772,16 +787,19 @@ class Awaits < Reaction
 			commit! if $web$ and !options.silent
 		return res
 
-class Action
+export class Action
 
-	def constructor cb, context
-		context = context
+	def constructor cb, scope
+		scope = scope
 		cb = cb
 
-	def run ctx = context, args = []
+	get ctx
+		CTX
+
+	def run that = scope, args = []
 		CTX.push(self)
 		try
-			let res = cb.apply(ctx,args)
+			let res = cb.apply(that,args)
 			CTX.pop(self)
 			return res
 		catch e
