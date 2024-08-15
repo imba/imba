@@ -53,7 +53,7 @@ const CHANGED = do(item,res)
 const REFERENCED = do(item,ref,extensions)
 	let beacon = item[OWNREF]
 	unless beacon
-		beacon = item[OWNREF] = new Ref(F.OBJECT)
+		beacon = item[OWNREF] = new Ref
 		Object.defineProperties(item,extensions)
 	beacon.addSubscriber(ref) if ref
 	return item
@@ -278,7 +278,7 @@ let GET = do(target,key,vsym,meta,bsym)
 	let beacon = target[bsym]
 
 	unless beacon
-		beacon = target[bsym] = new Ref(0,meta,val,key)
+		beacon = target[bsym] = new Ref(meta,key,val)
 
 	CTX.add(beacon,target)
 	return val
@@ -294,13 +294,12 @@ let SET = do(target,key,vsym,value,meta,bsym)
 	return
 
 export class Ref
-
-	def constructor kind, type, val, name
+	def constructor type, name, val
 		id = NEXT_REF_ID++
 		observer = null
 		observers = null
 		v = 0
-		# name = name
+		o = type or null
 
 		val.##referenced(self) if val and val.##referenced
 		return self
@@ -333,6 +332,7 @@ export class Ref
 		if level > 30
 			console.warn "Ref observer chain too deep",self,source
 			return
+
 
 		observer.invalidated(level + 1,this) if observer
 
@@ -368,7 +368,7 @@ export class Ref
 		CTX.add(this)
 
 export def createAtom name
-	new Ref(null,null,null,name)
+	new Ref(null,name,null)
 
 ###
 Array
@@ -487,7 +487,6 @@ class PropertyType
 				this[vkey] = value
 				this[bkey] = null
 				Object.defineProperty(this,name,descriptor)
-				# this[bkey] = (value and value.##referenced) ? new Ref(0,self,value) : null
 		}
 
 class RefIndex
@@ -541,7 +540,6 @@ class RefType
 				index.add(value,this) if value
 				Object.defineProperty(this,name,descriptor)
 				this[bkey] = null
-				# (value and value.##referenced) ? new Ref(0,self,value) : null
 		}
 
 	def where value
@@ -799,14 +797,18 @@ export class Action
 	get ctx
 		CTX
 
-	def run that = scope, args = []
+	def run that = scope, args = [], track = no
 		CTX.push(self)
 		try
+			# are we tracking here
+			TRACKING++ if track
 			let res = cb.apply(that,args)
 			CTX.pop(self)
+			TRACKING-- if track
 			return res
 		catch e
 			CTX.pop(self)
+			TRACKING-- if track
 			throw e
 
 export def autorun cb, options = {}
@@ -850,6 +852,21 @@ export def run cb
 	let action = new Action(cb,global)
 	return action.run!
 
+export def spy spy,blk,ctx = null
+	spy.##spy ||= spy
+	CTX.push(spy)
+	try
+		# are we tracking here
+		TRACKING++
+		let res = ctx ? blk.call(ctx) : blk
+		CTX.pop(spy)
+		TRACKING--
+		return res
+	catch e
+		CTX.pop(spy)
+		TRACKING--
+		throw e 
+
 export def reportChanged item
 	if item and item[OWNREF]
 		item[OWNREF].invalidated(0)
@@ -866,7 +883,7 @@ export def reportObserved item
 	return item
 
 export def createRef params = F.OBJECT
-	return new Ref(F.OBJECT)
+	return new Ref
 
 export def getComputed target, name
 	target[REFSYM(name)]
@@ -889,6 +906,7 @@ export def @observable target, key, desc
 	Object.defineProperty(target,key,field.lazyDescriptor)
 	return null
 
+# @deprecated
 export def @ref target, name, desc
 	let sym = METASYM(name)
 	target.constructor[name]
