@@ -47,7 +47,8 @@ export const OBSERVED = do(item,res)
 	return res
 
 const CHANGED = do(item,res)
-	item[OWNREF].invalidated(0)
+	# use a separate name?
+	item[OWNREF].$$invalidated(0)
 	return res
 
 const REFERENCED = do(item,ref,extensions)
@@ -207,12 +208,12 @@ class Context
 		s and s..enter(self)
 		return self
 
-	def add ref
+	def add ref, extra
 		if tracking and ref and beacon
 			# what if we are 
 			patcher.push(ref)
 		if spy
-			spy..observed(self,ref)
+			spy..observed(self,ref,extra)
 		return
 
 	def react reaction
@@ -304,6 +305,10 @@ export class Ref
 		val.##referenced(self) if val and val.##referenced
 		return self
 
+	# the current version of the signal
+	get $$v
+		v
+
 	def changed level, newValue,oldValue
 		RUN_ID++
 		v++
@@ -312,17 +317,21 @@ export class Ref
 		newValue.##referenced(self,oldValue) if newValue and newValue.##referenced
 
 		# change is only called here?
-		observer.invalidated(level + 1,this,newValue,oldValue) if observer
+		observer.$$invalidated(level + 1,this,newValue,oldValue) if observer
 
 		if observers
 			for obs of observers
-				obs.invalidated(level + 1,this,newValue,oldValue)
+				obs.$$invalidated(level + 1,this,newValue,oldValue)
 
 		if CTX == ROOT
 			CTX.flush!
 		return
 
-	def invalidated level\number?, source\any?
+	def invalidated level, source
+		console.warn `Ref.invalidated is deprecated - use $$invalidated`
+		$$invalidated(level,source)
+
+	def $$invalidated level\number?, source\any?
 		if ATOMICS
 			ATOMICS.add(self)
 			return yes
@@ -334,11 +343,11 @@ export class Ref
 			return
 
 
-		observer.invalidated(level + 1,this) if observer
+		observer.$$invalidated(level + 1,this) if observer
 
 		if observers
 			for obs of observers
-				obs.invalidated(level + 1,this)
+				obs.$$invalidated(level + 1,this)
 
 		if level == 0 and CTX == ROOT
 			CTX.flush!
@@ -364,8 +373,8 @@ export class Ref
 	def reportChanged
 		changed(0)
 
-	def reportObserved
-		CTX.add(this)
+	def reportObserved meta
+		CTX.add(this, meta)
 
 export def createAtom name
 	new Ref(null,name,null)
@@ -580,15 +589,15 @@ class Memo
 			obs.splice(idx,1)
 		return
 
-	def invalidated stack, source
+	def $$invalidated stack, source
 		flags |= F.STALE | F.POSSIBLY_STALE
-		observer.invalidated(stack,this) if observer
+		observer.$$invalidated(stack,this) if observer
 
 		return unless observers
 		for observer in observers
 			# these are never - they are always computeds
 			# not clear that these are invalidated? only if this value has not changed
-			observer.invalidated(stack,this)
+			observer.$$invalidated(stack,this)
 		self
 
 	def value
@@ -668,7 +677,7 @@ class Reaction
 	get running?
 		flags & F.RUNNING
 
-	def invalidated stack,source
+	def $$invalidated stack,source
 		if source instanceof Memo
 			flags |= F.POSSIBLY_STALE
 			checkComputedValues..add(source)
@@ -698,7 +707,7 @@ class Reaction
 	def call
 		if TRACKING
 			# only do this to detect infinite loops somehow?
-			console.warn 'should not call reaction inside an autorunning context?',ROOT.snapshot
+			console.warn 'should not call reaction inside an autorunning context?',ROOT.snapshot,self
 			# this shouldnt _always_ be the case though?
 			# return
 
@@ -835,11 +844,18 @@ export def atomic cb
 		catch e
 			# console.log 'error in atomics',e
 			ATOMICS = null
-			beacon.invalidated(0) for beacon of all
+			for beacon of all
+				beacon.$$invalidated(1,all)
+			ROOT.flush! if ROOT == CTX
 			throw e
 
 		ATOMICS = null
-		beacon.invalidated(0) for beacon of all		
+		# invalidate - but dont flush yet
+		# if CTX == ROOT and $web$
+		#	console.log 'running atomic in root',all.size	
+		for beacon of all
+			beacon.$$invalidated(1,all)
+		ROOT.flush! if ROOT == CTX
 		return res
 	else
 		return cb()
@@ -869,17 +885,17 @@ export def spy spy,blk,ctx = null
 
 export def reportChanged item
 	if item and item[OWNREF]
-		item[OWNREF].invalidated(0)
+		item[OWNREF].$$invalidated(0)
 	return item
 
 export def reportInvalidated item
 	if item and item[OWNREF]
-		item[OWNREF].invalidated(0)
+		item[OWNREF].$$invalidated(0)
 	return item
 
-export def reportObserved item
+export def reportObserved item, meta
 	if item and item[OWNREF]
-		item[OWNREF].reportObserved()
+		item[OWNREF].reportObserved(meta)
 	return item
 
 export def createRef params = F.OBJECT
@@ -930,3 +946,17 @@ export def @action target, key, desc
 		let action = new Action(desc.value,null)
 		desc.value = do action.run(this,arguments)
 	return desc
+
+
+export const rx = {
+	# The root reactive context
+	get root do ROOT
+	# The current reactive context
+	get context do CTX
+	get atomics do ATOMICS
+	get ownref do OWNREF
+
+	def flush
+		if CTX == ROOT
+			ROOT.flush!
+}
