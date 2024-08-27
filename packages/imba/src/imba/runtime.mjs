@@ -46,8 +46,8 @@ function meta$(klass,defaults = {}){
 		symbol: Symbol(),
 		parent: Object.getPrototypeOf(klass.prototype)?.constructor,
 		for:klass,
-		uses:[],
-		inits:[],
+		uses:null,
+		inits:null,
 		id: state.counter++,
 		...defaults
 	});
@@ -104,33 +104,47 @@ function isSameDesc(a,b){
 	if(a.value) return a.value === b.value;
 }
 
-export function extend$(target,ext,descs){
+export function extend$(target,ext,descs,cache = {}){
 	const klass = target.constructor;
-	descs ??= Object.getOwnPropertyDescriptors(ext);
-	const originals = Object.getOwnPropertyDescriptors(target);
-	delete descs.constructor;
 
-	if (descs[__init__$]) {
-		// console.warn(`Cannot define plain fields when extending class ${klass.name}`);
-		delete descs[__init__$];
-	};
+	if(!descs && ext){
+		descs = Object.getOwnPropertyDescriptors(ext);
+		delete descs.constructor;
 
-	Object.defineProperties(target,descs);
+		if (descs[__init__$]) {
+			console.warn(`Cannot define plain fields when extending class ${klass.name}`);
+			delete descs[__init__$];
+		};
+	}
 
 	let meta = meta$(klass);
-	if(meta && meta.augments){
-		for(let target of meta.augments){
-			let current = Object.getOwnPropertyDescriptors(target.prototype);
-			let defines = {}
-			for(let key of Object.keys(descs)){
-				let prop = descs[key];
-				if(current[key] && !isSameDesc(originals[key],current[key])) console.warn('wont extend',key);
-				else defines[key] = prop;
-			}
 
-			if(Object.keys(defines).length) extend$(target.prototype,null,defines)
+	if(meta && meta.augments){
+		// If the receiving class is mixed into other classes
+		const map = new Map;
+
+		for(let key of Object.keys(descs)){
+			// Could use caching here
+			let orig = Object.getOwnPropertyDescriptor(target,key);
+
+			for(let augmented of meta.augments){
+				let defines = map.get(augmented);
+				defines || map.set(augmented,defines = {});
+				// let current = Object.getOwnPropertyDescriptors(augmented.prototype);
+				let augmentedKey = Object.getOwnPropertyDescriptor(augmented.prototype,key)
+				// Check if the augmented klass still had the same descriptor
+				// let original = Object.getOwnPropertyDescriptor(target,key);
+				if(augmentedKey && !isSameDesc(orig,augmentedKey)) console.warn('wont extend',key,augmentedKey,orig);
+				else defines[key] = descs[key];
+			}
+		}
+
+		for(let [augmented,defines] of map){
+			if(Object.keys(defines).length) extend$(augmented.prototype,null,defines);
 		}
 	}
+
+	Object.defineProperties(target,descs);
 
 	return target;
 }
@@ -150,6 +164,8 @@ export function augment$(klass,mixin){
 
 	if(!mix.augments){
 		mix.augments = new Set;
+
+		// Define hasInstance on mixin so you can do object isa MyMixin
 		const ref = mix.ref = Symbol();
 		const native = Object[Symbol.hasInstance];
 		mixin.prototype[ref] = true;
@@ -163,22 +179,27 @@ export function augment$(klass,mixin){
 		return klass;
 	}
 
-	for(let v of mix.uses) augment$(klass,v,meta);
+	// If the mixin itself has mixins, mix those in first
+	if(mix.uses) {
+		for(let v of mix.uses) augment$(klass,v);
+	}
 
 	mix.augments.add(klass);
+	meta.uses ||= [];
 	meta.uses.push(mixin);
 
 	let descs = Object.getOwnPropertyDescriptors(mixin.prototype);
 	delete descs.constructor
 
 	if(descs[__init__$]){
+		meta.inits ||= []
 		meta.inits.push(mixin.prototype[__init__$]);
 		delete descs[__init__$];
 	}
 
 	Object.defineProperties(klass.prototype,descs);
 	// TODO Should also run a method / trigger a hook
-	try { meta.top.version++; } catch(e) { }
+	// try { meta.top.version++; } catch(e) { }
 
 	if(mixin?.mixed instanceof Function) mixin.mixed(klass)
 	
@@ -188,7 +209,8 @@ export function augment$(klass,mixin){
 export function multi$(symbol,sup,...mixins){	
 	let Mixins = sup ? (class extends sup {}) : (class {});
 	let meta = meta$(Mixins,{symbol});
-
+	
+	// Mixing in each mixin into the base class
 	for(let mixin of mixins) augment$(Mixins,mixin);
 
 	Mixins.prototype[symbol] = function(o,deep,fields) {
@@ -224,21 +246,21 @@ export function sup$(self,symbol) {
 }
 
 export function register$(klass,symbol,name,flags,into = null) {
+	
 	// Look for the actual superclass excluding mixins
 	let proto = Object.getPrototypeOf(klass.prototype)
 	let mixed = flags & ClassFlags.HasMixins
+	let meta
 	if(mixed) {
 		mmap.set(klass,mmap.get(proto.constructor))
 		proto = Object.getPrototypeOf(proto)
 	}
 
-	
-
 	if(into){
 		let target = flags & ClassFlags.IsObjectExtension ? into : into.prototype;
-		let meta = meta$(klass);
+		let meta = meta$(klass); // Does this make sense?
 
-		if(meta.uses?.length){
+		if(meta.uses){
 			if(into === target) console.warn("Cannot extend object with mixins");
 			for(let mixin of meta.uses) augment$(into,mixin);
 		}
@@ -255,7 +277,7 @@ export function register$(klass,symbol,name,flags,into = null) {
 	}
 
 	let supr = proto?.constructor;
-	let meta = meta$(klass,{symbol})
+	meta = meta$(klass,{symbol})
 
 	// All classes defined in imba get the Class.meta getter to access metadata for class
 	Object.defineProperty(klass,__meta__$,{value: meta, enumerable: false, configurable: true})
