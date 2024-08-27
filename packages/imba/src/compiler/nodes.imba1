@@ -3833,7 +3833,7 @@ export class ClassDeclaration < Code
 		var staticInits = @staticInits = ClassInitBlock.new()
 		var patches = InstancePatchBlock.new()
 
-		if @mixins[0] and !tsc
+		if @mixins[0] and !tsc and !isExtension
 			inits.add LIT("this[{refSym}]?.(...arguments)")
 
 		var ctor = body.option(:ctor)

@@ -43,7 +43,7 @@ const state = globalThis[__imba__$] ||= {
 
 function meta$(klass,defaults = {}){
 	mmap.has(klass) || mmap.set(klass,{
-		symbol: Symbol(),
+		symbol: Symbol(klass.name),
 		parent: Object.getPrototypeOf(klass.prototype)?.constructor,
 		for:klass,
 		uses:null,
@@ -166,7 +166,7 @@ export function augment$(klass,mixin){
 		mix.augments = new Set;
 
 		// Define hasInstance on mixin so you can do object isa MyMixin
-		const ref = mix.ref = Symbol();
+		const ref = mix.ref = Symbol(mixin.name);
 		const native = Object[Symbol.hasInstance];
 		mixin.prototype[ref] = true;
 		Object.defineProperty(mixin,Symbol.hasInstance,{
