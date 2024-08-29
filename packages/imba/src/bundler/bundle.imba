@@ -1041,8 +1041,16 @@ export default class Bundle < Component
 
 		if input.path.match(/(^styles:)|(\.css$)|(\?styles?$)/)  # or input.path.match(/^styles:/)
 			if matched.indexOf(input) == -1
-				unless matched.find(do $1.path == input.path)
+				let prev = matched.find(do $1.path == input.path)
+				unless prev
 					matched.push(input)
+				else
+					let a = prev.#csschunk or ''
+					let b = input.#csschunk or ''
+					if a != b
+						if b.length >= a.length
+							matched[matched.indexOf(prev)] = input
+						log.info `ambiguous css between server and client`
 
 		for item in input.imports
 			continue if item.path.match(/\?css$/)

@@ -1180,6 +1180,9 @@ export class Node
 	def oid
 		@oid ||= STACK.generateId('')
 
+	def tid
+		@tid ||= STACK.generateId('tag')
+
 	def osym ns = '',name = ''
 		STACK.getSymbol(oid + ns,null,name)
 
@@ -9731,7 +9734,7 @@ class TagLike < Node
 		no
 
 	def sourceId
-		@sourceId ||= STACK.sourceId + '-' + oid
+		@sourceId ||= STACK.sourceId + '-' + tid
 
 	def body
 		@body || @options:body
@@ -10307,7 +10310,7 @@ export class Tag < TagLike
 
 	def traverse
 		return self if @traversed
-		@tid = STACK.generateId('tag')
+		tid
 		@tagDeclaration = STACK.up(TagDeclaration)
 		let close = @options:close
 		let body = @options:body or []
@@ -10323,6 +10326,7 @@ export class Tag < TagLike
 
 	def visitBeforeBody stack
 		oid
+		tid
 		let type = @options:type
 		type && type.traverse
 
@@ -11805,7 +11809,7 @@ export class StyleRuleSet < StyleNode
 		@placeholders
 
 	def cssid
-		@cssid ||= "{STACK.root.sourceId}-{oid}"
+		@cssid ||= "{STACK.root.sourceId}-{tid}"
 
 	def visit stack, o
 		let cmp = @tagDeclaration = stack.up(TagDeclaration)
@@ -12371,7 +12375,7 @@ export class StyleInterpolationExpression < StyleTerm
 		super
 		if o:rootRule
 			o:rootRule.addPlaceholder(self)
-		@id = "{sourceId}_{oid}"
+		@id = "{sourceId}_{tid}" # could use a different counter?
 		@name = "--{@id}"
 		@runtimeValue = value
 		# @propname = stack.theme.expandProperty
@@ -13015,6 +13019,9 @@ export class Scope
 	def oid
 		@oid ||= STACK.generateId('')
 
+	def tid
+		@tid ||= STACK.generateId('tag')
+
 	def stack
 		STACK
 
@@ -13094,10 +13101,10 @@ export class Scope
 		'?'
 
 	def cssid
-		@cssid ||= "{root.sourceId}-{oid}"
+		@cssid ||= "{root.sourceId}-{tid}"
 
 	def cssns
-		@cssns ||= "{root.sourceId}_{oid}"
+		@cssns ||= "{root.sourceId}_{tid}"
 
 	def tagCache
 		unless @tagCache
