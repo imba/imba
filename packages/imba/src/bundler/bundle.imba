@@ -928,8 +928,7 @@ export default class Bundle < Component
 				}
 
 			let incStyles = res.css or o.format == 'css'
-			let inc = incStyles ? "\nimport './{src.name}?styles';" : ""
-			inc = incStyles ? "\nimport '_styles_';" : ""
+			let inc = incStyles ? "\nimport '_styles_';" : ""
 
 			let cached = res[self] ||= {
 				loader: 'js',
