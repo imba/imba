@@ -359,7 +359,7 @@ class Server
 		srv.on('request',handler)
 
 		srv.on('close') do
-			console.log "server is closing!!!"
+			console.log "server is closing!"
 
 		if global.IMBA_RUN
 			if cluster.isWorker
