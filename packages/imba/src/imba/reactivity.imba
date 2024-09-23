@@ -295,7 +295,7 @@ let SET = do(target,key,vsym,value,meta,bsym)
 	return
 
 export class Ref
-	def constructor type, name, val
+	def constructor type, name\any?, val\any?
 		id = NEXT_REF_ID++
 		observer = null
 		observers = null
@@ -462,7 +462,7 @@ class ObservableMap < Map
 
 const MapExtensions = getExtensions(ObservableMap)
 
-extend class Map
+extend class Map<K,V>
 	get ##reactive do REFERENCED(this,null,MapExtensions)
 	def ##referenced ref do REFERENCED(this,ref,MapExtensions)
 	def ##dereferenced ref do DEREFERENCED(this,ref)

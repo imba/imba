@@ -26,6 +26,12 @@ interface SVGSVGElement {
     src: ImbaAsset | string;
 }
 
+// Added
+
+interface HTMLMetaElement {
+    charset: string;
+}
+
 declare class Γany extends HTMLElement {
     [key: string]: any;
 }
