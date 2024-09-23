@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.237
+
+* Fix bug with computed properties not correctly removing observers.
+
+* Support `@font-face` declarations.
 
 ## 2.0.0-alpha.236
 
