@@ -307,6 +307,11 @@ extend class Element
 			return false
 		return parentElement..hidden? ?? true
 
+	# Element is detached from document?
+
+	get detached?
+		!global.document.documentElement.contains(self)
+
 	###
 	Is the element visible inside viewport and clickable?
 	###
