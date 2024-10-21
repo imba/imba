@@ -73,8 +73,9 @@ export function idx$(a,b){
 }
 
 export function devlog$(args,self,...rest){
-	if(self && self[L] instanceof Function)
-		args = self[L](args,self,...rest)
+	if(self && self[L] instanceof Function) args = self[L](args,self,...rest)
+	else if(globalThis[L] instanceof Function) args = globalThis[L](args,self,...rest)
+	// final / main rewriter here?
 	return args;
 }
 
