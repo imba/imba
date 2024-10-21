@@ -572,6 +572,11 @@ class Memo
 		self
 
 	def addSubscriber item
+
+		if item == self
+			console.warn `@computed depends on itself`
+			return
+		
 		unless observer
 			observer = item
 		else
@@ -589,15 +594,27 @@ class Memo
 			obs.splice(idx,1)
 		return
 
-	def $$invalidated stack, source
+	def $$invalidated level, source
 		flags |= F.STALE | F.POSSIBLY_STALE
-		observer.$$invalidated(stack,this) if observer
+
+		if level > 40
+			console.warn "Memo invalidated observer chain too deep",self,source
+			return
+
+		observer.$$invalidated(level + 1,this) if observer
 
 		return unless observers
 		for observer in observers
 			# these are never - they are always computeds
 			# not clear that these are invalidated? only if this value has not changed
-			observer.$$invalidated(stack,this)
+			observer.$$invalidated(level + 1,this)
+		self
+
+	def deactivate
+		if observing
+			for item in observing
+				item.removeSubscriber(self)
+		observing = null
 		self
 
 	def value
@@ -900,6 +917,15 @@ export def reportObserved item, meta
 
 export def createRef params = F.OBJECT
 	return new Ref
+
+export def disposeObservables item
+	let symbols = Object.getOwnPropertySymbols(item)
+	for sym in symbols
+		if item[sym] isa Memo
+			item[sym].deactivate!
+	return item
+
+
 
 export def getComputed target, name
 	target[REFSYM(name)]

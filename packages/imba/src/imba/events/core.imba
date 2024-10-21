@@ -324,6 +324,7 @@ export class EventHandler
 
 			if handler[0] == '$' and handler[1] == '_' and val[0] isa Function
 				# handlers should commit by default
+				event.#context = state
 				handler = val[0]
 				state.called = yes
 				state.commit = yes unless handler.passive #
