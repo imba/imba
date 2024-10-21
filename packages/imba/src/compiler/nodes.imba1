@@ -8049,7 +8049,7 @@ export class Call < Node
 				result.push LIT("'{dim}::{reset}'")
 
 			let devargs = []
-			let devlog = no
+			let devlog = false
 
 			for arg in args
 				# INFO leave for debugging purposes
@@ -8066,10 +8066,14 @@ export class Call < Node
 					.replace(/\t/g, "\\t")
 
 				if devlog
-					if arg isa Str or arg isa Num
-						devargs.push(Arr.new [arg])
+					# If it is a literal
+
+					if arg isa Str or arg isa Num or arg isa Bool
+						devargs.push(LIT("''"))
 					else
-						devargs.push(Arr.new [arg,STR(s)])
+						devargs.push(STR(s))
+
+					devargs.push(arg)
 
 				else
 					if arg isa Literal and !(arg isa Self or arg isa This or arg isa Arr)
@@ -8095,12 +8099,14 @@ export class Call < Node
 						result.push arg
 			
 			if devlog
-				# devargs.push(scope__.context)
 				let pars = [Arr.new(devargs),scope__.context]
 				let meth = STACK.up(MethodDeclaration)
-				if meth
-					pars.push(STR meth.rawName)
+				pars.push(STR meth.rawName) if meth
+				let l = scope__.root.l
+				return "(globalThis.DEBUG_IMBA && (l$={STDCALL('devlog$',pars).c},l$ && console.debug(...l$)))"
+
 				args = ArgList.new [Splat.new(STDCALL('devlog$',pars))]
+
 			else
 				args = ArgList.new ["\"{fmts.join(' ')}\"", *result]
 
@@ -13428,6 +13434,9 @@ export class RootScope < Scope
 	# single-file-component options
 	def sfco
 		@sfco ||= declare('sfc$',LIT('{/*$sfc$*/}'))
+	
+	def l
+		@l ||= declare('l$',LIT('null'))
 
 	def context
 		@context ||= RootScopeContext.new(self)
