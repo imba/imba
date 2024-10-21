@@ -216,7 +216,14 @@ export class Easer < Emitter
 
 		let parConnected = get_document!.contains(parent)
 
-		before ? parent.insertBefore(dom,before) : parent.appendChild(dom)
+		# Check if we are already still attached here
+		if before
+			unless dom.nextSibling == before
+				parent.insertBefore(dom,before)
+		else
+			if dom.parentNode != parent
+				# what if we are moving?
+				parent.appendChild(dom)
 
 		#nodes = getAnimatedNodes!
 
@@ -236,7 +243,7 @@ export class Easer < Emitter
 		commit!
 		unflag('_instant_')
 
-		let anims = #anims = track do
+		let anims = track do
 			phase = 'enter'
 			applyNodeSizes(sizes)
 			unflag('@off')
@@ -273,7 +280,7 @@ export class Easer < Emitter
 		sizes = getNodeSizes('out')
 		applyNodeSizes(sizes)
 		flag('@leave')
-		let anims = #anims = track do
+		let anims = track do
 			phase = 'leave'
 			flag('@off')
 			flag('@out')
