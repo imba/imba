@@ -278,8 +278,8 @@ def run entry, o, extras
 
 		unless o.command == 'build'
 			o.as = 'node'
-
-	let params = resolvePresets(prog.config,{entryPoints: [file.rel]},o.as or 'node')
+	
+	let params = resolvePresets(prog.config,{entryPoints: [file.rel]},o.as or ['node',o.platform or 'node'])
 
 	unless o.command == 'build'
 		o.port ||= await getport(port: getport.makeRange(3000, 3100))

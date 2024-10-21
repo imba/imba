@@ -166,7 +166,7 @@ export const defaultConfig = {
 		nodeworker: {
 			extends: 'node'
 			format: 'cjs'
-			platform: 'node'
+			platform: 'nodeworker'
 			splitting: false
 		}
 
@@ -265,6 +265,7 @@ export def resolvePresets imbaconfig, config = {}, types = null
 	let presets = imbaconfig.options
 
 	for typ in types
+		continue unless typ
 		let pre = presets[typ] or {}
 		base.presets.push(typ)
 		let curr = pre

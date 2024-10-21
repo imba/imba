@@ -353,6 +353,10 @@ export default class Bundle < Component
 			if let add = addExtensions[o.platform or esoptions.platform]
 				esoptions.resolveExtensions.unshift(...add)
 
+			if o.extensions
+				let ext = o.extensions
+				ext = ext.split(',') if ext isa 'string'
+				esoptions.resolveExtensions.unshift(...ext)
 		# TODO Clean up defines
 
 		let defines = esoptions.define ||= {}
@@ -1571,7 +1575,7 @@ export default class Bundle < Component
 				let file = outfs.lookup(asset.fullpath)
 				await file.write(asset.#contents,asset.hash,asset)
 
-			if staticFilesPath and !program.tmpdir
+			if staticFilesPath and !program.tmpdir and Object.keys(#bundles.web).length > 0
 				await copyPublicFiles!
 
 			# is this only really needed for hmr?
