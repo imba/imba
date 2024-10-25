@@ -28,7 +28,9 @@ class KeyedTagFragment < Fragment
 		return false if childNodes.length == 0
 		return true
 
-	def push item, idx
+	def push item, idx, key
+		# allow for removing it from the RenderContext later in removeChild
+		item.key = key
 		# on first iteration we can merely run through
 		unless #domFlags & $TAG_INITED$
 
@@ -81,7 +83,7 @@ class KeyedTagFragment < Fragment
 		insertChild(item,index, prevIndex)
 
 	def removeChild item, index
-		# self.map.delete(item)
+		self.$.delete item.key
 		# what if this is a fragment or virtual node?
 		if item.parentNode
 			# log 'removeChild',item,item.parentNode
