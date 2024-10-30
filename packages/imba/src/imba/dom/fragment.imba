@@ -1,5 +1,6 @@
 # imba$stdlib=1
 import {Text,createComment,createTextNode,Comment,Node} from './core'
+import {RenderContext,createRenderContext} from './context'
 import {Flags} from './flags'
 
 export def use_slots
@@ -37,6 +38,9 @@ export class Fragment
 
 	def #afterVisit
 		self
+
+	def #getRenderContext sym
+		createRenderContext(self,sym)
 
 let counter = 0
 # like a list

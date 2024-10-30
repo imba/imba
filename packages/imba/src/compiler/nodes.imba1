@@ -10810,7 +10810,7 @@ export class Tag < TagLike
 
 		# checking to see if a node is static enough to be inserted directly into the dom without
 		# any references.
-		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey and !isDynamicType
+		if @dynamics:length == 0 and !hasDynamicFlags and !dynamicKey and !isDynamicType and !option(:slotted)
 			if nodes.every(|v| v isa Str or (v isa Tag and !v.isDynamicType and !v.option(:key)))
 				if !shouldEnd and !hasNonTagChildren and !isSlot and !option(:dynamic) and !option(:reference)
 					hasDynamicParts = no
@@ -10950,9 +10950,11 @@ export class Tag < TagLike
 			elif isSlot and @consumed:length == 1
 				# single child can act as slot?
 				# if it is a string we dont really want to insert it at all
-				@consumed[0].set(dynamic: yes, detached: yes)
+				@consumed[0].set(detached: yes, slotted: yes)
 				@consumed[0].@tvar = tvar
 				@consumed[0].@parent = parent
+
+				ownCache = no
 				# add("{tvar}")
 
 			elif parent isa TagLoopFragment
