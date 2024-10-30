@@ -80,7 +80,7 @@ export def @thenable target, key, desc
 
 	desc.value = do(value)
 		let m = lookup(this)
-		m.wrapped ??= Promise.resolve(val.call(this))
+		m.wrapped ??= Promise.resolve(val.call(this,m))
 		return m.wrapped
 	
 	desc.value.reset = do(target)
