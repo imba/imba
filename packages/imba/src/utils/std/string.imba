@@ -7,7 +7,7 @@ extend class String
 		int? or float?
 
 	get int?
-		/^-?\d+$/.test self
+		/^-?(0|[1-9]\d*)$/.test self
 
 	get float?
 		/^-?\d+\.\d+$/.test self
