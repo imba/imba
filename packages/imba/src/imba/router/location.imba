@@ -70,7 +70,9 @@ export class Location
 		searchParams.get(name)
 
 	def #setQueryParam target, name, value
-		let curr = #getQueryParam(target,name)
+		let curr = #getQueryParam(target,name) ?? ''
+		value = value ?? ''
+
 		if curr != value
 			if (value == null or value == '')
 				searchParams.delete(name)
@@ -79,6 +81,6 @@ export class Location
 
 			if active?
 				# need to improve how we update the state?
-				router.history.replaceState({},null,url.toString!)
+				router.history.replaceState({},null,path)
 				router.touch!
 		return yes
