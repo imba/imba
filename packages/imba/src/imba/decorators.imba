@@ -31,19 +31,20 @@ export def @thenable target, key, desc
 	let weakmap = new WeakMap
 	let meta = thenables.get(target)
 	let maxtime = o.timeout or 10s
+	let readable = `{target.constructor..name or ''}.{String(key isa 'symbol' ? key.description : key)}`
 	meta || thenables.set(target,meta = {})
 
 	if meta.key
-		throw new Error(`@thenable {target.constructor..name}.{key} not allowed - @thenable {meta.key} already defined`)
+		throw new Error(`@thenable {readable} not allowed - @thenable {meta.key} already defined`)
 
 	if val !isa Function
-		throw new Error(`@thenable only supports functions`)
+		throw new Error(`@thenable {readable} only supports functions`)
 
 	if val.length > 0
-		throw new Error(`@thenable methods cannot be called with arguments ({key})`)
+		throw new Error(`@thenable {readable} methods cannot be called with arguments`)
 
 	const warn = do
-		console.trace `@thenable {target.constructor..name}.{key} took more than {maxtime}ms - make sure method does not return self.`
+		console.trace `@thenable {readable} took more than {maxtime}ms - make sure method does not return self.`
 
 	const lookup = do(that)
 		let m = weakmap.get(that)
@@ -62,7 +63,7 @@ export def @thenable target, key, desc
 				clearTimeout(timeout)
 				obj.met = yes
 				obj.error = error
-				console.trace `@thenable {target.constructor..name}.{key} threw error`,error
+				console.trace `@thenable {readable} threw error`,error
 				reject(error)
 
 			that[key]().then(&,err) do
