@@ -293,7 +293,7 @@ export class EventHandler
 			if event.handle$mod.apply(state,mods.options or []) == false
 				return
 
-		let guard = Event[self.type + '$handle'] or Event[event.type + '$handle'] or event.handle$mod or self.guard
+		let guard = Event[self.type + '$handle'] or Event[event.type + '$handle'] or self.guard
 
 		if guard and guard.apply(state,mods.options or []) == false
 			return
