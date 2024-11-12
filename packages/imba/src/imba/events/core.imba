@@ -80,6 +80,9 @@ extend class Event
 	def @trusted
 		return !!isTrusted
 
+	def @untrusted
+		return !isTrusted
+
 	def @if expr
 		return !!expr
 
