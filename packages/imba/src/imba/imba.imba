@@ -6,6 +6,7 @@ export * from './serve'
 export * from './env'
 export * from './memo'
 export * from './queue'
+export * from './log'
 
 export * from './dom/core'
 export * from './dom/fragment'
