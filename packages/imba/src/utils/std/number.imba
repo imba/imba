@@ -10,6 +10,13 @@ extend class Number
 	def ceil
 		Math.ceil self
 
+	def times blk
+		let i = 0
+		let k = self
+		while i < k
+			blk(i++)
+		return
+
 	def round prec = 1
 		if prec != 1
 			let inv = 1.0 / prec
