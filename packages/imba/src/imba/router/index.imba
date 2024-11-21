@@ -152,6 +152,8 @@ export class Router < EventEmitter
 				elif mode == 'pop'
 					self.history.index = params.index
 
+				# need to be able to redirect here
+				refreshing = no
 				self.emit('change',req)
 				touch!
 				commit!
