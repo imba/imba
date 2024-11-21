@@ -42,6 +42,40 @@ export const transitions = new Transitions
 let instance = global.imba ||= {}
 instance.transitions = transitions
 
+export class EaseGroup < Emitter
+
+	flushing? = no
+	mutations = []
+
+	def constructor callback
+		super()
+		callback = callback
+
+
+	def insert parent, node, before
+		mutations.push {target: parent, addedNodes: [node], removedNodes:[], nextSibling: before}
+
+	def remove parent, node
+		mutations.push {target: parent, addedNodes:[], removedNodes: [node]}
+
+	def flush
+		let muts = mutations.slice(0)
+		unless muts.length
+			return self
+
+		mutations = []
+		callback(muts) if callback isa Function
+		emit('start',self,muts)
+		flushing? = yes
+		for mut of muts
+			for add of mut.addedNodes
+				add.#insertInto(mut.target,mut.nextSibling)
+			for rem of mut.removedNodes
+				rem.#removeFrom(mut.target)
+		flushing? = no
+		emit('end',self,muts)
+	
+
 export class Easer < Emitter
 	def constructor target
 		super()
@@ -197,6 +231,12 @@ export class Easer < Emitter
 		map
 
 	def #insertInto parent, before
+
+		if #group and !#group.flushing?
+			#group.insert(parent,dom,before)
+			# is it not a point to actually ensure that we do change?
+			return dom
+
 		let sizes
 		if entering?
 			return dom
@@ -255,6 +295,12 @@ export class Easer < Emitter
 		return dom
 
 	def #removeFrom parent
+
+		if #group and !#group.flushing?
+			#group.remove(parent,dom)
+			# is it not a point to actually ensure that we do change?
+			return
+
 		if leaving?
 			return
 
