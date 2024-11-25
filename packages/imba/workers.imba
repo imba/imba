@@ -17,11 +17,12 @@ def compile_imba code, options
 	try
 		res = compile(code,options)
 	catch e
-		console.log "ERROR COMPILING IMBA",e,options.sourcePath
+		console.log "ERROR COMPILING IMBA",e,options.sourcePath,code
 		res = {}
 
-	for item in res.diagnostics
-		item.lineText = item.#lineText
+	if res.diagnostics
+		for item in res.diagnostics
+			item.lineText = item.#lineText
 
 	if res.warnings
 		out.warnings = res.warnings
