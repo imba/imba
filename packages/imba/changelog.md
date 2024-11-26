@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.0-alpha.238
+
+* Refactored `@thenable` decorator to use WeakMap
+
+* Add `Element#detached?` getter
+
+* Expose internal RenderContext for `imba.mount`
+
 ## 2.0.0-alpha.237
 
 * Fix bug with computed properties not correctly removing observers.
