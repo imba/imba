@@ -8103,6 +8103,7 @@ export class Call < Node
 				let meth = STACK.up(MethodDeclaration)
 				pars.push(STR meth.rawName) if meth
 				let l = scope__.root.l
+				STACK.use('devlog')
 				return "(globalThis.DEBUG_IMBA && (l$={STDCALL('devlog$',pars).c},l$ && console.debug(...l$)))"
 
 				args = ArgList.new [Splat.new(STDCALL('devlog$',pars))]
