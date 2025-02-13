@@ -26,6 +26,23 @@ const MAPS = {
 	VALUE: new Map
 	REF: new Map
 }
+
+let ROOT
+
+const rx = {
+	root: null
+	ctx: null
+	# The root reactive context
+	# The current reactive context
+	get context do CTX
+	get atomics do ATOMICS
+	get ownref do OWNREF
+
+	def flush
+		if CTX == ROOT
+			ROOT.flush!
+}
+
 const OWNREF = Symbol.for("~")
 const METAREF = Symbol.for("~~")
 
@@ -222,7 +239,7 @@ class Context
 		ROOT.reactions.add(reaction)
 
 	def push item
-		CTX = child.reset(item)
+		rx.ctx = CTX = child.reset(item)
 
 	def pop
 		let res = null
@@ -247,6 +264,9 @@ class Context
 		CTX = parent # call re-enter?
 		if CTX == ROOT
 			ROOT.flush!
+			rx.ctx = null
+		else
+			rx.ctx = CTX
 		return res
 
 	get child
@@ -268,8 +288,7 @@ class Root < Context
 	def add
 		yes
 
-let CTX = new Root(null,0)
-let ROOT = CTX
+let CTX = ROOT = rx.root = new Root(null,0)
 
 let REACT = do
 	CTX.tracking = no
@@ -859,7 +878,6 @@ export def atomic cb
 		try
 			res = cb()
 		catch e
-			# console.log 'error in atomics',e
 			ATOMICS = null
 			for beacon of all
 				beacon.$$invalidated(1,all)
@@ -867,9 +885,7 @@ export def atomic cb
 			throw e
 
 		ATOMICS = null
-		# invalidate - but dont flush yet
-		# if CTX == ROOT and $web$
-		#	console.log 'running atomic in root',all.size	
+
 		for beacon of all
 			beacon.$$invalidated(1,all)
 		ROOT.flush! if ROOT == CTX
@@ -891,7 +907,7 @@ export def spy spy,blk,ctx = null
 	try
 		# are we tracking here
 		TRACKING++
-		let res = ctx ? blk.call(ctx) : blk
+		let res = ctx ? blk.call(ctx,spy) : blk(spy,ctx)
 		CTX.pop(spy)
 		TRACKING--
 		return res
@@ -973,16 +989,4 @@ export def @action target, key, desc
 		desc.value = do action.run(this,arguments)
 	return desc
 
-
-export const rx = {
-	# The root reactive context
-	get root do ROOT
-	# The current reactive context
-	get context do CTX
-	get atomics do ATOMICS
-	get ownref do OWNREF
-
-	def flush
-		if CTX == ROOT
-			ROOT.flush!
-}
+export {rx}
