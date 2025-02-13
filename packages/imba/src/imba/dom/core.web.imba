@@ -160,7 +160,7 @@ extend class Node
 		self
 
 	get #parentNode\ParentNode
-		#parent.#closestNode
+		#parent..#closestNode
 
 	get #context
 		##context ||= new Proxy(self,contextHandler)

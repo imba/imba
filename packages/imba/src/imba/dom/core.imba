@@ -304,7 +304,7 @@ export class Node
 		self
 
 	get #parentNode
-		#parent.#closestNode
+		#parent..#closestNode
 
 	def #__init__
 		self
