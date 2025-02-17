@@ -417,12 +417,13 @@ global class SpecAssert < SpecComponent
 		if a === b
 			return true
 
-		if a isa Array and b isa Array
+		if (a isa Array and b isa Array) or (a isa Uint8Array and b isa Uint8Array)
 			return false if a.length != b.length
+
 			for item,i in a
 				return false unless self.compare(item,b[i])
 			return true
-			# return JSON.stringify(a) == JSON.stringify(b)
+
 		if isPlainObject(a) and isPlainObject(b)
 			# Not caring about order of keys
 			for own k,v of a
