@@ -103,6 +103,8 @@ def createChainable keys,fn
 			Object.defineProperty(chain,key,{
 				get: do create({...ctx, [key]: true})
 			})
+		chain.modifiers = ctx
+
 		return chain
 	let chain = create({})
 	chain.fn = fn
@@ -156,7 +158,7 @@ global class Spec < SpecComponent
 			observer = new MutationObserver do(muts)
 				context.state.mutations.push(...muts)
 
-		test = test.bind(self)
+		# test = test.bind(self)
 
 		test = createChainable(['skip','todo','only','client','node','web','both','concurrent','fails'],test)
 		describe = createChainable(['skip','todo','only','client','node','web','both','concurrent'],describe.bind(self))
