@@ -49,6 +49,7 @@ const valueMap = {
 const KnownNodeFlags = {
 	'--trace-gc': yes
 	'--trace-uncaught': yes
+	'--prof': yes
 }
 
 let argvpre = argv.slice(0)
