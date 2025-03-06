@@ -3613,13 +3613,6 @@
                 <string>punctuation.definition.comment.imba</string>
               </dict>
             </dict>
-            <key>patterns</key>
-            <array>
-              <dict>
-                <key>include</key>
-                <string>source.ts</string>
-              </dict>
-            </array>
           </dict>
           <dict>
             <key>name</key>

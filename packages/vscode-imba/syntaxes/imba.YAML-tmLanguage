@@ -1355,8 +1355,6 @@ repository:
       contentName: 'source.ts.embedded.imba'
       endCaptures:
         '0': { name: punctuation.definition.comment.imba }
-      patterns:
-      - include: 'source.ts'
 
     - name: comment.block.imba
       begin: (###)
