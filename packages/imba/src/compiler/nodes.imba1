@@ -4529,7 +4529,7 @@ export class AmperFunc < Func
 		# hash the output? Or the source? Maybe the source is enough?
 		var out = body.c(braces: no)
 
-		unless walker.deopt
+		if !walker.deopt and !STACK.tsc
 			let raw = body.sourcecode
 			let sym = raw.replace(/[\"]/g,"'")
 			let pars = [LIT('"' + sym + '"'),walker.@self or LIT('globalThis'),LIT("(v$)=>{out}")]
@@ -6035,7 +6035,8 @@ export class Access < Op
 
 		if rgt isa Num
 			# FIXME not adding type info
-			if rgt.toNumber < 0
+			if rgt.toNumber < 0 and !STACK.tsc
+				# TODO Make typescript check if it will viably work
 				return safeop ? util.optNegIndex(ctx,rgt).c : util.negIndex(ctx,rgt).c
 
 			return ctx.c + "{safeop ? '?.' : ''}[" + rgt.c + "]"
@@ -6727,6 +6728,9 @@ export class Assign < Op
 				# lc = "globalThis.{M(helpers.toNamespacedIdentifier('OPS',String(l.@right)),l.@right)}"
 
 		lc ||= l.c
+
+		if STACK.tsc and op == '||='
+			op = '  ='
 		var out = "{lc} {op} {right.c(expression: true)}"
 
 		# if let typ = (STACK.tsc and (datatype or (l and !(l isa VarReference) and l.datatype)))
