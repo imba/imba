@@ -848,12 +848,12 @@ export class Action
 			# are we tracking here
 			TRACKING++ if track
 			let res = cb.apply(that,args)
-			CTX.pop(self)
 			TRACKING-- if track
+			CTX.pop(self)
 			return res
 		catch e
-			CTX.pop(self)
 			TRACKING-- if track
+			CTX.pop(self)
 			throw e
 
 export def autorun cb, options = {}
@@ -908,12 +908,12 @@ export def spy spy,blk,ctx = null
 		# are we tracking here
 		TRACKING++
 		let res = ctx ? blk.call(ctx,spy) : blk(spy,ctx)
-		CTX.pop(spy)
 		TRACKING--
+		CTX.pop(spy)
 		return res
 	catch e
-		CTX.pop(spy)
 		TRACKING--
+		CTX.pop(spy)
 		throw e 
 
 export def reportChanged item
