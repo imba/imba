@@ -95,7 +95,7 @@ export class Scheduler
 	get version
 		#version
 
-	def add item, force
+	def add item, force = no
 		if force or self.queue.indexOf(item) == -1
 			self.queue.push(item)
 

@@ -4532,10 +4532,22 @@ export class AmperFunc < Func
 		if !walker.deopt and !STACK.tsc
 			let raw = body.sourcecode
 			let sym = raw.replace(/[\"]/g,"'")
+			let that = walker.@self
 			let pars = [LIT('"' + sym + '"'),walker.@self or LIT('globalThis'),LIT("(v$)=>{out}")]
 
+			# moving scopeless amperfunctions out to the top of the file
+			unless that
+				let scop = scope__.root
+				let lit = LIT("{runtime:memofunc}({pars.map(do $1.c).join(',')})")
+				let ref = scop.@ampermap[sym]
+
+				unless ref
+					let name = 'ƒ' + STACK.incr('ƒ') # sym.replace('&.','ƒ')
+					ref = scop.@ampermap[sym] = scop.declare(name,lit)
+
+				return ref.c
+
 			return "{runtime:memofunc}({pars.map(do $1.c).join(',')})"
-			return Util.memo(*pars).c
 
 		return "((v$)=>{out})"
 
@@ -13054,6 +13066,7 @@ export class Scope
 		@virtual = no
 		@counter = 0
 		@varmap  = {}
+		@ampermap = {}
 		@counters = {}
 		@varpool = []
 		@mixins = {}
