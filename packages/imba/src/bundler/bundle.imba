@@ -86,7 +86,7 @@ export default class Bundle < Component
 
 	# Will bundle be run in fork mode (vs cluster)?
 	get fork?
-		!program.watch and program.instances == 1
+		(!program.watch or program.fork) and program.instances == 1
 
 	get standalone?
 		!!program.bundle

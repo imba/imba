@@ -162,6 +162,9 @@ def parseOptions options, extras = []
 		if options.mode == 'development'
 			options.hmr = yes
 
+	if process.env.WEBCONTAINER
+		options.fork = yes
+
 	if options.force
 		options.mtime = Date.now!
 	else
@@ -448,6 +451,7 @@ def common cmd
 		.option("-p, --production","Use defaults for production")
 		.option("--br", "Compress assets with brotli")
 		.option("--vite", "Use Vite as a bundler")
+		.option("--fork", "Disable cluster mode")
 		.option("--esbuild", "Use the built-in bundler")
 		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
 		.option("--bundle", "Try to bundle all external dependencies")

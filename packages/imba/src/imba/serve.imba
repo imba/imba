@@ -12,6 +12,7 @@ import https from 'https'
 # bundle supported file extensions
 const defaultHeaders = {
 	html: {'Content-Type': 'text/html; charset=utf-8'}
+	txt: {'Content-Type': 'text/plain; charset=utf-8'}
 	js: {'Content-Type': 'text/javascript; charset=utf-8'}
 	cjs: {'Content-Type': 'text/javascript; charset=utf-8'}
 	mjs: {'Content-Type': 'text/javascript; charset=utf-8'}
@@ -50,7 +51,10 @@ const defaultHeaders = {
 	ogv: {'Content-Type': 'video/ogg'}
 	oga: {'Content-Type': 'audio/ogg'}
 	opus: {'Content-Type': 'audio/opus'}
+}
 
+const hmrState = {
+	id: Date.now()
 }
 
 const proc = global.process
@@ -77,6 +81,15 @@ class Servers < Set
 		for server of self
 			server.emit(event,data)
 
+	def sseEnd
+		let promises = []
+		for server of self
+			for client of server.clients
+				promises.push new Promise do(resolve)
+					client.on('finish',resolve)
+					client.end()
+		return Promise.all(promises)
+
 const servers = new Servers
 
 const process = new class Process < EventEmitter
@@ -91,6 +104,10 @@ const process = new class Process < EventEmitter
 					emit('message',msg)
 					emit(...msg.slice(1)) if msg[0] == 'emit'
 					# reload! if msg == 'reload'
+			else
+				proc.on('message') do(msg)
+					emit(...msg.slice(1)) if msg[0] == 'emit'
+
 		self
 
 	def #setup
@@ -100,6 +117,11 @@ const process = new class Process < EventEmitter
 			let prev = global.IMBA_MANIFEST
 			global.IMBA_MANIFEST = e
 			servers.broadcast('rebuild',e)
+
+		on('reloadHard') do(e)
+			servers.broadcast('reloadHard',e)
+			await servers.sseEnd()
+			proc.exit(0)
 
 		on('reloading') do(e)
 			state.reloading = yes
@@ -229,6 +251,7 @@ class Server
 	def constructor srv,options = {}
 		servers.add(self)
 		id = Math.random!
+		startedAt = Date.now!
 		options = options
 		closed = no
 		paused = no
@@ -288,7 +311,11 @@ class Server
 					return stalledResponses.push(res)
 
 			if global.IMBA_HMR
-				if url == '/__hmr__.js' and devtoolsPath
+				if url == '/__hmr__.json'
+					res.writeHead(200, defaultHeaders.json)
+					return res.end(JSON.stringify(hmrState))
+
+				elif url == '/__hmr__.js' and devtoolsPath
 					# and if hmr?
 					let stream = nfs.createReadStream(devtoolsPath)
 					res.writeHead(200, defaultHeaders.js)
@@ -305,6 +332,8 @@ class Server
 					res.writeHead(200,headers)
 					clients.add(res)
 					broadcast('init',global.IMBA_MANIFEST,[res])
+					broadcast('state',hmrState,[res])
+					
 					req.on('close') do clients.delete(res)
 					return true
 
@@ -362,7 +391,7 @@ class Server
 			console.log "server is closing!"
 
 		if global.IMBA_RUN
-			if cluster.isWorker
+			if cluster.isWorker or proc.env.IMBA_WATCH
 				process.#setup!
 				process.send('serve')
 

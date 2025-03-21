@@ -30,7 +30,7 @@ export def @thenable target, key, desc
 	let thensym = Symbol!
 	let weakmap = new WeakMap
 	let meta = thenables.get(target)
-	let maxtime = o.timeout or 10s
+	let maxtime = o.timeout or 20s
 	let readable = `{target.constructor..name or ''}.{String(key isa 'symbol' ? key.description : key)}`
 	meta || thenables.set(target,meta = {})
 
@@ -56,6 +56,7 @@ export def @thenable target, key, desc
 		let obj = lookup(that)
 		
 		let promise = obj.promise ||= new Promise do(resolve,reject)
+			# TODO add reference to resolver so that we can resolve it from outside
 			# TODO should only happen in debug
 			let timeout = o.timeout !== no ? setTimeout(warn,o.timeout or 20s,that) : null
 

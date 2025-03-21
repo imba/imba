@@ -7,6 +7,7 @@ class DevTools {
 		
 		this.start();
 		this.debug = false;
+		this.state = {};
 		this;
 	}
 	
@@ -65,7 +66,7 @@ class DevTools {
 			
 			return self.log('sse.onmessage',e);
 		};
-		
+
 		this.socket.addEventListener("paused",function(e) {
 			
 			self.log("server paused");
@@ -94,17 +95,15 @@ class DevTools {
 			let manifest = JSON.parse(e.data);
 			return self.refresh(manifest);
 		});
+
+		this.socket.addEventListener("state",function(e) {
+			self.state = JSON.parse(e.data);
+		});
 		
 		this.socket.addEventListener("init",function(e) {
 			
 			let manifest = JSON.parse(e.data);
 			return self.refresh(manifest);
-		});
-		
-		this.socket.addEventListener("state",function(e) {
-			
-			let json = JSON.parse(e.data);
-			return self.log("server state",json);
 		});
 		
 		this.socket.addEventListener("errors",function(e) {
@@ -122,10 +121,38 @@ class DevTools {
 			self.log('asked to reload by server');
 			return globalThis.document.location.reload();
 		});
+
+		this.socket.addEventListener("reloadHard",function(e) {
+			self.socket.close();
+			self.waitForServerAndReload();
+			return;
+		});
 		
 		this.socket.onerror = function(e) {
 			return self.log('hmr disconnected',e);
 		};
+	}
+
+	async waitForServerAndReload(){
+		let delay = 100;
+		while (true) {
+			await new Promise(resolve => setTimeout(resolve, delay));
+
+			try {
+				const response = await fetch("/__hmr__.json", { cache: 'no-cache' });
+				if (response.ok) {
+					let state = await response.json();
+					if(this.state.id != state.id){
+						window.location.reload();
+						break;
+					}
+				}
+			} catch (err) {
+				// Server not responding yet
+			}
+
+			delay = Math.min(delay * 1.1, 5000);
+		}
 	}
 };
 

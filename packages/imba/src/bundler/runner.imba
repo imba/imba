@@ -2,7 +2,7 @@ import cluster from 'cluster'
 import np from 'node:path'
 import cp from 'child_process'
 import nfs from 'node:fs'
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url'
 import Component from './component'
 import {Logger} from '../utils/logger'
 import {builtinModules} from 'module'
@@ -10,7 +10,6 @@ import {createHash, slash} from './utils'
 import mm from 'micromatch'
 import {__served__} from '../imba/utils'
 import { ensurePackagesInstalled, getConfigFilePath } from '../utils/vite'
-# import { installSourcemapsSupport } from './source-map'
 
 class WorkerInstance
 	runner = null
@@ -35,6 +34,7 @@ class WorkerInstance
 		log = new Logger(prefix: ["%bold%dim",name,": "])
 		current = null
 		restarts = 0
+
 	def create-dev-styles
 		const urls = []
 		const ids = []
@@ -83,6 +83,7 @@ class WorkerInstance
 			IMBA_OUTDIR: o.outdir
 			IMBA_WORKER_NR: options.number
 			IMBA_CLUSTER: !bundle.fork?
+			IMBA_WATCH: (o.watch ? 1 : '')
 			IMBA_LOGLEVEL: process.env.IMBA_LOGLEVEL or 'warning'
 			PORT: process.env.PORT or o.port
 			VITE: o.vite
@@ -99,11 +100,18 @@ class WorkerInstance
 					workerMessageHandler(message, handle, fork)
 			# setup-vite fork
 			process.on('SIGINT') do
+				#reload = no
 				fork.kill('SIGINT')
 
 			fork.on('exit') do(code)
-				process.exit(code)
+				if o.watch and #reload
+					#reload = no
+					current = null
+					start!
+				else
+					process.exit(code)
 
+			current = fork
 			return fork
 
 		cluster.setupMaster(args)
@@ -116,6 +124,7 @@ class WorkerInstance
 			# log.info "reloading"
 			prev.#next = worker
 			prev..send(['emit','reloading'])
+
 		worker.on 'exit' do(code, signal)
 			if signal
 				log.info "killed by signal: %d",signal
@@ -188,7 +197,12 @@ class WorkerInstance
 		current..send(event)
 
 	def reload
-		start!
+		if bundle.fork?
+			#reload = yes
+			if current
+				current.send(['emit','reloadHard'])
+		else
+			start!
 		self
 
 export default class Runner < Component
