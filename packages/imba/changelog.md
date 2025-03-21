@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-alpha.239
+
+* Fixed imba cli to work reliably inside webcontainers
+
+* Move global amperfuncs to top of file
+
 ## 2.0.0-alpha.238
 
 * Refactored `@thenable` decorator to use WeakMap
