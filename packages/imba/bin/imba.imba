@@ -429,7 +429,7 @@ def run entry, o, extras
 		run()
 	elif out..main and o.command != 'build'
 		run()
-	elif o.watch
+	elif o.watch and o.command != 'build'
 		bundle.once('built',run)
 	return
 
