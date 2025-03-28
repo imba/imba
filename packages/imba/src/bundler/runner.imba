@@ -101,13 +101,18 @@ class WorkerInstance
 			# setup-vite fork
 			process.on('SIGINT') do
 				#reload = no
-				fork.kill('SIGINT')
+				#exit = yes
+				if fork
+					fork.kill('SIGINT')
+				process.exit(0)
 
 			fork.on('exit') do(code)
-				if o.watch and #reload
-					#reload = no
-					current = null
-					start!
+				current = null
+
+				if o.watch and !#exit
+					if #reload
+						#reload = no
+						start!
 				else
 					process.exit(code)
 
@@ -190,7 +195,6 @@ class WorkerInstance
 			process.exit!
 
 		if message == 'reload'
-			console.log "RELOAD MESSAGE"
 			reload!
 
 	def broadcast event
@@ -198,9 +202,11 @@ class WorkerInstance
 
 	def reload
 		if bundle.fork?
-			#reload = yes
 			if current
+				#reload = yes
 				current.send(['emit','reloadHard'])
+			else
+				start!
 		else
 			start!
 		self
