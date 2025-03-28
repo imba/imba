@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.240
+
+* Improve webcontainer support
+
 ## 2.0.0-alpha.239
 
 * Fixed imba cli to work reliably inside webcontainers
