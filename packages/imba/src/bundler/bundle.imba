@@ -380,10 +380,7 @@ export default class Bundle < Component
 			esoptions.inject = []
 			esoptions.nodePaths.push(np.resolve(program.imbaPath,'polyfills'))
 
-		defines["globalThis.IMBA_HMR"] ||= String(hmr?)
 		defines["globalThis.IMBA_DEV"] ||= String(hmr?)
-		defines["globalThis.IMBA_RUN"] ||= String(run?)
-
 		defines["globalThis.IMBA_ENV_DEV"] ||= String(!production?)
 		defines["globalThis.IMBA_ENV_PROD"] ||= String(production?)
 		defines["globalThis.IMBA_ENV_DEBUG"] ||= String(!production? and run?)
@@ -403,6 +400,10 @@ export default class Bundle < Component
 				esoptions.banner.js += '\nimport * as $dotenv from "dotenv";$dotenv.config();'
 			elif main?
 				esoptions.banner.js += '\nrequire("dotenv").config();'
+
+		if main?
+			esoptions.banner.js += `globalThis.IMBA_HMR = true;` if hmr?
+			esoptions.banner.js += `globalThis.IMBA_RUN = true;` if run?
 
 		if webish?
 			# process.env should return an empty object when compiled to web
@@ -605,10 +606,24 @@ export default class Bundle < Component
 		esb.onResolve(filter: /^imba(\/|$)/) do(args)
 			if peerDependencies.indexOf('imba') >= 0
 				return null
+
+			# console.log 'resolve',nodeish?,args.path,args.importer,imbaDir
+			let rel = args.path.slice(args.path.indexOf('/') + 1)
+
 			# TODO Let the esbuild resolver take over here
 			if args.path == 'imba'
 				if o.format == 'css'
 					return {path: args.path, external: yes}
+
+				if process.env.WEBCONTAINER
+					if nodeish?
+						if run?
+							return {path: np.resolve(imbaDir,'dist','imba.node.js'), external: yes}
+						else
+							return {path: 'imba', external: yes}
+
+					if web? and esm? and run?
+						return {path: '/__imba__.mjs', external: yes}
 
 				let out = np.resolve(imbaDir,'index.imba')
 				return {path: out, namespace: 'file'}
@@ -620,8 +635,11 @@ export default class Bundle < Component
 				'runtime': 'src/imba/runtime.mjs'
 			}
 
-			let rel = args.path.slice(args.path.indexOf('/') + 1)
+			if web? and esm? and run? and process.env.WEBCONTAINER and rel == 'runtime'
+				return {path: '/__imba__.mjs', external: yes}
+
 			let path = np.resolve(imbaDir,map[rel] or rel)
+
 
 			let exts = ['','.imba']
 			if rel == 'program' or rel == 'compiler'
@@ -1470,7 +1488,8 @@ export default class Bundle < Component
 					asset.path = np.relative(fs.cwd,newpath)
 
 		for asset in assets when asset.entryId
-			entryManifest[asset.entryId] = {
+			# let bundle = root.builder.refs[asset.entryId]
+			let obj = entryManifest[asset.entryId] = {
 				url: asset.url
 				path: asset.fullpath
 			}
@@ -1506,7 +1525,7 @@ export default class Bundle < Component
 					let parts = ["globalThis.IMBA_MANIFEST={JSON.stringify(entryManifest)}","globalThis.IMBA_ASSETS_PATH='{assetsDir}'"]
 					if staticFilesPath and program.tmpdir
 						parts.push("globalThis.IMBA_STATICDIR='{staticFilesPath}'")
-					head = parts.join(';')
+					head = parts.join(';') + ';'
 
 				if asset.public and hmr?
 					head = "(globalThis.IMBA_LOADED || (globalThis.IMBA_LOADED=\{\}))['{asset.url}']=true;"

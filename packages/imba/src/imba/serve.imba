@@ -265,6 +265,7 @@ class Server
 		staticDir = global.IMBA_STATICDIR or ''
 
 		if proc.env.IMBA_PATH
+			# what if there is no imba path?
 			devtoolsPath = np.resolve(proc.env.IMBA_PATH,'hmr.js')
 
 		scheme = srv isa http.Server ? 'http' : 'https'
@@ -309,6 +310,12 @@ class Server
 					return res.end!
 				else
 					return stalledResponses.push(res)
+
+			if url == '/__imba__.mjs'
+				res.writeHead(200, defaultHeaders.mjs)
+				let path = np.resolve(proc.env.IMBA_PATH,'dist','imba.mjs')
+				let stream = nfs.createReadStream(path)
+				return stream.pipe(res)
 
 			if global.IMBA_HMR
 				if url == '/__hmr__.json'
