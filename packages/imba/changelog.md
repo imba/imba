@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Correctly deoptimize amperfunctions containing implicit self
+
 ## 2.0.0-alpha.240
 
 * Improve webcontainer support

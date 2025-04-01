@@ -4502,6 +4502,11 @@ export class Walker
 	def test node
 		no
 
+export class Lambda < Func
+	def scopetype
+		var k = option(:keyword)
+		(k and k.@value == 'ƒ') ? (MethodScope) : (LambdaScope)
+
 export class AmperWalker < Walker
 	prop deopt
 	
@@ -4511,6 +4516,9 @@ export class AmperWalker < Walker
 			node.@callee.consume(self)
 			return
 
+		if node isa VarOrAccess and node.@isSelf
+			@deopt = yes
+
 		let variable = node.@variable
 		if variable and !variable.isGlobal
 			@deopt = yes
@@ -4518,8 +4526,10 @@ export class AmperWalker < Walker
 		if node isa This or node isa Self
 			@self = node
 
-export class AmperFunc < Func
+export class AmperFunc < Lambda
 
+	def scopetype
+		LambdaScope
 
 	def js s,o
 		# traverse into the function to see if it is dynamic
@@ -4574,10 +4584,7 @@ export class RescueFunc < Func
 		else
 			return "({fn})()"
 
-export class Lambda < Func
-	def scopetype
-		var k = option(:keyword)
-		(k and k.@value == 'ƒ') ? (MethodScope) : (LambdaScope)
+
 
 export class ClosedFunc < Func
 	def scopetype
