@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.242
 
 * Correctly deoptimize amperfunctions containing implicit self
 
