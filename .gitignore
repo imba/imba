@@ -7,6 +7,7 @@ tmp
 temp
 test/perf
 test/dist
+packages/imba-core
 packages/imba/test/cli/examples/dist
 packages/imba/test/apps/**/*.js
 packages/imba/bin/temp-config.vite.js
