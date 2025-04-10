@@ -2222,6 +2222,9 @@ export class ClassField < Node
 		@name = name
 
 	def isExcluded
+		if STACK.tsc
+			return @envs and @envs.find(do $1.@key == 'JS') or false
+
 		if @envs
 			return !@envs.find(do $1.isTruthy)
 		return false
@@ -4574,9 +4577,14 @@ export class RescueFunc < Func
 		self
 
 	def js s,o
-		body = body.consume(ImplicitReturn.new)
+		let out
+		if STACK.tsc
+			out = body.c(braces: no)
+			return CALL(STACK.corelib['rescue$'],[LIT(out)]).c
 
-		var out = body.c(braces: no)
+		body = body.consume(ImplicitReturn.new)
+		out = body.c(braces: no)
+
 		let fn = '()=>{ try { ' + out + ' } catch(e) { return e; } }'
 
 		if option('async')
@@ -4610,6 +4618,9 @@ export class MethodDeclaration < Func
 		super
 
 	def isExcluded
+		if STACK.tsc
+			return @envs and @envs.find(do $1.@key == 'JS') or false
+
 		if @envs
 			return !@envs.find(do $1.isTruthy)
 		return false
@@ -6083,10 +6094,10 @@ export class Access < Op
 
 		if tsc
 			if rgt isa Identifier and rgt.isPredicate
-				let out = "('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}.{rgt.c}"
+				let out = "('{rgt.c(mark: false)}' in {ctx.c} && {ctx.c}.{rgt.c})"
 				return out
 			elif safeop and rgt isa Identifier
-				return "('{rgt.c(mark: false)}' in {ctx.c} && {ctx.c}?.{rgt.c})"
+				return "(('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}?.{rgt.c})"
 
 		# really?
 		# var ctx = (left || scope__.context)
@@ -11564,6 +11575,9 @@ export class ESMDeclaration < Statement
 			return yes
 
 		if @envs
+			if STACK.tsc
+				return @envs.find(do $1.@key == 'JS')
+
 			return !@envs.find(do $1.isTruthy)
 		return no
 
@@ -11787,6 +11801,13 @@ export class EnvFlag < ValueNode
 		@raw ?= STACK.env("" + @key)
 
 	def isTruthy
+		if @key == "JS"
+			return !STACK.tsc
+
+		if STACK.tsc
+			# always truthy for tsc unless $js$
+			return true
+
 		var val = raw
 		return !!val if val !== undefined and !(val isa Node)
 		return undefined
@@ -11797,7 +11818,10 @@ export class EnvFlag < ValueNode
 	def c
 		var val = raw
 		var out = val
-		if val !== undefined
+		if STACK.tsc
+			out = LIT("{runtime:$env}({STR(@key).c})")
+			# out = CALL(STACK.corelib['env$'],[STR(@key)]).c
+		elif val !== undefined
 			if val isa String
 				if val.match(/^\d+(\.\d+)?$/)
 					out = String(parseFloat(val))
@@ -11809,6 +11833,7 @@ export class EnvFlag < ValueNode
 				out = "{val}"
 
 		else
+
 			out = "globalThis.IMBA_ENV_{@key}"
 
 		return M(out,@value)

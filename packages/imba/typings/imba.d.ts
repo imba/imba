@@ -735,6 +735,20 @@ declare module "imba/compiler" {
     export function compile(fileName: string, options: any): any;
 }
 
+declare module "imba/runtime" {
+    export function iterable$<T>(a:T):(T extends {toIterable: (...args: any[]) => infer X} ? X : T);
+
+    export function isa$<T>(a:T):(T extends {[Symbol.hasInstance]: (...args: any[]) => infer X} ? T : false);
+    // type Narrow<T,R> = R extends {Ψmatcher: (item: T) => infer X} ? X : String;
+    // export function is$<T,R>(a:T,b:R):a is Narrow<T,R>;
+    export function is$<T,R>(a:T,b:R):a is R;
+
+    // export function rescue$<T extends (...args: any) => any>(cb:T): ReturnType<T> | Error;
+    export function rescue$<T>(value:T): T | Error;
+
+}
+
+
 declare module "imba" {
 
 	interface ThemeColors {

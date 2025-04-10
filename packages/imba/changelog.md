@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0-alpha.244
+
+* Evaluate all $env$ props to true in ts / tooling mode (except $js$)
+
+* Make tooling return correct type for `rescue` expressions
+
 ## 2.0.0-alpha.243
 
 * Correctly deoptimize amperfunctions containing implicit self

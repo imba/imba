@@ -48,6 +48,8 @@ declare namespace imba  {
 
     // Should be documented in codebase instead
 
+    
+
     /**
      * @custom
      */
@@ -231,6 +233,7 @@ declare namespace imba  {
      * Schedule re-render
      */
     function commit(): Promise<void>;
+
     
     /**
      * Render elements in custom context
@@ -323,6 +326,11 @@ declare namespace imba  {
     function run(callback: any): void;
     function autorun(callback: any): Reaction;
 
+    /**
+     * Replaced at compile-time by looking in process.env
+     */
+    function $env(key:string): any;
+
     type IsFunction<T> = T extends (...args: any[]) => any ? true : false;
     type Desc<T> = {[K in keyof T]: IsFunction<T[K]> extends true ? T[K] : (arg: T[K]) => void};
     function descriptor<T>(val: T): Desc<T>;
@@ -376,6 +384,10 @@ declare module "imba/runtime" {
     // type Narrow<T,R> = R extends {Ψmatcher: (item: T) => infer X} ? X : String;
     // export function is$<T,R>(a:T,b:R):a is Narrow<T,R>;
     export function is$<T,R>(a:T,b:R):a is R;
+
+    // export function rescue$<T extends (...args: any) => any>(cb:T): ReturnType<T> | Error;
+    export function rescue$<T>(value:T): T | Error;
+
 }
 
 declare module "imba/typings" {
