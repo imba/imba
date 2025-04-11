@@ -76,6 +76,9 @@ const Rules = [
 		item.category = 0
 		return no
 	---
+	code: 2367
+	message: /./
+	---
 	code: 2425
 	message: /./
 	---
