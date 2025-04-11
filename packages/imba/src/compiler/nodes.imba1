@@ -6094,10 +6094,16 @@ export class Access < Op
 
 		if tsc
 			if rgt isa Identifier and rgt.isPredicate
-				let out = "('{rgt.c(mark: false)}' in {ctx.c} && {ctx.c}.{rgt.c})"
-				return out
+				let val = "{ctx.c}.{rgt.c}"
+				if @call
+					return "('{rgt.c(mark: false)}' in {ctx.c} && {val} instanceof Function && {val})"
+				else
+					return "('{rgt.c(mark: false)}' in {ctx.c} && {val})"
 			elif safeop and rgt isa Identifier
-				return "(('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}?.{rgt.c})"
+				if @call
+					return "(('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}?.{rgt.c} instanceof Function && {ctx.c}.{rgt.c})"
+				else
+					return "(('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}?.{rgt.c})"
 
 		# really?
 		# var ctx = (left || scope__.context)
@@ -8031,6 +8037,7 @@ export class Call < Node
 		var variable = callee.@variable
 
 		if callee isa Access
+			callee.@call = self
 			lft = callee.left
 			rgt = callee.right
 
