@@ -10717,6 +10717,9 @@ export class Tag < TagLike
 		if tsc
 			let up = STACK.parent
 			let safe = up isa Block or up isa Tag
+
+			if !safe
+				option(:iife,true)
 			# if not we need to wrap the whole thing in an iife
 			# let up = STACK.
 			if type isa TagTypeIdentifier and !isSelf
