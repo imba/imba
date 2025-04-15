@@ -6,6 +6,8 @@
 
 * Make tooling return correct type for `rescue` expressions
 
+* Better generated class definitions for tooling
+
 ## 2.0.0-alpha.243
 
 * Correctly deoptimize amperfunctions containing implicit self
