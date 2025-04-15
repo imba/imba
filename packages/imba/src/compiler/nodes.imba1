@@ -4090,21 +4090,24 @@ export class ClassDeclaration < Code
 				'''
 			elif isGlobal
 				'''
-				
-				
-				class @localName@generics @{extends @supr }{
+				namespace Global {
+				export class @declareName@generics @{extends @supr }{
 					@{@unsafe? [index:string]: any; }
 					@oid:true;
-					declare protected static AnyType: Any@declareName
 					@body
 				}
-				@{@mixins? interface @localName@generics @{extends @mixins }{ }}
-				@{@export? export {@localName as @exportName}}
+				@{@mixins? export interface @declareName@generics @{extends @mixins }{ }}
+				export type Any@declareName|Map = ImbaClassMap<{@oid:true}>
+				}
+
+				@{@export? export import @declareName = Global.@declareName; }
+
 				declare global {
-					class @declareName@generics extends @localName@suprGenerics {}
+					namespace globalThis {
+						export import @declareName = Global.@declareName;
+					}
 					@{@mapped? interface GlobalClassMap {@declareName:@declareName}}
-					type Any@declareName|Map = ImbaClassMap<{@oid:true}>
-					type Any@declareName = Any@declareName|Map[keyof Any@declareName|Map]
+					type Any@declareName = Global.Any@declareName|Map[keyof Global.Any@declareName|Map]
 					// namespace @declareName {export type Any = Any@declareName;}
 				}
 				'''
@@ -4135,15 +4138,6 @@ export class ClassDeclaration < Code
 				jshead = "{mo('export')} {jshead}"
 
 		let js = "{jshead} \{{jsbody}\}"
-
-		# if isExtension
-		# 	let extTarget = self isa ExtendDeclaration ? LIT(@className.c) : LIT("{@className.c}.prototype")
-		# 
-		# 	if @virtualSuper
-		# 		let wrap =  OP('=',@virtualSuper,util.virtualSuper(extTarget))
-		# 		extTarget = LIT("({wrap.c},{extTarget.c})")
-		# 		js += ";\n" + util.extend(extTarget,LIT("{externalAccess}.prototype")).c + ';\n'
-		
 
 		if option(:global)
 			let access = name isa Access
@@ -4317,12 +4311,16 @@ export class TagDeclaration < ClassDeclaration
 				'''
 			elif isGlobal
 				return TPL tpl,'''
+					namespace Global {
+					export class %declareName extends %superName { %body }
+					@{@mixins? export interface %declareName extends @mixins { }}
+					}
 					declare global {
-						class %declareName extends %localName {}
+						namespace globalThis { export import %declareName = Global.%declareName }
 						interface HTMLElementTagNameMap { "%name": %declareName }
 					}
-					@{@mixins? interface %localName extends @mixins { }}
-					class %localName extends %superName { %body }
+					
+					
 				'''
 			else
 				return TPL tpl,'''
@@ -6093,17 +6091,21 @@ export class Access < Op
 			raw = rgt.c
 
 		if tsc
-			if rgt isa Identifier and rgt.isPredicate
+			let check = "'{rgt.c(mark: false)}' in {ctx.c}"
+			if rgt isa Identifier and rgt.isPredicate and !(lft isa Self)
 				let val = "{ctx.c}.{rgt.c}"
+
 				if @call
-					return "('{rgt.c(mark: false)}' in {ctx.c} && {val} instanceof Function && {val})"
+					return "({check} && {val} instanceof Function && {val})"
+				elif @assigns
+					return "({check} && {ctx.c}).{rgt.c}"
 				else
-					return "('{rgt.c(mark: false)}' in {ctx.c} && {val})"
+					return "({check} && {val})"
 			elif safeop and rgt isa Identifier
 				if @call
-					return "(('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}?.{rgt.c} instanceof Function && {ctx.c}.{rgt.c})"
+					return "(({check}) && {ctx.c}?.{rgt.c} instanceof Function && {ctx.c}.{rgt.c})"
 				else
-					return "(('{rgt.c(mark: false)}' in {ctx.c}) && {ctx.c}?.{rgt.c})"
+					return "(({check}) && {ctx.c}?.{rgt.c})"
 
 		# really?
 		# var ctx = (left || scope__.context)
@@ -6609,6 +6611,7 @@ export class Assign < Op
 		if l isa VarOrAccess and r isa VarOrAccess and l.@identifier.symbol == r.@identifier.symbol
 			@left = l = Access.new(".",scope__.context,l.@value)
 
+		l.@assigns = r
 		# console.log "Assign {l} {r}"
 		# Regularly, the var is declared after the right side, so `let item = item` resolves to
 		# `let item = self.item`. In the case of `let item = do ...` however, the variable
@@ -11831,6 +11834,8 @@ export class EnvFlag < ValueNode
 		if STACK.tsc
 			out = LIT("{runtime:$env}({STR(@key).c})")
 			# out = CALL(STACK.corelib['env$'],[STR(@key)]).c
+		elif @key == "JS"
+			out = LIT('true')
 		elif val !== undefined
 			if val isa String
 				if val.match(/^\d+(\.\d+)?$/)
@@ -11841,9 +11846,7 @@ export class EnvFlag < ValueNode
 				out = out.c
 			else
 				out = "{val}"
-
 		else
-
 			out = "globalThis.IMBA_ENV_{@key}"
 
 		return M(out,@value)
@@ -13690,17 +13693,23 @@ export class MethodScope < Scope
 
 		if STACK.tsc and isInExtend
 			let cls = parent.closure.node
-			if cls.@className
+			let clsname = cls.@className
+			if clsname
 				let iface = null
 				# Identifier should not have this much responsibility - it should be wrapped in an VarOrAccess?
-				if cls.@className isa Identifier and !cls.@className.@variable
-					iface = GLOBAL_INTERFACES[cls.@className.@value]
+				if clsname isa Identifier and !clsname.@variable
+					iface = GLOBAL_INTERFACES[clsname.@value]
 
-				let lit = node.option(:static) ? LIT("{cls.@className.c}") : (iface and iface:thistype ? LIT("null as any as {iface:thistype}") : LIT("{cls.@className.c}.prototype"))
-				# let ref = context.reference(LIT("/** @type {cls.@className.c} */(/** @type unknown */(this))"))
+				let gen = clsname.option(:generics)
+				let suptyp = clsname.c
+
+				if gen
+					suptyp += String(gen)
+
+				console.log(gen)
+				let lit = node.option(:static) ? LIT("{cls.@className.c}") : (iface and iface:thistype ? LIT("null as any as {iface:thistype}") : LIT("this as (this & {suptyp})"))
+
 				let ref = context.reference(lit)
-				# just set it directly??
-				# only need this if we are in a getter
 				context.@useReference = yes
 				ref.c
 		self

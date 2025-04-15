@@ -19,6 +19,12 @@ const Rules = [
 	code: 2612
 	message: /./
 	---
+	code: 2320
+	test: do({message},item)
+		# change to warning
+		item.category = 0
+		return no
+	---
 	code: 2322 # should only be for dom nodes?
 	message: /^Type '(boolean|string|number|ImbaAsset|typeof import\("data:text\/asset;\*"\))' is not assignable to type '(string|number|boolean|object)'/
 	---

@@ -664,7 +664,7 @@ export default class Bundle < Component
 			return null if args.pluginData == 'skip' or args.path.indexOf('data:') == 0
 			let path = args.path
 			let abs? = /^(\/|\w\:\/)/.test(path)
-			let rel? = path[0] == '.'
+			let rel? = path[0] == '.' or path[0] == '#'
 			let pkg? = !abs? and !rel?
 			let pkg = pkg? and path.match(/^(@[\w\.\-]+\/)?\w[\w\.\-]*/)[0] or null
 			let q = (path.split('?')[1] or '')
