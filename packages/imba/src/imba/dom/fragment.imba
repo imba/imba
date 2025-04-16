@@ -4,7 +4,6 @@ import {RenderContext,createRenderContext} from './context'
 import {Flags} from './flags'
 
 export def use_slots
-	global.imba.uses_slots = yes
 	yes
 
 export class Fragment
