@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.2.0
+
+* Improved typings for global classes, mixins and class extensions
+
 ## 4.1.0
 
 * Support typescript 5.5+ and vscode 1.91+
