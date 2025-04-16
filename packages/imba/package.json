@@ -2,7 +2,7 @@
   "name": "imba",
   "description": "Intuitive and powerful language for building webapps that fly",
   "author": "Sindre Aarsaether",
-  "version": "2.0.0-alpha.243",
+  "version": "2.0.0-alpha.244",
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
     "test-cli": "cd test/cli && node ../../bin/imba index.imba",
