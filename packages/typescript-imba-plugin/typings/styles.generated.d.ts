@@ -98,100 +98,166 @@ declare namespace imbacss {
 		/** The element generates a principal flex container box and establishes a flex formatting context. */
 		flex: ''
 
-		/** Vertical top left. */
+		/** Vertical top left. 
+		 * @custom
+		 * */
 		vtl: ''
 
-		/** Vertical top center. */
+		/** Vertical top center. 
+		 * @custom
+		 * */
 		vtc: ''
 
-		/** Vertical top right. */
+		/** Vertical top right. 
+		 * @custom
+		 * */
 		vtr: ''
 
-		/** Vertical top stretch. */
+		/** Vertical top stretch. 
+		 * @custom
+		 * */
 		vts: ''
 
-		/** Vertical center left. */
+		/** Vertical center left. 
+		 * @custom
+		 * */
 		vcl: ''
 
-		/** Vertical center center. */
+		/** Vertical center center. 
+		 * @custom
+		 * */
 		vcc: ''
 
-		/** Vertical center right. */
+		/** Vertical center right. 
+		 * @custom
+		 * */
 		vcr: ''
 
-		/** Vertical center stretch. */
+		/** Vertical center stretch. 
+		 * @custom
+		 * */
 		vcs: ''
 
-		/** Vertical bottom left. */
+		/** Vertical bottom left. 
+		 * @custom
+		 * */
 		vbl: ''
 
-		/** Vertical bottom center. */
+		/** Vertical bottom center. 
+		 * @custom
+		 * */
 		vbc: ''
 
-		/** Vertical bottom right. */
+		/** Vertical bottom right. 
+		 * @custom
+		 * */
 		vbr: ''
 
-		/** Vertical bottom stretch. */
+		/** Vertical bottom stretch. 
+		 * @custom
+		 * */
 		vbs: ''
 
-		/** Vertical space-between left. */
+		/** Vertical space-between left. 
+		 * @custom
+		 * */
 		vsl: ''
 
-		/** Vertical space-between center. */
+		/** Vertical space-between center. 
+		 * @custom
+		 * */
 		vsc: ''
 
-		/** Vertical space-between right. */
+		/** Vertical space-between right. 
+		 * @custom
+		 * */
 		vsr: ''
 
-		/** Vertical space-between stretch. */
+		/** Vertical space-between stretch. 
+		 * @custom
+		 * */
 		vss: ''
 
-		/** Horizontal top left. */
+		/** Horizontal top left. 
+		 * @custom
+		 * */
 		htl: ''
 
-		/** Horizontal top center. */
+		/** Horizontal top center. 
+		 * @custom
+		 * */
 		htc: ''
 
-		/** Horizontal top right. */
+		/** Horizontal top right. 
+		 * @custom
+		 * */
 		htr: ''
 
-		/** Horizontal top space-between. */
+		/** Horizontal top space-between. 
+		 * @custom
+		 * */
 		hts: ''
 
-		/** Horizontal center left. */
+		/** Horizontal center left. 
+		 * @custom
+		 * */
 		hcl: ''
 
-		/** Horizontal center center. */
+		/** Horizontal center center. 
+		 * @custom
+		 * */
 		hcc: ''
 
-		/** Horizontal center right. */
+		/** Horizontal center right. 
+		 * @custom
+		 * */
 		hcr: ''
 
-		/** Horizontal center space-between. */
+		/** Horizontal center space-between. 
+		 * @custom
+		 * */
 		hcs: ''
 
-		/** Horizontal bottom left. */
+		/** Horizontal bottom left. 
+		 * @custom
+		 * */
 		hbl: ''
 
-		/** Horizontal bottom center. */
+		/** Horizontal bottom center. 
+		 * @custom
+		 * */
 		hbc: ''
 
-		/** Horizontal bottom right. */
+		/** Horizontal bottom right. 
+		 * @custom
+		 * */
 		hbr: ''
 
-		/** Horizontal bottom space-between. */
+		/** Horizontal bottom space-between. 
+		 * @custom
+		 * */
 		hbs: ''
 
-		/** Horizontal stretch left. */
+		/** Horizontal stretch left. 
+		 * @custom
+		 * */
 		hsl: ''
 
-		/** Horizontal stretch center. */
+		/** Horizontal stretch center. 
+		 * @custom
+		 * */
 		hsc: ''
 
-		/** Horizontal stretch right. */
+		/** 
+		 * Horizontal stretch right. 
+		 * @custom
+		 * */
 		hsr: ''
 
-		/** Horizontal stretch space-between. */
+		/** 
+		 * Horizontal stretch space-between.
+		 * @custom
+		 * */
 		hss: ''
 
 		/**
