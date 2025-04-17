@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.245
+
+* Added `.shift`, `.alt`, `.ctrl`, `.meta` and `.mod` modifiers to `@keydown`, `@keyup` and `@keypress` events. Contributed by @aliak00 🥳
+
 ## 2.0.0-alpha.244
 
 * Evaluate all $env$ props to true in ts / tooling mode (except $js$)
