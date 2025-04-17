@@ -21,3 +21,11 @@ extend class KeyboardEvent
 			return key == code
 		elif typeof code == 'number'
 			return keyCode == code
+
+	def @shift do !!shiftKey
+	def @alt do !!altKey
+	def @ctrl do !!ctrlKey
+	def @meta do !!metaKey
+	def @mod do
+		let nav = global.navigator.platform
+		(/^(Mac|iPhone|iPad|iPod)/).test(nav or '') ? !!metaKey : !!ctrlKey
