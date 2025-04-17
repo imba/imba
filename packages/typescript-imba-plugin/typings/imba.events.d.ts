@@ -37,16 +37,14 @@ interface Event {
 
     /**
      * By default, Imba will re-render all scheduled tags after any *handled* event. So, Imba won't re-render your application if you click an element that has no attached handlers, but if you've added a `@click` listener somewhere in the chain of elements, `imba.commit` will automatically be called after the event has been handled.
-
-    This is usually what you want, but it is useful to be able to override this, especially when dealing with `@scroll` and other events that might fire rapidly.
-
-     #### Syntax
-    ```imba
-    # Will only trigger when intersection ratio increases
-    <div @click.silent=handler>
-    # Will only trigger when element is more than 50% visible
-    <div @intersect(0.5).in=handler>
-    ```
+     * 
+     * This is usually what you want, but it is useful to be able to override this, especially when dealing with `@scroll` and other events that might fire rapidly.
+     * 
+     * #### Syntax
+     * ```imba
+     * # Will only trigger when intersection ratio increases
+     * <div \@click.silent=handler>
+     * ```
      * @summary Don't trigger imba.commit from this event handler
      */
     αsilent(): void;
@@ -597,9 +595,9 @@ declare namespace imba {
 
     ```imba
     # Will only trigger when intersection ratio increases
-    <div @intersect.in=handler>
+    <div \@intersect.in=handler>
     # Will only trigger when element is more than 50% visible
-    <div @intersect(0.5).in=handler>
+    <div \@intersect(0.5).in=handler>
     ```
 
     #### Parameters
@@ -607,33 +605,33 @@ declare namespace imba {
     The `@intersect` events accepts several arguments. You can pass in an object with the same [root](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/root), [rootMargin](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/rootMargin), and [threshold](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/threshold)  properties supported by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/IntersectionObserver).
 
     ```imba
-    <div @intersect=handler> # default options
-    <div @intersect(root: frame, rootMargin: '20px')=handler>
-    <div @intersect(threshold: [0,0.5,1])=handler>
+    <div \@intersect=handler> # default options
+    <div \@intersect(root: frame, rootMargin: '20px')=handler>
+    <div \@intersect(threshold: [0,0.5,1])=handler>
     ```
 
     For convenience, imba will convert certain arguments into options. A single number between 0 and 1 will map to the [threshold](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/threshold) option:
     ```imba
     # n 0-1 adds single threshold at n visibility
-    <div @intersect(0)=handler> # {threshold: 0}
-    <div @intersect(0.5)=handler> # {threshold: 0.5}
-    <div @intersect(1)=handler> # {threshold: 1.0}
+    <div \@intersect(0)=handler> # {threshold: 0}
+    <div \@intersect(0.5)=handler> # {threshold: 0.5}
+    <div \@intersect(1)=handler> # {threshold: 1.0}
     ```
     Any number above 1 will add n thresholds, spread evenly:
     ```imba
-    <div @intersect(2)=handler> # {threshold: [0,1]}
-    <div @intersect(3)=handler> # {threshold: [0,0.5,1]}
-    <div @intersect(5)=handler> # {threshold: [0,0.25,0.5,0.75,1]}
+    <div \@intersect(2)=handler> # {threshold: [0,1]}
+    <div \@intersect(3)=handler> # {threshold: [0,0.5,1]}
+    <div \@intersect(5)=handler> # {threshold: [0,0.25,0.5,0.75,1]}
     # ... and so forth
     ```
     An element will map to the [root](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/root) option:
     ```imba
-    <div @intersect(frame)=handler> # {root: frame}
-    <div @intersect(frame,3)=handler> # {root: frame, threshold: [0,0.5,1]}
+    <div \@intersect(frame)=handler> # {root: frame}
+    <div \@intersect(frame,3)=handler> # {root: frame, threshold: [0,0.5,1]}
     ```
     A string will map to the [rootMargin](https://developer.mozilla.org/en-US/docs/Web/API/IntersectionObserver/rootMargin) option:
     ```imba
-    <div @intersect("20px 10px")=handler> # {rootMargin: "20px 10px"}
+    <div \@intersect("20px 10px")=handler> # {rootMargin: "20px 10px"}
     ```
     * @custom
     */
@@ -644,9 +642,9 @@ declare namespace imba {
         #### Syntax
         ```imba
         # Will only trigger when intersection ratio increases
-        <div @intersect.in=handler>
+        <div \@intersect.in=handler>
         # Will only trigger when element is more than 50% visible
-        <div @intersect(0.5).in=handler>
+        <div \@intersect(0.5).in=handler>
         ```
         @summary Stop handling unless intersectionRatio has increased.
         */
@@ -659,9 +657,9 @@ declare namespace imba {
         #### Syntax
         ```imba
         # Will only trigger when element starts intersecting
-        <div @intersect.out=handler>
+        <div \@intersect.out=handler>
         # Will trigger whenever any part of the div is hidden
-        <div @intersect(1).out=handler>
+        <div \@intersect(1).out=handler>
         ```
         @summary Stop handling unless intersectionRatio has decreased.
         */
@@ -794,6 +792,28 @@ declare namespace imba {
             end: number;
         }
     }
+
+    class MutateEvent extends Event {
+
+        /**
+        Include modifier to extend monitoring to the entire subtree of nodes rooted at target. All of the other properties are then extended to all of the nodes in the subtree instead of applying solely to the target node. The default value is false. Note that if a descendant of target is removed, changes in that descendant subtree will continue to be observed, until the notification about the removal itself has been delivered.
+        *
+        * @summary Include mutations for subtree of nodes
+        */
+        αsubtree(): void;
+
+        /**
+        Set to true to monitor the target node (and, if subtree is true, its descendants) for the addition of new child nodes or removal of existing child nodes. The default value is false.
+        * @summary Include removal and addition of child nodes
+        */
+        αchildList(): void;
+
+        /**
+        Set to true to watch for changes to the value of attributes on the node or nodes being monitored. The default value is true if either of attributeFilter or attributeOldValue is specified, otherwise the default value is false.
+        * @summary Include changes to attribute values
+        */
+        αattributes(): void;
+    }
 }
 
 interface GlobalEventHandlersEventMap {
@@ -802,6 +822,7 @@ interface GlobalEventHandlersEventMap {
     "selection": imba.SelectionEvent;
     "hotkey": imba.HotkeyEvent;
     "resize": imba.ResizeEvent;
+    "mutate": imba.MutateEvent;
     "__unknown": CustomEvent;
 }
 
@@ -972,6 +993,8 @@ interface ImbaEvents {
      * @summary Fired when element is resized.
      */
     resize: imba.ResizeEvent;
+    mutate: imba.MutateEvent;
+
     scroll: Event;
     securitypolicyviolation: SecurityPolicyViolationEvent;
     seeked: Event;
