@@ -8867,6 +8867,7 @@ export class ForOf < For
 	def js o
 		var vars = options:vars
 		var osrc = options:source
+		var params = options:params
 		var src = vars:source
 		var k = vars:key
 		var v = vars:value
@@ -8875,6 +8876,17 @@ export class ForOf < For
 		var code
 
 		if options:own
+			if STACK.tsc
+				let k = params[0]
+				let v = params[1]
+				let source = "Object.entries({options:source.c})"
+
+				if v and v.datatype
+					source = source + " as unknown as [string,{M(v.datatype)}][]"
+
+				code = "{M('for',keyword)}(let {v ? "[{k.c},{v.c}]" : "[{k.c}]"} of {source})"
+				return code + body.c(indent: yes, braces: yes)
+
 			# FIXME are we sure about this?
 			if v and v.refcount > 0
 				body.unshift(OP('=',v,OP('.',src,k)))
@@ -13706,7 +13718,6 @@ export class MethodScope < Scope
 				if gen
 					suptyp += String(gen)
 
-				console.log(gen)
 				let lit = node.option(:static) ? LIT("{cls.@className.c}") : (iface and iface:thistype ? LIT("null as any as {iface:thistype}") : LIT("this as (this & {suptyp})"))
 
 				let ref = context.reference(lit)

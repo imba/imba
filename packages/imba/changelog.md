@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.246
+
+* Better typing for `for own ...` statements.
+
 ## 2.0.0-alpha.245
 
 * Added `.shift`, `.alt`, `.ctrl`, `.meta` and `.mod` modifiers to `@keydown`, `@keyup` and `@keypress` events. Contributed by @aliak00 🥳
