@@ -4,6 +4,8 @@
 
 * Better typing for `for own ...` statements.
 
+* Add compilation error for `&` without corresponding function block.
+
 ## 2.0.0-alpha.245
 
 * Added `.shift`, `.alt`, `.ctrl`, `.meta` and `.mod` modifiers to `@keydown`, `@keyup` and `@keypress` events. Contributed by @aliak00 🥳

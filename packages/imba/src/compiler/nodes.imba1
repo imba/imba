@@ -7846,6 +7846,14 @@ export class Argvar < ValueNode
 # CALL
 
 export class DoPlaceholder < Node
+	def initialize token
+		@value = token
+
+	def loc
+		@value.loc
+
+	def c
+		error("Function missing for & placeholder")
 
 export class AmperRef < ValueNode
 
@@ -7997,6 +8005,8 @@ export class Call < Node
 
 	def addBlock block
 		var pos = @args.filter(|n,i| n isa DoPlaceholder )[0]
+		if pos
+			pos.@block = block
 		pos ? args.replace(pos,block) : args.push(block)
 		self
 
