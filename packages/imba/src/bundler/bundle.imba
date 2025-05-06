@@ -1225,7 +1225,7 @@ export default class Bundle < Component
 			if path and input and dep isa Bundle
 				res = await dep.rebuild!
 
-			let inp = res and res.meta and res.meta.inputs[rawpath]
+			let inp = res and res.meta and res.meta.inputs..[rawpath]
 
 			# find it via res.meta.entries instead?
 			if dep isa Bundle
@@ -1236,6 +1236,8 @@ export default class Bundle < Component
 				addOutputs.add(res.meta.outputs)
 
 			if res and res.meta
+				res.meta.errors ||= []
+				res.meta.warnings ||= []
 				# just register on root - or push to parent?
 				meta.errors.push(...res.meta.errors)
 				meta.warnings.push(...res.meta.warnings)
