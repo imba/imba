@@ -106,6 +106,7 @@ var grammar =
 		o 'INDENT Body OUTDENT' do A2.indented(A1,A3)
 		# hacky way to support terminators at the start of blocks
 		o 'INDENT TERMINATOR Body OUTDENT' do A3.prebreak(A2).indented(A1,A4)
+		o 'INDENT TERMINATOR OUTDENT' do Block.new([]).indented(A1,A3)
 	]
 
 	# Block and statements, which make up a line in a body.
@@ -557,6 +558,7 @@ var grammar =
 
 	TagBody: [
 		o 'INDENT OUTDENT' do TagBody.new([]).indented(A1,A2)
+		o 'INDENT TERMINATOR OUTDENT' do TagBody.new([]).indented(A1,A3)
 		o 'INDENT TagBodyList OUTDENT' do A2.indented(A1,A3)
 		o 'CALL_START TagBodyList CALL_END' do A2
 		o 'Tag' do TagBody.new([A1])
