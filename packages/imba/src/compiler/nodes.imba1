@@ -3702,9 +3702,13 @@ export class ClassDeclaration < Code
 	def visit
 		let upscope = STACK.scope(1)
 		let up = STACK.up
-		let refvar = SystemVariable.new(upscope,null,null,{type: 'let', ns: 'c', safe: yes})
-		STACK.prependInBlock(Templated.new('let @name = Symbol()',name: refvar))
-		@refSym = refvar
+
+		
+		if !STACK.tsc
+			let refvar = SystemVariable.new(upscope,null,null,{type: 'let', ns: 'c', safe: yes})
+			STACK.prependInBlock(Templated.new('let @name = Symbol()',name: refvar))
+			@refSym = refvar
+		
 
 		@body.@delimiter = ''
 		let blk = STACK.up(Block)
@@ -4053,6 +4057,9 @@ export class ClassDeclaration < Code
 			elif !tpl:abstract
 				tpl:mapped = yes
 
+			if (/^[\t]+$/m).test(jsbody)
+				tpl:body = null
+
 			let str
 
 			try tpl:ref = @name.variable.@value
@@ -4072,19 +4079,22 @@ export class ClassDeclaration < Code
 				'''
 					@declareName
 					declare module @path {
-						interface @declareName@generics extends @localName@generics {}
+						@{@body? interface @declareName@generics extends @localName@generics {} }
+						@{@mixins? interface @declareName@generics @{extends %mixins }{}}
 					}
-					class @localName@generics { @body }
+					@{@body? class @localName@generics { @body } }
 				'''
 			elif isExtension and tpl:global
 				'''
 				declare global {
-					interface @declareName@generics extends @localName@generics {}
+					@{@body? interface @declareName@generics extends @localName@generics {} }
+					@{@mixins? interface @declareName@generics @{extends %mixins }{}}
 				}
-				class @localName@generics { %body }
+				@{@body? class @localName@generics { @body } }
 				'''
 			elif isExtension
 				'''
+					
 					@export @default interface @declareName@generics extends @localName@generics {}
 					class @localName@generics { %body }
 				'''
@@ -4092,12 +4102,15 @@ export class ClassDeclaration < Code
 				'''
 				namespace Global {
 				export class @declareName@generics @{extends @supr }{
+					static declare Any: ImbaSubclassUnion<{@oid:true}> & {};
 					@{@unsafe? [index:string]: any; }
 					@oid:true;
 					@body
 				}
+				export namespace @declareName {
+					export type Any = typeof @declareName["Any"];
+				}
 				@{@mixins? export interface @declareName@generics @{extends @mixins }{ }}
-				export type Any@declareName|Map = ImbaClassMap<{@oid:true}>
 				}
 
 				@{@export? export import @declareName = Global.@declareName; }
@@ -4107,16 +4120,19 @@ export class ClassDeclaration < Code
 						export import @declareName = Global.@declareName;
 					}
 					@{@mapped? interface GlobalClassMap {@declareName:@declareName}}
-					type Any@declareName = Global.Any@declareName|Map[keyof Global.Any@declareName|Map]
-					// namespace @declareName {export type Any = Any@declareName;}
 				}
 				'''
 			else
 				'''
 				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{}}
 				%export %default class %localName@generics @{extends %supr }{
+					static declare Any: ImbaSubclassUnion<{@oid:true}> & {};
 					@{@unsafe? [index:string]: any;}
+					@oid:true;
 					@body
+				}
+				declare global {
+					@{@mapped? interface GlobalClassMap {@oid:@declareName}}
 				}
 				'''
 
