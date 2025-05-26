@@ -4101,10 +4101,11 @@ export class ClassDeclaration < Code
 			elif isGlobal
 				'''
 				namespace Global {
+				declare const @declareName$: unique symbol;
 				export class @declareName@generics @{extends @supr }{
-					static declare Any: ImbaSubclassUnion<{@oid:true}> & {};
+					static declare Any: ImbaSubclassUnion<{[@declareName$]:true}> & {};
 					@{@unsafe? [index:string]: any; }
-					@oid:true;
+					[@declareName$]:true;
 					@body
 				}
 				export namespace @declareName {
@@ -4125,14 +4126,15 @@ export class ClassDeclaration < Code
 			else
 				'''
 				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{}}
+				declare const @declareName$: unique symbol;
 				%export %default class %localName@generics @{extends %supr }{
-					static declare Any: ImbaSubclassUnion<{@oid:true}> & {};
+					static declare Any: ImbaSubclassUnion<{[@declareName$]:true}> & {};
 					@{@unsafe? [index:string]: any;}
-					@oid:true;
+					[@declareName$]:true;
 					@body
 				}
 				declare global {
-					@{@mapped? interface GlobalClassMap {@oid:@declareName}}
+					@{@mapped? interface GlobalClassMap {[@declareName$]:@declareName}}
 				}
 				'''
 
