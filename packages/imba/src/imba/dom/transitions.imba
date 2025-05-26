@@ -130,6 +130,11 @@ export class Easer < Emitter
 			unflag("@{prev}") if prev
 			flag("@{val}")  if val
 
+			if val
+				flags.add('_easing_')
+			else
+				flags.remove('_easing_')
+
 			# clearing all the node animations
 			unless val
 				unflag('@out')
