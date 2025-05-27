@@ -1,5 +1,21 @@
 # Changelog
 
+## unreleased
+
+* Fixed `Any` types in tooling.
+
+* Allow using mixins (`isa`) when reopening classes/
+
+```imba
+mixin Publishable
+    def publish
+        yes
+
+# can now use `isa` in `extend class`
+extend class Project
+    isa Publishable
+```
+
 ## 2.0.0-alpha.246
 
 * Better typing for `for own ...` statements.

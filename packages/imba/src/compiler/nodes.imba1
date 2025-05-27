@@ -3943,6 +3943,9 @@ export class ClassDeclaration < Code
 		if self isa ExtendDeclaration
 			cflags = cflags | ClassFlags.IsObjectExtension
 
+		if isMixin
+			cflags = cflags | ClassFlags.IsMixin
+
 		if isTag
 			cflags = cflags | ClassFlags.IsTag
 
@@ -3978,14 +3981,21 @@ export class ClassDeclaration < Code
 
 			let pars = [THIS,refSym,(@realName ? @realName.toStr : NULL),LIT(String(cflags))]
 			if isExtension
+				let clsname
 				if isTag
 					let namevar = @name.@variable
-					let cls = namevar or CALL(runtime:getTagType,[name,STR(name.toClassName)])
+					clsname = namevar or CALL(runtime:getTagType,[name,STR(name.toClassName)])
 					# if className == 'ImbaElement' or className == 'imba.Component'
 					#	cls = runtime:Component
-					pars.push(cls)
+					pars.push(clsname)
 				else
-					pars.push(@className)
+					pars.push(clsname = @className)
+
+				if @mixins:length
+					for mix in @mixins
+						staticInits.add CALL(STACK.corelib['augment$'],[clsname,mix])
+					@mixins:length = 0
+			
 			staticInits.add CALL(STACK.corelib['register$'],pars)
 
 		if !staticInits.isEmpty and !tsc
@@ -4054,10 +4064,11 @@ export class ClassDeclaration < Code
 
 			if tpl:generics
 				tpl:suprGenerics = tpl:generics.asGenericNames
+				tpl:mapped =  no
 			elif !tpl:abstract
 				tpl:mapped = yes
 
-			if (/^[\t]+$/m).test(jsbody)
+			if (/^[\t\n]+$/).test(jsbody)
 				tpl:body = null
 
 			let str
@@ -4094,9 +4105,10 @@ export class ClassDeclaration < Code
 				'''
 			elif isExtension
 				'''
-					
+
 					@export @default interface @declareName@generics extends @localName@generics {}
 					class @localName@generics { %body }
+					@{@mixins? interface @declareName@generics @{extends %mixins }{}}
 				'''
 			elif isGlobal
 				'''
@@ -8850,31 +8862,39 @@ export class ForOf < For
 
 		# possibly proxy the index-variable?
 
-		if o:own
-			vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
-			o:value = o:index
+		if o:own # and !STACK.tsc
+			
+			if STACK.tsc
+				o:value = o:index
+				let declvars = scope__.captureVariableDeclarations do
+					for par in o:params
+						par.traverse(declaring: 'let')
+						if par isa Identifier
+							par.@variable ||= scope__.register(par.symbol,par,type: 'let')
+				@declvars = declvars
+			else
+				vars:source = o:source.@variable || scope.declare('o',o:source, system: true, type: 'let')
+				o:value = o:index
 
-			var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
-			# systemvariable -- should not really be added to the map
-			var keys = vars:keys = scope.declare('keys',Util.keys(vars:source.accessor),system: yes, type: 'let') # the outer one should resolve first
-			var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
-			k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
+				var i = vars:index = scope.declare('i',Num.new(0),system: yes, type: 'let', pool: 'counter')
+				# systemvariable -- should not really be added to the map
+				var keys = vars:keys = scope.declare('keys',Util.keys(vars:source.accessor),system: yes, type: 'let') # the outer one should resolve first
+				var l = vars:len = scope.declare('l',Util.len(keys.accessor),system: yes, type: 'let')
+				k = vars:key = scope.declare(o:name,null,type: 'let') # scope.declare(o:name,null,system: yes)
 
-			if o:value isa Obj or o:value isa Arr
-				body.unshift(VarDeclaration.new(o:value,OP('.',vars:source,k),'let'),BR)
-				vars:value = null
-			elif o:value
-				v = vars:value = scope.declare(o:value,null,let: yes, type: 'let')
+				if o:value isa Obj or o:value isa Arr
+					body.unshift(VarDeclaration.new(o:value,OP('.',vars:source,k),'let'),BR)
+					vars:value = null
+				elif o:value
+					v = vars:value = scope.declare(o:value,null,let: yes, type: 'let')
 
 		else
 			source = vars:source = util.iterable(o:source) # STACK.tsc ? o:source : 
 			vars:value = o:value = o:name # need to visit these to declare them
 			let declvars = scope__.captureVariableDeclarations do
 				o:value.traverse(declaring: 'let')
-
 				if o:value isa Identifier
 					o:value.@variable ||= scope__.register(o:value.symbol,o:value,type: 'let')
-
 			@declvars = declvars
 
 			# need to declare this variable outside the for of
@@ -8913,7 +8933,9 @@ export class ForOf < For
 					source = source + " as unknown as [string,{M(v.datatype)}][]"
 
 				code = "{M('for',keyword)}(let {v ? "[{k.c},{v.c}]" : "[{k.c}]"} of {source})"
-				return code + body.c(indent: yes, braces: yes)
+				# code = scope.c(braces: yes, indent: yes)
+				return code + scope.c(braces: yes, indent: yes)
+				# return code + body.c(indent: yes, braces: yes)
 
 			# FIXME are we sure about this?
 			if v and v.refcount > 0

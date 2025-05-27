@@ -31,7 +31,8 @@ export const ClassFlags = {
 	HasMixins: 1 << 6,
 	HasInitor: 1 << 7,
 	HasDecorators: 1 << 8,
-	IsObjectExtension: 1 << 9
+	IsObjectExtension: 1 << 9,
+	IsMixin: 1 << 10
 }
 
 const mmap = new Map;
@@ -155,12 +156,19 @@ export function extend$(target,ext,descs,cache = {}){
 export function augment$(klass,mixin){
 	let meta = meta$(klass);
 	let mix = meta$(mixin);
+	let par = mix.parent;
 	
-	if(mix.parent){
-		if(!(klass.prototype instanceof mix.parent)){
-			// For better error reports we could delay this message...
-			throw new Error(`Mixin ${mixin.name} has superclass not present in target class`);
-		}
+	while(par && meta$(par)?.flags & ClassFlags.IsMixin) {
+		augment$(klass,par);
+		par = null;
+		break;
+		// par = meta$(par).parent
+	}
+	
+	if(par && !(klass.prototype instanceof par)){
+		// For better error reports we could delay this message...
+		// console.log(klass.prototype,mix.parent,klass.prototype.constructor,mix,meta)
+		throw new Error(`Mixin ${mixin.name} has superclass not present in target class`);
 	}
 
 	if(!mix.augments){
@@ -208,6 +216,7 @@ export function augment$(klass,mixin){
 };
 
 export function multi$(symbol,sup,...mixins){	
+	// Creating a mixins class for this
 	let Mixins = sup ? (class extends sup {}) : (class {});
 	let meta = meta$(Mixins,{symbol});
 	
@@ -250,7 +259,7 @@ export function register$(klass,symbol,name,flags,into = null) {
 	
 	// Look for the actual superclass excluding mixins
 	let proto = Object.getPrototypeOf(klass.prototype)
-	let mixed = flags & ClassFlags.HasMixins
+	let mixed = (flags & (ClassFlags.HasMixins | ClassFlags.IsExtension)) == ClassFlags.HasMixins;
 	let meta
 	if(mixed) {
 		mmap.set(klass,mmap.get(proto.constructor))
@@ -260,7 +269,7 @@ export function register$(klass,symbol,name,flags,into = null) {
 	if(into){
 		let target = flags & ClassFlags.IsObjectExtension ? into : into.prototype;
 		let meta = meta$(klass); // Does this make sense?
-
+		
 		if(meta.uses){
 			if(into === target) console.warn("Cannot extend object with mixins");
 			for(let mixin of meta.uses) augment$(into,mixin);

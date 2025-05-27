@@ -375,7 +375,7 @@ type ImbaAny<C,T = GlobalClassMap> = ImbaClassMap<C,T>[keyof ImbaClassMap<C,T>]
 // 1) compute just the keys whose values extend C
 type ImbaSubclassKeys<T,C> = { [K in keyof T]: T[K] extends C ? K : never }[keyof T];
 // 3) if you need the union of the values
-type ImbaSubclassUnion<C,T = ClassMap> = T[ImbaSubclassKeys<T, C>];
+type ImbaSubclassUnion<C,T = GlobalClassMap> = T[ImbaSubclassKeys<T, C>];
 
 
 
