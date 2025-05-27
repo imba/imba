@@ -4145,9 +4145,9 @@ export class ClassDeclaration < Code
 					[@declareName$]:true;
 					@body
 				}
-				declare global {
-					@{@mapped? interface GlobalClassMap {[@declareName$]:@declareName}}
-				}
+				@{@mapped? declare global {
+					 interface GlobalClassMap {[@declareName$]:@declareName}
+				}}
 				'''
 
 			return TPL(tpl,str)
