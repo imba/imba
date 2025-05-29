@@ -18,7 +18,7 @@ export def use_router
 	global.imba.use_router = yes
 	yes
 
-export const router = proxy do
+export const router\Router = proxy do
 	global.document.router
 
 export class Router < EventEmitter
@@ -27,6 +27,14 @@ export class Router < EventEmitter
 	declare redirects
 
 	declare history\History
+	declare location\Location
+	declare root\RootRoute
+	declare queue\Queue
+	declare mode\string
+	declare options\any
+	declare rules\any
+	declare matchers\any
+	declare busy\any[]
 
 	# support redirects
 	def constructor doc, o = {}
