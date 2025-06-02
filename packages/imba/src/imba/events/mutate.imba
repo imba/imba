@@ -21,12 +21,15 @@ extend class Element
 		let o = handler.#options = {}
 
 		if mods.subtree
+			delete mods.subtree
 			o.subtree = true
 
 		if mods.childList
+			delete mods.childList
 			o.childList = true
 
 		if mods.attributes
+			delete mods.attributes
 			o.attributes = true
 
 		if !o.attributes and !o.childList
