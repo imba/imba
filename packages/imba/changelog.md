@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## 2.0.0-alpha.247
 
 * Fixed `Any` types in tooling.
 
