@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0-alpha.247
+## 2.0.0-alpha.246
 
 * Fixed `Any` types in tooling.
 
@@ -15,8 +15,6 @@ mixin Publishable
 extend class Project
     isa Publishable
 ```
-
-## 2.0.0-alpha.246
 
 * Better typing for `for own ...` statements.
 
