@@ -4,7 +4,7 @@
 
 * Fixed `Any` types in tooling.
 
-* Allow using mixins (`isa`) when reopening classes/
+* Allow using mixins (`isa`) when reopening classes
 
 ```imba
 mixin Publishable

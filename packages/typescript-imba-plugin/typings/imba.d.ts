@@ -45,10 +45,7 @@ interface ImbaAsset {
 }
 
 declare namespace imba  {
-
     // Should be documented in codebase instead
-
-    
 
     /**
      * @custom
@@ -376,6 +373,11 @@ type ImbaAny<C,T = GlobalClassMap> = ImbaClassMap<C,T>[keyof ImbaClassMap<C,T>]
 type ImbaSubclassKeys<T,C> = { [K in keyof T]:
     unknown extends T[K] ? never : (T[K] extends C ? K : never)
 }[keyof T];
+
+
+declare const ImbaUnionType: unique symbol;
+// Wrap any type in Any<...> to potentially return a subclass set
+type Any<T> = T extends { [ImbaUnionType]: infer A } ? A : T extends new (...args:any[]) => {[ImbaUnionType]: infer X} ? X : T;
 
 type ImbaSubclassUnion<C,T = GlobalClassMap> = T[ImbaSubclassKeys<T, C>];
 

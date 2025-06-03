@@ -4115,13 +4115,10 @@ export class ClassDeclaration < Code
 				namespace Global {
 				declare const @declareName$: unique symbol;
 				export class @declareName@generics @{extends @supr }{
-					static declare Any: ImbaSubclassUnion<{[@declareName$]:true}> & {};
+					declare [ImbaUnionType]: ImbaSubclassUnion<{[@declareName$]:true}> & {};
 					@{@unsafe? [index:string]: any; }
 					[@declareName$]:true;
 					@body
-				}
-				export namespace @declareName {
-					export type Any = typeof @declareName["Any"];
 				}
 				@{@mixins? export interface @declareName@generics @{extends @mixins }{ }}
 				}
@@ -4140,7 +4137,7 @@ export class ClassDeclaration < Code
 				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{}}
 				declare const @declareName$: unique symbol;
 				%export %default class %localName@generics @{extends %supr }{
-					static declare Any: ImbaSubclassUnion<{[@declareName$]:true}> & {};
+					declare [ImbaUnionType]: ImbaSubclassUnion<{[@declareName$]:true}> & {};
 					@{@unsafe? [index:string]: any;}
 					[@declareName$]:true;
 					@body
