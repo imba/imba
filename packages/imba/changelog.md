@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Fixed type declarations for `static def method\self`
+
 ## 2.0.0-alpha.246
 
 * Fixed `Any` types in tooling.

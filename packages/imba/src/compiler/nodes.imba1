@@ -3220,9 +3220,8 @@ export class VariableDeclarator < Param
 
 			"{variable.c} = {defs}"
 		elif typ
-			"{variable.c} = {typ.c}(undefined)"
-		elif STACK.tsc
-			"{variable.c}"
+			# "{variable.c} = {typ.c}(undefined)"
+			"{variable.c}:{typ.c}"
 		else
 			"{variable.c}"
 
@@ -3323,6 +3322,7 @@ export class VarDeclaration < Node
 			out += "{M(kind,keyword)} {left.c()}"
 
 			if right
+				
 				out += " = {right.c(expression: true)}"
 
 		if option(:export)
@@ -3708,7 +3708,10 @@ export class ClassDeclaration < Code
 			let refvar = SystemVariable.new(upscope,null,null,{type: 'let', ns: 'c', safe: yes})
 			STACK.prependInBlock(Templated.new('let @name = Symbol()',name: refvar))
 			@refSym = refvar
-		
+
+		else
+			unless upscope isa RootScope
+				set(notInRoot: yes)
 
 		@body.@delimiter = ''
 		let blk = STACK.up(Block)
@@ -4056,7 +4059,7 @@ export class ClassDeclaration < Code
 				generics: @name and @name.option('generics')
 				supr: superclass
 				oid: tsId
-				iife: up isa Instantiation
+				iife: (up isa Instantiation or option(:notInRoot))
 				"return": option(:return)
 				unsafe: option(:implicitAny)
 				exportName: option(:default) or origName
@@ -4110,12 +4113,12 @@ export class ClassDeclaration < Code
 					class @localName@generics { %body }
 					@{@mixins? interface @declareName@generics @{extends %mixins }{}}
 				'''
-			elif isGlobal
+			elif isGlobal and !STACK.option('noAnyTypes')
 				'''
 				namespace Global {
 				declare const @declareName$: unique symbol;
 				export class @declareName@generics @{extends @supr }{
-					declare [ImbaUnionType]: ImbaSubclassUnion<{[@declareName$]:true}> & {};
+					declare [ImbaUnionType]: ImbaSubclassUnion<{[@declareName$]:true}>;
 					@{@unsafe? [index:string]: any; }
 					[@declareName$]:true;
 					@body
@@ -4132,12 +4135,31 @@ export class ClassDeclaration < Code
 					@{@mapped? interface GlobalClassMap {@declareName:@declareName}}
 				}
 				'''
-			else
+			elif isGlobal
+				'''
+				namespace Global {
+				export class @declareName@generics @{extends @supr }{
+					@{@unsafe? [index:string]: any; }
+					@body
+				}
+				@{@mixins? export interface @declareName@generics @{extends @mixins }{ }}
+				}
+
+				@{@export? export import @declareName = Global.@declareName; }
+
+				declare global {
+					namespace globalThis {
+						export import @declareName = Global.@declareName;
+					}
+					// @{@mapped? interface GlobalClassMap {@declareName:@declareName}}
+				}
+				'''
+			elif false
 				'''
 				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{}}
 				declare const @declareName$: unique symbol;
 				%export %default class %localName@generics @{extends %supr }{
-					declare [ImbaUnionType]: ImbaSubclassUnion<{[@declareName$]:true}> & {};
+					declare [ImbaUnionType]: ImbaSubclassUnion<{[@declareName$]:true}>;
 					@{@unsafe? [index:string]: any;}
 					[@declareName$]:true;
 					@body
@@ -4145,6 +4167,14 @@ export class ClassDeclaration < Code
 				@{@mapped? declare global {
 					 interface GlobalClassMap {[@declareName$]:@declareName}
 				}}
+				'''
+			else
+				'''
+				@{@mixins? %export %default interface %localName@generics @{extends %mixins }{}}
+				%export %default class %localName@generics @{extends %supr }{
+					@{@unsafe? [index:string]: any;}
+					@body
+				}
 				'''
 
 			return TPL(tpl,str)
@@ -6937,12 +6967,11 @@ export class TypeAnnotation < Node
 	def asGenericNames
 		@genericNames ||= MappedString.new(extractGenericNames(plain),self)
 
-
 	def hasSelfReference
-		@value.match(/(^|[\\\[\,\<])self([\[\<\]\,\)\>]|$)/g)
+		@value.match(/(^|[\\\[\,\<\(])(typeof )?self([\[\<\]\,\)\>]|$)/g)
 
 	def withReplacedThis val
-		c.replace(/(^|[\[\,\<\\\/])this([\[\]\,\)\>]|$)/g,"$1" + val + "$2")
+		c.replace(/(^|[\[\,\<\\\/\(]|typeof )this([\\\/\[\]\,\)\>]|$)/g,"$1" + val + "$2")
 
 	def makeGeneric name
 		unless @generic

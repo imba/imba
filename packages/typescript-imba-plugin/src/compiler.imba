@@ -10,6 +10,7 @@ const ImbaOptions = {
 	platform: 'tsc'
 	imbaPath: null
 	silent: yes
+	noAnyTypes: yes
 	sourcemap: 'hidden'
 }
 

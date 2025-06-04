@@ -362,18 +362,12 @@ declare module "data:text/asset;*" {
 interface GlobalClassMap {
 
 }
-type ImbaClasses = GlobalClassMap[keyof GlobalClassMap];
-type ImbaAnyGlobal<Key extends PropertyKey,T=ImbaClasses> = T extends Record<Key, any> ? T : never;
+
 type ImbaConstructor = new (...args:any[]) => any;
-
-type ImbaClassMap<C,T = GlobalClassMap> = { [K in keyof T & string as T[K] extends C ? K : never]: T[K] }
-
-type ImbaAny<C,T = GlobalClassMap> = ImbaClassMap<C,T>[keyof ImbaClassMap<C,T>]
 
 type ImbaSubclassKeys<T,C> = { [K in keyof T]:
     unknown extends T[K] ? never : (T[K] extends C ? K : never)
 }[keyof T];
-
 
 declare const ImbaUnionType: unique symbol;
 // Wrap any type in Any<...> to potentially return a subclass set

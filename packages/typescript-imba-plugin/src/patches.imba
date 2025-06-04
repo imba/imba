@@ -135,6 +135,7 @@ export class Session
 		return res
 
 	def filterDiagnostics file, project, diagnostics, kind
+		let t0 = Date.now!
 		let script = project.getScriptInfoForNormalizedPath(file)
 		let state = {}
 
@@ -144,6 +145,15 @@ export class Session
 
 		for item in diagnostics
 			try
+				# some fast suppressions here
+				if item.code == 6133 and item.messageText.match(/^\'(\$\$|self|slf|\$\d+)\'/)
+					item.#suppress = yes
+					continue
+
+				if item.code == 7043 or item.code == 7044
+					item.#suppress = yes
+					continue
+
 				let mapper = item.#mapper ||= item.file..scriptSnapshot..mapper
 				continue unless mapper
 
@@ -188,7 +198,8 @@ export class Session
 					item.category = 1
 					item.#suppress = no
 
-		util.log('filterDiagnostics',file,diagnostics)
+		let printed = diagnostics.map do(item) `{item.code} {item.messageText} {item.#suppress ? 'X' : ''}`
+		util.log('filterDiagnostics',file,printed,Date.now! - t0)
 		return diagnostics.filter do !$1.#suppress
 
 	def sendDiagnosticsEvent(file, project, diags, kind)
