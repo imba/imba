@@ -371,7 +371,9 @@ type ImbaSubclassKeys<T,C> = { [K in keyof T]:
 
 declare const ImbaUnionType: unique symbol;
 // Wrap any type in Any<...> to potentially return a subclass set
-type Any<T> = T extends { [ImbaUnionType]: infer A } ? A : T extends new (...args:any[]) => {[ImbaUnionType]: infer X} ? X : T;
+type Any<T> = T extends { [ImbaUnionType]: infer A } ? A 
+    : T extends new (...args:any[]) => {[ImbaUnionType]: infer X} ? X 
+    : T extends new (...args:any[]) => any ? InstanceType<T> : T;
 
 type ImbaSubclassUnion<C,T = GlobalClassMap> = T[ImbaSubclassKeys<T, C>];
 
