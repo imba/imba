@@ -5901,6 +5901,9 @@ export class Op < Node
 			elif isLogical
 				left = left.consume(node) if left
 				right = right.consume(node) if right
+			elif self isa Access
+				return node.clone(self)
+				
 			return self
 
 		return super if isExpressable

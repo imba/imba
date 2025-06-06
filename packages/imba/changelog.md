@@ -4,6 +4,10 @@
 
 * Fixed type declarations for `static def method\self`
 
+* Fixed issue with `isa (a or b)` operator
+
+* Removed `Any<Class>` definitions because of performance issues on large codebases
+
 ## 2.0.0-alpha.246
 
 * Fixed `Any` types in tooling.
