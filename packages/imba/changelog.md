@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.247
 
 * Fixed type declarations for `static def method\self`
 
