@@ -5127,7 +5127,10 @@ export class Nil < Literal
 		self
 
 	def c
-		M("null",@value)
+		let out = M("null",@value)
+		if STACK.tsc and datatype
+			out = out + ' as unknown as ' + datatype.c
+		return out
 
 export class True < Bool
 

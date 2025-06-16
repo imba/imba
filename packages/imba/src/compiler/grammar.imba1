@@ -865,6 +865,7 @@ var grammar =
 		o 'Assignable'
 		o 'Super'
 		o 'Literal'
+		o 'Literal Type' do AST.SETTYPE(A1,A2)
 		o 'Parenthetical'
 		o 'Range'
 		o 'ARGUMENTS' do AST.ARGUMENTS
