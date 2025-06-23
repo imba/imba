@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.248
+
+* Fixed type declarations for `self` in class field function bodies
+
 ## 2.0.0-alpha.247
 
 * Fixed type declarations for `static def method\self`
