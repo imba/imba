@@ -2337,7 +2337,28 @@ export class ClassField < Node
 					@setter = LIT("(val:Parameters<typeof {op.c}.$set>[0])\{ {op.c}.$set(val,{args}) \}")
 					
 					let pars = [wrapper.c(expression: yes),args,metasym,context]
-					inner = "const self = this;const slf = {context};return {runtime:accessor}({pars.join(',')})"
+					let extending = cls.option('extension')
+					
+					let slf = "const self = this"
+
+					if extending
+						let clsname = cls.@className
+						let iface = null
+						if clsname isa Identifier and !clsname.@variable
+							# Identifier should not have this much responsibility - it should be wrapped in an VarOrAccess?
+							iface = GLOBAL_INTERFACES[clsname.@value]
+
+						if clsname
+
+							let gen = clsname and clsname.option(:generics)
+							let suptyp = clsname.c
+
+							if gen
+								suptyp += String(gen)
+
+							slf = (iface and iface:thistype ? LIT("const self = null as any as {iface:thistype}") : LIT("const self = this as (this & {suptyp})"))
+
+					inner = "{slf};const slf = {context};return {runtime:accessor}({pars.join(',')})"
 
 					if wrapper.@callback
 						inner += '.$function(' + wrapper.@callback.c + ')'
