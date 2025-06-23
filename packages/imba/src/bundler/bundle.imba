@@ -368,9 +368,7 @@ export default class Bundle < Component
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
 			defines["process.env.NODE_ENV"]="'{env}'"
-
-			if program.dotvars..DEBUG == '1'
-				defines["process.env.GIT_HASH"] = try JSON.stringify(cp.execSync('git rev-parse --short HEAD').toString!.trim!)
+			defines["process.env.IMBA_GIT_HASH"] = try JSON.stringify(cp.execSync('git rev-parse --short HEAD').toString!.trim!)
 
 			# FIXME Buffer is no longer tree-shaken if not used
 			esoptions.inject = [
