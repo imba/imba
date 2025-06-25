@@ -390,15 +390,14 @@ export default class Bundle < Component
 
 		if program.dotvars
 			# In this initial implementation we are all vars from env file directly into the build script
-			if webish? or true
-				for own name,value of program.dotvars
-					defines["process.env.{name}"] = JSON.stringify(value)
-
-			elif main? and esm?
-				esoptions.banner.js += '\nimport * as $dotenv from "dotenv";$dotenv.config();'
-			elif main?
-				esoptions.banner.js += '\nrequire("dotenv").config();'
-
+			for own name,value of program.dotvars
+				value = JSON.stringify(value)
+				if webish? and name.match(/(^|_|api|access_?)(private|key|secret|password|token)/i)
+					if !name.match(/\b(public)\b/i)
+						log.warn `process.env.{name} will not be included in web builds - include PUBLIC in the name to allow`
+						value = 'undefined'
+				defines["process.env.{name}"] = value
+			
 		if main?
 			esoptions.banner.js += `globalThis.IMBA_HMR = true;` if hmr?
 			esoptions.banner.js += `globalThis.IMBA_RUN = true;` if run?
