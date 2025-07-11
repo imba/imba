@@ -23,7 +23,7 @@ export class Fragment
 	get #parent
 		##parent or ##up
 
-	get #closestNode
+	get #closestNode\ParentNode
 		#parent.#closestNode
 
 	get #isRichElement

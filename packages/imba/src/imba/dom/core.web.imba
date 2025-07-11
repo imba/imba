@@ -157,7 +157,7 @@ extend class Node
 		##parent or self.parentNode or ##up
 
 	get #closestNode
-		self
+		this
 
 	get #parentNode\ParentNode
 		#parent..#closestNode
@@ -166,7 +166,7 @@ extend class Node
 		##context ||= new Proxy(self,contextHandler)
 
 	def ##inited
-		self
+		this
 
 	def #getRenderContext sym
 		createRenderContext(self,sym)
@@ -352,13 +352,13 @@ extend class Element
 	# inline in files or remove all together?
 	def text$ item
 		self.textContent = item
-		self
+		this
 
 	def #beforeReconcile
-		self
+		this
 
 	def #afterReconcile
-		self
+		this
 
 	def #afterVisit
 		##visitContext = null if ##visitContext

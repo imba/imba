@@ -2238,6 +2238,7 @@ export class ClassField < Node
 		if value
 			value.@scope = @vscope = FieldScope.new(value)
 			value.@scope.@parent = scope__
+			
 			value.traverse
 
 		if watchBody
@@ -2356,11 +2357,14 @@ export class ClassField < Node
 							if gen
 								suptyp += String(gen)
 
-							slf = (iface and iface:thistype ? LIT("const self = null as any as {iface:thistype}") : LIT("const self = this as (this & {suptyp})"))
+							# slf = (iface and iface:thistype ? LIT("const self = null as any as {iface:thistype}") : LIT("const self = this as (this & {suptyp})"))
 
-					inner = "{slf};const slf = {context};return {runtime:accessor}({pars.join(',')})"
+							slf = (iface and iface:thistype ? LIT("const self = null as any as {iface:thistype}") : LIT("const self = this as unknown as ({suptyp})"))
+					# const slf = {context};
+					inner = "{slf};return {runtime:accessor}({pars.join(',')})"
 
 					if wrapper.@callback
+						# set self value for this?
 						inner += '.$function(' + wrapper.@callback.c + ')'
 
 				else
@@ -2733,7 +2737,7 @@ export class Return < Statement
 			k
 
 	def c
-		if STACK.tsc and value isa Self
+		if STACK.tsc and value isa This
 			return "{M('return',keyword)} {M('this',value)}"
 
 		return super if !value or value.isExpressable
@@ -7621,7 +7625,8 @@ export class Descriptor < Node
 			unless @variable
 				let cls = stack.up(ClassDeclaration)
 				if STACK.tsc and cls and cls.isExtension
-					@value = OP('.',LIT('slf'),@name)
+					@selfValue = LIT('self')
+					@value = OP('.',@selfValue,@name)
 				else
 					@value = OP('.',THIS,@name)
 
@@ -7700,7 +7705,8 @@ export class Descriptor < Node
 		if tsc
 			parts.add(LIT("${ref.c}"))
 			# if mixin?
-			return "((self,${ref.c}={val.c(mark: yes)},{ref.c}=imba.descriptor(${ref.c}))=>({parts.c}))(this)"
+			let slf = (@selfValue || THIS)
+			return "((self,${ref.c}={val.c(mark: yes)},{ref.c}=imba.descriptor(${ref.c}))=>({parts.c}))({slf.c})"
 
 		parts.add(ref)
 		parts.unshift(OP('=',ref,val))
