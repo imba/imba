@@ -280,6 +280,36 @@ interface KeyboardEvent {
     αdel(): boolean;
 
     /**
+    * Handle if mod key is pressed
+    *
+    */
+    αmod(): boolean;
+
+    /**
+    * Handle if meta key is pressed
+    *
+    */
+    αmeta(): boolean;
+
+    /**
+    * Handle if ctrl key is pressed
+    *
+    */
+    αctrl(): boolean;
+
+    /**
+    * Handle if alt key is pressed
+    *
+    */
+    αalt(): boolean;
+
+    /**
+    * Handle if shift key is pressed
+    *
+    */
+    αshift(): boolean;
+
+    /**
     * Handle if keyCode == code
     * @detail (code)
     */
