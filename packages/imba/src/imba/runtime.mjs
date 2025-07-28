@@ -58,7 +58,7 @@ function meta$(klass,defaults = {}){
 const statics = new WeakMap;
 
 export function is$(a,b){
-	return a === b || b?.[matcher]?.(a);
+	return a == b || b?.[matcher]?.(a);
 };
 
 export function isa$(a,b){

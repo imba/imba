@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Make `is` operator fallback to `==` (instead of `===`)
+
 * Exclude env variables matching PRIVATE|KEY|PASSWORD|TOKEN|SECRET from web bundles.
 
     If you want to include any such env variables in the web-bundle they have to include PUBLIC
