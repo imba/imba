@@ -5709,6 +5709,11 @@ export class Self < Literal
 	def c
 		let out = M(js,@value)
 		let typ = STACK.tsc and option(:datatype)
+		let gen = STACK.tsc and option(:generics)
+		if gen
+			# TODO what about sourcemapping?
+			out += String(gen)
+
 		if typ
 			out = "{out} as any as ({typ.c})"
 	
