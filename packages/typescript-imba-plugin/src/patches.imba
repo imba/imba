@@ -139,6 +139,7 @@ export class Session
 		let script = project.getScriptInfoForNormalizedPath(file)
 		let state = {}
 
+		# Skip files from inferred projects?
 		if project.projectKind == 0 and isImba(file)
 			# util.log('skip diagnostics')
 			return []
@@ -434,6 +435,14 @@ export class Project
 				global.ils.handleRequest(data)
 		else
 			#onPluginConfigurationChanged(name,data)
+
+	def getDiagnosticsForImba
+		return global.ts.getPreEmitDiagnostics(program)
+
+	def refreshConfigForImba
+		let src = canonicalConfigFilePath
+		projectService.onConfigFileChanged(src,src,0) if src
+		return self
 
 	def shouldSupportImba
 		return true if global.hasImbaScripts or #shouldSupportImba

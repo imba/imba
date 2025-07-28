@@ -37,6 +37,9 @@ export class Compilation
 		
 		options = {...ImbaOptions, fileName: fileName, sourcePath: fileName, sourceId: script.im.nr.toString(32)}
 
+		if fileName.includes('node_modules/imba/src/imba')
+			options.nocheck = true
+
 	def getCompiler
 		if !global.ils
 			return imbac

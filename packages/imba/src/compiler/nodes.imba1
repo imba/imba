@@ -3488,7 +3488,8 @@ export class Root < Code
 		if STACK.tsc
 			# out = "import 'imba/index.d.ts';\n{out}"
 			out = "export \{\};String();import * as imba from 'imba';\n{out}\n"
-			if script:sourceCode and script:sourceCode.match(/(^|[\r\n])\# @nocheck[\n\r]/)
+
+			if (script:sourceCode and script:sourceCode.match(/(^|[\r\n])\# @nocheck[\n\r]/)) or o:nocheck
 				out = "// @ts-nocheck\n{out}"
 
 		script:rawResult = {
