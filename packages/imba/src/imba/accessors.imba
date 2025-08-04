@@ -24,7 +24,7 @@ export def accessor<T>\AccessorLike<T> value\T, target\any?, key\any?, name\any?
 		context[slot] = value
 
 	# if accessor has no init method - forward to accessor.set
-	if value and !value.$init
+	if value and !value..$init
 		value.$init = value.$set or do yes
 	return value
 
