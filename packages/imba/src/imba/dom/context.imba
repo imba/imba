@@ -18,6 +18,8 @@ class Renderer
 export const renderer = new Renderer
 
 export class RenderContext < Map
+	declare value\any
+
 	def constructor parent,sym = null
 		super()
 		self._ = parent
@@ -34,6 +36,15 @@ export class RenderContext < Map
 		# createRenderContext(self,sym)
 	def #getDynamicContext sym, key
 		#getRenderContext(sym).#getRenderContext(key)
+
+	def #removeFromCache sym
+		let el = self[sym]
+		if el
+			self.delete(el)
+			self[sym] = null
+			if value == el
+				value = null
+		self
 
 	def run value
 		self.value = value
