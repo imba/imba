@@ -1,4 +1,39 @@
+###
 
+When using L some,args,here - imba will include the literal names of each
+logged parameter together with the value. Ie
+
+	let mynum = 1
+	L mynum
+
+Will log out as "mynum",1 in the console.
+In addition, the logger will look for a #L function on the current scope.
+If one is found, it will send the arguments etc through this method before
+logging out. This way you can add details, timestamps etc. If #L returns null,
+the console.log will not happen.
+
+You can use imba.logFormatter to use the default formatting / coloring in
+combination with defining #L. The params is an array, with alternating label and value pairs.
+
+L mynum,[1,2,3,mynum]
+# params will be ['mynum',1,'[1,2,3,mynum]',[1,2,3,1]]
+# If the label is '', only the value will be included
+
+class Model
+	id = 'modelid'
+	def #L params, scope
+		# adding model params to scope
+		params.unshift(`model`,id)
+		return imba.logFormatter(params,scope)
+
+	def save props
+		# Any L logging inside here will be routed through #L
+		L 'saving',props
+
+# model.save(a: 1) will now log:
+# 'model',id,'props',{a: 1}
+
+###
 
 export def logFormatter params, scope
 	return if scope..debug? == no
@@ -34,7 +69,6 @@ let l = Symbol.for('#L')
 
 export def use_devlog
 	global[l] ||= global[l] or logFormatter
-	# global.imba.uses_devlog = yes
 	yes
 
 
