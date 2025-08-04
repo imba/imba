@@ -8199,13 +8199,9 @@ export class Call < Node
 				result.push LIT("'{dim}::{reset}'")
 
 			let devargs = []
-			let devlog = false
+			let devlog = STACK.option(:devlog) || false
 
 			for arg in args
-				# INFO leave for debugging purposes
-				# console.log arg:constructor:name
-				# console.log STACK.isWeb
-
 				let [start, end] = arg.loc
 				let s = src.slice(start,end)
 					.replace(/\\/g, '\\\\')
@@ -8255,8 +8251,6 @@ export class Call < Node
 				let l = scope__.root.l
 				STACK.use('devlog')
 				return "(globalThis.DEBUG_IMBA && (l$={STDCALL('devlog$',pars).c},l$ && console.debug(...l$)))"
-
-				args = ArgList.new [Splat.new(STDCALL('devlog$',pars))]
 
 			else
 				args = ArgList.new ["\"{fmts.join(' ')}\"", *result]
