@@ -151,6 +151,9 @@ export default class Bundle < Component
 	get theme
 		imbaconfig.#theme ||= new StyleTheme(imbaconfig)
 
+	get githash
+		root.#githash ||= try JSON.stringify(cp.execSync('git rev-parse --short HEAD').toString!.trim!)
+
 	get root
 		parent ? parent.root : self
 
@@ -361,6 +364,8 @@ export default class Bundle < Component
 
 		let defines = esoptions.define ||= {}
 		defines["globalThis.DEBUG_IMBA"] ||= !production?
+		
+		try defines["process.env.IMBA_GIT_HASH"] = githash
 
 		if !nodeish?
 			let env = o.env or (production? ? 'production' : 'development')
@@ -368,7 +373,7 @@ export default class Bundle < Component
 			defines["process.platform"]="'web'"
 			defines["process.browser"]="true"
 			defines["process.env.NODE_ENV"]="'{env}'"
-			defines["process.env.IMBA_GIT_HASH"] = try JSON.stringify(cp.execSync('git rev-parse --short HEAD').toString!.trim!)
+			
 
 			# FIXME Buffer is no longer tree-shaken if not used
 			esoptions.inject = [
