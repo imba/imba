@@ -1667,6 +1667,7 @@ export class Comment < Meta
 	def c o
 		return "" if STACK.option(:comments) == false or @skip
 		var v = @value.@value
+		var out = ""
 
 		# Temporary way to support defining raw typescript types in comments.
 		# Whenever a multiline comment starts with @ts - just let it through
@@ -1675,16 +1676,16 @@ export class Comment < Meta
 			return v.slice(5)
 
 		if o and o:expression or v.match(/\n/) or isMultiline
-			var out = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
-
-			v = out
+			v = v.replace(/\*\//g, '\\*\\/').replace(/\/\*/g, '\\/\\*')
 			v = '*' + v if v.match(/\@(type|param|satisfies|template)/) or STACK.tsc
 
-			"/*{v}*/"
+			out += "/*{v}*/"
 		elif v.match(/\@(type|param|satisfies|template)/)
-			"/** {v} */"
+			out += "/** {v} */"
 		else
-			"// {v}"
+			out += "// {v}"
+		
+		return out
 
 export class Terminator < Meta
 
