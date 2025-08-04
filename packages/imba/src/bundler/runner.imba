@@ -33,6 +33,7 @@ class WorkerInstance
 		state = 'closed'
 		log = new Logger(prefix: ["%bold%dim",name,": "])
 		current = null
+		sharedEnv = {}
 		restarts = 0
 
 	def create-dev-styles
@@ -89,6 +90,8 @@ class WorkerInstance
 			VITE: o.vite
 		}
 
+		Object.assign(env,sharedEnv)
+
 		for own k,v of env
 			env[k] = '' if v === false
 
@@ -98,13 +101,17 @@ class WorkerInstance
 			if o.vite
 				fork.on 'message' do(message, handle)
 					workerMessageHandler(message, handle, fork)
+
 			# setup-vite fork
 			process.on('SIGINT') do
 				#reload = no
 				#exit = yes
 				if fork
 					fork.kill('SIGINT')
-				process.exit(0)
+				
+				# force exit after 5s?
+				setTimeout(&,5s) do
+					process.exit(0)
 
 			fork.on('exit') do(code)
 				current = null
@@ -119,16 +126,32 @@ class WorkerInstance
 			current = fork
 			return fork
 
-		cluster.setupMaster(args)
+		# Doesnt make sense for this to happen every time?
+		cluster.setupPrimary(args)
 
+		let prev = current
 		let worker = cluster.fork(env)
 		worker.nr = restarts++
-		let prev = worker.#prev = current
+		worker.#prev = prev
 
 		if prev
 			# log.info "reloading"
 			prev.#next = worker
-			prev..send(['emit','reloading'])
+
+			if prev.#listening
+				prev..send(['emit','reloading'])
+				prev..send('imba:replacing')
+			else
+				prev.kill('SIGINT')
+
+		else
+			# If you try to kill with ctrl+c multiple times, force kill
+			let sigints = 0
+			process.on('SIGINT') do
+				sigints++
+
+				if sigints > 3
+					process.exit(0)
 
 		worker.on 'exit' do(code, signal)
 			if signal
@@ -140,12 +163,15 @@ class WorkerInstance
 				log.error "exited with error code: %red",code
 			elif !worker.#next
 				log.info "exited"
+			if !worker.#next and !o.vite
+				process.exit()
 
 		worker.on 'listening' do(address)
 			o.#listening = address
 			log.success "listening on %address",address unless o.vite
-			prev..send(['emit','reloaded'])
-			# now we can kill the reloaded process?
+			if worker.#listening =? yes
+				prev..send(['emit','reloaded'])
+				prev..send('imba:replaced')
 
 		worker.on 'error' do(error)
 			log.info "%red", "errored" unless error.message == 'Channel closed'
@@ -154,7 +180,21 @@ class WorkerInstance
 		# worker.on 'message' do(message, handle)
 
 		worker.on 'message' do(message, handle)
-			workerMessageHandler(message, handle, worker)
+			# only if vite?!
+			if o.vite
+				workerMessageHandler(message, handle, worker)
+			else
+				if message[0] == 'imba:setenv'
+					Object.assign(sharedEnv,message[1] or {})
+				
+				if message == 'imba:restart'
+					if !worker.#next
+						reload!
+
+				if message == 'imba:listening'
+					if worker.#listening =? yes
+						prev..send(['emit','reloaded'])
+						prev..send('imba:replaced')
 
 		current = worker
 
@@ -191,7 +231,6 @@ class WorkerInstance
 			worker.send response
 
 		if message == 'exit'
-			console.log "exit"
 			process.exit!
 
 		if message == 'reload'
@@ -346,6 +385,7 @@ export default class Runner < Component
 
 		for worker of workers
 			worker.start!
+
 		if o.watch
 			#hash = bundle.result.hash
 			# running with vite, we use a thinner bundle
