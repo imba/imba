@@ -237,11 +237,13 @@ let sup = {
 	self: null,
 	target: null,
 	proxy: new Proxy({},{
-		apply: (_, key, ...params) => {
-			return sup.target[key].apply(sup.self, params)
+		apply: (_, thisArg, args) => {
+			return Reflect.apply(sup.target, thisArg, args)
 		},
 		get: (_, key) => {
-			return Reflect.get(sup.target, key, sup.self);
+			let val = Reflect.get(sup.target, key, sup.self);
+			if(val instanceof Function) return val.bind(sup.self);
+			return val;
 		},
 		set: (_, key, value, receiver) => {
 			return Reflect.set(sup.target, key, value, sup.self);

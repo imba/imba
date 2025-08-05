@@ -9,6 +9,8 @@
     If you want to include any such env variables in the web-bundle they have to include PUBLIC
     in their name. Ie STRIPE_PUBLIC_KEY will be included, STRIPE_PRIVATE_KEY will be stripped.
 
+* Fix super calling in class extensions
+
 ## 2.0.0-alpha.248
 
 * Fixed type declarations for `self` in class field function bodies
