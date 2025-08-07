@@ -36,7 +36,6 @@ class Model
 ###
 
 export def logFormatter params, scope
-	return if scope..debug? == no
 	let out = []
 	let fmts = []
 	for param,i in params when i % 2 == 0
