@@ -12,6 +12,7 @@ import { UserConfig } from 'vite';
 let esmRequire: NodeRequire;
 
 export const knownImbaConfigNames = [
+	'imba.config.mjs',
 	'imba.config.js',
 	'imbaconfig.json',
 	'imba.config.json',
