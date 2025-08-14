@@ -110,6 +110,11 @@ def parseOptions options, extras = []
 	# only overwrite if vite is present in the config file
 	options.vite = yes if options.imbaConfig.bundler == 'vite' and !options.esbuild
 
+	if const c = options.imbaConfig.imba..options
+		for own k,v of c
+			if options.config.options[k]
+				options.config.options[k] = {...options.config.options[k], ...v}
+
 	options.package = resolvePackage(options.cwd) or {}
 	options.dotenv = nfs.existsSync(np.resolve(options.cwd,'.env')) ? resolveFile('.env',options.cwd) : null
 	options.nodeModulesPath = resolvePath('node_modules',options.cwd)
