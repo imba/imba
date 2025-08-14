@@ -1598,7 +1598,7 @@ export default class Bundle < Component
 				let file = outfs.lookup(asset.fullpath)
 				await file.write(asset.#contents,asset.hash,asset)
 
-			if staticFilesPath and !program.tmpdir and Object.keys(#bundles.web).length > 0
+			if staticFilesPath and !program.tmpdir and (Object.keys(#bundles.web).length > 0 or static?)
 				await copyPublicFiles!
 
 			# is this only really needed for hmr?
