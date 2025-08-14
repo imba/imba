@@ -112,7 +112,7 @@ export const defaultConfig = {
 			extends: 'base'
 			platform: 'node'
 			format: 'cjs'
-			target: ['node20']
+			target: ['node14.13.0']
 			external: ['dependencies','!imba']
 		}
 
