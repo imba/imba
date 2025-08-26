@@ -148,6 +148,14 @@ class HotKeyManager
 
 		return unless targets.length
 
+		let beforeevent = new CustomEvent('beforehotkey', bubbles: true, detail: detail)
+		beforeevent.#extendType(HotkeyEvent)
+		beforeevent.hotkey = combo
+		source.dispatchEvent(beforeevent)
+
+		if beforeevent.#defaultPrevented
+			return
+
 		let detail = {combo: combo, originalEvent: e, targets: targets}
 		let event = new CustomEvent('hotkey', bubbles: true, detail: detail)
 		event.#extendType(HotkeyEvent)
@@ -156,7 +164,7 @@ class HotKeyManager
 		event.hotkey = combo
 
 		source.dispatchEvent(event)
-		
+
 		for receiver in targets
 			for handler in receiver.#hotkeyHandlers
 				if handler.#combos[combo] or handler.#combos['*']

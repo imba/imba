@@ -440,6 +440,10 @@ def Event.touch$handle
 	return if m.touch and e.pointerType != 'touch'
 	return if m.sel and !e.target.matches(String(m.sel[0]))
 
+	# closest 
+	if m['!sel'] and e.target.matches(String(m['!sel'][0]))
+		return
+
 	let t = state = handler.state = current = new Touch(e,handler,el)
 	id = t.pointerId
 
