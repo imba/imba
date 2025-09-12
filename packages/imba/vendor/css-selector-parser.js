@@ -848,6 +848,8 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           let value = pseudo.value || pseudo.name;
           // let neg = pseudo.not;
           let pre = ":" + escaped;
+
+          if(desc && desc.type == 'pseudoel') {pre = ':' + pre };
           // Hack doesnt work with @[] as selectors
 
           if (pseudo.valueType) {

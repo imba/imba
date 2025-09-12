@@ -85,6 +85,7 @@ export const modifiers =
 	'cue-region': {type:'el'}
 	'first-letter': {type:'el'}
 	'first-line': {type:'el'}
+	highlight: {type:'pseudoel'}
 	marker: {type:'el'}
 	placeholder: {type:'el'}
 	selection: {type:'el'}
