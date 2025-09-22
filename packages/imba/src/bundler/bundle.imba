@@ -398,8 +398,8 @@ export default class Bundle < Component
 			for own name,value of program.dotvars
 				value = JSON.stringify(value)
 				if webish? and name.match(/(^|_|api|access_?)(private|key|secret|password|token)/i)
-					if !name.match(/\b(public)\b/i)
-						log.warn `process.env.{name} will not be included in web builds - include PUBLIC in the name to allow`
+					if !name.match(/\b(public)\b/i) and !name.match(/(_|^)(public)(_|$)/i)
+						log.ts `process.env.{name} will not be included in web builds - include PUBLIC in the name to allow`,name.match(/public/i)
 						value = 'undefined'
 				defines["process.env.{name}"] = value
 			
