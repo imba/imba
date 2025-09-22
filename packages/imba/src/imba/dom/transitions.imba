@@ -4,6 +4,8 @@ import {get_document} from './core'
 import {Emitter} from '../utils'
 $node$ import {Element} from './core'
 
+const supports = {}
+
 class Transitions < Emitter
 	selectors = {}
 
@@ -50,6 +52,7 @@ export class EaseGroup < Emitter
 	def constructor callback
 		super()
 		callback = callback
+
 
 
 	def insert parent, node, before
@@ -122,6 +125,12 @@ export class Easer < Emitter
 	def disable
 		flags.remove('_ease_')
 		yes
+
+	def supports-size-keywords
+		static let m = {
+			support: CSS.supports('interpolate-size', 'allow-keywords') && global.window.getComputedStyle(global.document.body)['interpolate-size'] == 'allow-keywords'
+		}
+		return m.support
 
 	set phase val
 		let prev = #phase
@@ -243,6 +252,7 @@ export class Easer < Emitter
 			return dom
 
 		let sizes
+
 		if entering?
 			return dom
 		let finish = do
@@ -277,8 +287,9 @@ export class Easer < Emitter
 		flag('_instant_')
 		unflag('@out')
 		commit!
-		# must be certain that they don't have a size set directly?
-		sizes = #nodes.sized = getNodeSizes('in')
+
+		if !supports-size-keywords!
+			sizes = #nodes.sized = getNodeSizes('in')
 
 		dom..transition-in-init(self)
 		flag('@off')
@@ -290,12 +301,12 @@ export class Easer < Emitter
 
 		let anims = track do
 			phase = 'enter'
-			applyNodeSizes(sizes)
+			applyNodeSizes(sizes) if sizes
 			unflag('@off')
 			unflag('@in')
 
 		anims.finished.then(finish) do
-			clearNodeSizes(sizes)
+			clearNodeSizes(sizes) if sizes
 			log('cancelled insert into',$1)
 		return dom
 
@@ -322,20 +333,25 @@ export class Easer < Emitter
 				flag('@in')
 				unflag('@out')
 				phase = 'leave'
-				clearNodeSizes(#nodes.sized)
+				if #nodes.sized
+					# check sizes?
+					clearNodeSizes(#nodes.sized)
 			log "cancel enter anims own",anims.own,anims
 			anims.finished.then(finalize) do log('error cancel entering',$1)
 			return
 
 		#nodes = getAnimatedNodes!
-		sizes = getNodeSizes('out')
-		applyNodeSizes(sizes)
+
+		if !supports-size-keywords!
+			sizes = getNodeSizes('out')
+			applyNodeSizes(sizes)
+
 		flag('@leave')
 		let anims = track do
 			phase = 'leave'
 			flag('@off')
 			flag('@out')
-			clearNodeSizes(sizes)
+			clearNodeSizes(sizes) if sizes
 
 		# do it in the same tick if we find no running animations(!)
 		unless anims.own.length
