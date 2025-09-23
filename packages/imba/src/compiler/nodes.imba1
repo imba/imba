@@ -11094,7 +11094,8 @@ export class Tag < TagLike
 					else
 						add "({bvar}={dvar}=0,{tvar}={ctor})"
 
-				add "{bvar} || ({tvar}[{gsym('##up')}]={parentRef})" # really?
+				add "{bvar} || ({tvar}[{gsym('##up')}] = {parentRef})" # really?
+				add "{bvar} || ({tvar}[{gsym('##register')}]?.({parentCache},{osym}))" # really?
 
 				@cvar = tvar
 				@ref = tvar
@@ -11417,12 +11418,12 @@ export class Tag < TagLike
 
 		if shouldEnd
 			if !parent and !isSelf
-				foot.push("{bvar} || {parentCache}.sym || !{tvar}.setup || {tvar}.setup({dvar})")
+				foot.push("{bvar} || {parentCache}.sym || !{tvar}.setup || {tvar}.setup({dvar},{parentCache},{osym})")
 				foot.push("{parentCache}.sym || {tvar}{domCall 'end'}({dvar})")
 			elif isSelf
 				foot.push("{tvar}{domCall 'close'}({dvar})")
 			else
-				foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar})")
+				foot.push("{bvar} || !{tvar}.setup || {tvar}.setup({dvar},{owncvar})")
 				foot.push("{tvar}{domCall 'end'}({dvar})")
 
 		# horrible hacks to work around the way we join the tag parts
