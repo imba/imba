@@ -184,22 +184,29 @@ async function bundle(o) {
 	if (o.bundle == undefined) o.bundle = true;
 	o.conditions = ["imba-core","imba"];
 	o.loader = { '.txt': 'text' }
-	o.incremental = !!watcher;
+	// o.incremental = !!watcher;
 	o.logLevel = 'info';
 	o.charset = 'utf8';
 	o.pure = ['Symbol.for','Symbol'];
 	o.minify = !argv.watch;
 	o.supported = {bigint: true}
 	o.define = {'process.env.NODE_ENV': "'production'"};
-	if (o.write == undefined) o.write = false;
 
+	
+	
+	if (o.write == undefined) o.write = false;
+	
 	delete o.options;
-	let result = await esbuild.build(o);
+
+	let context = await esbuild.context(o);
+	let result = await context.rebuild();
+
 	await universalise(result, o);
+
 	if (watcher) {
 		watcher.on('change', async () => {
 			console.log('rebuilding', input);
-			let rebuilt = await result.rebuild();
+			let rebuilt = await context.rebuild();
 			await universalise(rebuilt, o);
 			console.log('rebuilt', input);
 		})

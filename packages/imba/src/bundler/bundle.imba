@@ -51,6 +51,9 @@ class Builder
 # - when it is we can safely keep things external
 export default class Bundle < Component
 
+	# need to upgrade bootstrapper
+	# $tsc$ context = esbuild.context({})
+
 	prop hasGlobStylesheet
 	prop built? = no
 
@@ -265,7 +268,7 @@ export default class Bundle < Component
 			minifySyntax: true
 			minifyWhitespace: minify? and o.format != 'html'
 			minifyIdentifiers: minify? and o.format != 'html'
-			incremental: !!watcher
+			# incremental: !!watcher
 			legalComments: 'inline'
 			loader: Object.assign({},LOADER_EXTENSIONS,o.loader or {})
 			write: false
@@ -983,8 +986,10 @@ export default class Bundle < Component
 				log.debug "build {entryPoints.join(',')} {o.format}|{o.platform} {nr}"
 
 				try
+					context ||= await esbuild.context(esoptions)
 					builder = new Builder(previous: builder)
-					result = await esbuild.build(esoptions)
+					result = await context.rebuild!
+					# result = await esbuild.build(esoptions)
 					firstBuild = result
 					lastResult = result
 				catch e
@@ -1041,7 +1046,7 @@ export default class Bundle < Component
 
 			try
 				builder = new Builder(previous: builder)
-				let rebuilt = await firstBuild.rebuild!
+				let rebuilt = await context.rebuild!
 				result = rebuilt
 				lastResult = result
 			catch e
