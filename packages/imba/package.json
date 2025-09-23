@@ -66,16 +66,16 @@
     "./colors": {
       "tsimba": "./src/utils/colors.imba.ts",
       "imba": "./src/utils/colors.imba",
-      "default": "./dist/colors.mjs",
       "browser": "./dist/colors.mjs",
-      "require": "./dist/colors.cjs"
+      "require": "./dist/colors.cjs",
+      "default": "./dist/colors.mjs"
     },
     "./std": {
       "tsimba": "./src/utils/std/std.imba.ts",
       "imba": "./src/utils/std/std.imba",
-      "default": "./dist/std.mjs",
       "browser": "./dist/std.mjs",
-      "require": "./dist/std.cjs"
+      "require": "./dist/std.cjs",
+      "default": "./dist/std.mjs"
     },
     "./std/*": {
       "tsimba": "./src/utils/std/*.imba.ts",
@@ -148,7 +148,7 @@
     "debug": "^4.3.4",
     "dotenv": "^16.0.3",
     "envinfo": "^7.8.1",
-    "esbuild": "^0.18.20",
+    "esbuild": "^0.24.2",
     "fdir": "^6.1.0",
     "get-port": "^5.1.1",
     "local-pkg": "^0.4.2",
