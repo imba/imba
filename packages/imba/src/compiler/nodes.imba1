@@ -5873,11 +5873,6 @@ export class Op < Node
 			op = 'is'
 
 		if op == 'is'
-
-			if r instanceof Str or r instanceof Num
-				op = neg ? '!==' : '==='
-
-		if op == 'is'
 			let res
 			if r instanceof Parens
 				l.cache
@@ -5888,7 +5883,7 @@ export class Op < Node
 			if neg
 				return "!({res.c})"
 			else
-				return res.c
+				return "({res.c})"
 
 		l = l.c if l isa Node
 		r = r.c if r isa Node
