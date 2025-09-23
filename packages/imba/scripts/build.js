@@ -210,6 +210,8 @@ async function bundle(o) {
 			await universalise(rebuilt, o);
 			console.log('rebuilt', input);
 		})
+	} else {
+		context.dispose();
 	}
 }
 
