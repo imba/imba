@@ -170,6 +170,7 @@ export default class Bundle < Component
 
 	def terminate
 		await watcher..close!
+		rescue await root.context..dispose!
 		process.exit(1)
 
 	def constructor up,o
@@ -1003,6 +1004,7 @@ export default class Bundle < Component
 				unless watcher
 					workers.stop!
 					workers = null
+					context.dispose!
 
 				# only add this once
 				if watcher and main? and (#watching =? true)
