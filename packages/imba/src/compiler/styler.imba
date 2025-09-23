@@ -693,9 +693,6 @@ export class StyleTheme
 	def inset [t,r=t,b=t,l=r]
 		{position: 'absolute', top: t, right: r, bottom: b, left: l}
 
-	def size [w,h=w]
-		{width: w, height: h}
-
 	def grid params
 		if let m = $varFallback('grid',params)
 			return m

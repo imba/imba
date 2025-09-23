@@ -484,12 +484,6 @@ export class Element < Node
 	get asset
 		#asset
 
-	def flag$
-		self
-
-	def flagIf$
-		self
-
 	def appendChild child
 		self.childNodes.push(child)
 		child.parentNode = self
@@ -657,6 +651,9 @@ export class Element < Node
 		let ns = flags$ns
 		self.className = ns ? (ns + (flags$ext = str)) : (flags$ext = str)
 		return
+	
+	def flagIf$
+		self
 
 	def flagDeopt$
 		self.flag$ = self.flagExt$ # do(str) self.flagSync$(flags$ext = str)
