@@ -66,6 +66,10 @@ export default class Watcher < Component
 			#watcher.add(...uniq)
 		self
 
+	def close
+		if #watcher
+			#watcher.close!
+
 	def has path
 		!!map[path]
 
