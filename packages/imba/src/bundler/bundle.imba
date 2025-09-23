@@ -165,6 +165,10 @@ export default class Bundle < Component
 	def [Symbol.toPrimitive] hint
 		#_id_ ||= Symbol!
 
+	def terminate
+		await watcher..close!
+		process.exit(1)
+
 	def constructor up,o
 		super()
 		#bundles = {web: {}, node: {}}
@@ -363,7 +367,7 @@ export default class Bundle < Component
 		# TODO Clean up defines
 
 		let defines = esoptions.define ||= {}
-		defines["globalThis.DEBUG_IMBA"] ||= !production?
+		defines["globalThis.DEBUG_IMBA"] ||= String(!production?)
 		
 		try defines["process.env.IMBA_GIT_HASH"] = githash
 
@@ -437,7 +441,8 @@ export default class Bundle < Component
 			if parent
 				parent.watchPath(path)
 			elif watcher and path.indexOf(':') == -1
-				watcher.add path.slice(0,path.lastIndexOf('/'))
+				if watch?
+					watcher.add path.slice(0,path.lastIndexOf('/'))
 		self
 
 	def resolveConfigPreset types = []
@@ -485,7 +490,8 @@ export default class Bundle < Component
 				"""
 
 		let esresolve = do(args)
-			let res = await esb.resolve(args.path,resolveDir: args.resolveDir, namespace: '')
+			# console.log 'esresolve',args
+			let res = await esb.resolve(args.path,resolveDir: args.resolveDir, namespace: '', kind: args.kind)
 			return res
 
 		if o.resolve
@@ -967,9 +973,8 @@ export default class Bundle < Component
 
 	def build force = no
 
-		buildcache[self] ||= new Promise do(resolve)
+		buildcache[self] ||= new Promise do(resolve,reject)
 			if (built =? true) or force
-
 				if main?
 					log.info "starting to build in %path",program.outdir
 
@@ -1052,6 +1057,7 @@ export default class Bundle < Component
 			return resolve(result)
 
 	def collectStyleInputs(input, deep, matched = [], visited = [])
+		# console.log 'collect style inputs',input
 		if input isa Array
 			for member in input
 				collectStyleInputs(member,deep,matched,visited)
@@ -1076,6 +1082,11 @@ export default class Bundle < Component
 						log.info `ambiguous css between server and client`
 
 		for item in input.imports
+			continue if item.external
+
+			unless item and item.path
+				console.log "PATH NOT FOUND?!",item,input.imports
+			
 			continue if item.path.match(/\?css$/)
 			collectStyleInputs(item,deep,matched,visited)
 
@@ -1112,10 +1123,12 @@ export default class Bundle < Component
 	def transform result, prev
 
 		let t = Date.now!
+
 		if result isa Error
 			# log.info '',result
-			for err in (result.errors or [])
-				watchPath(err.location.file)
+			if watch?
+				for err in (result.errors or [])
+					watchPath(err.location.file)
 
 			result.rebuild = prev and prev.rebuild.bind(prev)
 			result.meta = {
@@ -1176,6 +1189,7 @@ export default class Bundle < Component
 				file.#output = outs[path]
 			else
 				console.log 'could not map the file to anything!!',file.path,path,Object.keys(outs),fs.cwd,esoptions.outdir
+
 		for own path,output of meta.outputs
 			# skip if this is not a relevant asset, like for css?
 			root.builder.outputs.add(output)
@@ -1212,7 +1226,11 @@ export default class Bundle < Component
 		for own path,input of ins
 			input.#type = input._ = 'input'
 			input.path = path
+
+			# removing the external imports now
 			input.imports = input.imports.map do ins[$1.path]
+			input.imports = input.imports.filter(do $1)
+
 			watchPath(path.replace('.json.js?external','.json').replace(/\?.+/,''))
 
 		let addOutputs = new Set
@@ -1309,7 +1327,15 @@ export default class Bundle < Component
 
 			if output.imports
 				output.imports = output.imports.map do
-					outs[$1.path]
+					let res = outs[$1.path]
+
+					unless res
+						# console.log 'missing import for output!',$1
+						return null
+
+					res
+				# remove null imports
+				output.imports = output.imports.filter do $1
 
 			# no longer needed / relevant?
 			if let m = path.match(/\.([A-Z\d]{8})(\.\w+)?\.\w+(\.map)?$/)
@@ -1372,7 +1398,7 @@ export default class Bundle < Component
 			emit('errored',meta.errors)
 			# if we are not watching we actually want to exit the process
 			if !watch?
-				process.exit(1)
+				terminate!
 			return
 
 		# The new manifest - get rid of the old one
@@ -1501,8 +1527,8 @@ export default class Bundle < Component
 		for asset in assets when asset.url and asset.imports
 			continue if asset.type == 'map'
 			let entry = entryManifest[asset.url] = {}
-			let imports = asset.imports.map(do $1.url)
-
+			let imports = asset.imports.map do $1.url
+			
 			if imports.length
 				entry.imports = imports
 
@@ -1587,6 +1613,7 @@ export default class Bundle < Component
 				catch e
 					log.error "Unable to create symlink for node_modules. If you're on Windows, try enabling \"Developer Mode\" in Windows settings or creating a Vite project instead."
 					process.exit!
+
 			for asset in assets
 				let path = asset.path
 				if build? and static? and !asset.public
