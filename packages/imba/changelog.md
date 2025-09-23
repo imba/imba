@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.249
 
 * Make `is` operator fallback to `==` (instead of `===`)
 
@@ -10,6 +10,8 @@
     in their name. Ie STRIPE_PUBLIC_KEY will be included, STRIPE_PRIVATE_KEY will be stripped.
 
 * Fix super calling in class extensions
+
+* Upgrade esbuild to 0.24.2
 
 ## 2.0.0-alpha.248
 
