@@ -978,6 +978,10 @@ export class Lexer
 
 			if (@lastTyp in ['='])
 				return true
+			
+		if id == 'interface'
+			if (@lastVal in ['global','export','default','declare'])
+				return true
 
 		if (id == 'attr' or id == 'prop' or id == 'get' or id == 'set' or id == 'css' or id == 'constructor' or id == 'declare')
 

@@ -4109,7 +4109,33 @@ export class ClassDeclaration < Code
 			try tpl:path = isExtension and @name.variable.importPath
 
 			# only if the target is originally global
-			str = if !@name or tpl:iife
+			str = if isInterface
+				if isGlobal
+					'''
+					namespace Global {
+					export interface @declareName@generics @{extends @supr }{
+						@{@unsafe? [index:string]: any; }
+						@body
+					}
+					@{@mixins? export interface @declareName@generics @{extends @mixins }{ }}
+					}
+
+					@{@export? export import @declareName = Global.@declareName; }
+
+					declare global {
+						namespace globalThis {
+							export import @declareName = Global.@declareName;
+						}
+					}
+					'''
+				else
+					'''
+					interface @declareName@generics @{extends @supr }{@{@unsafe? 
+						[index:string]: any;}@body
+					}
+					'''
+			
+			elif !@name or tpl:iife
 				'''
 				class @name@generics @{extends @supr }{@{@unsafe? 
 					[index:string]: any;}@body
