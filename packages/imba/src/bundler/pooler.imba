@@ -14,6 +14,11 @@ def decr
 	if refs < 1 and pool
 		pool.terminate!
 
+def kill
+	if pool
+		pool.terminate(yes)
+		pool = null
+
 export def compile_imba code, o
 	if pool
 		pool.exec('compile_imba', [code,o])
@@ -26,5 +31,6 @@ export def startWorkers
 	incr!
 	return {
 		stop: decr
+		kill: kill
 		exec: do(...pars) pool.exec(...pars)
 	}
