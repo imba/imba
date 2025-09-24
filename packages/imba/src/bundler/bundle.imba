@@ -1022,7 +1022,7 @@ export default class Bundle < Component
 
 	def rebuild {force = no} = {}
 
-		unless built and result and result.rebuild isa Function
+		unless built and context and context.rebuild isa Function
 			return build(yes)
 
 		buildcache[self] ||= new Promise do(resolve)
