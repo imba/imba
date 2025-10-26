@@ -11,6 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "imba": "file:../../imba",
-    "vite": "^4.4.9"
+    "vite": "^5.4.21"
   }
 }
