@@ -34,6 +34,9 @@ extend class Array<T>
 			if items.indexOf(item) == -1
 				items.push(item)
 		items
+	
+	set unique val
+		Object.defineProperty(self,'unique',{value: val})
 
 	def add item
 		push(item) unless has(item)
