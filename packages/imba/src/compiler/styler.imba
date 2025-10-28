@@ -1561,6 +1561,12 @@ export class StyleRule
 					parts.push(rule.toString(indent: yes))
 					continue
 
+				if key.match(/@start\b/)
+					let [pre,post] = key.split(/\s*\@start\s*/)
+					let rule = new StyleRule(null,'@starting-style',value,{})
+					parts.push(rule.toString(indent: yes))
+					continue
+
 				let subsel = selparser.unwrap(selector,key)
 				subrules.push new StyleRule(self,subsel,value,options)
 				continue

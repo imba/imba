@@ -79,6 +79,10 @@ export const modifiers =
 	'-webkit-scrollbar-thumb': {type:'el'}
 	'-webkit-scrollbar-corner': {type:'el'}
 	'-webkit-resizer': {type:'el'}
+
+	'start': {type:'@'}
+	'starting-style': {type:'@'}
+
 	backdrop: {type:'el'}
 	before: {type:'el'}
 	cue: {type:'el'}
