@@ -3811,6 +3811,9 @@ export class ClassDeclaration < Code
 		var restIndex = undefined
 		var instanceMethodMap = {}
 
+		@instanceMethodMap = instanceMethodMap
+		@declaredFields = declaredFields
+
 		for node in body
 			if node isa ClassRelation
 				mixins.push(node.value)
@@ -4391,10 +4394,17 @@ export class TagDeclaration < ClassDeclaration
 			sup = superclass ? superclass.toClassName : LIT('imba.Component')
 
 			if !isExtension
+				# body.unshift(LIT("getTagName()\{ return '{tpl:name}' \}"),yes)
+				# only if we do avoid the data thing
+				# body.unshift(LIT("data = this.dataForTagName('{tpl:name}')"),yes)
 				body.unshift(LIT('static $$TAG$$:true'),yes)
 				body.unshift(LIT('constructor(){ super() }',@name),yes)
 
 			tpl:body = body.c
+
+			if !isExtension and !@declaredFields:data and !@instanceMethodMap:data
+				tpl:body = "data = this.dataForTagName('{tpl:name}')\n" + tpl:body
+
 			tpl:default = option(:default)
 			tpl:superName = superclass ? MappedString.new(sup,superclass) : sup
 
