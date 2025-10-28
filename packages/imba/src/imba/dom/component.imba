@@ -322,5 +322,8 @@ export class Component < HTMLElement
 		unmount()
 		scheduler.unschedule(self,#autorender) if #autorender
 
+	def dataForTagName\any name
+		return
+
 # Backwards compatibility
 export const ImbaElement = Component
