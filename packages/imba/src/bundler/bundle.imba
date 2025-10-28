@@ -1137,7 +1137,7 @@ export default class Bundle < Component
 				for err in (result.errors or [])
 					watchPath(err.location.file)
 
-			result.rebuild = prev and prev.rebuild.bind(prev)
+			result.rebuild = prev..rebuild..bind(prev)
 			result.meta = {
 				inputs: {}
 				outputs: {}
