@@ -24,6 +24,11 @@ extend class Element
 			delete mods.subtree
 			o.subtree = true
 
+		if mods.text
+			delete mods.text
+			o.characterData = true
+			o.characterDataOldValue = true
+
 		if mods.childList
 			delete mods.childList
 			o.childList = true

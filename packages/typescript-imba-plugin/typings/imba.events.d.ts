@@ -843,6 +843,12 @@ declare namespace imba {
         * @summary Include changes to attribute values
         */
         αattributes(): void;
+
+        /**
+        Set to true to monitor the specified target node (and, if subtree is true, its descendants) for changes to the character data contained within the node or nodes. The default value is true if characterDataOldValue is specified, otherwise the default value is false.
+        * @summary Include changes to Text nodes
+        */
+        αtext(): void;
     }
 }
 
