@@ -29,6 +29,7 @@ extend class Array<T>
 		await Promise.all self
 
 	get unique
+		# to allow overrides
 		let items = []
 		for item in self
 			if items.indexOf(item) == -1
@@ -49,7 +50,7 @@ extend class Array<T>
 		let items = slice!
 		let cb = key
 
-		if typeof key is "string"
+		if key isa "string"
 			cb = do $1[key]
 
 		elif key isa Map

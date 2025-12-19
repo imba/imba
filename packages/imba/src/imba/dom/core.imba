@@ -567,16 +567,19 @@ export class Element < Node
 			typ = nativeType
 
 		let v
+		let idattr = self.id
 		let cls = self.classList.toString!
 
 		if self.dehydrate
 			cls = (cls ? ('_ssr_ ' + cls) : '_ssr_')
 			self.dehydrate!
 
-		sel += " id=\"{escapeAttributeValue(v)}\"" if v = self.id
+		sel += " id=\"{escapeAttributeValue(idattr)}\"" if idattr
 		sel += " class=\"{escapeAttributeValue(cls)}\"" if cls
 
 		for own key,value of self.attributes
+			continue if key == 'id' and idattr
+
 			sel += " {key}=\"{escapeAttributeValue(value)}\""
 
 		if ##style
