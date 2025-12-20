@@ -255,7 +255,7 @@
 	"dependencies": {
 		"@types/vscode": "^1.56.0",
 		"imba-monarch": "file:../imba-monarch",
-		"node-ipc": "9.1.4",
+		"node-ipc": "9.2.1",
 		"typescript-imba-plugin": "file:../typescript-imba-plugin"
 	},
 	"devDependencies": {
