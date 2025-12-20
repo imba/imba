@@ -8,6 +8,7 @@ export const renderContext = {
 class Renderer
 
 	stack = []
+	moving = new Set
 
 	def push el
 		stack.push(el)

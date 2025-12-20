@@ -272,6 +272,7 @@ export class Easer < Emitter
 		let parConnected = get_document!.contains(parent)
 
 		# Check if we are already still attached here
+		# TODO support moveBefore here as well
 		if before
 			unless dom.nextSibling == before
 				parent.insertBefore(dom,before)

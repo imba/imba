@@ -127,6 +127,11 @@ export class Component < HTMLElement
 	def mount\any
 		self
 
+	# called when element is moved in the document
+	def remount\any
+		mount!
+		self
+
 	# called when element is detached from document
 	def unmount\any
 		self
@@ -250,6 +255,31 @@ export class Component < HTMLElement
 		visit()
 		##visitContext = null if ##visitContext
 
+	# can override if the element itself wants ot deal with this
+	def #insertInto parent, before = null
+		if mounted? and parent.moveBefore and true
+			parent.moveBefore(self,before)
+		else
+			let moving = ((__F & $EL_MOUNTED$) != 0) and parent == parentNode
+			
+			renderer.moving.add(self) if moving
+			before ? parent.insertBefore(self,before) : parent.appendChild(self)
+			renderer.moving.delete(self) if moving
+		return self
+
+	def #insertIntoDeopt parent, before
+		# log '#insertIntoDeopt',parent,before
+		if mounted? and parent.moveBefore and true
+			parent.moveBefore(#domNode or self,before)
+		else
+			let node = #domNode or self
+			let moving = ((__F & $EL_MOUNTED$) != 0) and parent == parentNode
+
+			renderer.moving.add(self) if moving
+			before ? parent.insertBefore(node,before) : parent.appendChild(node)
+			renderer.moving.delete(self) if moving
+		return self
+
 	def #beforeReconcile
 		if __F & $EL_SSR$
 			__F = __F & ~$EL_SSR$
@@ -270,11 +300,20 @@ export class Component < HTMLElement
 		if global.DEBUG_IMBA
 			renderer.pop(self)
 		self
+	
+	def connectedMoveCallback
+		remount()
+		return
 
 	def connectedCallback
 		let flags = __F
 		let inited = flags & $EL_INITED$
 		let awakened = flags & $EL_AWAKENED$
+
+		if flags & $EL_MOVING$
+			__F = flags & (~$EL_MOVING$)
+			remount()
+			return
 
 		if !inited and !(flags & $EL_SSR$)
 			hydrator.queue(self)
@@ -314,6 +353,17 @@ export class Component < HTMLElement
 		return this
 
 	def disconnectedCallback
+		if __F & $EL_MOVING$
+			return
+		
+		# expensive-ish?
+		if renderer.moving.size
+			for el of renderer.moving
+				if el..contains(self)
+					__F |= $EL_MOVING$
+					return
+
+
 		__F = __F & (~$EL_MOUNTED$ & ~$EL_MOUNTING$)
 		if __F & $EL_SCHEDULED$
 			# trigger potential unschedule listeners

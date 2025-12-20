@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+* Use Element#moveBefore internally in supported browsers to avoid unmount/mount cycles if element is merely moving within the document. There is a rudimentary polyfill for unsupported browsers. Only works for custom elements.
+
+* Add Component#remount lifecycle method that is called instead of mount if component was already mounted (but moved)
+
+
+
 ## 2.0.0-alpha.249
 
 * Make `is` operator fallback to `==` (instead of `===`)

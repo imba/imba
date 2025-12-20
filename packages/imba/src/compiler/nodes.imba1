@@ -214,6 +214,7 @@ export var F =
 	EL_TRACKED: 2 ** 11 # emit mount/unmount events
 	EL_SUSPENDED: 2 ** 12 # block commit from rendering
 	EL_UNRENDERED: 2 ** 13
+	EL_MOVING: 2 ** 14
 
 	# render marks
 	DIFF_BUILT: 2 ** 0

@@ -2,7 +2,7 @@
 
 import {Flags} from './flags'
 import {getDeepPropertyDescriptor} from '../utils'
-import {RenderContext,createRenderContext} from './context'
+import {RenderContext,createRenderContext,renderer} from './context'
 
 const IEvent = window.Event
 const IUIEvent = window.UIEvent
@@ -190,6 +190,7 @@ extend class Node
 
 	# can override if the element itself wants ot deal with this
 	def #insertInto parent, before = null
+		# TODO add renderer.moving handling
 		if before
 			parent.insertBefore(self,before)
 		else
@@ -197,7 +198,7 @@ extend class Node
 		return self
 
 	def #insertIntoDeopt parent, before
-		# log '#insertIntoDeopt',parent,before
+		# TODO add renderer.moving handling
 		if before
 			parent.insertBefore(#domNode or self,before)
 		else
