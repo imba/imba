@@ -8,7 +8,7 @@ import {scheduler} from '../scheduler'
 import {renderer} from './context'
 import {emit} from '../utils'
 
-const hydrator = new class
+export const hydrator = new class
 	items = []
 	current = null
 	lastQueued = null
@@ -23,7 +23,10 @@ const hydrator = new class
 			let prev = current
 			current = item
 			item.__F |= $EL_SSR$
-			item.connectedCallback!
+			try
+				item.connectedCallback!
+			catch e
+				console.error(e)
 			current = prev
 		return
 
