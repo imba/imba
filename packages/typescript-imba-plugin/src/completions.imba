@@ -133,9 +133,6 @@ export class Completion
 	get kind
 		item.kind
 
-	get cat
-		#options.kind
-
 	set name val do label.name = val
 	get name do label.name
 
