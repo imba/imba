@@ -1403,6 +1403,8 @@ export default class Bundle < Component
 			# emit errors - should be linked to the inputs from previous working manifest?
 			log.error "failed with {meta.errors.length} errors"
 			emit('errored',meta.errors)
+
+			#errors = meta.errors
 			# if we are not watching we actually want to exit the process
 			if !watch?
 				terminate!
@@ -1604,6 +1606,10 @@ export default class Bundle < Component
 			manifest.outputs[item.path] = item
 
 		let hash = createHash(assets.map(do $1.hash ).sort!.join('-'))
+
+		if #hash == hash and #errors
+			#errors = null
+			emit('repaired')
 
 		# update the build
 		if #hash =? hash
