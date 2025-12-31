@@ -18,6 +18,7 @@ class WorkerInstance
 	mode = 'cluster'
 	name = 'worker'
 	restarts = 0
+	procs = new Set
 
 	get manifest
 		runner.manifest or {}
@@ -62,6 +63,7 @@ class WorkerInstance
 
 	def start
 		return if current and current.#next
+
 		let o = runner.o
 		let path = bundle.result.main
 
@@ -134,14 +136,17 @@ class WorkerInstance
 		worker.nr = restarts++
 		worker.#prev = prev
 
+		procs.add(worker)
+
 		if prev
 			# log.info "reloading"
 			prev.#next = worker
 
 			if prev.#listening
-				prev..send(['emit','reloading'])
-				prev..send('imba:replacing')
+				markReplacing(prev)
 			else
+				log.info "send sigint to %d",prev.process..pid
+				# make sure previous ones are marked
 				prev.kill('SIGINT')
 
 		else
@@ -155,26 +160,38 @@ class WorkerInstance
 
 		worker.on 'exit' do(code, signal)
 			if signal
-				log.info "killed by signal: %d",signal
+				log.info "killed %d by signal: %d",worker.process..pid,signal
 			elif code == 43
 				# process.exit to reload
 				1
 			elif code != 0
-				log.error "exited with error code: %red",code
+				log.error "exited %d with error code: %red",worker.process..pid,code
 			elif !worker.#next
 				log.info "exited"
+
+			procs.delete(worker)
+
 			if !worker.#next and !o.vite
 				process.exit()
 
 		worker.on 'listening' do(address)
 			o.#listening = address
-			log.success "listening on %address",address unless o.vite
+			unless o.vite
+				log.success "listening %d on %address",worker.process.pid,address
+
 			if worker.#listening =? yes
-				prev..send(['emit','reloaded'])
-				prev..send('imba:replaced')
+				if worker.#next
+					log.debug "proc replaced before listening %d",worker.process.pid
+
+				for proc of procs
+					if proc.#replacing
+						markReplaced(proc)
+
+			return
 
 		worker.on 'error' do(error)
-			log.info "%red", "errored" unless error.message == 'Channel closed'
+			unless error.message == 'Channel closed'
+				log.info "%red", "errored"
 
 		# worker.on 'online' do log.info "%green","online"
 		# worker.on 'message' do(message, handle)
@@ -193,10 +210,28 @@ class WorkerInstance
 
 				if message == 'imba:listening'
 					if worker.#listening =? yes
-						prev..send(['emit','reloaded'])
-						prev..send('imba:replaced')
+						log.info "imba:listening %d",worker.process.pid
+						for proc of procs
+							if proc.#replacing
+								markReplaced(proc)
+			return
 
 		current = worker
+
+	def logProcs
+		for proc of procs
+			log.info "process %d {!!proc.#listening} {!!proc.#replacing} {!!proc.#replaced}",proc.process.pid
+		yes
+
+	def markReplacing worker
+		if worker.#replacing =? yes
+			worker.send(['emit','reloading'])
+			worker.send('imba:replacing')
+
+	def markReplaced worker
+		if worker.#replaced =? yes
+			worker.send(['emit','reloaded'])
+			worker.send('imba:replaced')
 
 	def workerMessageHandler(message, handle, worker)
 		if message.type == 'exit'

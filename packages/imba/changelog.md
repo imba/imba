@@ -6,7 +6,7 @@
 
 * Add Component#remount lifecycle method that is called instead of mount if component was already mounted (but moved)
 
-
+* Fix server reload issue
 
 ## 2.0.0-alpha.249
 
