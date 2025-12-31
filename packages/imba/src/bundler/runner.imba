@@ -423,6 +423,13 @@ export default class Runner < Component
 
 		if o.watch
 			#hash = bundle.result.hash
+
+			bundle..on('errored') do(errors)
+				broadcast(['emit','errors',errors])
+
+			bundle..on('repaired') do(errors)
+				broadcast(['emit','repaired'])
+
 			# running with vite, we use a thinner bundle
 			bundle..on('built') do(result)
 				# let hash = result.manifest.hash
