@@ -515,7 +515,7 @@ export default class Bundle < Component
 				if args.kind == 'entry-point'
 					let kind = args.path.split('.').pop!
 					let tpl = resolveTemplate("serve-{kind}.imba") or resolveTemplate("serve-web.imba")
-					let abs = await esb.resolve(args.path,resolveDir: args.resolveDir)
+					let abs = await esb.resolve(args.path,kind: args.kind, resolveDir: args.resolveDir)
 
 					return {path: tpl, namespace: 'file', pluginData: {
 						__ENTRYPOINT__: abs.path
@@ -524,7 +524,7 @@ export default class Bundle < Component
 
 				if args.path == '__ENTRYPOINT__'
 
-					let abs = await esb.resolve(entryPoints[0],resolveDir: fs.cwd)
+					let abs = await esb.resolve(entryPoints[0],kind: args.kind, resolveDir: fs.cwd)
 					return {
 						path: args.pluginData..__ENTRYPOINT__ or abs.path # fs.abs(entryPoints[0])
 						pluginData: {
