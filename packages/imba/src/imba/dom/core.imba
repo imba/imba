@@ -9,7 +9,7 @@ should move elsewhere
 import {TYPES,MAP} from './schema'
 import {AsyncLocalStorage} from '../bindings'
 import {Flags} from './flags'
-import {createRenderContext} from './context'
+import {createRenderContext,renderContext} from './context'
 import {getDeepPropertyDescriptor} from '../utils'
 
 const manifest = {}
@@ -201,6 +201,10 @@ export class Document
 		return null
 
 const doc = new Document
+
+renderContext.createTextNode = do(text) doc.createTextNode(text)
+	
+
 export const document = doc
 
 export def get_document

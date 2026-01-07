@@ -2,7 +2,8 @@
 
 export const renderContext = {
 	context: null
-
+	document: null
+	createTextNode: do(text) global.document.createTextNode(text)
 }
 
 class Renderer
@@ -20,6 +21,7 @@ export const renderer = new Renderer
 
 export class RenderContext < Map
 	declare value\any
+	declare text\any?
 
 	def constructor parent,sym = null
 		super()

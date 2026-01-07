@@ -10771,6 +10771,9 @@ export class Tag < TagLike
 
 	def isDynamicType
 		type isa ExpressionNode or @options:dynamic
+	
+	def hasDynamicTagName
+		type isa ExpressionNode
 
 	def isFunctional
 		!!@options:functional
@@ -11094,7 +11097,7 @@ export class Tag < TagLike
 						add "{owncvar}={renderContextFn}({osym})"
 
 					ctor = "{owncvar}.cache({ctor})"
-					add "({bvar}={dvar}=1,{tvar}={owncvar}.run({type.c})) || ({bvar}={dvar}=0,{ctor})"
+					add "({bvar}={dvar}=1,{tvar}={owncvar}.run({type.c},{hasDynamicTagName ? 1 : 0})) || ({bvar}={dvar}=0,{ctor})"
 
 				elif option(:key)
 					add "{cvar}=({k}={k}||new Map())"
@@ -11167,7 +11170,7 @@ export class Tag < TagLike
 				if option(:key)
 					if isDynamicType
 						add "{owncvar}={renderContextFn}({option(:key).c})"
-						let gets = "{owncvar}.run({type.c})"
+						let gets = "{owncvar}.run({type.c},{hasDynamicTagName ? 1 : 0})"
 						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 					else
 						let gets = "{parentCache}.get({kvar}={option(:key).c})"
@@ -11182,7 +11185,7 @@ export class Tag < TagLike
 						let gets = "({kvar}={renderContextFn}({osym})).get({parent.kvar})"
 						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{kvar}.set({parent.kvar},{ctor}))"
 					else
-						let gets = "({owncvar}={dynamicContextFn}({type.osym},{parent.kvar})).run({type.c})" # .get({parent.kvar})
+						let gets = "({owncvar}={dynamicContextFn}({type.osym},{parent.kvar})).run({type.c},{hasDynamicTagName ? 1 : 0})" # .get({parent.kvar})
 						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 
 				@ref = "{tvar}"
@@ -11214,12 +11217,12 @@ export class Tag < TagLike
 						add "{owncvar}={dynamicContextFn}({key.osym},{key.c})"
 					else
 						add "{owncvar}={renderContextFn}({type.osym})"
-					let gets = "{owncvar}.run({type.c})"
+					let gets = "{owncvar}.run({type.c},{hasDynamicTagName ? 1 : 0})"
 					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 
 				elif key
 					add "{owncvar}={renderContextFn}({key.osym})"
-					let gets = "{owncvar}.run({key.c})"
+					let gets = "{owncvar}.run({key.c},{hasDynamicTagName ? 1 : 0})"
 					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 				else
 					let ref = "{parentCache}[{osym}]"
