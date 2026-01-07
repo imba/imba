@@ -49,9 +49,23 @@ export class RenderContext < Map
 				value = null
 		self
 
-	def run value
+	def run value, flags = 1
 		self.value = value
-		renderContext.context = null if renderContext.context == self
+
+		if renderContext.context == self
+			# Means it was not correctly popped inside
+			renderContext.context = null
+
+		# Handling of plain text nodes returned from this
+		if typeof value == 'number'
+			value = String(value)
+
+		if typeof value == 'string' and flags == 0
+			let node = self.text ||= renderContext.createTextNode(value)
+			if value != node.textContent
+				node.textContent = value
+			return node
+
 		return self.get(value)
 
 	def cache val
