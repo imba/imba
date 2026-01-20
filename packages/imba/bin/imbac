@@ -501,6 +501,7 @@ CLI.prototype.finish = function (){
 
 function main(){
 	var o = helpers.parseArgs(process.argv.slice(2),parseOpts);
+	o.raiseErrors = true;
 
 	(o.colors == null) ? (o.colors = true) : o.colors;
 
