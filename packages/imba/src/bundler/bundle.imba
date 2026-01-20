@@ -258,7 +258,7 @@ export default class Bundle < Component
 			outdir: program.outdir
 			globalName: o.globalName
 			publicPath: baseurl or '/'
-			assetNames: "{assetsDir}/[name].[hash]"
+			assetNames: o.assetNames or "{assetsDir}/[name].[hash]"
 			chunkNames: "{assetsDir}/chunks/[name].[hash]"
 			entryNames: o.entryNames or "{assetsDir}/[name].[hash]"
 			conditions: ["imba"]
