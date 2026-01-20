@@ -45,6 +45,15 @@ extend class Array<T>
 
 	def has item
 		includes item
+	
+	def uniq cb\((member:T,array:this)=>any) = null
+		return Array.from(new Set(self)) unless cb
+		let seen = new Set
+		filter do(item)
+			let val = cb(item,self)
+			return if seen.has val
+			seen.add val
+			yes
 
 	def sorted key\any?, reverse = no
 		let items = slice!
