@@ -11222,7 +11222,7 @@ export class Tag < TagLike
 
 				elif key
 					add "{owncvar}={renderContextFn}({key.osym})"
-					let gets = "{owncvar}.run({key.c},{hasDynamicTagName ? 1 : 0})"
+					let gets = "{owncvar}.run({key.c})"
 					add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 				else
 					let ref = "{parentCache}[{osym}]"
