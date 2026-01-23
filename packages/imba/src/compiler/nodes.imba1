@@ -10964,9 +10964,14 @@ export class Tag < TagLike
 		if component and !isSelf
 			if let cname = component.cssref(option(:reference) ? null : scope__)
 				let orig = component.@cssns
+				# TOOD store in part of static classNames instead. Signal that these are static
 				if @classNames.indexOf(orig) >= 0
 					@classNames.splice(@classNames.indexOf(orig),1)
-				@classNames.push cname
+
+				if isDynamicType and true
+					@styleName = cname
+				else
+					@classNames.push cname
 
 		if option(:reference)
 			if oscope
@@ -11000,7 +11005,8 @@ export class Tag < TagLike
 			typ,
 			(fragment and !option(:detached) ? fragment.tvar : 'null'),
 			@className or 'null',
-			'null'
+			'null',
+			(@styleName ? @styleName.c() : 'null')
 		]
 
 		# if @asset
@@ -11389,12 +11395,16 @@ export class Tag < TagLike
 			flagsToConcat.unshift(@className) if @className
 			let cond = "{dvar}&{F.DIFF_FLAGS}"
 			let meth = isSelf ? 'flagSelf$' : 'flag$'
+			let extra = 'null'
 			cond = "(!{bvar}||{cond})" if isSelf or isDynamicType
 
 			if isDynamicType
-				add "({cond} && {tvar}.flags.reconcile({osym},{flagsToConcat.join("+' '+")}))"
+				if @styleName
+					extra = @styleName.c
+
+				add "({cond} && {tvar}.flags.reconcile({osym},{flagsToConcat.join("+' '+")},{extra}))"
 			else
-				add "({cond} && {tvar}.{meth}({flagsToConcat.join("+' '+")}))"
+				add "({cond} && {tvar}.{meth}({flagsToConcat.join("+' '+")},{extra}))"
 
 		# When there is only one value and that value is a static string or num - include it in ctor
 		# loop through attributes etc

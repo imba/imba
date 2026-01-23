@@ -15,6 +15,7 @@ export class Flags
 		return self if contains(ref)
 		string += (string ? ' ' : '') + ref
 		dom.classList.add(ref)
+		# now this should be said to be synced?
 		return self
 
 	def remove ref
@@ -45,13 +46,19 @@ export class Flags
 		remove(ref) if c == 1
 		return m[ref] = Math.max(c,1) - 1
 
-	def reconcile sym, str
+	def reconcile sym, str, statics
+		# only for functional tag syncing?
 		let syms = #symbols
 		let vals = #batches
 		let dirty = yes
 		unless syms
 			syms = #symbols = [sym]
 			vals = #batches = [str or '']
+
+			if statics and (dom.className or '').indexOf(statics) == -1
+				syms.push(sym)
+				vals.push(statics)
+
 			self.toString = self.valueOf = self.#toStringDeopt
 		else
 			let idx = syms.indexOf(sym)
@@ -59,6 +66,12 @@ export class Flags
 			if idx == -1
 				syms.push(sym)
 				vals.push(val)
+
+				if statics and (dom.className or '').indexOf(statics) == -1
+					syms.push(sym)
+					vals.push(statics)
+
+
 			elif vals[idx] != val
 				vals[idx] = val
 			else
