@@ -1488,7 +1488,11 @@ export class StyleSheet
 		return #string
 
 	def toString
-		parse!
+		try
+			parse!
+		catch e
+			console.warn "failed to parse stylesheet",#parts,e
+			return ""
 
 export class StyleRule
 
@@ -1561,6 +1565,7 @@ export class StyleRule
 					parts.push(rule.toString(indent: yes))
 					continue
 
+				# Rename to @mount?
 				if key.match(/@start\b/)
 					let [pre,post] = key.split(/\s*\@start\s*/)
 					let rule = new StyleRule(null,'@starting-style',value,{})
@@ -1679,6 +1684,7 @@ export class StyleRule
 					if sel[typ]
 						apply("{typ}sized",sel)
 
+			# should definitely be able to merge these back together
 			out = (content.match(/[^\n\s]/)) ? selparser.render(sel,content,options) : ""
 
 		for own subrule in subrules

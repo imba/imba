@@ -81,6 +81,7 @@ export const modifiers =
 	'-webkit-resizer': {type:'el'}
 
 	'start': {type:'@'}
+	'scope-to': {type:'@'}
 	'starting-style': {type:'@'}
 
 	backdrop: {type:'el'}

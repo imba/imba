@@ -11176,7 +11176,7 @@ export class Tag < TagLike
 				if option(:key)
 					if isDynamicType
 						add "{owncvar}={renderContextFn}({option(:key).c})"
-						let gets = "{owncvar}.run({type.c},{hasDynamicTagName ? 1 : 0})"
+						let gets = "{owncvar}.run({type.c})"
 						add "({bvar}={dvar}=1,{tvar}={gets}) || ({bvar}={dvar}=0,{owncvar}.cache({ctor}))"
 					else
 						let gets = "{parentCache}.get({kvar}={option(:key).c})"

@@ -64,10 +64,13 @@ export def rewrite rule,ctx,o = {}
 	let s2 = 0
 
 	rule.meta = {}
+	rule.scopeTo = null
 	rule.media = []
 	rule.container = []
+	# just has a bunch of rules
 
 	let parts = []
+
 	let curr = rule.rule
 
 	while curr
@@ -110,6 +113,7 @@ export def rewrite rule,ctx,o = {}
 		let next = parts[i + 1]
 		let name = part.tagName
 		let items = part.slice(0)
+
 
 		let op = part.op = part.nestingOperator
 
@@ -171,7 +175,6 @@ export def rewrite rule,ctx,o = {}
 			let mqcheck = /^(\!)?(\d+)([a-z]+)?$/
 
 
-
 			if let m = name..match(mqcheck)
 				# let [m,neg,num,typ] = name.match(mqcheck)
 				let num = parseInt(m[2])
@@ -182,11 +185,42 @@ export def rewrite rule,ctx,o = {}
 					'': 'width'
 				}[m[3] or '']
 
+
 				let cond = mod.not ? "(max-{kind}: {num - 1}px)" : "(min-{kind}: {num}px)"
 				if mod.closest
 					mod.container = cond
 				else
 					mod.media = cond
+
+			if name == 'scoped'
+				let cls = try o.scope.cssid!
+
+				mod.pseudo = null
+				let rest = []
+				while part[-1] != mod
+					rest.unshift(part.pop!)
+
+				rule.scopeFrom = parts.slice(0,i + 1)
+				rule.scopeTo = `.{cls}`
+				seenDeepOperator = yes
+				rule.rule = [{pseudo: 'scope'}].concat(rest)
+				rule.rule.type = 'rule'
+				rule.rule.rule = next
+
+			if name == 'scope-to'
+				mod.scopeTo = mod.value
+				mod.pseudo = null
+				let rest = []
+				while part[-1] != mod
+					rest.unshift(part.pop!)
+				
+				rule.scopeFrom = parts.slice(0,i + 1)
+				rule.scopeTo = mod.value
+				rule.rule = [{pseudo: 'scope'}].concat(rest)
+				rule.rule.type = 'rule'
+				rule.rule.rule = next
+
+				
 
 			if name == 'important' or name == 'force'
 				mod.pseudo = null
@@ -299,44 +333,57 @@ export def rewrite rule,ctx,o = {}
 
 	return rule
 
+
+
 export def render root, content, options = {}
-	let group = ['']
+	let group = [[]]
 	let groups = [group]
 	let rules = root.selectors or [root]
 
 	root.#rules = []
 
 	for rule in rules
-		let sel = selparser.render(rule)
-		let [base,media = ''] = sel.split(' @media ')
-		let [cbase,container = ''] = sel.split(' @container ')
-		rule.#string = base
+		let ctx = {
+			media: ''
+			scopeFrom: null
+			scopeTo: null
+			container: null
+		}
+		let sel = selparser.render(rule,ctx)
+		rule.#string = sel
 
-		# can we really group them this way?
-		# let media = rule.media.length ? "@media {rule.media.join(' and ')}" : ''
-		if media
-			rule.#media = media = '@media ' + media
+		let nestings = []
 
-			if media != group[0]
-				groups.push(group = [media])
+		if ctx.scopeTo
+			let str = `@scope ({ctx.scopeFrom}) to ({ctx.scopeTo})`
+			nestings.push(str)
 
-		elif container
-			rule.#container = container = '@container  ' + container
+		if ctx.media
+			let str = '@media ' + ctx.media.join(' and ')
+			nestings.push( rule.#media = str )
 
-			if container != group[0]
-				groups.push(group = [container])
+		if ctx.container
+			let str = `@container {ctx.container.join(' and ')}`
+			rule.#container = str
+			nestings.push(str)
 
-			base = cbase
+		for nesting,i in nestings
+			if group[0][i] != nesting
+				groups.push(group = [nestings])
+				break
 
-		group.push(base)
+		group.push(sel)
 		root.#rules.push(rule)
 
 	let out = []
 
-	for group in groups when group[1]
-		let sel = group.slice(1).join(',') + ' {$CONTENT$}'
-		if group[0]
-			sel = group[0] + '{\n' + sel + '\n}'
+	for [scopes,...sels] in groups
+		continue if sels.length == 0
+		let sel = sels.join(',') + ' {$CONTENT$}'
+
+		for scope in scopes.toReversed!
+			sel = scope + '{\n' + sel + '\n}'
+
 		out.push(sel)
 
 	return out.join('\n').replace(/\$CONTENT\$/g,content)

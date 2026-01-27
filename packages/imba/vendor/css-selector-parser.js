@@ -416,7 +416,6 @@ function ParseContext(str, pos, pseudos, attrEqualityMods, ruleNestingOperators,
 
       // Legacy support for the @.flag stuff
       if(chr == '@' && str.charAt(pos + 1) == '.'){
-        
         rule = rule || currentRule;
         part.implicitScope = true;
         pos++; chr = '.';
@@ -708,12 +707,12 @@ CssSelectorParser.prototype.escapeStr = function(s) {
   return "\"" + result + "\"";
 };
 
-CssSelectorParser.prototype.render = function(path) {
-  return this._renderEntity(path).trim();
+CssSelectorParser.prototype.render = function(path,opts = {}) {
+  return this._renderEntity(path,null,opts).trim();
 };
 
 var rootSelector = null;
-CssSelectorParser.prototype._renderEntity = function(entity,parent) {
+CssSelectorParser.prototype._renderEntity = function(entity,parent,ctx = {}) {
   var currentEntity, parts, res;
   res = '';
   switch (entity.type) {
@@ -721,27 +720,37 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
       currentEntity = entity.rule;
       rootSelector = entity;
       parts = [];
+
       while (currentEntity) {
         if (currentEntity.nestingOperator) {
           parts.push(currentEntity.nestingOperator);
         }
-        parts.push(this._renderEntity(currentEntity));
+        parts.push(this._renderEntity(currentEntity,null,ctx));
         currentEntity = currentEntity.rule;
       }
-      let media = entity.media && entity.media.length ? ` @media ${entity.media.join(' and ')}` : ''
 
-      let container = entity.container && entity.container.length ? ` @container ${entity.container.join(' and ')}` : ''
-
-      let suffix = ''
-      if (media && container){
-        suffix = ` ${container} and ${media}`
-      } else if (media){
-        suffix = media
-      } else if (container){
-        suffix = container
+      if(entity.media?.length) {
+        ctx.media = entity.media;
       }
 
-      res = parts.join(' ') + suffix;
+      if(entity.container?.length) {
+        ctx.container = entity.container;
+      }
+
+      if(entity.scopeFrom){
+        // this just seems wrong
+        let sel = entity.scopeFrom.map(this._renderEntity, this).join(' ');
+        // let sel = this._renderEntity(entity.scopeFrom,null,ctx);
+        ctx.scopeFrom = sel;
+      }
+
+      if(entity.scopeTo){
+        // console.log('found scope to!!!',entity.scopeTo,scopeParts,parts)
+        ctx.scopeTo = entity.scopeTo;
+        // parts[0] = ':scope';
+      }
+
+      res = parts.join(' ');
       break;
     case 'selectors':
       res = entity.selectors.map(this._renderEntity, this).join(', ');
@@ -854,7 +863,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
 
           if (pseudo.valueType) {
             if (pseudo.valueType === 'selector') {
-              out = pre + "(" + this._renderEntity(pseudo.value,parent) + ")" + post;
+              out = pre + "(" + this._renderEntity(pseudo.value,parent,ctx) + ")" + post;
             } else if (pseudo.valueType === 'substitute') {
               out = pre + "($" + pseudo.value + ")" + post;
             } else if (pseudo.valueType === 'numeric') {
@@ -886,7 +895,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent) {
           let parts = entity.filter(v=> v.closest == part);
           parts.map( v=> v.closest = null )
           part.not = false;
-          let all = this._renderEntity(RULE({type: 'rule'},parts))
+          let all = this._renderEntity(RULE({type: 'rule'},parts),null,ctx)
           parts.map( v=> v.skip = true )
 
           if(part.base){
@@ -937,5 +946,5 @@ parser.registerAttrEqualityMods('^', '$', '*', '~')
 
 export const parse = function(v,o){
   return parser.parse(v,o) }
-export const render = function(v){ return parser.render(v) }
+export const render = function(v,o = {}){ return parser.render(v,o) }
 // exports.default = parser;
