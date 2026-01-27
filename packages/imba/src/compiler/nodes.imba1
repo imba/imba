@@ -12096,7 +12096,6 @@ export class StyleRuleSet < StyleNode
 
 			# FIX the selector based on the tag
 		elif option(:toplevel)
-
 			let inbody = stack.up(TagBody)
 
 			if inbody
@@ -12178,7 +12177,6 @@ export class StyleRuleSet < StyleNode
 			}
 
 			@css = StyleRule.new(null,@sel,@styles,opts).toString
-
 			STACK.css.add @css, opts
 		self
 

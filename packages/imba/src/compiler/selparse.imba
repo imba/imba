@@ -220,13 +220,16 @@ export def rewrite rule,ctx,o = {}
 				rule.rule.type = 'rule'
 				rule.rule.rule = next
 
-				
+
 
 			if name == 'important' or name == 'force'
 				mod.pseudo = null
 				mod.important = yes
 				importance += 1
 				yes
+
+			if meta..scrollstate
+				mod.container = meta.scrollstate
 
 			if meta..media
 				if mod.not
@@ -333,9 +336,7 @@ export def rewrite rule,ctx,o = {}
 
 	return rule
 
-
-
-export def render root, content, options = {}
+export def layerize root, options = {}
 	let group = [[]]
 	let groups = [group]
 	let rules = root.selectors or [root]
@@ -375,18 +376,26 @@ export def render root, content, options = {}
 		group.push(sel)
 		root.#rules.push(rule)
 
-	let out = []
+	return groups
 
+export def render root, content, options = {}, stack = {}
+	let groups = layerize(root,options)
+
+	let out = []
+	let indent = stack.indent or ''
+	let ind = indent
 	for [scopes,...sels] in groups
 		continue if sels.length == 0
 		let sel = sels.join(',') + ' {$CONTENT$}'
-
-		for scope in scopes.toReversed!
-			sel = scope + '{\n' + sel + '\n}'
+		
+		for scope,i in scopes.toReversed!
+			ind += '\t'
+			# sel = ind + scope + '{\n' + sel + '\n' + ind + '}'
+			sel = scope + '{ ' + sel + ' }'
 
 		out.push(sel)
 
-	return out.join('\n').replace(/\$CONTENT\$/g,content)
+	return out.join('\n').replace(/\$CONTENT\$/g,content + indent)
 
 export def unwrap parent, subsel
 	let pars = parent.split(',')

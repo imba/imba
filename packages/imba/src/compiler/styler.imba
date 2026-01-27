@@ -1517,9 +1517,29 @@ export class StyleRule
 		arr.push(sel)
 
 	def toString o = {}
+
+		if !parent and selector
+			# parse the nested groups here
+			let selast
+			let layers
+
+			try
+				selast = selparser.parse(selector,options)
+				layers = selparser.layerize(selast,options)
+
+				if layers[1] and layers[1][0]
+					[ownsel,...ownrules] = layers[1]
+			catch e
+				console.log 'error',e,selast,selector
+
 		let parts = []
 		let subrules = []
 		let subrule
+
+		let out = ""
+
+		let suffix = []
+		let indent = o.indent or ''
 
 		if isKeyFrames
 			let [context,name] = selector.split(/\s*\@keyframes\s*/)
@@ -1562,17 +1582,23 @@ export class StyleRule
 				if isKeyFrames
 					let keyframe = key.replace(/&/g,'')
 					let rule = new StyleRule(self,keyframe,value,options)
-					parts.push(rule.toString(indent: yes))
+					parts.push(rule.toString(indent: indent + '\t'))
 					continue
 
 				# Rename to @mount?
 				if key.match(/@start\b/)
 					let [pre,post] = key.split(/\s*\@start\s*/)
+
 					let rule = new StyleRule(null,'@starting-style',value,{})
-					parts.push(rule.toString(indent: yes))
+					parts.push(rule.toString(indent: indent + '\t'))
 					continue
 
 				let subsel = selparser.unwrap(selector,key)
+				if ownsel
+					# subsel = selparser.unwrap('&',key)
+					# only replace the first one?
+					subsel = key.replace(/&/g,':scope')
+
 				subrules.push new StyleRule(self,subsel,value,options)
 				continue
 
@@ -1587,6 +1613,8 @@ export class StyleRule
 				# do we unwrap, or can we just use :where etc and trust it?
 				let subsel = selparser.unwrap(selector,substr)
 				let obj = {}
+
+				
 				obj[keys[0]] = value
 				if subrule = subrules[subsel]
 					subrule.content[keys[0]] = value
@@ -1650,9 +1678,9 @@ export class StyleRule
 					for prefixed in AutoPrefixes[key]
 						parts.push "{prefixed}: {value}{important};"
 
-		let out = ""
-
-		let content = parts.join('\n')
+		
+		let content = parts.map(do indent + '\t' + $1).join('\n')
+		# let content = parts.join('\n')
 		if o.indent or isKeyFrames
 			content = '\n' + content + '\n'
 
@@ -1685,9 +1713,41 @@ export class StyleRule
 						apply("{typ}sized",sel)
 
 			# should definitely be able to merge these back together
-			out = (content.match(/[^\n\s]/)) ? selparser.render(sel,content,options) : ""
+			# content += indent
+			out = (content.match(/[^\n\s]/)) ? selparser.render(sel,content,options,o) : ""
+			out = indent + out
+		
+		o.indent = indent
+
+		if !parent and ownsel
+			out = ''
+			let ind = indent # + '\t'
+
+			for layer in ownsel
+				out += ind + layer + '{\n'
+				suffix.push '\n' + ind + '}'
+				ind += '\t'
+
+			for ownrule in ownrules
+				out += ind + ownrule + ' {\n'
+				suffix.push '\n' + ind + '}'
+				ind += '\t'
+				# suffix += '}'
+
+			if content
+				out += parts.map(do ind + $1).join('\n')
+
+			if ownrules[-1] == ':scope'
+				ind = ind.slice(0,-1)
+				out += suffix[-1]
+				suffix.pop!
+			
+			o.indent = ind
 
 		for own subrule in subrules
-			out += '\n' + subrule.toString()
+			out += '\n' + subrule.toString(o)
+		
+		o.indent = indent
+		out += suffix.toReversed().join('')
 
 		return out
