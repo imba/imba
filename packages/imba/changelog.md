@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Support css scoping with `@scope-to(sel)`. Started refactoring style generation to allow generating nested selectors directly without flattening. Could contain subtle regressions.
+
 * Use Element#moveBefore internally in supported browsers to avoid unmount/mount cycles if element is merely moving within the document. There is a rudimentary polyfill for unsupported browsers. Only works for custom elements.
 
 * Add Component#remount lifecycle method that is called instead of mount if component was already mounted (but moved)
