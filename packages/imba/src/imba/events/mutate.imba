@@ -34,6 +34,9 @@ extend class Element
 			o.childList = true
 
 		if mods.attributes
+			if mods.attributes isa Array
+				o.attributeFilter = mods.attributes
+
 			delete mods.attributes
 			o.attributes = true
 
