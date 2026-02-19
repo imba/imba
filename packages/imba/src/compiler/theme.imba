@@ -105,6 +105,23 @@ export const modifiers =
 	speech: {media: 'speech'}
 	all: {media: 'all'}
 
+	# @container my-container scroll-state(scrollable: top)
+	'scrollable': {type: '@', scrollstate: 'scroll-state(scrollable: top)'}
+	'scrollable-top': {type: '@', scrollstate: 'scroll-state(scrollable: top)'}
+	'scrollable-left': {type: '@', scrollstate: 'scroll-state(scrollable: left)'}
+	'scrollable-right': {type: '@', scrollstate: 'scroll-state(scrollable: right)'}
+	'scrollable-bottom': {type: '@', scrollstate: 'scroll-state(scrollable: bottom)'}
+
+	'snapped-x': {type: '@', scrollstate: 'scroll-state(snapped:x)'}
+	'snapped-y': {type: '@', scrollstate: 'scroll-state(snapped:y)'}
+	'snapped-inline': {type: '@', scrollstate: 'scroll-state(snapped:inline)'}
+	'snapped-block': {type: '@', scrollstate: 'scroll-state(snapped:block)'}
+
+	'stuck-top': {type: '@', scrollstate: 'scroll-state(stuck:top)'}
+	'stuck-bottom': {type: '@', scrollstate: 'scroll-state(stuck:bottom)'}
+	'stuck-left': {type: '@', scrollstate: 'scroll-state(stuck:left)'}
+	'stuck-right': {type: '@', scrollstate: 'scroll-state(stuck:right)'}
+
 	xs: {media: '(min-width: 480px)', medianeg: '(max-width: 479px)' }
 	sm: {media: '(min-width: 640px)', medianeg: '(max-width: 639px)' }
 	md: {media: '(min-width: 768px)', medianeg: '(max-width: 767px)' }
