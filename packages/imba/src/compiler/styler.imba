@@ -1124,6 +1124,8 @@ export class StyleTheme
 			[l,c,h,a] = val.lcha!
 		elif val.._resolvedValue isa Color
 			[l,c,h,a] = val._resolvedValue.lcha!
+			if val.param and val.param.toAlpha
+				a = val.param.toAlpha()
 
 		if typeof l == 'number'
 			l = Math.round(l * 10) / 10
