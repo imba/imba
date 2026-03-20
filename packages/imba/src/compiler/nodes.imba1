@@ -9553,6 +9553,8 @@ export class TagAttr < TagPart
 			# "set('{key}',{val})"
 			"{tref}.setAttribute('{key}',{val})"
 			# "dataset.{key.slice(5)}{op}{val}"
+		elif ns
+			"{tref}.setns$('{ns}','{key}',{val})"
 		else
 			OP('.',LIT(tref),key).c + "{op}{val}"
 
