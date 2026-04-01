@@ -17,6 +17,17 @@ export class Flags
 		dom.classList.add(ref)
 		# now this should be said to be synced?
 		return self
+	
+	def set name, val
+		#named ||= {}
+		let prev = #named[name]
+		if prev != val
+			if prev
+				decr(prev)
+			if val
+				incr(val)
+			#named[name] = val
+		return self
 
 	def remove ref
 		return self unless contains(ref)
