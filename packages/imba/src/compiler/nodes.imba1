@@ -897,6 +897,9 @@ export class Stack
 
 	def platform
 		@options:platform or 'browser'
+	
+	def mode
+		@options:mode or 'production'
 
 	def format
 		@options:format
@@ -934,7 +937,11 @@ export class Stack
 	def isNode
 		platform == 'node'
 
+	def isDev
+		mode == 'development'
 
+	def isProd
+		mode == 'production'
 
 	def isVite
 		!!@options:vite
@@ -961,6 +968,10 @@ export class Stack
 		elif key == 'NODE'
 			@meta:universal = no
 			return isNode
+		elif key == 'DEV'
+			return isDev
+		elif key == 'PROD'
+			return isProd
 		elif key == 'NODEISH'
 			@meta:universal = no
 			return isNode or !!tsc
@@ -2756,7 +2767,7 @@ export class GreedyReturn < ImplicitReturn
 export class Yield < Statement
 
 	def visit
-		@method = STACK.method
+		@method = STACK.method or STACK.up(Func)
 		@method.set(yield: yes, noreturn: yes)
 
 
@@ -9525,6 +9536,7 @@ export class TagAttr < TagPart
 				bval = "[{val[0].c(o)},{val[1].c(o)}]"
 
 			"{tref}.bind$('{key}',{bval})"
+
 		elif key.indexOf('--') == 0
 			let pars = ["'{key}'",val]
 			let u = option(:unit)
@@ -12003,7 +12015,6 @@ export class EnvFlag < ValueNode
 		var out = val
 		if STACK.tsc
 			out = LIT("{runtime:$env}({STR(@key).c})")
-			# out = CALL(STACK.corelib['env$'],[STR(@key)]).c
 		elif @key == "JS"
 			out = LIT('true')
 		elif val !== undefined
@@ -12709,7 +12720,6 @@ export class StyleIdentifier < StyleTerm
 
 	def visit stack
 		let raw = toString
-	
 		if raw.match(/^[lcha]$/)
 			super
 			let mix = stack.up(StyleColorMix)

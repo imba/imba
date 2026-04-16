@@ -279,11 +279,12 @@ export class ImbaFile < FileNode
 
 	def compile o,context = program
 		# hmr / production true or false
-		let key = "{o.platform}-{o.hmr}"
+		let key = "{o.platform}-{o.hmr}-{o.mode}"
 		memo(key) do
 			o = Object.assign({
 				platform: o.platform,
 				format: 'esm',
+				mode: o.mode,
 				imbaPath: 'imba'
 				styles: 'extern'
 				hmr: o.hmr

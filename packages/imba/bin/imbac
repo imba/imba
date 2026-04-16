@@ -35,6 +35,7 @@ var parseOpts = {
 		outext: {type: 'string'},
 		sourcemap: {type: 'string'}, // inline | extern
 		platform: {type: 'string'}, // node | browser | worker
+		mode: {type: 'string'}, // development | production | test
 		styles: {type: 'string'}, // extern | inline
 		imbaPath: {type: 'string'}, // global | inline | import
 		sourceId: {type: 'string'},
