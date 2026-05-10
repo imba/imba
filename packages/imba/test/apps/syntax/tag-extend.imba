@@ -33,11 +33,13 @@ extend tag App
 		super + 3
 
 let div = document.createElement('div')
+let random = document.createElement('random')
 let p = document.createElement('p')
 let app = <App>
 
 test 'extend tag element' do
 	eq div.baseExtended!, yes
+	eq random.baseExtended!, yes
 	ok !div.pExtended
 
 test 'extend tag p' do
