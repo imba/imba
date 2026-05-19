@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0-alpha.250
+## 2.0.0-alpha.249
 
 * Add basic support for scroll-state container query modifiers: `@scrollable(-top/-left/-right/-bottom)`, `@snapped-(x/y/inline/block)` and `@stuck-(top/right/bottom/left)`.
 
@@ -31,8 +31,6 @@
 * Add Component#remount lifecycle method that is called instead of mount if component was already mounted (but moved)
 
 * Fix server reload issue
-
-## 2.0.0-alpha.249
 
 * Make `is` operator fallback to `==` (instead of `===`)
 
