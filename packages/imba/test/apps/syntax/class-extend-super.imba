@@ -48,6 +48,20 @@ test do
 	let item = new Two
 	eq item.num!, 5
 
+test "super keeps extension receiver in nested function" do
+	class NestedSuper
+		def value
+			self
+
+	extend class NestedSuper
+		def value
+			let call = do
+				super
+			call!
+
+	let item = new NestedSuper
+	eq item.value!, item
+
 # extend dynamically
 describe "dynamic extend" do
 	class Hello

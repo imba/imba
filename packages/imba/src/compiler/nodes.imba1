@@ -14550,7 +14550,7 @@ export class Super < Node
 
 		# need to know if our method is in the initial declaration
 		if virtual and @class
-			sup = CALL(STACK.corelib['sup$'],[THIS,@class.refSym])
+			sup = CALL(STACK.corelib['sup$'],[slf,@class.refSym])
 			# sup = CALL(@class.virtualSuper,[slf])
 
 		# when super is written all by itself - it means to do the default action
