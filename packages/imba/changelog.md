@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+* Add basic support for scroll-state container query modifiers: `@scrollable(-top/-left/-right/-bottom)`, `@snapped-(x/y/inline/block)` and `@stuck-(top/right/bottom/left)`.
+
+* Improve generated selectors for ancestor/parent modifiers (`..` / `^`) to avoid wildcard relation selectors inside `:is`/`:not`. This changes the emitted selectors to keep the current subject via `:where(...)`.
+
+* Allow `@mutate.attributes([...])` to pass an `attributeFilter` to `MutationObserver`.
+
+* Add low-level `Flags#set(name,value)` helper for named flag state.
+
+* Add `--mode` to `imbac` and pass bundler mode through to the compiler so `$dev$` and `$prod$` work consistently in front of imports and compile-time branches. The bundler compile cache now includes mode.
+
+* Fix namespaced tag attributes that are not known HTML/SVG attributes to compile through `setns$`.
+
+* Fix `super` in `extend class` methods when called from nested functions.
+
+* Fix `<select bind:data>` sync to tolerate missing `options`.
+
+* Fix server rendering of `<style>` text content so it is not escaped like normal text.
+
+* Preserve alpha when resolving named palette colors inside style color mixes.
+
+* Make `global.sleep` callback optional in generated types.
+
 * Support css scoping with `@scope-to(sel)`. Started refactoring style generation to allow generating nested selectors directly without flattening. Could contain subtle regressions.
 
 * Use Element#moveBefore internally in supported browsers to avoid unmount/mount cycles if element is merely moving within the document. There is a rudimentary polyfill for unsupported browsers. Only works for custom elements.
