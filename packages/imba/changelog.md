@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.250
 
 * Add basic support for scroll-state container query modifiers: `@scrollable(-top/-left/-right/-bottom)`, `@snapped-(x/y/inline/block)` and `@stuck-(top/right/bottom/left)`.
 
