@@ -133,7 +133,7 @@ const escapeAttributeValue = do(val)
 const escapeTextContent = do(val, nodeName)
 	let str = typeof val == 'string' ? val : String(val)
 
-	if nodeName == 'script'
+	if nodeName == 'script' or nodeName == 'style'
 		return str
 
 	if str.indexOf('"') >= 0
@@ -550,7 +550,7 @@ export class Element < Node
 			return #innerHTML
 
 		if self.textContent != undefined
-			return escapeTextContent(self.textContent)
+			return escapeTextContent(self.textContent,self.nodeName)
 
 		for item,i in self.childNodes
 			if typeof item == 'string'
