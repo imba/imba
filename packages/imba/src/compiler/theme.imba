@@ -167,13 +167,13 @@ export const modifiers =
 
 	darky: {
 		flag:'@dark',
-		raw:':is( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
-		neg:':not( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
+		raw:':is( :where(.@dark,.@dark :where(:root,:not(:root))):not(.@dark .@light :where(:root,:not(:root)),.@dark .@light), :where(.@light .@dark,.@light .@dark :where(:root,:not(:root))):not(.@dark .@light .@dark .@light :where(:root,:not(:root)),.@dark .@light .@dark .@light))'
+		neg:':not( :where(.@dark,.@dark :where(:root,:not(:root))):not(.@dark .@light :where(:root,:not(:root)),.@dark .@light), :where(.@light .@dark,.@light .@dark :where(:root,:not(:root))):not(.@dark .@light .@dark .@light :where(:root,:not(:root)),.@dark .@light .@dark .@light))'
 	}
 	lighty: {
 		flag:'@light',
-		raw:':not( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
-		neg:':is( :where(.@dark,.@dark *):not(.@dark .@light *,.@dark .@light), :where(.@light .@dark,.@light .@dark *):not(.@dark .@light .@dark .@light *,.@dark .@light .@dark .@light))'
+		raw:':not( :where(.@dark,.@dark :where(:root,:not(:root))):not(.@dark .@light :where(:root,:not(:root)),.@dark .@light), :where(.@light .@dark,.@light .@dark :where(:root,:not(:root))):not(.@dark .@light .@dark .@light :where(:root,:not(:root)),.@dark .@light .@dark .@light))'
+		neg:':is( :where(.@dark,.@dark :where(:root,:not(:root))):not(.@dark .@light :where(:root,:not(:root)),.@dark .@light), :where(.@light .@dark,.@light .@dark :where(:root,:not(:root))):not(.@dark .@light .@dark .@light :where(:root,:not(:root)),.@dark .@light .@dark .@light))'
 	}
 
 	# For whole module or single element?

@@ -712,6 +712,24 @@ CssSelectorParser.prototype.render = function(path,opts = {}) {
 };
 
 var rootSelector = null;
+var anyElementSelector = ':where(:root,:not(:root))';
+
+function relationSubjectSelector(subject) {
+  return subject && subject !== '*' ? `:where(${subject})` : anyElementSelector;
+}
+
+function relationPathSelector(selector, distance, subject) {
+  if (distance > 5) {
+    return `${selector} ${subject}`;
+  }
+
+  var path = selector;
+  for (var i = 1; i < distance; i++) {
+    path += ` > ${anyElementSelector}`;
+  }
+  return `${path} > ${subject}`;
+}
+
 CssSelectorParser.prototype._renderEntity = function(entity,parent,ctx = {}) {
   var currentEntity, parts, res;
   res = '';
@@ -780,6 +798,11 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent,ctx = {}) {
 
       let idx = 0;
       let len = entity.length;
+      let relationSubject;
+      let getRelationSubject = () => {
+        if (relationSubject === undefined) relationSubject = res;
+        return relationSubjectSelector(relationSubject);
+      };
 
       while(idx < len){
         let shortest = null;
@@ -788,6 +811,7 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent,ctx = {}) {
         let flag = part.flag;
         let out = "";
         let neg = part.not;
+        let relationNeg = neg;
         let pseudo = part.pseudo ? part : null;
         let desc = modifiers[part.pseudo];
 
@@ -891,7 +915,6 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent,ctx = {}) {
 
         if(part.closest) {
           // fetch all the other
-          // out = `:${neg ? 'not' : 'is'}(${out},${out} *)`
           let parts = entity.filter(v=> v.closest == part);
           parts.map( v=> v.closest = null )
           part.not = false;
@@ -901,15 +924,18 @@ CssSelectorParser.prototype._renderEntity = function(entity,parent,ctx = {}) {
           if(part.base){
             all = `${part.base}${all}`
           }
-          // find better way?
-          out = `:${neg ? 'not' : 'is'}(${all} *)`
+          // Keep the relation scoped to this subject without putting a wildcard inside :is/:not.
+          out = `:${relationNeg ? 'not' : 'is'}(${all} ${getRelationSubject()})`
           neg = false;
 
           
 
         } else if (part.up) {
-          let rest = part.up > 5 ? ' *' : ' > *'.repeat(part.up);
-          out = `:${neg ? 'not' : 'is'}(${out}${rest})`
+          if (relationNeg) {
+            let positivePart = Object.assign({},part,{not: false, up: 0, closest: false, skip: false});
+            out = this._renderEntity(RULE({type: 'rule'},[positivePart]),null,ctx);
+          }
+          out = `:${relationNeg ? 'not' : 'is'}(${relationPathSelector(out, part.up, getRelationSubject())})`
           neg = false;
         }
 
