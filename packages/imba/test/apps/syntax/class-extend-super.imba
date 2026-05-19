@@ -62,6 +62,23 @@ test "super keeps extension receiver in nested function" do
 	let item = new NestedSuper
 	eq item.value!, item
 
+test "super resolves through superclass mixins" do
+	class SuperMixin
+		def value
+			10
+
+	class SuperBase
+		isa SuperMixin
+
+	class SuperSub < SuperBase
+
+	extend class SuperSub
+		def value
+			super + 1
+
+	let item = new SuperSub
+	eq item.value!, 11
+
 # extend dynamically
 describe "dynamic extend" do
 	class Hello

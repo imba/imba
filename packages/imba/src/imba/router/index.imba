@@ -343,7 +343,8 @@ export class ElementRoute
 
 	get route
 		let pr = parent ? parent.route : self.router
-		pr.route(#path)
+		(pr or self.router)..route(#path)
+
 
 	get match
 		#match
