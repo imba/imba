@@ -127,7 +127,7 @@ extend class HTMLSelectElement
 
 		if self.multiple
 			let vals = []
-			for option,i in self.options
+			for option,i in (self.options or [])
 				let val = option.richValue
 				let sel = bindHas(model,val)
 				option.selected = sel
@@ -135,7 +135,7 @@ extend class HTMLSelectElement
 			$$value = vals
 
 		else
-			for option,i in self.options
+			for option,i in (self.options or [])
 				let val = option.richValue
 				if val == model
 					$$value = [val]
