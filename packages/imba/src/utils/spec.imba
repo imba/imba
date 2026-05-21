@@ -94,6 +94,43 @@ class SpecComponent
 def isPlainObject val
 	typeof val == 'object' and val and Object.getPrototypeOf(val) == Object.prototype
 
+def formatAssertValue value
+	if value === undefined
+		return 'undefined'
+	elif typeof value == 'string'
+		return JSON.stringify(value)
+	elif typeof value == 'function'
+		return value.toString()
+
+	try
+		let json = JSON.stringify(value)
+		return json === undefined ? String(value) : json
+	catch e
+		return String(value)
+
+def formatAssertFailure payload
+	let source = payload && payload.source or ''
+	let lines = ["assert {source} failed"]
+
+	if payload and payload.type == 'binary'
+		lines.push "  {payload.left.source}: {formatAssertValue(payload.left.value)}"
+		lines.push "  {payload.operator}"
+		lines.push "  {payload.right.source}: {formatAssertValue(payload.right.value)}"
+	elif payload
+		lines.push "  value: {formatAssertValue(payload.value)}"
+
+	return lines.join("\n")
+
+def formatEqFailure payload
+	let actual = payload.actual
+	let expected = payload.expected
+	let lines = ["eq {actual.source}, {expected.source} failed"]
+
+	lines.push "  {actual.source}: {formatAssertValue(actual.value)}"
+	lines.push "  {expected.source}: {formatAssertValue(expected.value)}"
+
+	return lines.join("\n")
+
 def createChainable keys,fn
 	let create
 	create = do(ctx)
@@ -213,8 +250,28 @@ global class Spec < SpecComponent
 		let blocks = context.blocks[name] ||= []
 		blocks.push blk
 
-	def eq actual, expected, options
+	def eq actual, expected, options = {}
+		if typeof options == 'string'
+			options = {message: options}
+		else
+			options = Object.assign({},options)
+
+		if globalThis.IMBA_EQ
+			options.eq = globalThis.IMBA_EQ
+			globalThis.IMBA_EQ = null
+
 		new SpecAssert(context, actual,expected, options)
+
+	def assert actual, options = {}
+		if typeof options == 'string'
+			options = {message: options}
+		else
+			options = Object.assign({},options)
+
+		if globalThis.IMBA_ASSERT
+			options.assert = globalThis.IMBA_ASSERT
+
+		new SpecAssert(context, actual, true, options)
 
 	def step i = 0
 		Spec.CURRENT = self
@@ -450,7 +507,11 @@ global class SpecAssert < SpecComponent
 		self
 
 	def toString
-		if failed and typeof message == 'string'
+		if failed and options.assert and !options.message and !options.warn
+			return formatAssertFailure(options.assert)
+		elif failed and options.eq and !options.message and !options.warn
+			return formatEqFailure(options.eq)
+		elif failed and typeof message == 'string'
 			let str = message
 			str = str.replace('%1',actual)
 			str = str.replace('%2',expected)
@@ -467,6 +528,7 @@ global.test = spec.test
 
 global def before name, blk do spec.before(name,blk)
 global def eq actual, expected, o\any? do  spec.eq(actual, expected, o)
+global def assert actual, o\any? do spec.assert(actual, o)
 global def ok actual, o\any? do spec.eq(!!actual, true, o)
 global def nok actual, o\any? do spec.eq(!!actual, false, o)
 

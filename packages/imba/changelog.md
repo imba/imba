@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Add compiler-powered metadata for global `assert` and `eq` calls in specs, allowing failures to report the original expression plus captured operand values.
+
 ## 2.0.0-alpha.249
 
 * Add basic support for scroll-state container query modifiers: `@scrollable(-top/-left/-right/-bottom)`, `@snapped-(x/y/inline/block)` and `@stuck-(top/right/bottom/left)`.

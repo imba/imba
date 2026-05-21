@@ -1622,24 +1622,42 @@ export class ValueReferenceNode < Node
 export class ExpressionNode < ValueNode
 
 export class AssertionNode < ValueNode
+
+	def sourceFor node
+		let src = STACK.SOURCECODE
+		let [start, end] = node.loc
+		JSON.stringify(src.slice(start,end))
+
+	def isInspectableBinary op
+		op isa Op and !(op isa Access) and !(op isa UnaryOp) and !op.isLogical and !op.isAssignment and op.left and op.right
+
 	def js o
 		let op = @value
 		let out = []
 
-		if op isa Op and !(op isa Access)
+		if isInspectableBinary(op)
 			let l = op.left
 			let r = op.right
+			let osrc = sourceFor(op)
+			let lsrc = sourceFor(l)
+			let rsrc = sourceFor(r)
+			let oval = JSON.stringify(op.@op)
+			let lval = l.cache.c(o)
+			let rval = r.cache.c(o)
 
-			out.push(l.cache.c(o))
-			out.push(helpers.singlequote(op.@op))
-			out.push(r.cache.c(o))
-			out = ["imba.$a=[{out.join(',')}]"]
+			out = [
+				"source:{osrc}",
+				"operator:{oval}",
+				"left:\{source:{lsrc},value:{lval}\}",
+				"right:\{source:{rsrc},value:{rval}\}"
+			]
+			let meta = out.join(',')
+			out = ["globalThis.IMBA_ASSERT=\{type:'binary',{meta}\}"]
 			out.push(op.c(o))
-			# op.cache
-			# out.push('imba.$asrt=undefined')
-			# out.push(op.c(o))
 		else
-			out.push('imba.$a=null')
+			let osrc = sourceFor(op)
+			let oval = op.cache.c(o)
+			out.push("globalThis.IMBA_ASSERT=\{type:'expression',source:{osrc},value:{oval}\}")
 			out.push(op.c(o))
 		return '(' + out.join(',') + ")" # ,{op.c(o)})
 		# "('assert',{super})"
@@ -8207,11 +8225,36 @@ export class Call < Node
 			@receiver = callee.receiver
 			callee = @callee = Access.new(callee.op,callee.left,callee.right)
 
-		# Idea for special assert compilation that includes ast info
-		# if rgt isa Identifier and rgt.value == 'assert' and !splat and false
-		# 	let arg = args.first
-		# 	arg.option(:assertion,yes)
-		# 	args.@nodes[0] = AssertionNode.new(arg)
+		if variable === ROOT.ASSERT and !splat and args.first
+			args.@nodes[0] = AssertionNode.new(args.first)
+
+		if variable === ROOT.EQ and !splat and args.count >= 2
+			let actual = args.index(0)
+			let expected = args.index(1)
+			let src = STACK.SOURCECODE
+			let loc = self.loc
+			let aloc = actual.loc
+			let eloc = expected.loc
+			let source = JSON.stringify(src.slice(loc[0],loc[1]))
+			let asource = JSON.stringify(src.slice(aloc[0],aloc[1]))
+			let esource = JSON.stringify(src.slice(eloc[0],eloc[1]))
+			let actualValue = actual.cache.c(o)
+			let expectedValue = expected.cache.c(o)
+			let payload = [
+				"source:{source}",
+				"actual:\{source:{asource},value:{actualValue}\}",
+				"expected:\{source:{esource},value:{expectedValue}\}"
+			].join(',')
+			let callargs = [
+				actual.c(expression: yes,mark: false),
+				expected.c(expression: yes,mark: false)
+			]
+			var i = 2
+			while i < args.count
+				let arg = args.index(i)
+				callargs.push(arg.c(expression: yes,mark: false)) if arg
+				i++
+			return "(globalThis.IMBA_EQ=\{{payload}\},{callee.c(expression: yes)}({callargs.join(',')}))"
 
 		# INFO DEVLOGS
 		if variable === ROOT.L
@@ -13611,6 +13654,8 @@ export class RootScope < Scope
 		self.REQUIRE = register('require', self, type: 'global') # .@c = 'globalThis'
 		self.IMPORT = register('import', self, type: 'global')
 		self.MODULE = register('module', self, type: 'global')
+		self.ASSERT = register('assert', self, type: 'global')
+		self.EQ = register('eq', self, type: 'global')
 
 		self.L = register('L', self, type: 'global')
 
