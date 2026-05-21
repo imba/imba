@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.250
 
 * Add compiler-powered metadata for global `assert` and `eq` calls in specs, allowing failures to report the original expression plus captured operand values.
 
