@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.0-alpha.251
+
+* Refresh prerelease after a failed 2.0.0-alpha.250 publish.
+
 ## 2.0.0-alpha.250
 
 * Add compiler-powered metadata for global `assert` and `eq` calls in specs, allowing failures to report the original expression plus captured operand values.
