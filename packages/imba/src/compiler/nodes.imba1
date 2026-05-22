@@ -1635,7 +1635,11 @@ export class AssertionNode < ValueNode
 		let op = @value
 		let out = []
 
-		if isInspectableBinary(op)
+		if op isa Assign
+			let osrc = sourceFor(op)
+			out.push("globalThis.IMBA_ASSERT=\{type:'assignment',source:{osrc}\}")
+			out.push(op.c(o))
+		elif isInspectableBinary(op)
 			let l = op.left
 			let r = op.right
 			let osrc = sourceFor(op)

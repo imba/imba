@@ -86,6 +86,18 @@ test 'runtime captures expression assert' do
 	eq info.source, 'ready'
 	eq info.value, true
 
+test 'runtime preserves assignment assert expression' do
+	let target = no
+	let value = yes
+
+	assert target = value
+
+	let info = globalThis.IMBA_ASSERT
+	eq target, yes
+	eq info.type, 'assignment'
+	eq info.source, 'target = value'
+	eq info.value, true
+
 test 'runtime captures eq sides' do
 	let left = {count: 2}
 	let right = 2
@@ -140,3 +152,16 @@ test 'assert failure message' do
 
 	assert msg.indexOf('assert item > 110 failed') >= 0
 	assert msg.indexOf('item: 100') >= 0
+
+test 'assignment assert failure message' do
+	let target = yes
+	let value = no
+
+	assert target = value
+	let ass = SPEC.context.assertions[-1]
+	let msg = ass.toString!
+	ass.failed = no
+
+	assert target == no
+	assert msg.indexOf('assert target = value failed') >= 0
+	assert msg.indexOf('value: false') >= 0

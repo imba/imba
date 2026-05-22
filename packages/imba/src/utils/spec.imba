@@ -270,6 +270,8 @@ global class Spec < SpecComponent
 
 		if globalThis.IMBA_ASSERT
 			options.assert = globalThis.IMBA_ASSERT
+			if !Object.prototype.hasOwnProperty.call(options.assert,'value')
+				options.assert.value = actual
 
 		new SpecAssert(context, actual, true, options)
 
