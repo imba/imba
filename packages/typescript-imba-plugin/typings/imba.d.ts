@@ -8,6 +8,16 @@
 /// <reference path="./styles.generated.d.ts" />
 /// <reference path="./styles.modifiers.d.ts" />
 
+interface ImbaFieldRegistry {}
+type ImbaFieldEntry = ImbaFieldRegistry[keyof ImbaFieldRegistry];
+type ImbaFieldEntriesForDecorator<D extends string> = ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${D}:${string}`>];
+type ImbaFieldEntriesForField<F extends string> = ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${string}:${F}:${string}`>];
+type ImbaFieldEntriesForDecoratorField<D extends string, F extends string> = ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${D}:${F}:${string}`>];
+type ImbaFieldEntriesForTarget<T> = NonNullable<T[Extract<keyof T, `__imbaFieldTarget:${string}`>]>;
+type ImbaFieldEntriesForDecoratorTarget<D extends string, T> = NonNullable<T[Extract<keyof T, `__imbaFieldTarget:${D}:${string}`>]>;
+type ImbaFieldEntriesForDecoratorFirstArg<D extends string, A> = ImbaFieldEntriesForDecoratorTarget<D, A>;
+type ImbaFieldEntriesForDecoratorFirstArgType<D extends string, A extends abstract new (...args: any) => any> = ImbaFieldEntriesForDecoratorTarget<D, InstanceType<A>>;
+
 interface Storage {
     setItem(key: string, value: number): void;
 }

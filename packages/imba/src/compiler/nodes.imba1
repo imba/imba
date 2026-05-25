@@ -768,6 +768,7 @@ export class Stack
 		@tag = null
 		@sourceId = null
 		@symbols = {}
+		@fieldRegistryEntries = []
 		@css = StyleSheet.new(self)
 		@theme = null
 		@meta = {}
@@ -787,6 +788,69 @@ export class Stack
 
 	def use item
 		@root.use(item)
+
+	def addFieldRegistryEntry entry
+		@fieldRegistryEntries ||= []
+		@fieldRegistryEntries.push(entry)
+		self
+
+	def fieldRegistryDeclaration
+		return "" unless @fieldRegistryEntries and @fieldRegistryEntries:length
+
+		let lines = [
+			'declare global {'
+			'\tinterface ImbaFieldRegistry {'
+		]
+
+		for entry in @fieldRegistryEntries
+			lines.push("\t\t" + JSON.stringify(entry:key) + ': {')
+			lines.push("\t\t\towner: " + entry:owner)
+			lines.push("\t\t\townerType: typeof " + entry:ownerType)
+			lines.push("\t\t\tfield: " + JSON.stringify(entry:field))
+			lines.push("\t\t\tdecorator: " + JSON.stringify(entry:decorator))
+			if entry:firstArg
+				lines.push("\t\t\tfirstArg: " + entry:firstArg)
+				lines.push("\t\t\tfirstArgType: " + entry:firstArgType)
+			lines.push("\t\t\targs: [" + entry:args.join(', ') + ']')
+			lines.push('\t\t}')
+
+		lines.push('\t}')
+		lines.push('}')
+
+		for entry in @fieldRegistryEntries
+			if entry:firstArgTarget
+				lines.push(fieldRegistryTargetDeclaration(entry,entry:firstArgTarget))
+
+		lines.join("\n")
+
+	def fieldRegistryTargetDeclaration entry, target
+		let prop = JSON.stringify(target:key)
+		let value = 'ImbaFieldRegistry[' + JSON.stringify(entry:key) + ']'
+		let member = 'readonly ' + prop + '?: ' + value
+
+		if target:module
+			return [
+				'declare module ' + target:module + ' {'
+				'\tinterface ' + target:name + ' {'
+				'\t\t' + member
+				'\t}'
+				'}'
+			].join("\n")
+		elif target:global
+			return [
+				'declare global {'
+				'\tinterface ' + target:name + ' {'
+				'\t\t' + member
+				'\t}'
+				'}'
+			].join("\n")
+		else
+			let prefix = target:export ? 'export ' : ''
+			return [
+				prefix + 'interface ' + target:name + ' {'
+				'\t' + member
+				'}'
+			].join("\n")
 
 	def incr name
 		@counters[name] ||= 0
@@ -2333,6 +2397,43 @@ export class ClassField < Node
 	def wrapper
 		option(:wrapper)
 
+	def fieldRegistryEntry owner
+		return null unless STACK.tsc
+		return null if isStatic
+
+		let desc = wrapper
+		return null unless desc isa Descriptor
+		return null unless @name isa Identifier
+		return null if @name isa SymbolIdentifier
+
+		let decorator = desc.fieldRegistryDecoratorName
+		return null unless decorator
+
+		let field = String(@name)
+		let start = @name.startLoc or 0
+		let end = @name.endLoc or start
+		let registryArgs = desc.fieldRegistryArgs
+		return null unless registryArgs:length
+
+		let args = []
+		for arg in registryArgs
+			args.push(arg:constructorType)
+		let firstArg = registryArgs[0]
+		let key = "{decorator}:{field}:imba:{sourceId}:{owner}:{start}:{end}"
+		let targetKey = "__imbaFieldTarget:{decorator}:{field}:imba:{sourceId}:{owner}:{start}:{end}"
+
+		return {
+			key: key
+			owner: owner
+			ownerType: owner
+			field: field
+			decorator: decorator
+			firstArg: firstArg and firstArg:instanceType
+			firstArgType: firstArg and firstArg:constructorType
+			firstArgTarget: firstArg and firstArg:target ? Object.assign({key: targetKey},firstArg:target) : null
+			args: args
+		}
+	
 	def loc
 		[@name.@loc,@name.region[1]]
 
@@ -3521,6 +3622,8 @@ export class Root < Code
 		var out = c(o)
 
 		if STACK.tsc
+			if let registry = STACK.fieldRegistryDeclaration
+				out += "\n{registry}\n" if registry
 			# out = "import 'imba/index.d.ts';\n{out}"
 			out = "export \{\};String();import * as imba from 'imba';\n{out}\n"
 
@@ -3726,6 +3829,14 @@ export class ClassDeclaration < Code
 	def classReference
 		@name
 
+	def fieldRegistryOwnerName
+		return null unless STACK.tsc
+		return null if option(:notInRoot) or isExtension
+		return null unless @name isa Identifier
+		return null if @name isa DecoratorIdentifier
+		return null if @name.option('generics')
+		String(@name.c(mark: no))
+	
 	def instanceInit
 		return @instanceInit if @instanceInit
 		let call = Super.callOp(initKey)
@@ -3941,6 +4052,12 @@ export class ClassDeclaration < Code
 
 			if !node.isStatic and restIndex != null
 				node.set(restIndex: restIndex)
+
+		if tsc
+			if let owner = fieldRegistryOwnerName
+				for node in fieldNodes
+					if let entry = node.fieldRegistryEntry(owner)
+						STACK.addFieldRegistryEntry(entry)
 
 		if !tsc and @decorators
 			let op = util.decorate(Arr.new(@decorators),THIS)
@@ -7753,6 +7870,76 @@ export class Descriptor < Node
 			@chain.push(@last = DescriptorPart.new(item))
 		return self
 
+	def fieldRegistryDecoratorName
+		return null unless @name
+		return null if @chain and @chain:length
+
+		let raw = String(@name.toRaw).replace(/^@/,'')
+		return null unless raw.match(/^[A-Za-z_$][0-9A-Za-z_$]*$/)
+		raw
+
+	def fieldRegistryArgs
+		let out = []
+		if @params
+			for arg in @params
+				out.push(fieldRegistryArgType(arg))
+		out
+
+	def fieldRegistryArgType arg
+		if let ref = fieldRegistryArgReference(arg)
+			return {
+				instanceType: ref:name
+				constructorType: "typeof {ref:name}"
+				target: ref:target
+			}
+		{
+			instanceType: "unknown"
+			constructorType: "unknown"
+			target: null
+		}
+
+	def fieldRegistryArgReference arg
+		arg = arg.unwrappedNode if arg and arg:unwrappedNode
+
+		if arg isa VarOrAccess
+			let variable = arg.@variable
+			let name = arg.c(mark: no)
+			if variable
+				if variable.value isa ClassDeclaration
+					let cls = variable.value
+					let target = null
+					unless cls.@name and cls.@name.option('generics')
+						target = {
+							name: name
+							export: cls.isExported
+							global: cls.isGlobal
+						}
+					return {name: name,target: target}
+				elif variable.isImported
+					let spec = variable.declarator
+					let target = null
+					if spec and spec.@cname != 'default' and variable.importPath
+						target = {
+							name: spec.@cname
+							module: variable.importPath
+						}
+					return {name: name,target: target}
+				elif variable.isGlobal(null)
+					return {
+						name: name
+						target: {name: name,global: yes}
+					}
+			elif arg.@isGlobal
+				return {
+					name: name
+					target: {name: name,global: yes}
+				}
+
+		elif arg isa Access
+			return {name: arg.c(mark: no),target: null} if arg:is_namespace
+
+		return null
+	
 	def js
 		let ref = scope__.root.declare('desc',null,system: yes)
 		let tsc = STACK.tsc
