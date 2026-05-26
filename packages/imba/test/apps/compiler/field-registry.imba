@@ -14,7 +14,7 @@ test 'field decorator registry entry' do
 	"""
 
 	ok js.indexOf('interface ImbaFieldRegistry') >= 0
-	ok js.match(/"something:stuff:imba:[^"]+":/)
+	ok js.match(/"_\$INTERNAL\$_imbaFieldRegistry:something:stuff:imba:[^"]+":/)
 	ok js.match(/owner:\s*Item/)
 	ok js.match(/ownerType:\s*typeof Item/)
 	ok js.match(/field:\s*"stuff"/)
@@ -22,7 +22,7 @@ test 'field decorator registry entry' do
 	ok js.match(/firstArg:\s*Variant/)
 	ok js.match(/firstArgType:\s*typeof Variant/)
 	ok js.match(/args:\s*\[typeof Variant\]/)
-	ok js.match(/interface Variant\s*\{\s*readonly "__imbaFieldTarget:something:stuff:imba:[^"]+"\?: ImbaFieldRegistry\["something:stuff:imba:[^"]+"\]/)
+	ok js.match(/interface Variant\s*\{\s*readonly "_\$INTERNAL\$_imbaFieldTarget:something:stuff:imba:[^"]+"\?: ImbaFieldRegistry\["_\$INTERNAL\$_imbaFieldRegistry:something:stuff:imba:[^"]+"\]/)
 
 test 'field registry has one entry per decorated field' do
 	let js = compile """
@@ -51,7 +51,7 @@ test 'field registry supports exported class names' do
 	ok js.match(/firstArg:\s*Variant/)
 	ok js.match(/firstArgType:\s*typeof Variant/)
 	ok js.match(/args:\s*\[typeof Variant\]/)
-	ok js.match(/export interface Variant\s*\{\s*readonly "__imbaFieldTarget:something:stuff:imba:[^"]+"\?: ImbaFieldRegistry\["something:stuff:imba:[^"]+"\]/)
+	ok js.match(/export interface Variant\s*\{\s*readonly "_\$INTERNAL\$_imbaFieldTarget:something:stuff:imba:[^"]+"\?: ImbaFieldRegistry\["_\$INTERNAL\$_imbaFieldRegistry:something:stuff:imba:[^"]+"\]/)
 
 test 'field registry skips local class names' do
 	let js = compile """
@@ -74,7 +74,7 @@ test 'field registry keeps unknown for non-nameable args' do
 	ok js.match(/firstArg:\s*unknown/)
 	ok js.match(/firstArgType:\s*unknown/)
 	ok js.match(/args:\s*\[unknown\]/)
-	ok js.indexOf('__imbaFieldTarget') == -1
+	ok js.indexOf('_$INTERNAL$_imbaFieldTarget') == -1
 
 test 'field registry keeps unknown for non-namespace access args' do
 	let js = compile """
@@ -88,7 +88,7 @@ test 'field registry keeps unknown for non-namespace access args' do
 	ok js.match(/decorator:\s*"children"/)
 	ok js.match(/firstArg:\s*unknown/)
 	ok js.match(/args:\s*\[unknown\]/)
-	ok js.indexOf('__imbaFieldTarget') == -1
+	ok js.indexOf('_$INTERNAL$_imbaFieldTarget') == -1
 
 test 'field registry skips descriptors without args' do
 	let js = compile """

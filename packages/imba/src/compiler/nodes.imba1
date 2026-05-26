@@ -88,6 +88,9 @@ var TAG_ATTRS = {}
 var TSC = no
 
 var USE_SAFE_RENDER_SELF = yes
+var IMBA_FIELD_REGISTRY_ENABLED = yes
+var IMBA_FIELD_REGISTRY_KEY_PREFIX = '_$INTERNAL$_imbaFieldRegistry'
+var IMBA_FIELD_TARGET_KEY_PREFIX = '_$INTERNAL$_imbaFieldTarget'
 
 var CONTEXT = {}
 
@@ -795,6 +798,7 @@ export class Stack
 		self
 
 	def fieldRegistryDeclaration
+		return "" unless IMBA_FIELD_REGISTRY_ENABLED
 		return "" unless @fieldRegistryEntries and @fieldRegistryEntries:length
 
 		let lines = [
@@ -2398,6 +2402,7 @@ export class ClassField < Node
 		option(:wrapper)
 
 	def fieldRegistryEntry owner
+		return null unless IMBA_FIELD_REGISTRY_ENABLED
 		return null unless STACK.tsc
 		return null if isStatic
 
@@ -2419,8 +2424,8 @@ export class ClassField < Node
 		for arg in registryArgs
 			args.push(arg:constructorType)
 		let firstArg = registryArgs[0]
-		let key = "{decorator}:{field}:imba:{sourceId}:{owner}:{start}:{end}"
-		let targetKey = "__imbaFieldTarget:{decorator}:{field}:imba:{sourceId}:{owner}:{start}:{end}"
+		let key = "{IMBA_FIELD_REGISTRY_KEY_PREFIX}:{decorator}:{field}:imba:{sourceId}:{owner}:{start}:{end}"
+		let targetKey = "{IMBA_FIELD_TARGET_KEY_PREFIX}:{decorator}:{field}:imba:{sourceId}:{owner}:{start}:{end}"
 
 		return {
 			key: key

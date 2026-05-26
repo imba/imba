@@ -22,7 +22,7 @@ declaration output includes a global registry entry shaped like:
 ```ts
 declare global {
 	interface ImbaFieldRegistry {
-		"embed:stuff:imba:opaque-generated-key": {
+		"_$INTERNAL$_imbaFieldRegistry:embed:stuff:imba:opaque-generated-key": {
 			owner: Item
 			ownerType: typeof Item
 			field: "stuff"
@@ -35,15 +35,16 @@ declare global {
 }
 
 interface Variant {
-	readonly "__imbaFieldTarget:embed:stuff:imba:opaque-generated-key"?: ImbaFieldRegistry["embed:stuff:imba:opaque-generated-key"]
+	readonly "_$INTERNAL$_imbaFieldTarget:embed:stuff:imba:opaque-generated-key"?: ImbaFieldRegistry["_$INTERNAL$_imbaFieldRegistry:embed:stuff:imba:opaque-generated-key"]
 }
 ```
 
-The registry key is opaque. It currently starts with the decorator name and field
-name so TypeScript consumers can filter by key prefix, but code should prefer the
-helper types below instead of depending directly on the complete key format. The
-target-side `__imbaFieldTarget:*` key is also opaque and exists only for
-type-only inverse lookup.
+The registry key is opaque. It starts with `_$INTERNAL$_` so Imba tooling can
+hide it as an internal path, then includes the decorator and field name so helper
+types can still filter by key prefix. Code should prefer the helper types below
+instead of depending directly on the complete key format. The target-side
+`_$INTERNAL$_imbaFieldTarget:*` key is also opaque and exists only for type-only
+inverse lookup.
 
 ## Base Types
 
@@ -52,23 +53,29 @@ Imba's base declarations provide:
 ```ts
 interface ImbaFieldRegistry {}
 
+type ImbaFieldRegistryKeyPrefix =
+	'_$INTERNAL$_imbaFieldRegistry'
+
+type ImbaFieldTargetKeyPrefix =
+	'_$INTERNAL$_imbaFieldTarget'
+
 type ImbaFieldEntry =
 	ImbaFieldRegistry[keyof ImbaFieldRegistry]
 
 type ImbaFieldEntriesForDecorator<D extends string> =
-	ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${D}:${string}`>]
+	ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${ImbaFieldRegistryKeyPrefix}:${D}:${string}`>]
 
 type ImbaFieldEntriesForField<F extends string> =
-	ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${string}:${F}:${string}`>]
+	ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${ImbaFieldRegistryKeyPrefix}:${string}:${F}:${string}`>]
 
 type ImbaFieldEntriesForDecoratorField<D extends string, F extends string> =
-	ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${D}:${F}:${string}`>]
+	ImbaFieldRegistry[Extract<keyof ImbaFieldRegistry, `${ImbaFieldRegistryKeyPrefix}:${D}:${F}:${string}`>]
 
 type ImbaFieldEntriesForTarget<T> =
-	NonNullable<T[Extract<keyof T, `__imbaFieldTarget:${string}`>]>
+	NonNullable<T[Extract<keyof T, `${ImbaFieldTargetKeyPrefix}:${string}`>]>
 
 type ImbaFieldEntriesForDecoratorTarget<D extends string, T> =
-	NonNullable<T[Extract<keyof T, `__imbaFieldTarget:${D}:${string}`>]>
+	NonNullable<T[Extract<keyof T, `${ImbaFieldTargetKeyPrefix}:${D}:${string}`>]>
 
 type ImbaFieldEntriesForDecoratorFirstArg<D extends string, A> =
 	ImbaFieldEntriesForDecoratorTarget<D, A>
@@ -241,7 +248,7 @@ when that target can be augmented safely:
 
 ```ts
 interface Target {
-	readonly "__imbaFieldTarget:embed:field:imba:opaque-generated-key"?: ImbaFieldRegistry["embed:field:imba:opaque-generated-key"]
+	readonly "_$INTERNAL$_imbaFieldTarget:embed:field:imba:opaque-generated-key"?: ImbaFieldRegistry["_$INTERNAL$_imbaFieldRegistry:embed:field:imba:opaque-generated-key"]
 }
 ```
 
