@@ -195,7 +195,7 @@ extend class Node
 			parent.insertBefore(self,before)
 		else
 			parent.appendChild(self)
-		return self
+		return this
 
 	def #insertIntoDeopt parent, before
 		# TODO add renderer.moving handling
@@ -203,7 +203,7 @@ extend class Node
 			parent.insertBefore(#domNode or self,before)
 		else
 			parent.appendChild(#domNode or self)
-		return self
+		return this
 
 	def #removeFrom parent
 		parent.removeChild(self)
@@ -235,7 +235,7 @@ extend class Node
 			#domNode = null
 			#insertInto(par,ph)
 			ph.#removeFrom(par)
-		self
+		this
 
 	def #detachFromParent
 		if #domDeopt =? yes
@@ -251,7 +251,7 @@ extend class Node
 
 		#domNode = ph
 		# self.#replaceWith(ph,parentNode)
-		self
+		this
 
 	def #placeChild item, f, prev
 
@@ -675,6 +675,6 @@ declare extend class Element
 	@idl
 	###
 	set key value\any
-		self
+		this
 
 	declare data\any
