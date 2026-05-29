@@ -2019,8 +2019,6 @@ function ValueNode(value){
 subclass$(ValueNode,Node);
 
 ValueNode.prototype.value = function(v){ return this._value; }
-ValueNode.prototype.setValue = function(v){ this._value = v; return this; };
-
 ValueNode.prototype.startLoc = function (){
 	let loc = this._startLoc;
 	return (typeof loc == 'number') ? loc : (((this._value && this._value.startLoc) ? this._value.startLoc() : (-1)));
@@ -2053,8 +2051,6 @@ function ValueReferenceNode(value,orig){
 subclass$(ValueReferenceNode,Node);
 
 ValueReferenceNode.prototype.value = function(v){ return this._value; }
-ValueReferenceNode.prototype.setValue = function(v){ this._value = v; return this; };
-
 ValueReferenceNode.prototype.startLoc = function (){
 	return this._orig && this._orig.startLoc  &&  this._orig.startLoc();
 };
@@ -3558,8 +3554,6 @@ function Return(v){
 subclass$(Return,Statement);
 
 Return.prototype.value = function(v){ return this._value; }
-Return.prototype.setValue = function(v){ this._value = v; return this; };
-
 Return.prototype.replace = function (base,replacement){
 	if (this._value == base) {
 		return this._value = replacement;
@@ -3738,8 +3732,6 @@ Param.prototype.index = function(v){ return this._index; }
 Param.prototype.splat = function(v){ return this._splat; }
 Param.prototype.variable = function(v){ return this._variable; }
 Param.prototype.value = function(v){ return this._value; }
-Param.prototype.setValue = function(v){ this._value = v; return this; };
-
 Param.prototype.varname = function (){
 	return this._variable ? this._variable.c() : this._name;
 };
@@ -4885,7 +4877,7 @@ ClassDeclaration.prototype.visit = function (){
 	} else if (this._name instanceof Identifier) {
 		if (!(this.isTag()) || this._name.isCapitalized()) {
 			this._name.registerVariable('const');
-			this._name._variable.setValue(this);
+			(this._name._variable._value = this,this._name._variable);
 		};
 	} else if (this._name && !(this._name instanceof Access)) {
 		this._name.traverse({declaring: this});
@@ -5219,7 +5211,7 @@ ClassDeclaration.prototype.addMethod = function (name,params,mbody,options,cb){
 
 ClassDeclaration.prototype.js = function (o){
 	this.scope().virtualize(); // is this always needed?
-	this.scope().context().setValue(this._name);
+	this.scope().context()._value = this._name;
 	this.scope().context()._reference = this._name;
 	
 	var tsc = STACK.tsc();
@@ -5488,7 +5480,7 @@ TagDeclaration.prototype.addElementReference = function (name,child){
 
 TagDeclaration.prototype.js = function (s){
 	this.scope().virtualize(); // is this always needed?
-	this.scope().context().setValue(this.name());
+	this.scope().context()._value = this.name();
 	this.scope().context()._reference = this.name();
 	
 	let tsc = STACK.tsc();
@@ -7030,8 +7022,6 @@ subclass$(ObjAttr,Node);
 
 ObjAttr.prototype.key = function(v){ return this._key; }
 ObjAttr.prototype.value = function(v){ return this._value; }
-ObjAttr.prototype.setValue = function(v){ this._value = v; return this; };
-
 ObjAttr.prototype.visit = function (stack,state){
 	// should probably traverse key as well, unless it is a dead simple identifier
 	this._key.traverse();
@@ -8847,7 +8837,6 @@ subclass$(Identifier,Node);
 
 Identifier.prototype.safechain = function(v){ return this._safechain; }
 Identifier.prototype.value = function(v){ return this._value; }
-Identifier.prototype.setValue = function(v){ this._value = v; return this; };
 Identifier.prototype.variable = function(v){ return this._variable; }
 Identifier.prototype.isStatic = function (){
 	return true;
@@ -9430,7 +9419,6 @@ subclass$(DescriptorPart,Node);
 DescriptorPart.prototype.params = function(v){ return this._params; }
 DescriptorPart.prototype.setParams = function(v){ this._params = v; return this; };
 DescriptorPart.prototype.value = function(v){ return this._value; }
-DescriptorPart.prototype.setValue = function(v){ this._value = v; return this; };
 DescriptorPart.prototype.context = function(v){ return this._context; }
 DescriptorPart.prototype.visit = function (stack){
 	if (this._params) {
@@ -9485,7 +9473,6 @@ subclass$(Descriptor,Node);
 Descriptor.prototype.name = function(v){ return this._name; }
 Descriptor.prototype.setName = function(v){ this._name = v; return this; };
 Descriptor.prototype.value = function(v){ return this._value; }
-Descriptor.prototype.setValue = function(v){ this._value = v; return this; };
 Descriptor.prototype.params = function(v){ return this._params; }
 Descriptor.prototype.setParams = function(v){ this._params = v; return this; };
 
@@ -9558,7 +9545,7 @@ Descriptor.prototype.add = function (item,type){
 			// console.log 'add',item.@generated
 			if (type == '=') {
 				// notify if multiple nodes?!
-				(this._last || this).setValue(item._nodes[0]);
+				(this._last || this)._value = item._nodes[0];
 			} else {
 				(this._last || this).setParams(item || new ListNode([]));
 			};
@@ -9773,7 +9760,7 @@ TagTypeIdentifier.prototype.traverse = function (o){
 		if (o && o.declaring) {
 			this.registerVariable('const',o.declscope || STACK.scope());
 			if (this._variable) {
-				this._variable.setValue(o.declaring);
+				(this._variable._value = o.declaring,this._variable);
 			};
 		} else {
 			this.resolveVariable();
@@ -10028,7 +10015,6 @@ function TaggedTemplate(value,string){
 subclass$(TaggedTemplate,Node);
 
 TaggedTemplate.prototype.value = function(v){ return this._value; }
-TaggedTemplate.prototype.setValue = function(v){ this._value = v; return this; };
 TaggedTemplate.prototype.visit = function (){
 	if (this._value instanceof Node) { this._value.traverse() };
 	this._string.traverse();
@@ -11559,7 +11545,6 @@ subclass$(TagPart,Node);
 TagPart.prototype.name = function(v){ return this._name; }
 TagPart.prototype.setName = function(v){ this._name = v; return this; };
 TagPart.prototype.value = function(v){ return this._value; }
-TagPart.prototype.setValue = function(v){ this._value = v; return this; };
 TagPart.prototype.params = function(v){ return this._params; }
 TagPart.prototype.setParams = function(v){ this._params = v; return this; };
 
@@ -12326,7 +12311,7 @@ TagHandlerCallback.prototype.visit = function (){
 	// if this is a plain access it should be enough to set a reference
 	// to the function once?
 	
-	this.setValue(new (STACK.tsc() ? Func : IsolatedFunc)([],[val],null,{}));
+	(this._value = new (STACK.tsc() ? Func : IsolatedFunc)([],[val],null,{}),this);
 	
 	if (this.value() instanceof IsolatedFunc) {
 		true;
@@ -13185,12 +13170,12 @@ Tag.prototype.visitBeforeBody = function (stack){
 	while (i < self._attributes.length){
 		let item = self._attributes[i++];
 		if ((item instanceof TagFlag) && (item.name() instanceof StyleRuleSet)) {
-			if (item.name().placeholders().length) {
-				for (let j = 0, items = iter$(item.name().placeholders()), len = items.length, ph; j < len; j++) {
+			if (item.name()._placeholders.length) {
+				for (let j = 0, items = iter$(item.name()._placeholders), len = items.length, ph; j < len; j++) {
 					ph = items[j];
 					let setter = new TagStyleAttr(ph.name());
 					setter._tag = self;
-					setter.setValue(ph.runtimeValue());
+					(setter._value = ph.runtimeValue(),setter);
 					setter.set(
 						{propname: ph._propname,
 						unit: ph.option('unit'),
@@ -13379,7 +13364,7 @@ Tag.prototype.addPart = function (part,type,tok){
 				curr.add(new TagHandlerCallback(part),type);
 			};
 		} else if (curr) {
-			curr.setValue(part);
+			(curr._value = part,curr);
 			curr.set({op: tok});
 		};
 	} else if (curr instanceof TagHandler) {
@@ -14142,10 +14127,10 @@ Tag.prototype.js = function (o){
 					add(("(" + item.js(o) + ")"));
 				} else if (val._variable) {
 					let vc = val.c(o);
-					item.setValue(LIT(("" + iref + "=" + vc)));
+					(item._value = LIT(("" + iref + "=" + vc)),item);
 					add(("(" + this.bvar() + "&&" + vc + "===" + iref + " || (" + M(item.js(o),item) + "))"));
 				} else {
-					item.setValue(LIT(("" + iref + "=" + this.vvar())));
+					(item._value = LIT(("" + iref + "=" + this.vvar())),item);
 					add(("(" + this.vvar() + "=" + val.c(o) + "," + this.bvar() + "&&" + this.vvar() + "===" + iref + " || (" + M(item.js(o),item) + "))"));
 				};
 			};
@@ -14186,7 +14171,7 @@ Tag.prototype.js = function (o){
 				add(("" + this.tvar() + this.domCall('insert') + "(" + item.c(o) + ")"));
 			};
 		} else if (item instanceof StyleRuleSet) {
-			for (let j = 0, items = iter$(item.placeholders()), len = items.length; j < len; j++) {
+			for (let j = 0, items = iter$(item._placeholders), len = items.length; j < len; j++) {
 				let item = items[j]._setter;
 				// TODO - this logic should definitely move into TagAttr.c
 				let iref = ("" + this.cvar() + "[" + (item.osym()) + "]");
@@ -14197,10 +14182,10 @@ Tag.prototype.js = function (o){
 					add(("(" + item.js(o) + ")"));
 				} else if (val._variable) {
 					let vc = val.c(o);
-					item.setValue(LIT(("" + iref + "=" + vc)));
+					(item._value = LIT(("" + iref + "=" + vc)),item);
 					add(("(" + this.bvar() + "&&" + vc + "===" + iref + " || (" + M(item.js(o),item) + "))"));
 				} else {
-					item.setValue(LIT(("" + iref + "=" + this.vvar())));
+					(item._value = LIT(("" + iref + "=" + this.vvar())),item);
 					add(("(" + this.vvar() + "=" + val.c(o) + "," + this.bvar() + "&&" + this.vvar() + "===" + iref + " || (" + M(item.js(o),item) + "))"));
 				};
 			};
@@ -14985,10 +14970,6 @@ StyleRuleSet.prototype.addPlaceholder = function (item){
 	return this;
 };
 
-StyleRuleSet.prototype.placeholders = function (){
-	return this._placeholders;
-};
-
 StyleRuleSet.prototype.cssid = function (){
 	return this._cssid || (this._cssid = ("" + (STACK.root().sourceId()) + "-" + this.tid()));
 };
@@ -15088,7 +15069,7 @@ StyleRuleSet.prototype.visit = function (stack,o){
 				ph = items[i];
 				let setter = new TagStyleAttr(ph.name());
 				setter._tag = this._tag;
-				setter.setValue(ph.runtimeValue());
+				(setter._value = ph.runtimeValue(),setter);
 				setter.set(
 					{propname: ph._propname,
 					unit: ph.option('unit'),
@@ -17296,7 +17277,6 @@ Variable.prototype.alias = function(v){ return this._alias; }
 Variable.prototype.type = function(v){ return this._type; }
 Variable.prototype.references = function(v){ return this._references; }
 Variable.prototype.value = function(v){ return this._value; }
-Variable.prototype.setValue = function(v){ this._value = v; return this; };
 Variable.prototype.datatype = function(v){ return this._datatype; }
 Variable.prototype.setDatatype = function(v){ this._datatype = v; return this; };
 
@@ -17833,7 +17813,6 @@ subclass$(ScopeContext,Node);
 
 ScopeContext.prototype.scope = function(v){ return this._scope; }
 ScopeContext.prototype.value = function(v){ return this._value; }
-ScopeContext.prototype.setValue = function(v){ this._value = v; return this; };
 ScopeContext.prototype.namepath = function (){
 	return this._scope.namepath();
 };
