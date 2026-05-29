@@ -1,6 +1,6 @@
 import { off } from "process";
 import { modifiers } from "../src/compiler/theme.imba";
-import { TAG_NAMES } from '../src/compiler/constants.imba1';
+import { TAG_NAMES } from '../src/compiler/constants.mjs';
 
 /*
 Copyright (c) 2013 Dulin Marat

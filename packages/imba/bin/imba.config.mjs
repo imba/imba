@@ -22,7 +22,7 @@ async function getModulePath(moduleName) {
 }
 const envPrefix = ["VITE_", "IMBA_", "OP_"]
 
-const extensions = ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+const extensions = ['.imba', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 
 let userTestConfig = {}
 

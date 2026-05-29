@@ -1,5 +1,5 @@
 # imba$stdlib=1
-import { ImbaDocument } from '../program/document'
+import { computeLineOffsets } from '../program/utils'
 import { Position, Range, Diagnostic,DiagnosticSeverity } from '../program/structures'
 
 import path from 'path'
@@ -12,7 +12,7 @@ const STEPS =
 	COMPILE: 16
 
 ###
-Should eventually take over for the Stack / options mess in nodes.imba1
+Should eventually take over for the Stack / options mess in nodes.mjs
 ###
 
 const weakCache = new WeakMap
@@ -22,7 +22,7 @@ export class CompilationResult
 export class Compilation
 
 	# lexer, rewriter and parser are
-	# currently set on prototype in compiler.imba1
+	# currently set on prototype in compiler.mjs
 
 	static prop current
 
@@ -128,16 +128,52 @@ export class Compilation
 		diagnostics.filter do $1.severity == DiagnosticSeverity.Information
 
 	get doc
-		#doc ||= new ImbaDocument(null,'imba',0,sourceCode)
+		self
+
+	get lineOffsets
+		#lineOffsets ||= computeLineOffsets(sourceCode,yes,0)
+
+	def getLineText line
+		let start = lineOffsets[line]
+		let end = lineOffsets[line + 1]
+		sourceCode.substring(start,end).replace(/[\r\n]/g,'')
 
 	def positionAt offset
-		doc.positionAt(offset)
+		return offset if offset isa Position
+
+		if typeof offset == 'object'
+			offset = offset.offset
+
+		offset = Math.max(Math.min(offset,sourceCode.length),0)
+		let offsets = lineOffsets
+		let low = 0
+		let high = offsets.length
+		if high === 0
+			return new Position(0,offset,offset)
+		while low < high
+			let mid = Math.floor((low + high) / 2)
+			if offsets[mid] > offset
+				high = mid
+			else
+				low = mid + 1
+		let line = low - 1
+		new Position(line,offset - offsets[line],offset)
 
 	def offsetAt position
-		doc.offsetAt(position)
+		return position.offset if position.offset !== undefined
+
+		let offsets = lineOffsets
+		if position.line >= offsets.length
+			return sourceCode.length
+		elif position.line < 0
+			return 0
+
+		let lineOffset = offsets[position.line]
+		let nextLineOffset = (position.line + 1 < offsets.length) ? offsets[position.line + 1] : sourceCode.length
+		return position.offset = Math.max(Math.min(lineOffset + position.character,nextLineOffset),lineOffset)
 
 	def rangeAt a,b
-		doc.rangeAt(a,b)
+		new Range(positionAt(a),positionAt(b))
 
 	def toString
 		self.js

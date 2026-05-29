@@ -1,4 +1,3 @@
-const imba1 = require('./bootstrap.compiler.js');
 const imba2 = require('./bootstrap.compiler2.js');
 const chokidar = require('chokidar');
 const fs = require('fs');
@@ -47,42 +46,14 @@ function plugin(build) {
 		// return { path: relative(p.path), external: true }
 	});
 
-	build.onResolve({ filter: /^compiler1?$/ }, (p) => {
+	build.onResolve({ filter: /^compiler$/ }, (p) => {
 		// find the output dir
 		// console.log('resolve compiler?',p,options);
-		let src = p.path == 'compiler1' ? "../scripts/bootstrap.compiler.js" : "./dist/compiler.cjs";
+		let src = "./dist/compiler.cjs";
 		return { path: src, external: true }
 	});
 
-	build.onLoad({ filter: /\.imba1/ }, async (args) => {
-		// console.log('loading imba',args);
-		if (watcher) watcher.add(args.path);
-
-		let key = `${args.path}:${options.platform}`
-		let raw = await fs.promises.readFile(args.path, 'utf8');
-		let cached = compileCache[key];
-
-		if (cached && cached.input == raw) {
-			return { contents: cached.output };
-		}
-
-		let target = {
-			browser: 'web',
-			worker: 'webworker'
-		}[options.platform] || options.platform || 'web';
-		let t0 = Date.now();
-
-		let body = imba1.compile(raw, {
-			target: target,
-			filename: args.path,
-			sourcePath: args.path
-		});
-		time += (Date.now() - t0);
-		compileCache[key] = { input: raw, output: body.js };
-		return { contents: body.js }
-	})
-
-	build.onLoad({ filter: /\.imba/ }, async (args) => {
+	build.onLoad({ filter: /\.imba$/ }, async (args) => {
 		// console.log('loading imba',args);
 		if (watcher) watcher.add(args.path);
 		let raw = await fs.promises.readFile(args.path, 'utf8');
@@ -167,9 +138,9 @@ async function bundle(o) {
 	o.plugins = [{ name: 'imba', setup: plugin.bind(entry) }];
 
 	if (o.platform == 'node') {
-		o.resolveExtensions = ['.node.imba', '.imba', '.imba1', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
+		o.resolveExtensions = ['.node.imba', '.imba', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
 	} else {
-		o.resolveExtensions = ['.web.imba', '.imba', '.imba1', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
+		o.resolveExtensions = ['.web.imba', '.imba', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
 		o.nodePaths = [np.resolve(__dirname, '..', 'polyfills')]
 		o.target = ['chrome88','edge79','safari15']
 	}

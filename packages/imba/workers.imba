@@ -1,10 +1,8 @@
 ###
-Script for compiling imba and imba1 files inside workers using
-workerpool.
+Script for compiling imba files inside workers using workerpool.
 ###
 
 import {compile} from 'dist/compiler.cjs'
-import imba1 from 'dist/../scripts/bootstrap.compiler.js'
 
 const workerpool = require('workerpool')
 
@@ -37,20 +35,6 @@ def compile_imba code, options
 	out.css = res.css
 	return out
 
-def compile_imba1 code,options
-	options.target = 'web' if options.target == 'browser'
-	let out = {id: options.sourceId, warnings: [], errors: []}
-	let res = imba1.compile(code,options)
-	let js = res.js
-
-	if js.indexOf('$_ =') > 0
-		js = "var $_;\n{js}"
-
-	out.js = js
-
-	return out
-
 workerpool.worker(
 	compile_imba: compile_imba
-	compile_imba1: compile_imba1
 )
