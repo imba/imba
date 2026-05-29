@@ -1437,7 +1437,7 @@ Stack.prototype.closure = function (){
 };
 
 Stack.prototype.closures = function (){
-	return this._scopes.filter(function(scope) { return scope.closure() == scope; });
+	return this.scopes().filter(function(scope) { return scope.closure() == scope; });
 };
 
 Stack.prototype.method = function (){
@@ -1540,8 +1540,8 @@ Node.prototype.isExcluded = function (){
 
 Node.prototype.sourcecode = function (){
 	let src = STACK.SOURCECODE;
-	let start = this._startLoc;
-	let end = this._endLoc;
+	let start = this.startLoc();
+	let end = this.endLoc();
 	return src.slice(start,end);
 };
 
@@ -1685,7 +1685,7 @@ Node.prototype.region = function (){
 };
 
 Node.prototype.loc = function (){
-	return [this._startLoc || 0,this._endLoc || 0];
+	return [this.startLoc() || 0,this.endLoc() || 0];
 };
 
 Node.prototype.token = function (){
@@ -15234,7 +15234,7 @@ StyleDeclaration.prototype.clone = function (name,params){
 StyleDeclaration.prototype.visit = function (stack,o){
 	// see if property can be expanded
 	var self = this, v_;
-	let theme = stack._theme;
+	let theme = stack.theme();
 	let list = stack.parent();
 	let name = String(self._property.name());
 	let alias = theme.expandProperty(name);
@@ -15605,7 +15605,7 @@ StyleTerm.prototype.visit = function (stack,o){
 	this._property = o.property;
 	this._propname = o.property && o.property._name;
 	this.alone = (stack.up() instanceof StyleExpression) && stack.up().values().length == 1;
-	let resolved = stack._theme.$value(this,0,this._propname);
+	let resolved = stack.theme().$value(this,0,this._propname);
 	if (!(stack.up(StyleParens) || stack.up(StyleFunction))) { this._resolvedValue = resolved };
 	return this;
 };
@@ -15923,6 +15923,10 @@ function StyleDimension(value){
 subclass$(StyleDimension,StyleTerm);
 
 
+Object.defineProperty(StyleDimension.prototype,'unit',{get: function(){
+	return this._unit || '';
+}, configurable: true});
+
 StyleDimension.prototype.clone = function (num,unit){
 	if(num === undefined) num = this._number;
 	if(unit === undefined) unit = this._unit;
@@ -16219,16 +16223,16 @@ Util.Isa.prototype.helper = function (){
 };
 
 Util.Isa.prototype.js = function (){
-	if (this._right instanceof Str) {
+	if (this.right() instanceof Str) {
 		// only need parens if left is caching...
-		return ("typeof (" + (this._left.c()) + ")===" + (this._right.c()));
+		return ("typeof (" + (this.left().c()) + ")===" + (this.right().c()));
 	};
 	
 	if (String(this.op()) == 'instanceof' || STACK.tsc()) {
-		return ("(" + (this._left.c()) + ") instanceof " + (this._right.c()));
+		return ("(" + (this.left().c()) + ") instanceof " + (this.right().c()));
 	};
 	
-	return this.called([this._left,this._right],'isa$','isa$');
+	return this.called([this.left(),this.right()],'isa$','isa$');
 };
 
 Util.Promisify = function Promisify(){ return Util.apply(this,arguments) };
@@ -16404,7 +16408,7 @@ Scope.prototype.nextShortRef = function (){
 };
 
 Scope.prototype.staticsRef = function (){
-	return this._staticsRef || (this._staticsRef = this.declare('$statics$',CALL(STACK.corelib().statics$,[this._context])));
+	return this._staticsRef || (this._staticsRef = this.declare('$statics$',CALL(STACK.corelib().statics$,[this.context()])));
 };
 
 Scope.prototype.memovar = function (name,init){
@@ -17565,6 +17569,30 @@ SystemVariable.prototype.resolve = function (){
 		return this;
 	};
 	
+	if (o.alias) {
+		var alias = o.alias;
+		let name = alias || InternalPrefixes.ANY;
+		
+		if ((/\d/).test(name[0])) {
+			
+			name = ("_" + name);
+		};
+		
+		if ((/\d$/).test(name)) {
+			name = name + InternalPrefixes.SEP;
+		};
+		
+		let nr = STACK.incr(name);
+		if (nr == 1) { nr = '' };
+		// if sysvar starts with a greek character (used for sysvars) - dont add dollar-sign
+		if (ReservedIdentifierRegex.test(name)) {
+			this._name = ("" + name + nr);
+		} else {
+			this._name = ("" + name + "φ" + nr);
+		};
+		return this;
+	};
+	
 	let ns = o.ns || '';
 	
 	let sysnr = (STACK.tsc() || o.safe) ? this._scope.incr('sysvar' + ns) : STACK.incr('sysvar' + ns);
@@ -17612,6 +17640,10 @@ SystemVariable.prototype.resolve = function (){
 SystemVariable.prototype.name = function (){
 	this.resolve();
 	return this._name;
+};
+
+SystemVariable.prototype.toString = function (){
+	return this.c();
 };
 
 function ShadowedVariable(){ return Variable.apply(this,arguments) };
