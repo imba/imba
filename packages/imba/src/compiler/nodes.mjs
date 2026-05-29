@@ -334,9 +334,9 @@ var OP = function(op,l,r) {
 	switch (o) {
 		case '.': 
 		case '?.': {
-			if ((l instanceof Super) && !l.member()) {
+			if ((l instanceof Super) && !l._member) {
 				
-				l.setMember(r);
+				(l._member = r,l);
 				return l;
 			};
 			
@@ -442,8 +442,8 @@ var PATHIFY = function(val) {
 	};
 	
 	if (val instanceof Access) {
-		let left = val.left();
-		let right = (val.right() instanceof Index) ? val.right().value() : val.right();
+		let left = val._left;
+		let right = (val._right instanceof Index) ? val._right.value() : val._right;
 		
 		if (left instanceof VarOrAccess) {
 			left = left._variable || left.value();
@@ -870,10 +870,6 @@ function Indentation(a,b){
 };
 
 
-Indentation.prototype.open = function(v){ return this._open; }
-Indentation.prototype.setOpen = function(v){ this._open = v; return this; };
-Indentation.prototype.close = function(v){ return this._close; }
-Indentation.prototype.setClose = function(v){ this._close = v; return this; };
 
 Indentation.prototype.isGenerated = function (){
 	return this._open && this._open.generated;
@@ -944,23 +940,9 @@ function Stack(){
 };
 
 
-Stack.prototype.loglevel = function(v){ return this._loglevel; }
-Stack.prototype.setLoglevel = function(v){ this._loglevel = v; return this; };
 Stack.prototype.nodes = function(v){ return this._nodes; }
-Stack.prototype.setNodes = function(v){ this._nodes = v; return this; };
-Stack.prototype.scopes = function(v){ return this._scopes; }
-Stack.prototype.setScopes = function(v){ this._scopes = v; return this; };
 Stack.prototype.root = function(v){ return this._root; }
-Stack.prototype.setRoot = function(v){ this._root = v; return this; };
-Stack.prototype.state = function(v){ return this._state; }
-Stack.prototype.setState = function(v){ this._state = v; return this; };
 Stack.prototype.meta = function(v){ return this._meta; }
-Stack.prototype.setMeta = function(v){ this._meta = v; return this; };
-Stack.prototype.theme = function(v){ return this._theme; }
-Stack.prototype.setTheme = function(v){ this._theme = v; return this; };
-Stack.prototype.css = function(v){ return this._css; }
-Stack.prototype.setCss = function(v){ this._css = v; return this; };
-
 Stack.prototype.reset = function (){
 	this._nodes = [];
 	this._scoping = [];
@@ -1181,10 +1163,6 @@ Stack.prototype.sourceId = function (){
 
 Stack.prototype.theme = function (){
 	return this._theme || (this._theme = StyleTheme.wrap(this._options.config));
-};
-
-Stack.prototype.stash = function (){
-	return this._stash;
 };
 
 Stack.prototype.set = function (obj){
@@ -1459,7 +1437,7 @@ Stack.prototype.closure = function (){
 };
 
 Stack.prototype.closures = function (){
-	return this.scopes().filter(function(scope) { return scope.closure() == scope; });
+	return this._scopes.filter(function(scope) { return scope.closure() == scope; });
 };
 
 Stack.prototype.method = function (){
@@ -1486,7 +1464,7 @@ Stack.prototype.prependInBlock = function (node){
 };
 
 Stack.prototype.lastImport = function (){
-	let scopes = this.scopes();
+	let scopes = this._scopes;
 	for (let i = 0, items = iter$(scopes), len = items.length, scope; i < len; i++) {
 		scope = items[i];
 		if (scope._lastImport) {
@@ -1517,10 +1495,6 @@ Stack.prototype.toString = function (){
 	return ("Stack(" + this._nodes.join(" -> ") + ")");
 };
 
-Stack.prototype.isAnalyzing = function (){
-	return this._analyzing;
-};
-
 Stack.prototype.scoping = function (){
 	return this._nodes.filter(function(n) { return n._scope; }).map(function(n) { return n._scope; });
 };
@@ -1542,12 +1516,6 @@ function Node(){
 };
 
 
-Node.prototype.o = function(v){ return this._o; }
-Node.prototype.setO = function(v){ this._o = v; return this; };
-Node.prototype.options = function(v){ return this._options; }
-Node.prototype.setOptions = function(v){ this._options = v; return this; };
-Node.prototype.traversed = function(v){ return this._traversed; }
-Node.prototype.setTraversed = function(v){ this._traversed = v; return this; };
 
 // reference to the script object this node
 // is part of
@@ -1572,8 +1540,8 @@ Node.prototype.isExcluded = function (){
 
 Node.prototype.sourcecode = function (){
 	let src = STACK.SOURCECODE;
-	let start = this.startLoc();
-	let end = this.endLoc();
+	let start = this._startLoc;
+	let end = this._endLoc;
 	return src.slice(start,end);
 };
 
@@ -1615,7 +1583,7 @@ Node.prototype.slf = function (){
 
 Node.prototype.p = function (){
 	// allow controlling this from CLI
-	if (STACK.loglevel() > 0) {
+	if (STACK._loglevel > 0) {
 		console.log.apply(console,arguments);
 	};
 	return this;
@@ -1639,16 +1607,6 @@ Node.prototype.setup = function (){
 	this._parens = false;
 	this._cache = null;
 	this._value = null;
-	return this;
-};
-
-Node.prototype.setStartLoc = function (loc){
-	this._startLoc = loc;
-	return this;
-};
-
-Node.prototype.setEndLoc = function (loc){
-	this._endLoc = loc;
 	return this;
 };
 
@@ -1727,7 +1685,7 @@ Node.prototype.region = function (){
 };
 
 Node.prototype.loc = function (){
-	return [this.startLoc() || 0,this.endLoc() || 0];
+	return [this._startLoc || 0,this._endLoc || 0];
 };
 
 Node.prototype.token = function (){
@@ -1776,14 +1734,14 @@ Node.prototype.traverse = function (o){
 	this._traversed = true;
 	let prev;
 	if (o) {
-		prev = STACK.state();
-		STACK.setState(o);
+		prev = STACK._state;
+		(STACK._state = o,STACK);
 	};
 	STACK.push(this);
-	this.visit(STACK,STACK.state());
+	this.visit(STACK,STACK._state);
 	STACK.pop(this);
 	if (o) {
-		STACK.setState(prev);
+		(STACK._state = prev,STACK);
 	};
 	return this;
 };
@@ -1808,16 +1766,16 @@ Node.prototype.consume = function (node){
 	
 	if (node instanceof PushAssign) {
 		node.register(this);
-		return new PushAssign(node.op(),node.left(),this);
+		return new PushAssign(node.op(),node._left,this);
 	};
 	
 	if (node instanceof Assign) {
 		// node.right = self
-		return OP(node.op(),node.left(),this);
+		return OP(node.op(),node._left,this);
 	} else if (node instanceof VarDeclaration) {
-		return OP('=',node.left(),this);
+		return OP('=',node._left,this);
 	} else if (node instanceof Op) {
-		return OP(node.op(),node.left(),this);
+		return OP(node.op(),node._left,this);
 	} else if (node instanceof Return) {
 		return new Return(this);
 	} else if (node == NumberLike) {
@@ -2096,8 +2054,6 @@ subclass$(ValueReferenceNode,Node);
 
 ValueReferenceNode.prototype.value = function(v){ return this._value; }
 ValueReferenceNode.prototype.setValue = function(v){ this._value = v; return this; };
-ValueReferenceNode.prototype.orig = function(v){ return this._orig; }
-ValueReferenceNode.prototype.setOrig = function(v){ this._orig = v; return this; };
 
 ValueReferenceNode.prototype.startLoc = function (){
 	return this._orig && this._orig.startLoc  &&  this._orig.startLoc();
@@ -2143,7 +2099,7 @@ AssertionNode.prototype.sourceFor = function (node){
 };
 
 AssertionNode.prototype.isInspectableBinary = function (op){
-	return (op instanceof Op) && !(op instanceof Access) && !(op instanceof UnaryOp) && !op.isLogical() && !op.isAssignment() && op.left() && op.right();
+	return (op instanceof Op) && !(op instanceof Access) && !(op instanceof UnaryOp) && !op.isLogical() && !op.isAssignment() && op._left && op._right;
 };
 
 AssertionNode.prototype.js = function (o){
@@ -2155,8 +2111,8 @@ AssertionNode.prototype.js = function (o){
 		out.push(("globalThis.IMBA_ASSERT=\{type:'assignment',source:" + osrc + "\}"));
 		out.push(op.c(o));
 	} else if (this.isInspectableBinary(op)) {
-		let l = op.left();
-		let r = op.right();
+		let l = op._left;
+		let r = op._right;
 		let osrc = this.sourceFor(op);
 		let lsrc = this.sourceFor(l);
 		let rsrc = this.sourceFor(r);
@@ -2346,8 +2302,6 @@ function ListNode(list){
 subclass$(ListNode,Node);
 
 ListNode.prototype.nodes = function(v){ return this._nodes; }
-ListNode.prototype.setNodes = function(v){ this._nodes = v; return this; };
-
 ListNode.prototype.consume = function (node){
 	if (node instanceof Walker) {
 		for (let i = 0, items = iter$(this._nodes), len = items.length; i < len; i++) {
@@ -2356,10 +2310,6 @@ ListNode.prototype.consume = function (node){
 		return this;
 	};
 	return ListNode.prototype.__super__.consume.apply(this,arguments);
-};
-
-ListNode.prototype.list = function (){
-	return this._nodes;
 };
 
 ListNode.prototype.compact = function (){
@@ -2373,13 +2323,13 @@ ListNode.prototype.load = function (list){
 
 ListNode.prototype.concat = function (other){
 	// need to store indented content as well?
-	this._nodes = this.nodes().concat((other instanceof Array) ? other : other.nodes());
+	this._nodes = this._nodes.concat((other instanceof Array) ? other : other.nodes());
 	return this;
 };
 
 ListNode.prototype.swap = function (item,other){
 	var idx = this.indexOf(item);
-	if (idx >= 0) { this.nodes()[idx] = other };
+	if (idx >= 0) { this._nodes[idx] = other };
 	return this;
 };
 
@@ -2568,7 +2518,7 @@ ListNode.prototype.visit = function (){
 };
 
 ListNode.prototype.isExpressable = function (){
-	for (let i = 0, items = iter$(this.nodes()), len = items.length, node; i < len; i++) {
+	for (let i = 0, items = iter$(this._nodes), len = items.length, node; i < len; i++) {
 		node = items[i];
 		if (node && !node.isExpressable()) { return false };
 	};
@@ -2689,8 +2639,6 @@ function Block(list){
 subclass$(Block,ListNode);
 
 Block.prototype.head = function(v){ return this._head; }
-Block.prototype.setHead = function(v){ this._head = v; return this; };
-
 Block.prototype.startLoc = function (){
 	return this._indentation ? this._indentation.startLoc() : (Block.prototype.__super__.startLoc.apply(this,arguments));
 };
@@ -3017,15 +2965,15 @@ ClassField.prototype.target = function (){
 };
 
 ClassField.prototype.storageSymbol = function (){
-	return this.symbolRef(("#" + this.name().c({as: 'symbolpart'})));
+	return this.symbolRef(("#" + this._name.c({as: 'symbolpart'})));
 };
 
 ClassField.prototype.watcherSymbol = function (){
-	return this.symbolRef(("#" + this.name().c({as: 'symbolpart'}) + "DidSet"));
+	return this.symbolRef(("#" + this._name.c({as: 'symbolpart'}) + "DidSet"));
 };
 
 ClassField.prototype.storageKey = function (){
-	return this._storageKey || (this._storageKey = STR(this.name().c() + '$$'));
+	return this._storageKey || (this._storageKey = STR(this._name.c() + '$$'));
 };
 
 ClassField.prototype.storageMap = function (){
@@ -3120,7 +3068,7 @@ ClassField.prototype.c = function (){
 	if (up instanceof ClassBody) {
 		// return if isPlain
 		let prefix = this.isStatic() ? (("" + M('static',this.option('static')) + " ")) : '';
-		let name = (this.name() instanceof IdentifierExpression) ? this.name().asObjectKey() : this.name().c({as: 'field'});
+		let name = (this._name instanceof IdentifierExpression) ? this._name.asObjectKey() : this._name.c({as: 'field'});
 		let cls = STACK.up(ClassDeclaration);
 		let typ = STACK.tsc() && this.datatype();
 		
@@ -3252,7 +3200,7 @@ ClassField.prototype.c = function (){
 				this._vscope.mergeScopeInto(fn._scope);
 			};
 		};
-		out = OP('=',OP('.',THIS,this.name()),this.value() || UNDEFINED).c() + ';\n';
+		out = OP('=',OP('.',THIS,this._name),this.value() || UNDEFINED).c() + ';\n';
 	} else if (!(this.isStatic()) && (up instanceof ClassInitBlock)) {
 		return "";
 	} else if (!(this.isStatic()) && (up instanceof InstanceInitBlock)) {
@@ -3262,9 +3210,9 @@ ClassField.prototype.c = function (){
 			};
 		};
 		
-		let key = this.name();
-		if (this.name() instanceof Identifier) {
-			key = this.name().toStr();
+		let key = this._name;
+		if (this._name instanceof Identifier) {
+			key = this._name.toStr();
 		};
 		
 		let ctor = up.option('ctor');
@@ -3279,10 +3227,10 @@ ClassField.prototype.c = function (){
 		if (up instanceof InstancePatchBlock) {
 			// Dropped the patch block now
 			rest = ctor._params.at(restIndex,true,'$$',LIT('{}'));
-			access = OP('.',rest,this.name());
+			access = OP('.',rest,this._name);
 			access.cache({reuse: true,name: 'vsds',safe: true});
 			
-			let right = OP('=',OP('.',THIS,this.name()),access);
+			let right = OP('=',OP('.',THIS,this._name),access);
 			
 			if (this.wrapper()) {
 				right = CALL(
@@ -3301,7 +3249,7 @@ ClassField.prototype.c = function (){
 			};
 		} else if (restIndex != undefined) {
 			rest = ctor._params.at(restIndex,true,'$$',LIT('null'));
-			access = OP('.',rest,this.name());
+			access = OP('.',rest,this._name);
 			
 			if (this.value()) {
 				access.cache({reuse: true,name: 'v',safe: true});
@@ -3325,7 +3273,7 @@ ClassField.prototype.c = function (){
 			out = OP('&&',LIT('fields'),out);
 		};
 		
-		out || (out = OP('=',OP('.',THIS,this.name()),val));
+		out || (out = OP('=',OP('.',THIS,this._name),val));
 		out = out.c() + ';\n';
 		
 		if (this.watchBody()) {
@@ -3340,7 +3288,7 @@ ClassField.prototype.c = function (){
 ClassField.prototype.getter = function (){
 	return this._getter || (this._getter = true && (
 		this.wrapper() ? (
-			LIT(("()\{ return this.__" + (this.name().c()) + ".$get(this," + (this.name().toStr().c()) + "," + this.osym() + ") \}"))
+			LIT(("()\{ return this.__" + (this._name.c()) + ".$get(this," + (this._name.toStr().c()) + "," + this.osym() + ") \}"))
 		) : (
 			this.parseTemplate('(){ return $get$; }')
 		)
@@ -3375,7 +3323,7 @@ ClassField.prototype.setter = function (){
 
 ClassField.prototype.decorater = function (){
 	return this._decorater || (this._decorater = true && (
-		this.util().decorate(new Arr(this._decorators),this.target(),this.name(),LIT('null'))
+		this.util().decorate(new Arr(this._decorators),this.target(),this._name,LIT('null'))
 	));
 };
 
@@ -3644,13 +3592,13 @@ Return.prototype.js = function (o){
 };
 
 Return.prototype.c = function (){
-	if (STACK.tsc() && (this.value() instanceof This)) {
-		return ("" + M('return',this.keyword()) + " " + M('this',this.value()));
+	if (STACK.tsc() && (this._value instanceof This)) {
+		return ("" + M('return',this.keyword()) + " " + M('this',this._value));
 	};
 	
-	if (!(this.value()) || this.value().isExpressable()) { return Return.prototype.__super__.c.apply(this,arguments) };
+	if (!(this._value) || this._value.isExpressable()) { return Return.prototype.__super__.c.apply(this,arguments) };
 	
-	return this.value().consume(this).c();
+	return this._value.consume(this).c();
 };
 
 Return.prototype.consume = function (node){
@@ -3705,19 +3653,15 @@ Throw.prototype.consume = function (node){
 };
 
 function LoopFlowStatement(lit,expr){
-	this.setLiteral(lit);
-	this.setExpression(expr);
+	(this._literal = lit,this);
+	(this._expression = expr,this);
 };
 
 subclass$(LoopFlowStatement,Statement);
 
-LoopFlowStatement.prototype.literal = function(v){ return this._literal; }
-LoopFlowStatement.prototype.setLiteral = function(v){ this._literal = v; return this; };
-LoopFlowStatement.prototype.expression = function(v){ return this._expression; }
-LoopFlowStatement.prototype.setExpression = function(v){ this._expression = v; return this; };
 
 LoopFlowStatement.prototype.visit = function (){
-	if (this.expression()) { return this.expression().traverse() };
+	if (this._expression) { return this._expression.traverse() };
 };
 
 LoopFlowStatement.prototype.consume = function (node){
@@ -3725,20 +3669,20 @@ LoopFlowStatement.prototype.consume = function (node){
 };
 
 LoopFlowStatement.prototype.c = function (){
-	if (!(this.expression())) { return LoopFlowStatement.prototype.__super__.c.apply(this,arguments) };
+	if (!(this._expression)) { return LoopFlowStatement.prototype.__super__.c.apply(this,arguments) };
 	// get up to the outer loop
 	var _loop = STACK.up(Loop);
 	
 	// need to fix the grammar for this. Right now it
 	// is like a fake call, but should only care about the first argument
-	var expr = this.expression();
+	var expr = this._expression;
 	
-	if (_loop.catcher()) {
-		expr = expr.consume(_loop.catcher());
-		var copy = new this.constructor(this.literal());
+	if (_loop._catcher) {
+		expr = expr.consume(_loop._catcher);
+		var copy = new this.constructor(this._literal);
 		return new Block([expr,copy]).c();
 	} else if (expr) {
-		copy = new this.constructor(this.literal());
+		copy = new this.constructor(this._literal);
 		return new Block([expr,copy]).c();
 	} else {
 		return LoopFlowStatement.prototype.__super__.c.apply(this,arguments);
@@ -3791,18 +3735,13 @@ subclass$(Param,Node);
 Param.prototype.name = function(v){ return this._name; }
 Param.prototype.setName = function(v){ this._name = v; return this; };
 Param.prototype.index = function(v){ return this._index; }
-Param.prototype.setIndex = function(v){ this._index = v; return this; };
-Param.prototype.defaults = function(v){ return this._defaults; }
-Param.prototype.setDefaults = function(v){ this._defaults = v; return this; };
 Param.prototype.splat = function(v){ return this._splat; }
-Param.prototype.setSplat = function(v){ this._splat = v; return this; };
 Param.prototype.variable = function(v){ return this._variable; }
-Param.prototype.setVariable = function(v){ this._variable = v; return this; };
 Param.prototype.value = function(v){ return this._value; }
 Param.prototype.setValue = function(v){ this._value = v; return this; };
 
 Param.prototype.varname = function (){
-	return this._variable ? this._variable.c() : this.name();
+	return this._variable ? this._variable.c() : this._name;
 };
 
 Param.prototype.datatype = function (){
@@ -3815,8 +3754,8 @@ Param.prototype.type = function (){
 
 Param.prototype.jsdoc = function (){
 	let typ = this.datatype();
-	if (typ && this.name()) {
-		return typ.asParam(this.name());
+	if (typ && this._name) {
+		return typ.asParam(this._name);
 		// '@param {' + typ.c() + '} ' + name
 	} else {
 		return '';
@@ -3832,7 +3771,7 @@ Param.prototype.js = function (stack,params){
 	
 	if (this.datatype() && STACK.tsc()) {
 		let typ = C(this.datatype());
-		if (this.datatype().isOptional()) { val += '?' };
+		if (this.datatype()._optional) { val += '?' };
 		// now check if type is optional
 		val += ':' + typ;
 	};
@@ -3860,11 +3799,11 @@ Param.prototype.visit = function (stack){
 };
 
 Param.prototype.assignment = function (){
-	return OP('=',this.variable().accessor(),this.defaults());
+	return OP('=',this._variable.accessor(),this._defaults);
 };
 
 Param.prototype.isExpressable = function (){
-	return !(this.defaults()) || this.defaults().isExpressable();
+	return !(this._defaults) || this._defaults.isExpressable();
 };
 
 Param.prototype.dump = function (){
@@ -3878,8 +3817,8 @@ Param.prototype.loc = function (){
 Param.prototype.toJSON = function (){
 	return {
 		type: this.typeName(),
-		name: this.name(),
-		defaults: this.defaults()
+		name: this._name,
+		defaults: this._defaults
 	};
 };
 
@@ -3926,10 +3865,7 @@ function ParamList(){ return ListNode.apply(this,arguments) };
 subclass$(ParamList,ListNode);
 
 ParamList.prototype.splat = function(v){ return this._splat; }
-ParamList.prototype.setSplat = function(v){ this._splat = v; return this; };
 ParamList.prototype.block = function(v){ return this._block; }
-ParamList.prototype.setBlock = function(v){ this._block = v; return this; };
-
 ParamList.prototype.at = function (index,force,name,value){
 	if(force === undefined) force = false;
 	if(name === undefined) name = null;
@@ -3944,7 +3880,7 @@ ParamList.prototype.at = function (index,force,name,value){
 		
 		// need to visit at the same time, no?
 	};
-	return this.list()[index];
+	return this._nodes[index];
 };
 
 ParamList.prototype.metadata = function (){
@@ -4031,7 +3967,7 @@ ParamList.prototype.head = function (o){
 			return;
 		};
 		
-		par.setIndex(idx);
+		par._index = idx;
 		if (par instanceof OptionalParam) {
 			signature.push('opt');
 			opt.push(par);
@@ -4074,7 +4010,7 @@ ParamList.prototype.head = function (o){
 	if (!named && !splat && !blk && opt.length > 0 && signature.join(" ").match(/opt$/)) {
 		for (let i = 0, len_ = opt.length, par; i < len_; i++) {
 			par = opt[i];
-			ast.push(("if(" + (par.name().c()) + " === undefined) " + (par.name().c()) + " = " + (par.defaults().c())));
+			ast.push(("if(" + (par.name().c()) + " === undefined) " + (par.name().c()) + " = " + (par._defaults.c())));
 		};
 	} else if (named && !splat && !blk && opt.length == 0) { // and no block?!
 		// different shorthands
@@ -4084,8 +4020,8 @@ ParamList.prototype.head = function (o){
 		var op = opt[0];
 		var opn = op.name().c();
 		var bn = blk.name().c();
-		ast.push(("if(" + bn + "==undefined && " + isFunc(opn) + ") " + bn + " = " + opn + "," + opn + " = " + (op.defaults().c())));
-		ast.push(("if(" + opn + "==undefined) " + opn + " = " + (op.defaults().c())));
+		ast.push(("if(" + bn + "==undefined && " + isFunc(opn) + ") " + bn + " = " + opn + "," + opn + " = " + (op._defaults.c())));
+		ast.push(("if(" + opn + "==undefined) " + opn + " = " + (op._defaults.c())));
 	} else if (blk && named && opt.length == 0 && !splat) {
 		bn = blk.name().c();
 		ast.push(("if(" + bn + "==undefined && " + isFunc(namedvar.c()) + ") " + bn + " = " + (namedvar.c()) + "," + (namedvar.c()) + " = \{\}"));
@@ -4121,7 +4057,7 @@ ParamList.prototype.head = function (o){
 		
 		for (let i = 0, len_ = opt.length, par; i < len_; i++) {
 			par = opt[i];
-			ast.push(("if(" + len + " < " + (par.index() + 1) + ") " + (par.name().c()) + " = " + (par.defaults().c())));
+			ast.push(("if(" + len + " < " + (par.index() + 1) + ") " + (par.name().c()) + " = " + (par._defaults.c())));
 		};
 		
 		// add the splat
@@ -4151,7 +4087,7 @@ ParamList.prototype.head = function (o){
 	} else if (opt.length > 0) {
 		for (let i = 0, len_ = opt.length, par; i < len_; i++) {
 			par = opt[i];
-			ast.push(("if(" + (par.name().c()) + " === undefined) " + (par.name().c()) + " = " + (par.defaults().c())));
+			ast.push(("if(" + (par.name().c()) + " === undefined) " + (par.name().c()) + " = " + (par._defaults.c())));
 		};
 	};
 	
@@ -4162,7 +4098,7 @@ ParamList.prototype.head = function (o){
 			// console.log "named var {k.c}"
 			k = items[i];
 			op = OP('.',namedvar,k.c()).c();
-			ast.push(("var " + (k.c()) + " = " + op + " !== undefined ? " + op + " : " + (k.defaults().c())));
+			ast.push(("var " + (k.c()) + " = " + op + " !== undefined ? " + op + " : " + (k._defaults.c())));
 		};
 	};
 	
@@ -4183,23 +4119,18 @@ function ScopeVariables(){ return ListNode.apply(this,arguments) };
 
 subclass$(ScopeVariables,ListNode);
 
-ScopeVariables.prototype.kind = function(v){ return this._kind; }
-ScopeVariables.prototype.setKind = function(v){ this._kind = v; return this; };
-ScopeVariables.prototype.split = function(v){ return this._split; }
-ScopeVariables.prototype.setSplit = function(v){ this._split = v; return this; };
-
 // we want to register these variables in
 ScopeVariables.prototype.add = function (name,init,pos){
 	if(pos === undefined) pos = -1;
 	var vardec = new VariableDeclarator(name,init);
-	if (name instanceof Variable) { (vardec.setVariable(name),name) };
+	if (name instanceof Variable) { (vardec._variable = name,name) };
 	(pos == 0) ? this.unshift(vardec) : this.push(vardec);
 	return vardec;
 };
 
 ScopeVariables.prototype.load = function (list){
 	
-	return list.map(function(par) { return new VariableDeclarator(par.name(),par.defaults(),par.splat()); });
+	return list.map(function(par) { return new VariableDeclarator(par.name(),par._defaults,par.splat()); });
 };
 
 ScopeVariables.prototype.isExpressable = function (){
@@ -4243,7 +4174,7 @@ ScopeVariables.prototype.js = function (o){
 	// FIX PERFORMANCE
 	// This is used in let scope as well - inflexible
 	// Is this used by
-	if (this.split() && true) {
+	if (this._split && true) {
 		let out2 = [];
 		for (let v, i = 0, keys = Object.keys(groups), l = keys.length, k; i < l; i++){
 			k = keys[i];v = groups[k];out2.push(("" + k + " " + AST.cary(v,{as: 'declaration'}).join(', ') + ";"));
@@ -4260,17 +4191,16 @@ function VariableDeclarator(){ return Param.apply(this,arguments) };
 subclass$(VariableDeclarator,Param);
 
 VariableDeclarator.prototype.type = function(v){ return this._type; }
-VariableDeclarator.prototype.setType = function(v){ this._type = v; return this; };
 // can possibly create the variable immediately but wait with scope-declaring
 // What if this is merely the declaration of a system/temporary variable?
 VariableDeclarator.prototype.visit = function (){
 	// even if we should traverse the defaults as if this variable does not exist
 	// we need to preregister it and then activate it later
 	var variable_, v_;
-	(variable_ = this.variable()) || ((this.setVariable(v_ = this.scope__().register(this.name(),null,{type: this._type || 'var'})),v_));
-	if (this.defaults()) { this.defaults().traverse() };
+	(variable_ = this.variable()) || (((this._variable = v_ = this.scope__().register(this.name(),null,{type: this._type || 'var'}),this),v_));
+	if (this._defaults) { this._defaults.traverse() };
 	// WARN what if it is already declared?
-	this.variable().setDeclarator(this);
+	this.variable()._declarator = this;
 	this.variable().addReference(this.name());
 	return this;
 };
@@ -4279,7 +4209,7 @@ VariableDeclarator.prototype.visit = function (){
 VariableDeclarator.prototype.js = function (o){
 	if (this.variable()._proxy) { return null };
 	
-	var defs = this.defaults();
+	var defs = this._defaults;
 	let typ = STACK.tsc() && this.variable().datatype();
 	
 	// console.log 'compile variable!!'
@@ -4314,13 +4244,6 @@ function VarDeclaration(left,right,kind,op){
 };
 
 subclass$(VarDeclaration,Node);
-
-VarDeclaration.prototype.kind = function(v){ return this._kind; }
-VarDeclaration.prototype.setKind = function(v){ this._kind = v; return this; };
-VarDeclaration.prototype.left = function(v){ return this._left; }
-VarDeclaration.prototype.setLeft = function(v){ this._left = v; return this; };
-VarDeclaration.prototype.right = function(v){ return this._right; }
-VarDeclaration.prototype.setRight = function(v){ this._right = v; return this; };
 
 VarDeclaration.prototype.op = function (){
 	return this._op;
@@ -4368,10 +4291,10 @@ VarDeclaration.prototype.consume = function (node){
 	
 	if ((node instanceof PushAssign) || (node instanceof Return)) {
 		let ast = this;
-		if (this.right() && !this.right().isExpressable()) {
+		if (this._right && !this._right.isExpressable()) {
 			let temp = this.scope__().temporary(this);
-			let ast = this.right().consume(OP('=',temp,NULL));
-			this.setRight(temp);
+			let ast = this._right.consume(OP('=',temp,NULL));
+			(this._right = temp,this);
 			return new Block([ast,BR,this.consume(node)]);
 		};
 		
@@ -4386,10 +4309,10 @@ VarDeclaration.prototype.consume = function (node){
 };
 
 VarDeclaration.prototype.c = function (o){
-	if (this.right() && !this.right().isExpressable()) {
+	if (this._right && !this._right.isExpressable()) {
 		let temp = this.scope__().temporary(this);
-		let ast = this.right().consume(OP('=',temp,NULL));
-		this.setRight(temp);
+		let ast = this._right.consume(OP('=',temp,NULL));
+		(this._right = temp,this);
 		return new Block([ast,BR,this]).c(o);
 	};
 	// testing this
@@ -4398,7 +4321,7 @@ VarDeclaration.prototype.c = function (o){
 
 VarDeclaration.prototype.js = function (){
 	let out = '';
-	let kind = this.kind();
+	let kind = this._kind;
 	let typ = (this.datatype() || (this._left && this._left.datatype()));
 	if (STACK.tsc() && this._variables.length > 1 && this._variables.some(function(_0) { return _0.vartype(); })) {
 		kind = 'let'; // or var?
@@ -4414,17 +4337,17 @@ VarDeclaration.prototype.js = function (){
 			
 			out += ("" + M(kind,this.keyword()) + " " + itemjs + ";\n");
 		};
-		out += ("(" + this.left().c());
-		if (this.right()) {
-			out += (" = " + this.right().c({expression: true}));
+		out += ("(" + this._left.c());
+		if (this._right) {
+			out += (" = " + this._right.c({expression: true}));
 		};
 		out += ")";
 	} else {
-		out += ("" + M(kind,this.keyword()) + " " + this.left().c());
+		out += ("" + M(kind,this.keyword()) + " " + this._left.c());
 		
-		if (this.right()) {
+		if (this._right) {
 			
-			out += (" = " + this.right().c({expression: true}));
+			out += (" = " + this._right.c({expression: true}));
 		};
 	};
 	
@@ -4449,26 +4372,23 @@ function VarName(a,b){
 subclass$(VarName,ValueNode);
 
 VarName.prototype.variable = function(v){ return this._variable; }
-VarName.prototype.setVariable = function(v){ this._variable = v; return this; };
 VarName.prototype.splat = function(v){ return this._splat; }
-VarName.prototype.setSplat = function(v){ this._splat = v; return this; };
-
 VarName.prototype.visit = function (){
 	// should we not lookup instead?
 	// FIXME p "register value {value.c}"
 	var variable_, v_;
-	(variable_ = this.variable()) || ((this.setVariable(v_ = this.scope__().register(this.value().c(),null)),v_));
-	this.variable().setDeclarator(this);
-	this.variable().addReference(this.value());
+	(variable_ = this._variable) || (((this._variable = v_ = this.scope__().register(this.value().c(),null),this),v_));
+	this._variable._declarator = this;
+	this._variable.addReference(this.value());
 	return this;
 };
 
 VarName.prototype.js = function (o){
-	return this.variable().c();
+	return this._variable.c();
 };
 
 VarName.prototype.c = function (){
-	return this.variable().c();
+	return this._variable.c();
 };
 
 // CODE
@@ -4478,11 +4398,8 @@ function Code(){ return Node.apply(this,arguments) };
 subclass$(Code,Node);
 
 Code.prototype.head = function(v){ return this._head; }
-Code.prototype.setHead = function(v){ this._head = v; return this; };
 Code.prototype.body = function(v){ return this._body; }
-Code.prototype.setBody = function(v){ this._body = v; return this; };
 Code.prototype.scope = function(v){ return this._scope; }
-Code.prototype.setScope = function(v){ this._scope = v; return this; };
 Code.prototype.params = function(v){ return this._params; }
 Code.prototype.setParams = function(v){ this._params = v; return this; };
 
@@ -4504,7 +4421,7 @@ function CodeBlock(body,opts){
 	this._traversed = false;
 	this._body = AST.blk(body);
 	this._scope = new FlowScope(this);
-	this._body.setHead(this._scope.head());
+	this._body._head = this._scope.head();
 	this._options = {};
 };
 
@@ -4556,13 +4473,13 @@ Root.prototype.compile = function (o,script){
 	var registry;
 	if(script === undefined) script = {};
 	STACK.reset(); // -- nested compilation does not work now
-	this._scope.setOptions(OPTS = STACK._options = this._options = o || {});
+	(this._scope._options = OPTS = STACK._options = this._options = o || {},this._scope);
 	STACK.SOURCECODE = script.sourceCode;
-	ROOT = (STACK.setRoot(this._scope),this._scope);
+	ROOT = (STACK._root = this._scope,this._scope);
 	this._scope._imba.configure(o);
 	this.traverse();
 	
-	STACK.setRoot(this._scope);
+	STACK._root = this._scope;
 	
 	
 	
@@ -4585,7 +4502,7 @@ Root.prototype.compile = function (o,script){
 		o.onTraversed(this,STACK);
 	};
 	
-	let sheet = STACK.css();
+	let sheet = STACK._css;
 	let css = sheet.toString();
 	
 	if (sheet.transitions) {
@@ -4618,7 +4535,7 @@ Root.prototype.compile = function (o,script){
 	script.js = out;
 	script.css = css || "";
 	script.sourceId = this.sourceId();
-	script.assets = this.scope().assets();
+	script.assets = this.scope()._assets;
 	script.universal = STACK.meta().universal !== false;
 	
 	if (!STACK.tsc()) {
@@ -4683,7 +4600,7 @@ Root.prototype.js = function (o){
 Root.prototype.analyze = function (o){
 	// loglevel: 0, entities: no, scopes: yes
 	if(o === undefined) o = {};
-	STACK.setLoglevel(o.loglevel || 0);
+	(STACK._loglevel = o.loglevel || 0,STACK);
 	STACK._analyzing = true;
 	ROOT = STACK.ROOT = this._scope;
 	OPTS = STACK._options = {
@@ -4726,10 +4643,6 @@ subclass$(ClassDeclaration,Code);
 
 ClassDeclaration.prototype.name = function(v){ return this._name; }
 ClassDeclaration.prototype.setName = function(v){ this._name = v; return this; };
-ClassDeclaration.prototype.superclass = function(v){ return this._superclass; }
-ClassDeclaration.prototype.setSuperclass = function(v){ this._superclass = v; return this; };
-ClassDeclaration.prototype.initor = function(v){ return this._initor; }
-ClassDeclaration.prototype.setInitor = function(v){ this._initor = v; return this; };
 
 ClassDeclaration.prototype.consume = function (node){
 	if (node instanceof Return) {
@@ -4740,7 +4653,7 @@ ClassDeclaration.prototype.consume = function (node){
 };
 
 ClassDeclaration.prototype.namepath = function (){
-	return this._namepath || (this._namepath = ("" + (this.name() ? this.name().c() : '--')));
+	return this._namepath || (this._namepath = ("" + (this._name ? this._name.c() : '--')));
 };
 
 ClassDeclaration.prototype.metadata = function (){
@@ -4748,11 +4661,11 @@ ClassDeclaration.prototype.metadata = function (){
 	return {
 		type: 'class',
 		namepath: this.namepath(),
-		inherits: (superclass_ = this.superclass()) && superclass_.namepath  &&  superclass_.namepath(),
-		path: this.name() && this.name().c().toString(),
+		inherits: (superclass_ = this._superclass) && superclass_.namepath  &&  superclass_.namepath(),
+		path: this._name && this._name.c().toString(),
 		desc: this._desc,
 		loc: this.loc(),
-		symbols: this._scope.entities()
+		symbols: this._scope._entities
 	};
 };
 
@@ -4934,7 +4847,7 @@ ClassDeclaration.prototype.visit = function (){
 	
 	this._path = this._name;
 	this._ownName = this._name;
-	this._realName = (this._name instanceof Access) ? this._name.right() : this._name;
+	this._realName = (this._name instanceof Access) ? this._name._right : this._name;
 	
 	if (sup) {
 		sup.traverse();
@@ -4989,7 +4902,7 @@ ClassDeclaration.prototype.visit = function (){
 	};
 	
 	STACK.push(this);
-	ROOT.entities().add(this.namepath(),this);
+	ROOT._entities.add(this.namepath(),this);
 	this.scope().visit();
 	this.set({iife: STACK.up() instanceof Instantiation});
 	
@@ -5050,7 +4963,7 @@ ClassDeclaration.prototype.visit = function (){
 			if (!field) {
 				field = fields[name] = new ClassField(param.name()).set(
 					{datatype: dtyp,
-					value: param.defaults()}
+					value: param._defaults}
 				);
 				// field.set(param: param)
 				add.push(field);
@@ -5059,8 +4972,8 @@ ClassDeclaration.prototype.visit = function (){
 				if (dtyp && !field.datatype()) {
 					field.set({datatype: dtyp});
 				};
-				if (param.defaults() && !field.value()) {
-					field.set({value: param.defaults()});
+				if (param._defaults && !field.value()) {
+					field.set({value: param._defaults});
 				};
 			};
 			
@@ -5267,7 +5180,7 @@ ClassDeclaration.prototype.visit = function (){
 			let clsname;
 			if (this.isTag()) {
 				let namevar = this._name._variable;
-				clsname = namevar || CALL(this.runtime().getTagType,[this.name(),STR(this.name().toClassName())]);
+				clsname = namevar || CALL(this.runtime().getTagType,[this._name,STR(this._name.toClassName())]);
 				// if className == 'ImbaElement' or className == 'imba.Component'
 				//	cls = runtime:Component
 				pars.push(clsname);
@@ -5306,18 +5219,18 @@ ClassDeclaration.prototype.addMethod = function (name,params,mbody,options,cb){
 
 ClassDeclaration.prototype.js = function (o){
 	this.scope().virtualize(); // is this always needed?
-	this.scope().context().setValue(this.name());
-	this.scope().context().setReference(this.name());
+	this.scope().context().setValue(this._name);
+	this.scope().context()._reference = this._name;
 	
 	var tsc = STACK.tsc();
 	var up = STACK.up();
 	var o = this._options || {};
 	
-	var cname = (this._ownName instanceof Access) ? this._ownName.right() : this._ownName;
-	var origName = (this._name instanceof Access) ? this._name.right() : this._name;
+	var cname = (this._ownName instanceof Access) ? this._ownName._right : this._ownName;
+	var origName = (this._name instanceof Access) ? this._name._right : this._name;
 	
 	var initor = null;
-	var sup = this.superclass();
+	var sup = this._superclass;
 	
 	if (typeof cname != 'string' && cname) {
 		cname = cname.c({mark: true});
@@ -5330,8 +5243,8 @@ ClassDeclaration.prototype.js = function (o){
 	let jsbody = this.body().c();
 	let jshead = M('class',this.keyword());
 	
-	if (this.name()) {
-		jshead += (" " + M(cname,this.name()));
+	if (this._name) {
+		jshead += (" " + M(cname,this._name));
 	} else {
 		if (up instanceof VarReference) {
 			try {
@@ -5351,7 +5264,7 @@ ClassDeclaration.prototype.js = function (o){
 			abstract: this.option('abstract') || this.isMixin() || this.isInterface(),
 			mixins: AST.cary(this._mixins).join(', ') || null,
 			generics: this._name && this._name.option('generics'),
-			supr: this.superclass(),
+			supr: this._superclass,
 			oid: this.tsId(),
 			iife: ((up instanceof Instantiation) || this.option('notInRoot')),
 			"return": this.option('return'),
@@ -5417,8 +5330,8 @@ ClassDeclaration.prototype.js = function (o){
 		jshead += (" " + this.mo('extends') + " " + M(sup));
 	};
 	
-	if ((this.name() instanceof Access) && !(this.exportForDts()) && !(this.isExtension())) {
-		jshead = ("" + (this.name().c()) + " = " + jshead);
+	if ((this._name instanceof Access) && !(this.exportForDts()) && !(this.isExtension())) {
+		jshead = ("" + (this._name.c()) + " = " + jshead);
 	};
 	
 	if (this.option('export')) { // or (tsc and (exportForDts or option(:global)))
@@ -5433,8 +5346,8 @@ ClassDeclaration.prototype.js = function (o){
 	let js = ("" + jshead + " \{" + jsbody + "\}");
 	
 	if (this.option('global')) {
-		let access = (this.name() instanceof Access);
-		let getter = (this.name() instanceof Access) ? this.name().c() : this._cname;
+		let access = (this._name instanceof Access);
+		let getter = (this._name instanceof Access) ? this._name.c() : this._cname;
 		js = ("" + js + "; " + (this.scope__().root().globalRef()) + "." + (this._cname) + " = " + getter);
 	};
 	
@@ -5482,7 +5395,7 @@ TagDeclaration.prototype.classReference = function (){
 };
 
 TagDeclaration.prototype.cssref = function (scope){
-	if (this.isNeverExtended() && !(this.superclass())) {
+	if (this.isNeverExtended() && !(this._superclass)) {
 		return this._cssns;
 	};
 	
@@ -5510,7 +5423,7 @@ TagDeclaration.prototype.visit = function (){
 	
 	TagDeclaration.prototype.__super__.visit.apply(this,arguments);
 	
-	let sup = this.superclass();
+	let sup = this._superclass;
 	
 	if (!this.name().isClass()) {
 		this.set({global: true});
@@ -5552,7 +5465,7 @@ TagDeclaration.prototype.visit = function (){
 		// name.@nodeName ||= STACK.sourceId + '-' + STACK.generateId('')
 		let name = this.name().toNodeName();
 		if (name.indexOf('-') == -1) { name = name + '-tag' };
-		STACK.css().add(name + ' { display:block; }');
+		STACK._css.add(name + ' { display:block; }');
 	};
 	
 	if (this.option('export') && this.name() && this.name().isLowerCase && this.name().isLowerCase()) {
@@ -5576,11 +5489,11 @@ TagDeclaration.prototype.addElementReference = function (name,child){
 TagDeclaration.prototype.js = function (s){
 	this.scope().virtualize(); // is this always needed?
 	this.scope().context().setValue(this.name());
-	this.scope().context().setReference(this.name());
+	this.scope().context()._reference = this.name();
 	
 	let tsc = STACK.tsc();
 	let className = this.name().toClassName();
-	let sup = this.superclass();
+	let sup = this._superclass;
 	
 	let anonGlobalTag = !this.option('extension') && (!this.name().isClass()) && tsc;
 	
@@ -5606,7 +5519,7 @@ TagDeclaration.prototype.js = function (s){
 	};
 	
 	if (tsc) {
-		sup = this.superclass() ? this.superclass().toClassName() : LIT('imba.Component');
+		sup = this._superclass ? this._superclass.toClassName() : LIT('imba.Component');
 		
 		if (!(this.isExtension())) {
 			// body.unshift(LIT("getTagName()\{ return '{tpl:name}' \}"),yes)
@@ -5623,7 +5536,7 @@ TagDeclaration.prototype.js = function (s){
 		};
 		
 		tpl.default = this.option('default');
-		tpl.superName = this.superclass() ? new MappedString(sup,this.superclass()) : sup;
+		tpl.superName = this._superclass ? new MappedString(sup,this._superclass) : sup;
 		
 		try {
 			tpl.export = this.option('export') || !(!this._name.variable()._value.isExported());
@@ -5717,14 +5630,8 @@ Func.prototype.setName = function(v){ this._name = v; return this; };
 Func.prototype.params = function(v){ return this._params; }
 Func.prototype.setParams = function(v){ this._params = v; return this; };
 Func.prototype.target = function(v){ return this._target; }
-Func.prototype.setTarget = function(v){ this._target = v; return this; };
-Func.prototype.options = function(v){ return this._options; }
-Func.prototype.setOptions = function(v){ this._options = v; return this; };
 Func.prototype.type = function(v){ return this._type; }
-Func.prototype.setType = function(v){ this._type = v; return this; };
 Func.prototype.context = function(v){ return this._context; }
-Func.prototype.setContext = function(v){ this._context = v; return this; };
-
 Func.prototype.scopetype = function (){
 	return FunctionScope;
 };
@@ -5788,7 +5695,7 @@ Func.prototype.js = function (s,o){
 	var keyword = (o && o.keyword != undefined) ? o.keyword : this.funcKeyword();
 	
 	
-	var out = ("" + M(keyword,this.option('def') || this.option('keyword')) + helpers.toValidIdentifier(name) + "(" + (this.params().c()) + ") ");
+	var out = ("" + M(keyword,this.option('def') || this.option('keyword')) + helpers.toValidIdentifier(name) + "(" + (this._params.c()) + ") ");
 	
 	if (STACK.tsc() && this.returnType()) {
 		out += ':' + this.returnType().c();
@@ -5803,7 +5710,7 @@ Func.prototype.js = function (s,o){
 
 Func.prototype.shouldParenthesize = function (par){
 	if(par === undefined) par = this.up();
-	return (par instanceof Call) && par.callee() == this;
+	return (par instanceof Call) && par._callee == this;
 	// if up as a call? Only if we are
 };
 
@@ -5811,8 +5718,6 @@ function IsolatedFunc(){ return Func.apply(this,arguments) };
 
 subclass$(IsolatedFunc,Func);
 
-IsolatedFunc.prototype.leaks = function(v){ return this._leaks; }
-IsolatedFunc.prototype.setLeaks = function(v){ this._leaks = v; return this; };
 
 IsolatedFunc.prototype.scopetype = function (){
 	return IsolatedFunctionScope;
@@ -5864,8 +5769,6 @@ function Walker(fn){
 };
 
 
-Walker.prototype.leaks = function(v){ return this._leaks; }
-Walker.prototype.setLeaks = function(v){ this._leaks = v; return this; };
 Walker.prototype.test = function (node){
 	return false;
 };
@@ -5883,8 +5786,6 @@ function AmperWalker(){ return Walker.apply(this,arguments) };
 
 subclass$(AmperWalker,Walker);
 
-AmperWalker.prototype.deopt = function(v){ return this._deopt; }
-AmperWalker.prototype.setDeopt = function(v){ this._deopt = v; return this; };
 
 AmperWalker.prototype.test = function (node){
 	if (node instanceof Call) {
@@ -5923,7 +5824,7 @@ AmperFunc.prototype.js = function (s,o){
 	// hash the output? Or the source? Maybe the source is enough?
 	var out = this.body().c({braces: false});
 	
-	if (!walker.deopt() && !STACK.tsc()) {
+	if (!walker._deopt && !STACK.tsc()) {
 		let raw = this.body().sourcecode();
 		let sym = raw.replace(/[\"]/g,"'");
 		let that = walker._self;
@@ -5972,7 +5873,7 @@ RescueFunc.prototype.js = function (s,o){
 		return CALL(STACK.corelib().rescue$,[LIT(out)]).c();
 	};
 	
-	this.setBody(this.body().consume(new ImplicitReturn()));
+	this._body = this.body().consume(new ImplicitReturn());
 	out = this.body().c({braces: false});
 	
 	let fn = '()=>{ try { ' + out + ' } catch(e) { return e; } }';
@@ -6008,10 +5909,6 @@ function MethodDeclaration(){ return Func.apply(this,arguments) };
 subclass$(MethodDeclaration,Func);
 
 MethodDeclaration.prototype.variable = function(v){ return this._variable; }
-MethodDeclaration.prototype.setVariable = function(v){ this._variable = v; return this; };
-MethodDeclaration.prototype.decorators = function(v){ return this._decorators; }
-MethodDeclaration.prototype.setDecorators = function(v){ this._decorators = v; return this; };
-
 MethodDeclaration.prototype.scopetype = function (){
 	return MethodScope;
 };
@@ -6033,10 +5930,6 @@ MethodDeclaration.prototype.isExcluded = function (){
 		return !this._envs.find(function(_0) { return _0.isTruthy(); });
 	};
 	return false;
-};
-
-MethodDeclaration.prototype.identifier = function (){
-	return this._name;
 };
 
 MethodDeclaration.prototype.rawName = function (){
@@ -6147,13 +6040,13 @@ MethodDeclaration.prototype.visit = function (){
 	
 	if (this.target() instanceof Identifier) {
 		if (variable = this.scope().lookup(this.target().toString())) {
-			this.setTarget(variable);
+			this._target = variable;
 		};
 		// should be changed to VarOrAccess?!
 	};
 	
 	if (String(this.name()) == 'initialize' && (closure instanceof ClassScope) && !(closure instanceof TagScope)) {
-		this.setType('constructor');
+		this._type = 'constructor';
 	};
 	
 	if (String(this.name()) == 'constructor' || this.isConstructor()) {
@@ -6193,7 +6086,7 @@ MethodDeclaration.prototype.visit = function (){
 		this.warn("cannot export non-root method",{loc: o.export.loc()});
 	};
 	
-	ROOT.entities().add(this.namepath(),this);
+	ROOT._entities.add(this.namepath(),this);
 	
 	this._body.traverse();
 	
@@ -6211,7 +6104,7 @@ MethodDeclaration.prototype.visit = function (){
 		let block = supr && supr.block;
 		
 		if (ref && node) {
-			ref.declarator()._defaults = null;
+			ref._declarator._defaults = null;
 			let op = OP('=',ref,new This());
 			block.replace(node,[node,op]);
 		};
@@ -6636,7 +6529,7 @@ Num.prototype.negate = function (){
 
 Num.prototype.shouldParenthesize = function (par){
 	if(par === undefined) par = this.up();
-	return (par instanceof Access) && par.left() == this;
+	return (par instanceof Access) && par._left == this;
 };
 
 Num.prototype.js = function (o){
@@ -6647,7 +6540,7 @@ Num.prototype.c = function (o){
 	if (this._cache) { return Num.prototype.__super__.c.call(this,o) };
 	var out = M(this.toString(),this._value);
 	var par = STACK.current();
-	var paren = (par instanceof Access) && par.left() == this;
+	var paren = (par instanceof Access) && par._left == this;
 	// only if this is the right part of the access
 	return paren ? (("(" + out + ")")) : out;
 };
@@ -7136,52 +7029,49 @@ function ObjAttr(key,value,defaults){
 subclass$(ObjAttr,Node);
 
 ObjAttr.prototype.key = function(v){ return this._key; }
-ObjAttr.prototype.setKey = function(v){ this._key = v; return this; };
 ObjAttr.prototype.value = function(v){ return this._value; }
 ObjAttr.prototype.setValue = function(v){ this._value = v; return this; };
-ObjAttr.prototype.options = function(v){ return this._options; }
-ObjAttr.prototype.setOptions = function(v){ this._options = v; return this; };
 
 ObjAttr.prototype.visit = function (stack,state){
 	// should probably traverse key as well, unless it is a dead simple identifier
-	this.key().traverse();
-	if (this.value()) { this.value().traverse() };
+	this._key.traverse();
+	if (this._value) { this._value.traverse() };
 	if (this._defaults) { this._defaults.traverse() };
 	
 	let decl = state && state.declaring;
 	
-	if (this.key() instanceof Ivar) {
-		if (!(this.value())) {
-			this.setKey(new Identifier(this.key().value()));
-			this.setValue(OP('.',this.scope__().context(),this.key()));
+	if (this._key instanceof Ivar) {
+		if (!(this._value)) {
+			(this._key = new Identifier(this._key.value()),this);
+			(this._value = OP('.',this.scope__().context(),this._key),this);
 			if (this._defaults) {
-				this.setValue(OP('=',this.value(),this._defaults));
+				(this._value = OP('=',this._value,this._defaults),this);
 				this._defaults = null;
 			};
 		};
-	} else if (this.key() instanceof Private) {
-		if (!(this.value())) {
-			this.setValue(OP('.',this.scope__().context(),this.key()));
-			this.setKey(new Identifier(this.key().value()));
+	} else if (this._key instanceof Private) {
+		if (!(this._value)) {
+			(this._value = OP('.',this.scope__().context(),this._key),this);
+			(this._key = new Identifier(this._key.value()),this);
 		};
-	} else if (this.key() instanceof Identifier) {
+	} else if (this._key instanceof Identifier) {
 		// if state && state:declaring
 		// 	key.variable = scope__.register(key.symbol,key)\
 		// isnt this rather going to
 		
-		if (!(this.value())) {
+		if (!(this._value)) {
 			if (decl) {
-				this.setValue(this.scope__().register(this.key().symbol(),this.key(),{type: decl}));
-				this.setValue(this.value().via(this.key()));
+				(this._value = this.scope__().register(this._key.symbol(),this._key,{type: decl}),this);
+				(this._value = this._value.via(this._key),this);
 				
 				if (this._defaults) {
-					this.setValue(OP('=',this.value(),this._defaults));
+					(this._value = OP('=',this._value,this._defaults),this);
 					this._defaults = null;
 				};
 			} else {
-				this.setValue(this.scope__().lookup(this.key().symbol()));
-				if (!(this.value())) {
-					this.setValue(OP('.',this.scope__().context(),this.key()));
+				(this._value = this.scope__().lookup(this._key.symbol()),this);
+				if (!(this._value)) {
+					(this._value = OP('.',this.scope__().context(),this._key),this);
 				};
 			};
 		};
@@ -7191,7 +7081,7 @@ ObjAttr.prototype.visit = function (stack,state){
 };
 
 ObjAttr.prototype.js = function (o){
-	let key = this.key();
+	let key = this._key;
 	let kjs;
 	
 	// if key isa Identifier and String(key.@value)[0] == '@'
@@ -7214,8 +7104,8 @@ ObjAttr.prototype.js = function (o){
 	
 	if (this._defaults) {
 		return ("" + kjs + " = " + (this._defaults.c()));
-	} else if (this.value()) {
-		return ("" + kjs + ": " + (this.value().c()));
+	} else if (this._value) {
+		return ("" + kjs + ": " + (this._value.c()));
 	} else {
 		return ("" + kjs);
 	};
@@ -7340,12 +7230,6 @@ function Op(o,l,r){
 subclass$(Op,Node);
 
 Op.prototype.op = function(v){ return this._op; }
-Op.prototype.setOp = function(v){ this._op = v; return this; };
-Op.prototype.left = function(v){ return this._left; }
-Op.prototype.setLeft = function(v){ this._left = v; return this; };
-Op.prototype.right = function(v){ return this._right; }
-Op.prototype.setRight = function(v){ this._right = v; return this; };
-
 Op.prototype.visit = function (){
 	if (this._right && this._right.traverse) { this._right.traverse() };
 	if (this._left && this._left.traverse) { this._left.traverse() };
@@ -7393,7 +7277,7 @@ Op.prototype.opToIfTree = function (){
 			if (r instanceof Op) { r = r.opToIfTree() };
 			
 			if (r instanceof If) {
-				r.setTest(OP('&&',l,r.test()));
+				r._test = OP('&&',l,r.test());
 				return r;
 			};
 			
@@ -7413,7 +7297,7 @@ Op.prototype.opToIfTree = function (){
 
 Op.prototype.isExpressable = function (){
 	// what if right is a string?!?
-	return !(this.right()) || this.right().isExpressable();
+	return !(this._right) || this._right.isExpressable();
 };
 
 Op.prototype.js = function (o){
@@ -7524,16 +7408,16 @@ Op.prototype.consume = function (node){
 			return this;
 		};
 	} else if (node instanceof Walker) {
-		if (this.left()) { this.left().consume(node) };
-		if (this.right()) { this.right().consume(node) };
+		if (this._left) { this._left.consume(node) };
+		if (this._right) { this._right.consume(node) };
 	};
 	
 	if (node instanceof Util.Is) {
-		if (this.op() == '!') {
-			this.setLeft(this.left().consume(node));
+		if (this._op == '!') {
+			(this._left = this._left.consume(node),this);
 		} else if (this.isLogical()) {
-			if (this.left()) { (this.setLeft(v_ = this.left().consume(node)),v_) };
-			if (this.right()) { (this.setRight(v_ = this.right().consume(node)),v_) };
+			if (this._left) { ((this._left = v_ = this._left.consume(node),this),v_) };
+			if (this._right) { ((this._right = v_ = this._right.consume(node),this),v_) };
 		} else if (this instanceof Access) {
 			return node.clone(this);
 		};
@@ -7545,8 +7429,8 @@ Op.prototype.consume = function (node){
 	
 	// TODO can rather use global caching?
 	var tmpvar = this.scope__().declare('tmp',null,{system: true});
-	var clone = OP(this.op(),this.left(),null);
-	var ast = this.right().consume(clone);
+	var clone = OP(this._op,this._left,null);
+	var ast = this._right.consume(clone);
 	if (node) { ast.consume(node) };
 	return ast;
 };
@@ -7562,15 +7446,15 @@ ComparisonOp.prototype.invert = function (){
 	var pairs = ["==","!=","===","!==",">","<=","<",">="];
 	var idx = pairs.indexOf(op);
 	idx += ((idx % 2) ? (-1) : 1);
-	this.setOp(pairs[idx]);
+	this._op = pairs[idx];
 	this._invert = !this._invert;
 	return this;
 };
 
 ComparisonOp.prototype.c = function (){
-	if (this.left() instanceof ComparisonOp) {
-		this.left().right().cache();
-		return OP('&&',this.left(),OP(this.op(),this.left().right(),this.right())).c();
+	if (this._left instanceof ComparisonOp) {
+		this._left._right.cache();
+		return OP('&&',this._left,OP(this.op(),this._left._right,this._right)).c();
 	} else {
 		return ComparisonOp.prototype.__super__.c.apply(this,arguments);
 	};
@@ -7592,14 +7476,14 @@ subclass$(UnaryOp,Op);
 
 UnaryOp.prototype.invert = function (){
 	if (this.op() == '!') {
-		return this.left();
+		return this._left;
 	} else {
 		return UnaryOp.prototype.__super__.invert.apply(this,arguments); // regular invert
 	};
 };
 
 UnaryOp.prototype.isTruthy = function (){
-	var val = AST.truthy(this.left());
+	var val = AST.truthy(this._left);
 	return (val !== undefined) ? ((!val)) : ((undefined));
 };
 
@@ -7624,7 +7508,7 @@ UnaryOp.prototype.js = function (o){
 		};
 		// l.set(parens: yes) # sure?
 		return ("" + op + str);
-	} else if (this.left()) {
+	} else if (this._left) {
 		return ("" + (l.c()) + s + op);
 	} else {
 		return ("" + op + s + (r.c()));
@@ -7633,7 +7517,7 @@ UnaryOp.prototype.js = function (o){
 
 UnaryOp.prototype.normalize = function (){
 	if (this.op() == '!') { return this };
-	var node = (this.left() || this.right()).node();
+	var node = (this._left || this._right).node();
 	// for property-accessors we need to rewrite the ast
 	return this;
 };
@@ -7654,26 +7538,26 @@ subclass$(InstanceOf,Op);
 
 InstanceOf.prototype.js = function (s,o){
 	
-	if (this.right() instanceof Str) {
-		let out = ("typeof (" + (this.left().c()) + ")===" + (this.right().c()));
+	if (this._right instanceof Str) {
+		let out = ("typeof (" + (this._left.c()) + ")===" + (this._right.c()));
 		if (s.parent() instanceof Op) { out = helpers.parenthesize(out) };
 		return out;
 	};
 	
 	// fix checks for String and Number
-	if (this.right() instanceof Parens) {
-		let out = this.right().consume(new Util.Isa([STACK.tsc() ? this.left() : this.left().cache(),null,this._op])).c();
+	if (this._right instanceof Parens) {
+		let out = this._right.consume(new Util.Isa([STACK.tsc() ? this._left : this._left.cache(),null,this._op])).c();
 		out = helpers.parenthesize(out); // if o.parent isa Op
 		return out;
 	};
 	
 	if (String(this._op) == 'instanceof' || STACK.tsc()) {
-		let out = ("" + (this.left().c()) + " " + M('instanceof',this._opToken) + " " + (this.right().c()));
+		let out = ("" + (this._left.c()) + " " + M('instanceof',this._opToken) + " " + (this._right.c()));
 		if (s.parent() instanceof Op) { out = helpers.parenthesize(out) };
 		return out;
 	};
 	
-	return new Util.Isa([this.left(),this.right(),this._op]).js(s,o);
+	return new Util.Isa([this._left,this._right,this._op]).js(s,o);
 };
 
 function TypeOf(){ return Op.apply(this,arguments) };
@@ -7681,7 +7565,7 @@ function TypeOf(){ return Op.apply(this,arguments) };
 subclass$(TypeOf,Op);
 
 TypeOf.prototype.js = function (o){
-	return ("typeof " + (this.left().c()));
+	return ("typeof " + (this._left.c()));
 };
 
 function Delete(){ return Op.apply(this,arguments) };
@@ -7691,7 +7575,7 @@ subclass$(Delete,Op);
 Delete.prototype.js = function (o){
 	// TODO this will execute calls several times if the path is not directly to an object
 	// need to cache the receiver
-	var l = this.left();
+	var l = this._left;
 	var tmp = this.scope__().temporary(this,{pool: 'val'});
 	var o = OP('=',tmp,l);
 	// FIXME
@@ -7711,13 +7595,13 @@ subclass$(In,Op);
 
 In.prototype.js = function (s,o){
 	
-	if (this.right() instanceof Parens) {
-		let out = this.right().consume(new Util.In([STACK.tsc() ? this.left() : this.left().cache(),null])).c();
+	if (this._right instanceof Parens) {
+		let out = this._right.consume(new Util.In([STACK.tsc() ? this._left : this._left.cache(),null])).c();
 		out = helpers.parenthesize(out);
 		return out;
 	};
 	
-	return new Util.In([this.left(),this.right()]).js(s,o);
+	return new Util.In([this._left,this._right]).js(s,o);
 };
 
 // ACCESS
@@ -7756,9 +7640,9 @@ Access.prototype.clone = function (left,right){
 };
 
 Access.prototype.isRuntimeReference = function (){
-	if ((this.left() instanceof VarOrAccess) && (this.left()._variable instanceof ImbaRuntime)) {
-		if (this.right() instanceof Identifier) {
-			return this.right().toString();
+	if ((this._left instanceof VarOrAccess) && (this._left._variable instanceof ImbaRuntime)) {
+		if (this._right instanceof Identifier) {
+			return this._right.toString();
 		};
 		return true;
 	};
@@ -7770,8 +7654,8 @@ Access.prototype.isRuntimeReference = function (){
 Access.prototype.js = function (stack){
 	var opjs, r;
 	var raw = null;
-	var lft = this.left();
-	var rgt = this.right();
+	var lft = this._left;
+	var rgt = this._right;
 	var rgtexpr = null;
 	var tsc = STACK.tsc();
 	
@@ -7881,7 +7765,7 @@ Access.prototype.js = function (stack){
 	};
 	
 	// tricky?
-	if (typ && (!(up instanceof Assign) || up.right().node() == this)) {
+	if (typ && (!(up instanceof Assign) || up._right.node() == this)) {
 		
 		if ((up instanceof Block) && ((this instanceof ImplicitAccess) || (lft instanceof Self))) {
 			out = out + ' as ' + typ.c();
@@ -7899,10 +7783,10 @@ Access.prototype.js = function (stack){
 };
 
 Access.prototype.visit = function (){
-	let lft = this.left();
-	if (this.left()) { this.left().traverse() };
+	let lft = this._left;
+	if (this._left) { this._left.traverse() };
 	
-	if (this.right()) { this.right().traverse() };
+	if (this._right) { this._right.traverse() };
 	this._left || (this._left = this.scope__().context());
 	return;
 };
@@ -7912,7 +7796,7 @@ Access.prototype.isExpressable = function (){
 };
 
 Access.prototype.alias = function (){
-	return (this.right() instanceof Identifier) ? this.right().alias() : Access.prototype.__super__.alias.call(this);
+	return (this._right instanceof Identifier) ? this._right.alias() : Access.prototype.__super__.alias.call(this);
 };
 
 Access.prototype.safechain = function (){
@@ -7920,7 +7804,7 @@ Access.prototype.safechain = function (){
 };
 
 Access.prototype.cache = function (o){
-	return ((this.right() instanceof Ivar) && !(this.left())) ? this : Access.prototype.__super__.cache.call(this,o);
+	return ((this._right instanceof Ivar) && !(this._left)) ? this : Access.prototype.__super__.cache.call(this,o);
 };
 
 Access.prototype.shouldParenthesizeInTernary = function (){
@@ -7943,18 +7827,16 @@ function LocalVarAccess(){ return Access.apply(this,arguments) };
 subclass$(LocalVarAccess,Access);
 
 LocalVarAccess.prototype.safechain = function(v){ return this._safechain; }
-LocalVarAccess.prototype.setSafechain = function(v){ this._safechain = v; return this; };
-
 LocalVarAccess.prototype.js = function (o){
-	if ((this.right() instanceof Variable) && this.right().type() == 'meth') {
-		if (!((this.up() instanceof Call))) { return ("" + (this.right().c()) + "()") };
+	if ((this._right instanceof Variable) && this._right.type() == 'meth') {
+		if (!((this.up() instanceof Call))) { return ("" + (this._right.c()) + "()") };
 	};
 	
-	return this.right().c();
+	return this._right.c();
 };
 
 LocalVarAccess.prototype.variable = function (){
-	return this.right();
+	return this._right;
 };
 
 LocalVarAccess.prototype.cache = function (o){
@@ -7964,7 +7846,7 @@ LocalVarAccess.prototype.cache = function (o){
 };
 
 LocalVarAccess.prototype.alias = function (){
-	return this.variable()._alias || LocalVarAccess.prototype.__super__.alias.call(this);
+	return this._right._alias || LocalVarAccess.prototype.__super__.alias.call(this);
 };
 
 function PropertyAccess(o,l,r){
@@ -8004,7 +7886,7 @@ PropertyAccess.prototype.js = function (o){
 };
 
 PropertyAccess.prototype.receiver = function (){
-	if (this.left() instanceof Super) {
+	if (this._left instanceof Super) {
 		return SELF;
 	} else {
 		return null;
@@ -8033,7 +7915,7 @@ subclass$(IndexAccess,Access);
 IndexAccess.prototype.cache = function (o){
 	if(o === undefined) o = {};
 	if (o.force) { return IndexAccess.prototype.__super__.cache.apply(this,arguments) };
-	this.right().cache();
+	this._right.cache();
 	return this;
 };
 
@@ -8127,7 +8009,7 @@ VarOrAccess.prototype.visit = function (stack,state){
 		} else {
 			this._value = LIT(name);
 		};
-	} else if (variable && variable.declarator()) {
+	} else if (variable && variable._declarator) {
 		// var decl = variable.declarator
 		let vscope = variable.scope();
 		
@@ -8304,12 +8186,7 @@ function VarReference(value,type){
 subclass$(VarReference,ValueNode);
 
 VarReference.prototype.variable = function(v){ return this._variable; }
-VarReference.prototype.setVariable = function(v){ this._variable = v; return this; };
-VarReference.prototype.declared = function(v){ return this._declared; }
-VarReference.prototype.setDeclared = function(v){ this._declared = v; return this; };
 VarReference.prototype.type = function(v){ return this._type; }
-VarReference.prototype.setType = function(v){ this._type = v; return this; };
-
 Object.defineProperty(VarReference.prototype,'is_static',{get: function(){
 	return this.option('static') && !STACK.tsc();
 }, configurable: true});
@@ -8381,7 +8258,7 @@ VarReference.prototype.js = function (stack,params,plain){
 		if (STACK.tsc()) {
 			let pars = {
 				js: this.js(stack,params,true),
-				kind: this.type(),
+				kind: this._type,
 				name: out
 			};
 			return TPL(pars,'declare global { %js }');
@@ -8456,7 +8333,7 @@ function Assign(o,l,r){
 subclass$(Assign,Op);
 
 Assign.prototype.isExpressable = function (){
-	return !(this.right()) || this.right().isExpressable();
+	return !(this._right) || this._right.isExpressable();
 };
 
 Assign.prototype.isUsed = function (){
@@ -8531,16 +8408,16 @@ Assign.prototype.visit = function (){
 };
 
 Assign.prototype.c = function (o){
-	if (!this.right().isExpressable()) {
+	if (!this._right.isExpressable()) {
 		// if left isa VarReference and !(right isa Loop) and false
 		//	let ref = left
 		//	@left = left.@value
 		//	return Block.new([ref,BR,right.consume(self)]).c(o)
-		if ((this.left() instanceof VarReference) && (!(this.right() instanceof Loop) || this._expression)) {
-			this.left().forceExpression();
+		if ((this._left instanceof VarReference) && (!(this._right instanceof Loop) || this._expression)) {
+			this._left.forceExpression();
 		};
 		
-		return this.right().consume(this).c(o);
+		return this._right.consume(this).c(o);
 	};
 	
 	// testing this
@@ -8554,11 +8431,11 @@ Assign.prototype.js = function (o,plain){
 		if (STACK.tsc()) {
 			let orig = this.js(o,true);
 			// if not expressable - force wrap in function?
-			let id = this.left().value();
-			let kind = this.left().type();
+			let id = this._left.value();
+			let kind = this._left.type();
 			let pars = {
 				js: orig,
-				kind: this.left().type(),
+				kind: this._left.type(),
 				name: id,
 				localName: new InternalName(id)
 			};
@@ -8569,20 +8446,20 @@ Assign.prototype.js = function (o,plain){
 		};
 	};
 	
-	if (!this.right().isExpressable()) {
+	if (!this._right.isExpressable()) {
 		this.p("Assign#js right is not expressable ");
 		// here this should be go out of the stack(!)
 		// it should already be consumed?
-		if (this.left() instanceof VarReference) { this.left().forceExpression() };
-		return this.right().consume(this).c();
+		if (this._left instanceof VarReference) { this._left.forceExpression() };
+		return this._right.consume(this).c();
 	};
 	
 	if (this._expression) {
-		this.left().forceExpression();
+		this._left.forceExpression();
 	};
 	
-	var l = this.left().node();
-	var r = this.right();
+	var l = this._left.node();
+	var r = this._right;
 	var lc = null;
 	
 	// FIXME Not supported anymore?
@@ -8609,7 +8486,7 @@ Assign.prototype.js = function (o,plain){
 				sysname: internal,
 				namespace: l._left,
 				name: l._right,
-				value: this.right().c({expression: true})
+				value: this._right.c({expression: true})
 			};
 			Object.assign(vars,iface || {});
 			
@@ -8644,9 +8521,9 @@ Assign.prototype.js = function (o,plain){
 	lc || (lc = l.c());
 	
 	if (STACK.tsc() && this.op() == '||=') {
-		this.setOp('  =');
+		this._op = '  =';
 	};
-	var out = ("" + lc + " " + this.op() + " " + this.right().c({expression: true}));
+	var out = ("" + lc + " " + this.op() + " " + this._right.c({expression: true}));
 	
 	// if let typ = (STACK.tsc and (datatype or (l and !(l isa VarReference) and l.datatype)))
 	// 	# The datatype should be passed in to the rigth value we are setting instead?
@@ -8670,15 +8547,15 @@ Assign.prototype.shouldParenthesize = function (par){
 
 Assign.prototype.consume = function (node){
 	if (node instanceof TagLike) {
-		if (this.right() instanceof TagLike) {
-			this.right().set({assign: this.left()});
-			return this.right().consume(node);
+		if (this._right instanceof TagLike) {
+			this._right.set({assign: this._left});
+			return this._right.consume(node);
 		} else {
 			return this;
 		};
 	};
 	
-	if ((node instanceof Return) && (this.left() instanceof VarReference)) {
+	if ((node instanceof Return) && (this._left instanceof VarReference)) {
 		
 		if (STACK.tsc()) {
 			let rgt = this._right;
@@ -8687,7 +8564,7 @@ Assign.prototype.consume = function (node){
 			return new Block([this,BR,after]);
 			// return Block.new([OP('=',sysvar,@right),BR,VarAccess.new(@left.@variable).consume(node)])
 		};
-		this.left().forceExpression();
+		this._left.forceExpression();
 	};
 	
 	if (this.isExpressable()) {
@@ -8695,7 +8572,7 @@ Assign.prototype.consume = function (node){
 		return Assign.prototype.__super__.consume.call(this,node);
 	};
 	
-	var ast = this.right().consume(this);
+	var ast = this._right.consume(this);
 	return ast.consume(node);
 };
 
@@ -8703,8 +8580,6 @@ function PushAssign(){ return Assign.apply(this,arguments) };
 
 subclass$(PushAssign,Assign);
 
-PushAssign.prototype.consumed = function(v){ return this._consumed; }
-PushAssign.prototype.setConsumed = function(v){ this._consumed = v; return this; };
 
 PushAssign.prototype.register = function (node){
 	this._consumed || (this._consumed = []);
@@ -8713,7 +8588,7 @@ PushAssign.prototype.register = function (node){
 };
 
 PushAssign.prototype.js = function (o){
-	return ("" + (this.left().c()) + ".push(" + (this.right().c()) + ")");
+	return ("" + (this._left.c()) + ".push(" + (this._right.c()) + ")");
 };
 
 PushAssign.prototype.consume = function (node){
@@ -8725,7 +8600,7 @@ function TagPushAssign(){ return PushAssign.apply(this,arguments) };
 subclass$(TagPushAssign,PushAssign);
 
 TagPushAssign.prototype.js = function (o){
-	return ("" + (this.left().c()) + ".push(" + (this.right().c()) + ")");
+	return ("" + (this._left.c()) + ".push(" + (this._right.c()) + ")");
 };
 
 TagPushAssign.prototype.consume = function (node){
@@ -8748,20 +8623,20 @@ CompoundAssign.prototype.consume = function (node){
 	var ast = this.normalize();
 	if (ast != this) { return ast.consume(node) };
 	
-	ast = this.right().consume(this);
+	ast = this._right.consume(this);
 	return ast.consume(node);
 };
 
 CompoundAssign.prototype.normalize = function (){
-	var ln = this.left().node();
+	var ln = this._left.node();
 	// we dont need to change this at all
 	if (!((ln instanceof PropertyAccess))) {
 		return this;
 	};
 	
-	if (ln.left()) { ln.left().cache() };
+	if (ln._left) { ln._left.cache() };
 	// TODO FIXME we want to cache the context of the assignment
-	var ast = OP('=',this.left(),OP(this.op()[0],this.left(),this.right()));
+	var ast = OP('=',this._left,OP(this.op()[0],this._left,this._right));
 	if (ast.isExpressable()) { ast.toExpression() };
 	
 	return ast;
@@ -8815,10 +8690,6 @@ TypeAnnotation.prototype.asParam = function (name){
 
 TypeAnnotation.prototype.isGeneric = function (){
 	return String(this._value)[0] == '<';
-};
-
-TypeAnnotation.prototype.isOptional = function (){
-	return this._optional;
 };
 
 TypeAnnotation.prototype.asGenericNames = function (){
@@ -8975,12 +8846,9 @@ function Identifier(value){
 subclass$(Identifier,Node);
 
 Identifier.prototype.safechain = function(v){ return this._safechain; }
-Identifier.prototype.setSafechain = function(v){ this._safechain = v; return this; };
 Identifier.prototype.value = function(v){ return this._value; }
 Identifier.prototype.setValue = function(v){ this._value = v; return this; };
 Identifier.prototype.variable = function(v){ return this._variable; }
-Identifier.prototype.setVariable = function(v){ this._variable = v; return this; };
-
 Identifier.prototype.isStatic = function (){
 	return true;
 };
@@ -9058,7 +8926,7 @@ Identifier.prototype.isInternal = function (){
 };
 
 Identifier.prototype.symbol = function (){
-	return this._symbol || (this._symbol = AST.sym(this.value()));
+	return this._symbol || (this._symbol = AST.sym(this._value));
 };
 
 Identifier.prototype.toString = function (){
@@ -9179,7 +9047,7 @@ ImportProxyAccess.prototype.toString = function (){
 };
 
 ImportProxyAccess.prototype.asObjectKey = function (){
-	return ("[" + this.toString() + "]");
+	return ("[" + this._value + "]");
 };
 
 ImportProxyAccess.prototype.c = function (o){
@@ -9246,8 +9114,6 @@ function IdentifierExpression(value){
 
 subclass$(IdentifierExpression,Node);
 
-IdentifierExpression.prototype.single = function(v){ return this._single; }
-IdentifierExpression.prototype.setSingle = function(v){ this._single = v; return this; };
 
 IdentifierExpression.wrap = function (node){
 	return node;
@@ -9566,30 +9432,28 @@ DescriptorPart.prototype.setParams = function(v){ this._params = v; return this;
 DescriptorPart.prototype.value = function(v){ return this._value; }
 DescriptorPart.prototype.setValue = function(v){ this._value = v; return this; };
 DescriptorPart.prototype.context = function(v){ return this._context; }
-DescriptorPart.prototype.setContext = function(v){ this._context = v; return this; };
-
 DescriptorPart.prototype.visit = function (stack){
-	if (this.params()) {
-		this.params().traverse();
+	if (this._params) {
+		this._params.traverse();
 	};
-	if (this.value()) {
-		this.value().traverse();
+	if (this._value) {
+		this._value.traverse();
 	};
 	return this;
 };
 
 DescriptorPart.prototype.js = function (){
-	if (this.context()) {
-		let op = OP('.',this.context(),this._name);
+	if (this._context) {
+		let op = OP('.',this._context,this._name);
 		let path = op;
 		
-		if (this.value()) {
-			return OP('=',path,this.value()).c();
+		if (this._value) {
+			return OP('=',path,this._value).c();
 		};
 		
 		let fn = OP('isa',path,LIT('Function'));
-		let pars = this.params() || (this.value() ? [this.value()] : []);
-		let val = this.params() && this.params().first() || this.value() || TRUE;
+		let pars = this._params || (this._value ? [this._value] : []);
+		let val = this._params && this._params.first() || this._value || TRUE;
 		let call = CALL(path,pars);
 		let setter = OP('=',path,val);
 		
@@ -9624,10 +9488,6 @@ Descriptor.prototype.value = function(v){ return this._value; }
 Descriptor.prototype.setValue = function(v){ this._value = v; return this; };
 Descriptor.prototype.params = function(v){ return this._params; }
 Descriptor.prototype.setParams = function(v){ this._params = v; return this; };
-
-Descriptor.prototype.isSpecial = function (){
-	return this._special;
-};
 
 Descriptor.prototype.visit = function (stack){
 	let pre = stack._descriptor;
@@ -9675,7 +9535,7 @@ Descriptor.prototype.visit = function (stack){
 };
 
 Descriptor.prototype.valueIsStatic = function (){
-	return !(this.value()) || this.value().isPrimitive() || ((this.value() instanceof Func) && !this.value().nonlocals());
+	return !(this._value) || this._value.isPrimitive() || ((this._value instanceof Func) && !this._value.nonlocals());
 };
 
 Descriptor.prototype.isStatic = function (){
@@ -9763,7 +9623,7 @@ Descriptor.prototype.fieldRegistryArgReference = function (arg){
 				};
 				return {name: name,target: target};
 			} else if (variable.isImported()) {
-				let spec = variable.declarator();
+				let spec = variable._declarator;
 				let target = null;
 				if (spec && spec._cname != 'default' && variable.importPath()) {
 					target = {
@@ -9795,13 +9655,13 @@ Descriptor.prototype.js = function (){
 	let ref = this.scope__().root().declare('desc',null,{system: true});
 	let tsc = STACK.tsc();
 	
-	let val = this._variable ? new Instantiation(CALL(this._value,this.params() || [])) : ((this._name ? CALL(this._value,this.params() || []) : this._value));
+	let val = this._variable ? new Instantiation(CALL(this._value,this._params || [])) : ((this._name ? CALL(this._value,this._params || []) : this._value));
 	
 	let parts = AST.blk([]);
 	
 	for (let i = 0, items = iter$(this._chain), len = items.length, item; i < len; i++) {
 		item = items[i];
-		item.setContext(ref);
+		item._context = ref;
 		parts.push(item);
 	};
 	
@@ -9852,7 +9712,7 @@ Const.prototype.traverse = function (){
 	
 	this._traversed = true;
 	var curr = STACK.current();
-	if (!(curr instanceof Access) || curr.left() == this) {
+	if (!(curr instanceof Access) || curr._left == this) {
 		if (this.symbol() == "Imba") {
 			this._variable = this.scope__().imba();
 		} else {
@@ -9880,9 +9740,6 @@ subclass$(TagTypeIdentifier,Identifier);
 
 TagTypeIdentifier.prototype.name = function(v){ return this._name; }
 TagTypeIdentifier.prototype.setName = function(v){ this._name = v; return this; };
-TagTypeIdentifier.prototype.ns = function(v){ return this._ns; }
-TagTypeIdentifier.prototype.setNs = function(v){ this._ns = v; return this; };
-
 TagTypeIdentifier.prototype.startLoc = function (){
 	return this._token && this._token.startLoc  &&  this._token.startLoc();
 };
@@ -9940,11 +9797,11 @@ TagTypeIdentifier.prototype.func = function (){
 };
 
 TagTypeIdentifier.prototype.nativeCreateNode = function (){
-	let doc = this.scope__().root().document().c();
+	let doc = this.scope__().root()._document.c();
 	if (this.isSVG()) {
-		return CALL(LIT(("" + doc + ".createElementNS")),[STR("http://www.w3.org/2000/svg"),STR(this.name())]);
+		return CALL(LIT(("" + doc + ".createElementNS")),[STR("http://www.w3.org/2000/svg"),STR(this._name)]);
 	} else {
-		return CALL(LIT(("" + doc + ".createElement")),[STR(this.name())]);
+		return CALL(LIT(("" + doc + ".createElement")),[STR(this._name)]);
 	};
 };
 
@@ -10062,7 +9919,7 @@ TagTypeIdentifier.prototype.toTypeArgument = function (){
 	if (this._variable) {
 		return this._variable.c();
 	} else {
-		return this.name();
+		return this._name;
 	};
 };
 
@@ -10072,7 +9929,7 @@ TagTypeIdentifier.prototype.id = function (){
 };
 
 TagTypeIdentifier.prototype.flag = function (){
-	return "_" + this.name().replace(/--/g,'_').toLowerCase();
+	return "_" + this._name.replace(/--/g,'_').toLowerCase();
 };
 
 TagTypeIdentifier.prototype.sel = function (){
@@ -10144,10 +10001,10 @@ AmperRef.prototype.visit = function (stack){
 	let base = stack.relative(blk,1);
 	let inner = stack.relative(base,1);
 	
-	if ((base instanceof Assign) && stack._nodes.indexOf(base.left()) == -1) {
-		if (!((base.right() instanceof AmperFunc))) {
-			let rgt = base.right();
-			let wrapper = (base.setRight(v_ = new AmperFunc([],rgt)),v_);
+	if ((base instanceof Assign) && stack._nodes.indexOf(base._left) == -1) {
+		if (!((base._right instanceof AmperFunc))) {
+			let rgt = base._right;
+			let wrapper = ((base._right = v_ = new AmperFunc([],rgt),base),v_);
 		};
 		return this;
 	};
@@ -10172,9 +10029,6 @@ subclass$(TaggedTemplate,Node);
 
 TaggedTemplate.prototype.value = function(v){ return this._value; }
 TaggedTemplate.prototype.setValue = function(v){ this._value = v; return this; };
-TaggedTemplate.prototype.string = function(v){ return this._string; }
-TaggedTemplate.prototype.setString = function(v){ this._string = v; return this; };
-
 TaggedTemplate.prototype.visit = function (){
 	if (this._value instanceof Node) { this._value.traverse() };
 	this._string.traverse();
@@ -10207,7 +10061,7 @@ function Call(callee,args,opexists){
 	};
 	
 	if (callee instanceof Super) {
-		callee.setArgs((this instanceof BangCall) ? [] : args);
+		(callee._args = (this instanceof BangCall) ? [] : args,callee);
 		return callee;
 	};
 	
@@ -10247,37 +10101,29 @@ function Call(callee,args,opexists){
 
 subclass$(Call,Node);
 
-Call.prototype.callee = function(v){ return this._callee; }
-Call.prototype.setCallee = function(v){ this._callee = v; return this; };
-Call.prototype.receiver = function(v){ return this._receiver; }
-Call.prototype.setReceiver = function(v){ this._receiver = v; return this; };
-Call.prototype.args = function(v){ return this._args; }
-Call.prototype.setArgs = function(v){ this._args = v; return this; };
 Call.prototype.block = function(v){ return this._block; }
-Call.prototype.setBlock = function(v){ this._block = v; return this; };
-
 Call.prototype.visit = function (){
-	this.args().traverse();
-	this.callee().traverse();
+	this._args.traverse();
+	this._callee.traverse();
 	// if the callee is a PropertyAccess - better to immediately change it
 	
-	let runref = this.callee().isRuntimeReference();
+	let runref = this._callee.isRuntimeReference();
 	
-	if ((this.callee() instanceof Access) && this.callee().left().isGlobal('import')) {
-		let arg = this.args().first();
-		let kind = this.callee().right().toString();
+	if ((this._callee instanceof Access) && this._callee._left.isGlobal('import')) {
+		let arg = this._args.first();
+		let kind = this._callee._right.toString();
 		
 		if (arg instanceof Str) {
 			// TODO remove need for ImbaAsset type
 			// callee = runtime:asset
-			this.setCallee(LIT(''));
+			(this._callee = LIT(''),this);
 			let asset = STACK.root().registerAsset(arg.raw(),("" + kind),this,arg);
-			this.args().replace(arg,asset.ref);
+			this._args.replace(arg,asset.ref);
 		};
-	} else if (this.callee().isGlobal('import')) {
+	} else if (this._callee.isGlobal('import')) {
 		
 		// TODO support interpolated strings that can be globbed
-		let arg = this.args().first();
+		let arg = this._args.first();
 		let path = (arg instanceof Str) && arg.raw();
 		// console.log 'calling the global import!!',path
 		if (path) {
@@ -10286,21 +10132,21 @@ Call.prototype.visit = function (){
 			if (EXT_LOADER_MAP[ext] || path.indexOf('?') >= 0) {
 				
 				this._asset = STACK.root().registerAsset(path,'',this,arg);
-				this.args().replace(arg,this._asset.ref);
+				this._args.replace(arg,this._asset.ref);
 			};
 		};
-	} else if (this.callee().isGlobal('require')) {
-		let arg = this.args().first();
+	} else if (this._callee.isGlobal('require')) {
+		let arg = this._args.first();
 		let path = (arg instanceof Str) && arg.raw();
 	};
 	
 	if (runref == 'asset') {
 		
-		let arg = this.args().first();
+		let arg = this._args.first();
 		
 		if (arg instanceof Str) {
 			let asset = STACK.root().registerAsset(arg.raw(),'asset',this);
-			this.args().replace(arg,asset.ref);
+			this._args.replace(arg,asset.ref);
 		};
 		// console.log 'visit Call asset',runref
 	};
@@ -10319,18 +10165,18 @@ Call.prototype.addBlock = function (block){
 	if (pos) {
 		pos._block = block;
 	};
-	pos ? this.args().replace(pos,block) : this.args().push(block);
+	pos ? this._args.replace(pos,block) : this._args.push(block);
 	return this;
 };
 
 Call.prototype.receiver = function (){
-	return this._receiver || (this._receiver = ((this.callee() instanceof Access) && this.callee().left() || NULL));
+	return this._receiver || (this._receiver = ((this._callee instanceof Access) && this._callee._left || NULL));
 };
 
 // check if all arguments are expressions - otherwise we have an issue
 
 Call.prototype.safechain = function (){
-	return this.callee().safechain(); // really?
+	return this._callee.safechain(); // really?
 };
 
 Call.prototype.shouldParenthesizeInTernary = function (){
@@ -10354,7 +10200,7 @@ Call.prototype.js = function (o){
 	var opt = {expression: true};
 	var rec = null;
 	// var args = AST.compact(args) # really?
-	var args = this.args();
+	var args = this._args;
 	
 	// drop this?
 	
@@ -10371,8 +10217,8 @@ Call.prototype.js = function (o){
 	
 	if (callee instanceof Access) {
 		callee._call = this;
-		lft = callee.left();
-		rgt = callee.right();
+		lft = callee._left;
+		rgt = callee._right;
 	};
 	
 	if (callee instanceof Super) {
@@ -10390,7 +10236,7 @@ Call.prototype.js = function (o){
 	// never call the property-access directly?
 	if (callee instanceof PropertyAccess) { // && rec = callee.receiver
 		this._receiver = callee.receiver();
-		callee = this._callee = new Access(callee.op(),callee.left(),callee.right());
+		callee = this._callee = new Access(callee.op(),callee._left,callee._right);
 	};
 	
 	if (variable === ROOT.ASSERT && !splat && args.first()) {
@@ -10523,7 +10369,7 @@ Call.prototype.js = function (o){
 	if (this._receiver) {
 		// quick workaround
 		if (!((this._receiver instanceof ScopeContext))) { this._receiver.cache() };
-		args.unshift(this.receiver());
+		args.unshift(this._receiver);
 		// should rather rewrite to a new call?
 		out = ("" + callee.c({expression: true}) + ".call(" + args.c({expression: true,mark: false}) + ")");
 	} else {
@@ -10576,13 +10422,13 @@ New.prototype.visit = function (){
 };
 
 New.prototype.js = function (o){
-	var target = this.callee();
+	var target = this._callee;
 	
 	while (target instanceof Access){
-		let left = target.left();
+		let left = target._left;
 		
 		if ((left instanceof PropertyAccess) || (left instanceof VarOrAccess)) {
-			this.callee()._parens = true;
+			this._callee._parens = true;
 			break;
 		};
 		
@@ -10590,7 +10436,7 @@ New.prototype.js = function (o){
 	};
 	
 	// var out = "{M(keyword or 'new',keyword)} {callee.c}"
-	var out = ("" + M('new',this.keyword()) + " " + M(this.callee().c(),this.callee()));
+	var out = ("" + M('new',this.keyword()) + " " + M(this._callee.c(),this._callee));
 	if (!((o.parent() instanceof Call) || (o.parent() instanceof BangCall))) { out += '()' };
 	return out;
 };
@@ -10600,7 +10446,7 @@ function ExternDeclaration(){ return ListNode.apply(this,arguments) };
 subclass$(ExternDeclaration,ListNode);
 
 ExternDeclaration.prototype.visit = function (){
-	this.setNodes(this.map(function(item) { return item.node(); })); // drop var or access really
+	this._nodes = this.map(function(item) { return item.node(); }); // drop var or access really
 	// only in global scope?
 	var root = this.scope__();
 	for (let i = 0, items = iter$(this.nodes()), len = items.length, item; i < len; i++) {
@@ -10648,16 +10494,8 @@ function If(cond,body,o){
 subclass$(If,ControlFlow);
 
 If.prototype.test = function(v){ return this._test; }
-If.prototype.setTest = function(v){ this._test = v; return this; };
 If.prototype.body = function(v){ return this._body; }
-If.prototype.setBody = function(v){ this._body = v; return this; };
-If.prototype.alt = function(v){ return this._alt; }
-If.prototype.setAlt = function(v){ this._alt = v; return this; };
 If.prototype.scope = function(v){ return this._scope; }
-If.prototype.setScope = function(v){ this._scope = v; return this; };
-If.prototype.prevIf = function(v){ return this._prevIf; }
-If.prototype.setPrevIf = function(v){ this._prevIf = v; return this; };
-
 If.ternary = function (cond,body,alt){
 	// prefer to compile it this way as well
 	var obj = new If(cond,new Block([body]),{type: '?'});
@@ -10666,19 +10504,19 @@ If.ternary = function (cond,body,alt){
 };
 
 If.prototype.addElse = function (add){
-	if (this.alt() && (this.alt() instanceof If)) {
-		this.alt().addElse(add);
+	if (this._alt && (this._alt instanceof If)) {
+		this._alt.addElse(add);
 	} else {
-		this.setAlt(add);
+		(this._alt = add,this);
 		if (add instanceof If) {
-			add.setPrevIf(this);
+			(add._prevIf = this,add);
 		};
 	};
 	return this;
 };
 
 If.prototype.loc = function (){
-	return this._loc || (this._loc = [this._type ? this._type._loc : 0,this.body().loc()[1]]);
+	return this._loc || (this._loc = [this._type ? this._type._loc : 0,this._body.loc()[1]]);
 };
 
 If.prototype.invert = function (){
@@ -10690,14 +10528,14 @@ If.prototype.invert = function (){
 };
 
 If.prototype.visit = function (stack){
-	var alt = this.alt();
+	var alt = this._alt;
 	var scop = this._scope;
 	if (scop) { scop.visit() };
 	
-	if (this.test()) {
+	if (this._test) {
 		// make sure variables are registered in outer scope
 		this._scope = null;
-		this.test().traverse();
+		this._test.traverse();
 		this._scope = scop;
 	};
 	
@@ -10705,7 +10543,7 @@ If.prototype.visit = function (stack){
 	
 	// console.log "vars in if",Object.keys(@scope.varmap)
 	// TODO deal with variable scope
-	for (let o = this._scope.varmap(), variable, i = 0, keys = Object.keys(o), l = keys.length, name; i < l; i++){
+	for (let o = this._scope._varmap, variable, i = 0, keys = Object.keys(o), l = keys.length, name; i < l; i++){
 		name = keys[i];variable = o[name];if (variable.type() == 'let') {
 			// console.log "variable virtualize"
 			variable._virtual = true;
@@ -10717,22 +10555,22 @@ If.prototype.visit = function (stack){
 	// local to the inner scope, but will technically be
 	// declared in the outer scope. Must get unique name
 	
-	if (!stack.isAnalyzing() && !stack.tsc()) {
-		this._pretest = AST.truthy(this.test());
+	if (!stack._analyzing && !stack.tsc()) {
+		this._pretest = AST.truthy(this._test);
 		
 		if (this._pretest === true) {
 			// only collapse if condition includes compiletime flags?
 			alt = this._alt = null;
-			if (this.test() instanceof EnvFlag) {
+			if (this._test instanceof EnvFlag) {
 				this._preunwrap = true;
 			};
 		} else if (this._pretest === false) {
 			this.loc(); // cache location before removing body
-			this.setBody(null);
+			(this._body = null,this);
 		};
 	};
 	
-	if (this.body()) { this.body().traverse() };
+	if (this._body) { this._body.traverse() };
 	
 	// should skip the scope in alt.
 	if (alt) {
@@ -10749,15 +10587,15 @@ If.prototype.visit = function (stack){
 
 If.prototype.js = function (o){
 	var v_, test_;
-	var body = this.body();
+	var body = this._body;
 	// would possibly want to look up / out
 	var brace = {braces: true,indent: true};
 	
 	if (this._pretest === true && this._preunwrap) {
 		// what if it is inside expression?
-		let js = body ? body.c({braces: !(!(this.prevIf()))}) : 'true';
+		let js = body ? body.c({braces: !(!(this._prevIf))}) : 'true';
 		
-		if (!(this.prevIf())) {
+		if (!(this._prevIf)) {
 			js = helpers.normalizeIndentation(js);
 		};
 		
@@ -10767,10 +10605,10 @@ If.prototype.js = function (o){
 		
 		return js;
 	} else if (this._pretest === false && false) {
-		if (this.alt() instanceof If) { (this.alt().setPrevIf(v_ = this.prevIf()),v_) };
-		let js = this.alt() ? this.alt().c({braces: !(!(this.prevIf()))}) : '';
+		if (this._alt instanceof If) { ((this._alt._prevIf = v_ = this._prevIf,this._alt),v_) };
+		let js = this._alt ? this._alt.c({braces: !(!(this._prevIf))}) : '';
 		
-		if (!(this.prevIf())) {
+		if (!(this._prevIf)) {
 			js = helpers.normalizeIndentation(js);
 		};
 		
@@ -10779,11 +10617,11 @@ If.prototype.js = function (o){
 	
 	if (o.isExpression()) {
 		
-		if ((test_ = this.test()) && test_.shouldParenthesizeInTernary  &&  test_.shouldParenthesizeInTernary()) {
-			this.test()._parens = true;
+		if ((test_ = this._test) && test_.shouldParenthesizeInTernary  &&  test_.shouldParenthesizeInTernary()) {
+			this._test._parens = true;
 		};
 		
-		var cond = this.test().c({expression: true}); // the condition is always an expression
+		var cond = this._test.c({expression: true}); // the condition is always an expression
 		
 		var code = body ? body.c() : 'true'; // (braces: yes)
 		
@@ -10791,9 +10629,9 @@ If.prototype.js = function (o){
 			code = '(' + code + ')'; // if code.indexOf(',') >= 0
 		};
 		
-		if (this.alt()) {
-			var altbody = this.alt().c();
-			if (this.alt().shouldParenthesizeInTernary()) {
+		if (this._alt) {
+			var altbody = this._alt.c();
+			if (this._alt.shouldParenthesizeInTernary()) {
 				altbody = '(' + altbody + ')';
 			};
 			
@@ -10812,7 +10650,7 @@ If.prototype.js = function (o){
 	} else {
 		// if there is only a single item - and it is an expression?
 		code = null;
-		cond = this.test().c({expression: true}); // the condition is always an expression
+		cond = this._test.c({expression: true}); // the condition is always an expression
 		
 		// if body.count == 1 # dont indent by ourselves?
 		
@@ -10828,7 +10666,7 @@ If.prototype.js = function (o){
 		
 		// don't wrap if it is only a single expression?
 		var out = ("" + M('if',this._type) + " (" + cond + ") ") + code; // ' {' + code + '}' # '{' + code + '}'
-		if (this.alt()) { out += (" else " + this.alt().c((this.alt() instanceof If) ? {} : brace)) };
+		if (this._alt) { out += (" else " + this._alt.c((this._alt instanceof If) ? {} : brace)) };
 		return out;
 	};
 };
@@ -10905,7 +10743,7 @@ If.prototype.consume = function (node){
 
 If.prototype.isExpressable = function (){
 	// process:stdout.write 'x'
-	var exp = (!(this.body()) || this.body().isExpressable()) && (!(this.alt()) || this.alt().isExpressable());
+	var exp = (!(this._body) || this._body.isExpressable()) && (!(this._alt) || this._alt.isExpressable());
 	return exp;
 };
 
@@ -10920,16 +10758,7 @@ function Loop(options){
 subclass$(Loop,Statement);
 
 Loop.prototype.scope = function(v){ return this._scope; }
-Loop.prototype.setScope = function(v){ this._scope = v; return this; };
-Loop.prototype.options = function(v){ return this._options; }
-Loop.prototype.setOptions = function(v){ this._options = v; return this; };
 Loop.prototype.body = function(v){ return this._body; }
-Loop.prototype.setBody = function(v){ this._body = v; return this; };
-Loop.prototype.catcher = function(v){ return this._catcher; }
-Loop.prototype.setCatcher = function(v){ this._catcher = v; return this; };
-Loop.prototype.elseBody = function(v){ return this._elseBody; }
-Loop.prototype.setElseBody = function(v){ this._elseBody = v; return this; };
-
 Loop.prototype.loc = function (){
 	var a = this._options.keyword;
 	var b = this._body;
@@ -10953,12 +10782,12 @@ Loop.prototype.set = function (obj){
 };
 
 Loop.prototype.addBody = function (body){
-	this.setBody(AST.blk(body));
+	(this._body = AST.blk(body),this);
 	return this;
 };
 
 Loop.prototype.addElse = function (block){
-	this.setElseBody(block);
+	(this._elseBody = block,this);
 	return this;
 };
 
@@ -10978,7 +10807,7 @@ Loop.prototype.c = function (o){
 	if (this.stack().isExpression() || this.isExpression()) {
 		// what the inner one should not be an expression though?
 		// this will resut in an infinite loop, no?!?
-		this.scope().closeScope();
+		this._scope.closeScope();
 		
 		var ast = CALL(FN([],[this]),[]);
 		return ast.c(o);
@@ -10988,7 +10817,7 @@ Loop.prototype.c = function (o){
 		return Loop.prototype.__super__.c.call(this,0);
 	} else {
 		
-		this.scope().closeScope();
+		this._scope.closeScope();
 		ast = CALL(FN([],[this]),[]);
 		// scope.context.reference
 		return ast.c(o);
@@ -11012,11 +10841,9 @@ function While(test,opts){
 subclass$(While,Loop);
 
 While.prototype.test = function(v){ return this._test; }
-While.prototype.setTest = function(v){ this._test = v; return this; };
-
 While.prototype.visit = function (){
 	this.scope().visit();
-	if (this.test()) { this.test().traverse() };
+	if (this._test) { this._test.traverse() };
 	if (this.body()) { return this.body().traverse() };
 };
 
@@ -11059,11 +10886,11 @@ While.prototype.consume = function (node){
 };
 
 While.prototype.js = function (o){
-	var out = ("while (" + this.test().c({expression: true}) + ")") + this.body().c({braces: true,indent: true}); // .wrap
+	var out = ("while (" + this._test.c({expression: true}) + ")") + this.body().c({braces: true,indent: true}); // .wrap
 	
-	if (this.scope().vars().count() > 0) {
+	if (this.scope()._vars.count() > 0) {
 		
-		out = this.scope().vars().c() + ';' + out;
+		out = this.scope()._vars.c() + ';' + out;
 		// [scope.vars.c,out]
 	};
 	return out;
@@ -11095,17 +10922,17 @@ For.prototype.visit = function (stack){
 	
 	var parent = stack._tag;
 	
-	this.options().source.traverse(); // what about awakening the vars here?
+	this._options.source.traverse(); // what about awakening the vars here?
 	
 	// add guard to body
-	if (this.options().guard) {
-		var op = IF(this.options().guard.invert(),Block.wrap([new ContinueStatement("continue")]));
+	if (this._options.guard) {
+		var op = IF(this._options.guard.invert(),Block.wrap([new ContinueStatement("continue")]));
 		this.body().unshift(op,BR);
 	};
 	
 	this.declare();
 	
-	if (this.options().await) {
+	if (this._options.await) {
 		var fnscope = stack.up(Func); // do |item| item isa MethodDeclaration or item isa Fun
 		
 		if (fnscope) {
@@ -11136,7 +10963,7 @@ For.prototype.isBare = function (src){
 };
 
 For.prototype.declare = function (){
-	var o = this.options();
+	var o = this._options;
 	var scope = this.scope();
 	var src = o.source;
 	var vars = o.vars = {};
@@ -11150,8 +10977,8 @@ For.prototype.declare = function (){
 	// what about a range where we also include an index?
 	if (src instanceof Range) {
 		
-		let from = src.left();
-		let to = src.right();
+		let from = src._left;
+		let to = src._right;
 		let dynamic = !((from instanceof Num)) || !((to instanceof Num));
 		
 		if (to instanceof Num) {
@@ -11233,7 +11060,7 @@ For.prototype.consume = function (node){
 	resvar.autodeclare(); // only if it is a system variable?
 	
 	if ((node instanceof VarDeclaration) || (node instanceof Assign)) {
-		node.setRight(resvar.accessor());
+		(node._right = resvar.accessor(),node);
 		// let block = [self,BR,node]
 		return new Block([
 			OP('=',resvar,resval),
@@ -11251,17 +11078,17 @@ For.prototype.consume = function (node){
 };
 
 For.prototype.js = function (o){
-	var vars = this.options().vars;
+	var vars = this._options.vars;
 	var idx = vars.index;
 	var val = vars.value;
-	var src = this.options().source;
+	var src = this._options.source;
 	
 	var cond;
 	var final;
 	
 	if (src instanceof Range) {
-		let a = src.left();
-		let b = src.right();
+		let a = src._left;
+		let b = src._right;
 		let inc = src.inclusive();
 		
 		cond = OP(inc ? '<=' : '<',val,vars.len);
@@ -11278,8 +11105,8 @@ For.prototype.js = function (o){
 	} else {
 		cond = OP('<',idx,vars.len);
 		
-		if (this.options().step) {
-			final = OP('=',idx,OP('+',idx,this.options().step));
+		if (this._options.step) {
+			final = OP('=',idx,OP('+',idx,this._options.step));
 		} else {
 			final = OP('++',idx);
 		};
@@ -11289,7 +11116,7 @@ For.prototype.js = function (o){
 	var after = "";
 	
 	var code = this.body().c({braces: true,indent: true});
-	var head = ("" + M('for',this.keyword()) + " (" + (this.scope().vars().c()) + "; " + cond.c({expression: true}) + "; " + final.c({expression: true}) + ") ");
+	var head = ("" + M('for',this.keyword()) + " (" + (this.scope()._vars.c()) + "; " + cond.c({expression: true}) + "; " + final.c({expression: true}) + ") ");
 	
 	return before + head + code + after;
 };
@@ -11304,12 +11131,10 @@ function ForOf(){ return For.apply(this,arguments) };
 
 subclass$(ForOf,For);
 
-ForOf.prototype.source = function(v){ return this._source; }
-ForOf.prototype.setSource = function(v){ this._source = v; return this; };
 
 ForOf.prototype.declare = function (){
 	var self = this;
-	var o = self.options();
+	var o = self._options;
 	var vars = o.vars = {};
 	var params = o.params;
 	var k;
@@ -11351,7 +11176,7 @@ ForOf.prototype.declare = function (){
 			};
 		};
 	} else {
-		self.setSource(vars.source = self.util().iterable(o.source)); // STACK.tsc ? o:source : 
+		(self._source = vars.source = self.util().iterable(o.source),self); // STACK.tsc ? o:source : 
 		vars.value = o.value = o.name; // need to visit these to declare them
 		let declvars = self.scope__().captureVariableDeclarations(function() {
 			var value_;
@@ -11382,9 +11207,9 @@ ForOf.prototype.declare = function (){
 };
 
 ForOf.prototype.js = function (o){
-	var vars = this.options().vars;
-	var osrc = this.options().source;
-	var params = this.options().params;
+	var vars = this._options.vars;
+	var osrc = this._options.source;
+	var params = this._options.params;
 	var src = vars.source;
 	var k = vars.key;
 	var v = vars.value;
@@ -11392,11 +11217,11 @@ ForOf.prototype.js = function (o){
 	
 	var code;
 	
-	if (this.options().own) {
+	if (this._options.own) {
 		if (STACK.tsc()) {
 			let k = params[0];
 			let v = params[1];
-			let source = ("Object.entries(" + (this.options().source.c()) + ")");
+			let source = ("Object.entries(" + (this._options.source.c()) + ")");
 			
 			if (v && v.datatype()) {
 				source = source + (" as unknown as [string," + M(v.datatype()) + "][]");
@@ -11415,7 +11240,7 @@ ForOf.prototype.js = function (o){
 		
 		this.body().unshift(OP('=',k,OP('.',vars.keys,i)));
 		code = this.body().c({indent: true,braces: true}); // .wrap
-		var head = ("" + M('for',this.keyword()) + " (" + (this.scope().vars().c()) + "; " + (OP('<',i,vars.len).c()) + "; " + (OP('++',i).c()) + ")");
+		var head = ("" + M('for',this.keyword()) + " (" + (this.scope()._vars.c()) + "; " + (OP('<',i,vars.len).c()) + "; " + (OP('++',i).c()) + ")");
 		return head + code;
 	} else {
 		
@@ -11444,8 +11269,8 @@ ForOf.prototype.js = function (o){
 		
 		let ofjs = src.c({expression: true});
 		let js = ("(let " + (v.c()) + " of " + ofjs + ")") + code;
-		if (this.options().await) {
-			js = ("" + M('await',this.options().await) + " " + js);
+		if (this._options.await) {
+			js = ("" + M('await',this._options.await) + " " + js);
 		};
 		js = ("" + M('for',this.keyword()) + " " + js);
 		
@@ -11457,7 +11282,7 @@ ForOf.prototype.js = function (o){
 };
 
 ForOf.prototype.head = function (){
-	var v = this.options().vars;
+	var v = this._options.vars;
 	// skipping head?
 	return [
 		OP('=',v.key,OP('.',v.keys,v.index)),
@@ -11485,19 +11310,13 @@ function Switch(a,b,c){
 
 subclass$(Switch,ControlFlowStatement);
 
-Switch.prototype.source = function(v){ return this._source; }
-Switch.prototype.setSource = function(v){ this._source = v; return this; };
-Switch.prototype.cases = function(v){ return this._cases; }
-Switch.prototype.setCases = function(v){ this._cases = v; return this; };
-Switch.prototype.fallback = function(v){ return this._fallback; }
-Switch.prototype.setFallback = function(v){ this._fallback = v; return this; };
 
 Switch.prototype.visit = function (){
-	for (let i = 0, items = iter$(this.cases()), len = items.length; i < len; i++) {
+	for (let i = 0, items = iter$(this._cases), len = items.length; i < len; i++) {
 		items[i].traverse();
 	};
-	if (this.fallback()) { this.fallback().traverse() };
-	if (this.source()) { this.source().traverse() };
+	if (this._fallback) { this._fallback.traverse() };
+	if (this._source) { this._source.traverse() };
 	return;
 };
 
@@ -11533,17 +11352,17 @@ Switch.prototype.c = function (o){
 Switch.prototype.js = function (o){
 	var body = [];
 	
-	for (let i = 0, items = iter$(this.cases()), len = items.length, part; i < len; i++) {
+	for (let i = 0, items = iter$(this._cases), len = items.length, part; i < len; i++) {
 		part = items[i];
 		part.autobreak();
 		body.push(part);
 	};
 	
-	if (this.fallback()) {
-		body.push("default:\n" + this.fallback().c({indent: true}));
+	if (this._fallback) {
+		body.push("default:\n" + this._fallback.c({indent: true}));
 	};
 	
-	return ("switch (" + (this.source().c()) + ") ") + helpers.bracketize(AST.cary(body).join("\n"),true);
+	return ("switch (" + (this._source.c()) + ") ") + helpers.bracketize(AST.cary(body).join("\n"),true);
 };
 
 function SwitchCase(test,body){
@@ -11556,29 +11375,26 @@ function SwitchCase(test,body){
 subclass$(SwitchCase,ControlFlowStatement);
 
 SwitchCase.prototype.test = function(v){ return this._test; }
-SwitchCase.prototype.setTest = function(v){ this._test = v; return this; };
 SwitchCase.prototype.body = function(v){ return this._body; }
-SwitchCase.prototype.setBody = function(v){ this._body = v; return this; };
-
 SwitchCase.prototype.visit = function (){
 	this.scope__().visit();
-	return this.body().traverse();
+	return this._body.traverse();
 };
 
 SwitchCase.prototype.consume = function (node){
-	this.body().consume(node);
+	this._body.consume(node);
 	return this;
 };
 
 SwitchCase.prototype.autobreak = function (){
-	if (!((this.body().last() instanceof BreakStatement))) { this.body().push(new BreakStatement()) };
+	if (!((this._body.last() instanceof BreakStatement))) { this._body.push(new BreakStatement()) };
 	return this;
 };
 
 SwitchCase.prototype.js = function (o){
 	if (!((this._test instanceof Array))) { this._test = [this._test] };
 	var cases = this._test.map(function(item) { return ("case " + (item.c()) + ": "); });
-	return cases.join("\n") + this.body().c({indent: true,braces: true});
+	return cases.join("\n") + this._body.c({indent: true,braces: true});
 };
 
 function Try(body,c,f){
@@ -11591,7 +11407,6 @@ function Try(body,c,f){
 subclass$(Try,ControlFlowStatement);
 
 Try.prototype.body = function(v){ return this._body; }
-Try.prototype.setBody = function(v){ this._body = v; return this; };
 // prop ncatch
 // prop nfinally
 
@@ -11619,7 +11434,7 @@ Try.prototype.c = function (o){
 };
 
 Try.prototype.js = function (o){
-	var out = "try " + this.body().c({braces: true,indent: true});
+	var out = "try " + this._body.c({braces: true,indent: true});
 	if (this._catch) { out += " " + this._catch.c() };
 	if (this._finally) { out += " " + this._finally.c() };
 	
@@ -11641,8 +11456,6 @@ function Catch(body,varname){
 subclass$(Catch,ControlFlowStatement);
 
 Catch.prototype.body = function(v){ return this._body; }
-Catch.prototype.setBody = function(v){ this._body = v; return this; };
-
 Catch.prototype.consume = function (node){
 	this._body = this._body.consume(node);
 	return this;
@@ -11754,10 +11567,6 @@ TagPart.prototype.load = function (value){
 	return value;
 };
 
-TagPart.prototype.isSpecial = function (){
-	return this._special;
-};
-
 TagPart.prototype.visit = function (){
 	this._chain.map(function(v) { return v.traverse(); });
 	if (this._value) { this._value.traverse() };
@@ -11770,7 +11579,7 @@ TagPart.prototype.quoted = function (){
 };
 
 TagPart.prototype.valueIsStatic = function (){
-	return !(this.value()) || this.value().isPrimitive() || ((this.value() instanceof Func) && !this.value().nonlocals());
+	return !(this._value) || this._value.isPrimitive() || ((this._value instanceof Func) && !this._value.nonlocals());
 };
 
 TagPart.prototype.isStatic = function (){
@@ -11818,8 +11627,6 @@ function TagFlag(){ return TagPart.apply(this,arguments) };
 
 subclass$(TagFlag,TagPart);
 
-TagFlag.prototype.condition = function(v){ return this._condition; }
-TagFlag.prototype.setCondition = function(v){ this._condition = v; return this; };
 
 TagFlag.prototype.rawClassName = function (){
 	return this.name().toRaw();
@@ -11841,17 +11648,17 @@ TagFlag.prototype.isStatic = function (){
 };
 
 TagFlag.prototype.isConditional = function (){
-	return !(!(this.condition()));
+	return !(!(this._condition));
 };
 
 TagFlag.prototype.js = function (){
 	if (STACK.tsc()) {
-		let val = this.value().c();
-		return this.condition() ? (("[" + val + "," + (this.condition().c()) + "]")) : (("[" + val + "]"));
+		let val = this._name.c();
+		return this._condition ? (("[" + val + "," + (this._condition.c()) + "]")) : (("[" + val + "]"));
 	};
 	// NOT used anymore
-	let val = this.value().c({as: 'string'});
-	return this.condition() ? (("" + this.tagRef() + ".flags.toggle(" + val + "," + (this.condition().c()) + ")")) : (("" + this.tagRef() + ".classList.add(" + val + ")"));
+	let val = this._name.c({as: 'string'});
+	return this._condition ? (("" + this.tagRef() + ".flags.toggle(" + val + "," + (this._condition.c()) + ")")) : (("" + this.tagRef() + ".classList.add(" + val + ")"));
 };
 
 function TagSep(){ return TagPart.apply(this,arguments) };
@@ -11956,24 +11763,16 @@ TagAttr.prototype.visit = function (){
 	return this;
 };
 
-TagAttr.prototype.ns = function (){
-	return this._ns;
-};
-
 TagAttr.prototype.key = function (){
 	return this._key;
 };
 
-TagAttr.prototype.mods = function (){
-	return this._mods;
-};
-
 TagAttr.prototype.nameIdentifier = function (){
-	return this._nameIdentifier || (this._nameIdentifier = new Identifier(this.key()));
+	return this._nameIdentifier || (this._nameIdentifier = new Identifier(this._key));
 };
 
 TagAttr.prototype.modsIdentifier = function (){
-	return this._modsIdentifier || (this._modsIdentifier = new Identifier(this.key() + '__'));
+	return this._modsIdentifier || (this._modsIdentifier = new Identifier(this._key + '__'));
 };
 
 TagAttr.prototype.js = function (o){
@@ -11981,7 +11780,7 @@ TagAttr.prototype.js = function (o){
 	let val = this.value().c(o);
 	let bval = val;
 	let op = M('=',this.option('op'));
-	let isAttr = (this.key().match(/^(aria-|data-)/) || this.key() == 'style') || (this._tag && this._tag.isSVG()) || this.ns() == 'html';
+	let isAttr = (this._key.match(/^(aria-|data-)/) || this._key == 'style') || (this._tag && this._tag.isSVG()) || this._ns == 'html';
 	let tagName = this._tag && this._tag._tagName;
 	let tref = this._tag.ref();
 	
@@ -11989,16 +11788,16 @@ TagAttr.prototype.js = function (o){
 		val = this._asset.ref.c();
 	};
 	
-	if (STACK.tsc() && (isAttr || TAG_GLOBAL_ATTRIBUTES[this.key()])) {
-		return ("" + tref + ".setAttribute('" + this.key() + "',String(" + val + "))");
+	if (STACK.tsc() && (isAttr || TAG_GLOBAL_ATTRIBUTES[this._key])) {
+		return ("" + tref + ".setAttribute('" + this._key + "',String(" + val + "))");
 	};
 	
 	if (isAttr) {
-		if ((STACK.isNode() || this.ns() == 'html') && !this._asset) {
+		if ((STACK.isNode() || this._ns == 'html') && !this._asset) {
 			// TODO don't compile to setAttribute directly for node
 			// mark compilation as being only for node?
 			STACK.meta().universal = false;
-			return ("" + tref + ".setAttribute('" + this.key() + "'," + val + ")");
+			return ("" + tref + ".setAttribute('" + this._key + "'," + val + ")");
 		};
 	};
 	
@@ -12015,7 +11814,7 @@ TagAttr.prototype.js = function (o){
 		return ("" + M(access,this._name) + op + (this._autovalue ? M('true',this._value) : val));
 	};
 	
-	let key = this.key();
+	let key = this._key;
 	
 	if (key == 'tabindex') {
 		key = 'tabIndex';
@@ -12027,9 +11826,9 @@ TagAttr.prototype.js = function (o){
 		key = 'richValue';
 	};
 	
-	if (this.ns() == 'css') {
+	if (this._ns == 'css') {
 		return ("" + tref + ".css$('" + key + "'," + val + ")");
-	} else if (this.ns() == 'bind') {
+	} else if (this._ns == 'bind') {
 		let path = PATHIFY(this.value());
 		
 		if (path instanceof Variable) {
@@ -12062,8 +11861,8 @@ TagAttr.prototype.js = function (o){
 		
 		return ("" + tref + ".css$var(" + AST.cary(pars,{as: 'js'}).join(',') + ")");
 	} else if (key.indexOf("aria-") == 0 || (this._tag && this._tag.isSVG()) || key == 'for' || TAG_GLOBAL_ATTRIBUTES[key]) {
-		if (this.ns()) {
-			return ("" + tref + ".setns$('" + this.ns() + "','" + key + "'," + val + ")");
+		if (this._ns) {
+			return ("" + tref + ".setns$('" + this._ns + "','" + key + "'," + val + ")");
 		} else {
 			return ("" + tref + ".set$('" + key + "'," + val + ")");
 		};
@@ -12071,8 +11870,8 @@ TagAttr.prototype.js = function (o){
 		// "set('{key}',{val})"
 		return ("" + tref + ".setAttribute('" + key + "'," + val + ")");
 		// "dataset.{key.slice(5)}{op}{val}"
-	} else if (this.ns()) {
-		return ("" + tref + ".setns$('" + this.ns() + "','" + key + "'," + val + ")");
+	} else if (this._ns) {
+		return ("" + tref + ".setns$('" + this._ns + "','" + key + "'," + val + ")");
 	} else {
 		return OP('.',LIT(tref),key).c() + ("" + op + val);
 	};
@@ -12200,7 +11999,7 @@ TagModifier.prototype.load = function (value){
 };
 
 TagModifier.prototype.isPrimitive = function (){
-	return !(this.params()) || this.params().every(function(param) { return param.isPrimitive(); });
+	return !(this._params) || this._params.every(function(param) { return param.isPrimitive(); });
 };
 
 TagModifier.prototype.visit = function (){
@@ -12226,7 +12025,7 @@ TagModifier.prototype.visit = function (){
 		};
 		
 		this._name = STR('$_');
-		this._params = new ListNode([this._value].concat(this._value.leaks() || []));
+		this._params = new ListNode([this._value].concat(this._value._leaks || []));
 	};
 	
 	// @value.traverse if @value
@@ -12265,9 +12064,9 @@ TagModifier.prototype.js = function (){
 		};
 		
 		path = helpers.toValidIdentifier('α' + path);
-		let parjs = this.params() ? this.params().c() : '';
+		let parjs = this._params ? this._params.c() : '';
 		
-		if (this.params() && parjs == '') {
+		if (this._params && parjs == '') {
 			if (path == 'αoptions') {
 				parjs = M('',MLOC(this._handlerName.endLoc() + 1));
 			} else {
@@ -12277,7 +12076,7 @@ TagModifier.prototype.js = function (){
 		
 		let call = ("" + M(path,this._name) + "(" + parjs + ")");
 		
-		if (!(this.params()) || this.params().count() == 0) {
+		if (!(this._params) || this._params.count() == 0) {
 			call = M(call,this._name);
 		};
 		
@@ -12290,9 +12089,9 @@ TagModifier.prototype.js = function (){
 		return ("e." + call);
 	};
 	
-	if (this.params() && this.params().count() > 0) {
-		return ("[" + this.quoted() + "," + (this.params().c()) + "]");
-	} else if (this.params()) {
+	if (this._params && this._params.count() > 0) {
+		return ("[" + this.quoted() + "," + (this._params.c()) + "]");
+	} else if (this._params) {
 		return ("[" + this.quoted() + "]");
 	} else {
 		return this.quoted();
@@ -12335,8 +12134,8 @@ TagData.prototype.proxyParts = function (){
 	};
 	
 	if (val instanceof Access) {
-		let left = val.left();
-		let right = (val.right() instanceof Index) ? val.right().value() : val.right();
+		let left = val._left;
+		let right = (val._right instanceof Index) ? val._right.value() : val._right;
 		
 		if (val instanceof IvarAccess) {
 			left || (left = val.scope__().context());
@@ -12363,8 +12162,8 @@ TagData.prototype.js = function (){
 	};
 	
 	if (val instanceof Access) {
-		let left = val.left();
-		let right = (val.right() instanceof Index) ? val.right().value() : val.right();
+		let left = val._left;
+		let right = (val._right instanceof Index) ? val._right.value() : val._right;
 		
 		if (val instanceof IvarAccess) {
 			left || (left = val.scope__().context());
@@ -12397,7 +12196,7 @@ subclass$(TagHandler,TagPart);
 TagHandler.prototype.__params = {watch: 'paramsDidSet',name: 'params'};
 TagHandler.prototype.params = function(v){ return this._params; }
 TagHandler.prototype.setParams = function(v){
-	var a = this.params();
+	var a = this._params;
 	if(v != a) { this._params = v; }
 	if(v != a) { this.paramsDidSet && this.paramsDidSet(v,a,this.__params) }
 	return this;
@@ -12780,10 +12579,6 @@ TagLike.prototype.tagvarprefix = function (){
 	return "";
 };
 
-TagLike.prototype.level = function (){
-	return this._level;
-};
-
 TagLike.prototype.parent = function (){
 	return this._parent || (this._parent = this.option('parent'));
 };
@@ -12940,11 +12735,11 @@ TagLike.prototype.consume = function (node){
 	};
 	
 	if (node instanceof Assign) {
-		return OP(node.op(),node.left(),this);
+		return OP(node.op(),node._left,this);
 	} else if (node instanceof VarDeclaration) {
-		return OP('=',node.left(),this);
+		return OP('=',node._left,this);
 	} else if (node instanceof Op) {
-		return OP(node.op(),node.left(),this);
+		return OP(node.op(),node._left,this);
 	} else if (node instanceof Return) {
 		// console.log "return is consuming tag"
 		this.option('return',true);
@@ -12991,12 +12786,12 @@ TagContent.prototype.js = function (){
 	let isStatic = this.isStatic();
 	
 	if (STACK.tsc()) {
-		return value.c(this.o());
+		return value.c(this._o);
 	};
 	
 	if ((this.parent() instanceof TagSwitchFragment) || (this._tvar && (this.parent() instanceof Tag) && (this.parent().isSlot() || this.isDetached()))) {
 		// what if it is a call?
-		parts.push(("" + (this._tvar) + "=" + value.c(this.o())));
+		parts.push(("" + (this._tvar) + "=" + value.c(this._o)));
 		
 		if ((value instanceof Call) || (value instanceof BangCall)) {
 			// mark parent to reset imba.ctx at the end
@@ -13005,13 +12800,13 @@ TagContent.prototype.js = function (){
 			parts.push(("" + (this.runtime().renderContext) + ".context=null"));
 		};
 	} else if (this.isOnlyChild() && ((value instanceof Str) || (value instanceof Num))) {
-		return ("" + this.bvar() + " || " + this.ref() + ".text$(" + value.c(this.o()) + ")");
+		return ("" + this.bvar() + " || " + this.ref() + ".text$(" + value.c(this._o) + ")");
 	} else if (isStatic) {
-		return ("" + this.bvar() + " || " + this.ref() + this.domCall('insert') + "(" + value.c(this.o()) + ")");
+		return ("" + this.bvar() + " || " + this.ref() + this.domCall('insert') + "(" + value.c(this._o) + ")");
 	} else if ((value instanceof TagTextContent) && this.isOnlyChild() && !(this.parent() instanceof TagSwitchFragment)) {
-		return ("(" + this.vvar() + "=" + value.c(this.o()) + "," + this.vvar() + "===" + this.key() + " || " + this.ref() + ".text$(String(" + this.key() + "=" + this.vvar() + ")))");
+		return ("(" + this.vvar() + "=" + value.c(this._o) + "," + this.vvar() + "===" + this.key() + " || " + this.ref() + ".text$(String(" + this.key() + "=" + this.vvar() + ")))");
 	} else {
-		parts.push(("" + this.vvar() + "=" + value.c(this.o())));
+		parts.push(("" + this.vvar() + "=" + value.c(this._o)));
 		
 		let inskey = ("" + (this.parent().cvar()) + "[" + this.osym('i') + "]");
 		// TODO rework to only introduce context with <( dynamic )> syntax (expecting tags)
@@ -13290,8 +13085,6 @@ function Tag(){ return TagLike.apply(this,arguments) };
 
 subclass$(Tag,TagLike);
 
-Tag.prototype.attrmap = function(v){ return this._attrmap; }
-Tag.prototype.setAttrmap = function(v){ this._attrmap = v; return this; };
 
 Tag.prototype.setup = function (){
 	Tag.prototype.__super__.setup.apply(this,arguments);
@@ -13303,10 +13096,6 @@ Tag.prototype.setup = function (){
 
 Tag.prototype.isAbstract = function (){
 	return this.isSlot() || this.isFragment();
-};
-
-Tag.prototype.attrs = function (){
-	return this._attributes;
 };
 
 Tag.prototype.cssns = function (){
@@ -13367,7 +13156,7 @@ Tag.prototype.visitBeforeBody = function (stack){
 		self._kind = 'element';
 	};
 	
-	if (self.attrs().length == 0 && !self._options.type) {
+	if (self._attributes.length == 0 && !self._options.type) {
 		self._options.type = 'fragment';
 	};
 	
@@ -13534,7 +13323,7 @@ Tag.prototype.visitAfterConsumedChildren = function (){
 };
 
 Tag.prototype.hasBlockScopedVariables = function (){
-	return Object.keys(this._scope.varmap()).length > 0;
+	return Object.keys(this._scope._varmap).length > 0;
 };
 
 Tag.prototype.getSlot = function (name){
@@ -13575,7 +13364,7 @@ Tag.prototype.addPart = function (part,type,tok){
 		};
 		
 		if (curr instanceof TagFlag) {
-			curr.setCondition(part);
+			(curr._condition = part,curr);
 			this.flag(F.TAG_HAS_DYNAMIC_FLAGS);
 			curr.set({op: tok});
 		} else if (curr instanceof TagHandler) {
@@ -13594,9 +13383,9 @@ Tag.prototype.addPart = function (part,type,tok){
 			curr.set({op: tok});
 		};
 	} else if (curr instanceof TagHandler) {
-		if ((part instanceof IdentifierExpression) && part.single() && !part.isPrimitive()) {
+		if ((part instanceof IdentifierExpression) && part._single && !part.isPrimitive()) {
 			// console.log 'is stack tsc?'
-			part = new (STACK.tsc() ? Func : IsolatedFunc)([],[part.single()],null,{});
+			part = new (STACK.tsc() ? Func : IsolatedFunc)([],[part._single],null,{});
 		};
 		
 		curr.add(part,type);
@@ -13840,7 +13629,7 @@ Tag.prototype.js = function (o){
 	// whether this tag should set a variable indicating
 	// whether this was built now or not
 	// basically whether we need a reference at all?
-	var markWhenBuilt = shouldEnd || this.hasDynamicFlags() || this.attrs().length || this.option('markWhenBuilt') || this.isDetached() || this.isDynamicType() || !(!this.option('key'));
+	var markWhenBuilt = shouldEnd || this.hasDynamicFlags() || this._attributes.length || this.option('markWhenBuilt') || this.isDetached() || this.isDynamicType() || !(!this.option('key'));
 	// when it has any attributes? - but not text or
 	
 	var inCondition = parent && parent.option('condition');
@@ -14249,7 +14038,7 @@ Tag.prototype.js = function (o){
 			let iref = ("" + this.cvar() + "[" + (item.osym()) + "]");
 			
 			if (item instanceof TagFlag) {
-				let cond = item.condition();
+				let cond = item._condition;
 				let val = item.name();
 				let cref;
 				let vref;
@@ -14306,7 +14095,7 @@ Tag.prototype.js = function (o){
 				if (visit) {
 					add(("" + this.dvar() + "&" + (F.DIFF_INLINE) + " && (" + this.dvar() + "^=" + (F.DIFF_INLINE) + "," + this.hvar() + "[" + this.gsym('#visit') + "]?.())"));
 				};
-			} else if ((item instanceof TagAttr) && item.ns() == 'bind') {
+			} else if ((item instanceof TagAttr) && item._ns == 'bind') {
 				
 				let rawVal = item.value();
 				let val = PATHIFY(rawVal);
@@ -14637,13 +14426,10 @@ function Await(){ return ValueNode.apply(this,arguments) };
 
 subclass$(Await,ValueNode);
 
-Await.prototype.func = function(v){ return this._func; }
-Await.prototype.setFunc = function(v){ this._func = v; return this; };
-
 Await.prototype.js = function (o){
 	return ("await " + (this.value().c())); // if option(:native)
 	// introduce a util here, no?
-	return CALL(OP('.',new Util.Promisify([this.value()]),'then'),[this.func()]).c();
+	return CALL(OP('.',new Util.Promisify([this.value()]),'then'),[this._func]).c();
 };
 
 Await.prototype.visit = function (o){
@@ -14672,25 +14458,25 @@ Await.prototype.visit = function (o){
 	var outer = o.relative(block,1);
 	var par = o.relative(this,-1);
 	
-	this.setFunc(new AsyncFunc([],[]));
+	(this._func = new AsyncFunc([],[]),this);
 	// now we move this node up to the block
-	this.func().body().setNodes(block.defers(outer,this));
-	this.func().scope().visit();
+	this._func.body()._nodes = block.defers(outer,this);
+	this._func.scope().visit();
 	
 	// if the outer is a var-assignment, we can simply set the params
 	if (par instanceof Assign) {
-		par.left().traverse();
-		var lft = par.left().node();
+		par._left.traverse();
+		var lft = par._left.node();
 		// Can be a tuple as well, no?
 		if (lft instanceof VarReference) {
 			// the param is already registered?
 			// should not force the name already??
 			// beware of bugs
-			this.func().params().at(0,true,lft.variable().name());
+			this._func.params().at(0,true,lft.variable().name());
 		} else {
-			par.setRight(this.func().params().at(0,true));
-			this.func().body().unshift(par);
-			this.func().scope().context();
+			(par._right = this._func.params().at(0,true),par);
+			this._func.body().unshift(par);
+			this._func.scope().context();
 		};
 	};
 	
@@ -14702,7 +14488,7 @@ Await.prototype.visit = function (o){
 	// we need to think differently.
 	
 	// now we need to visit the function as well
-	this.func().traverse();
+	this._func.traverse();
 	// pull the outer in
 	return this;
 };
@@ -14726,7 +14512,6 @@ function ESMSpecifier(name,alias){
 subclass$(ESMSpecifier,Node);
 
 ESMSpecifier.prototype.alias = function(v){ return this._alias; }
-ESMSpecifier.prototype.setAlias = function(v){ this._alias = v; return this; };
 ESMSpecifier.prototype.name = function(v){ return this._name; }
 ESMSpecifier.prototype.setName = function(v){ this._name = v; return this; };
 
@@ -14750,7 +14535,7 @@ ESMSpecifier.prototype.visit = function (stack){
 	
 	if (this._exporter) {
 		// lookup variable
-		if (!this._exporter.source()) {
+		if (!this._exporter._source) {
 			this._variable = this.scope__().root().lookup(this._cname);
 		};
 	} else {
@@ -14818,10 +14603,6 @@ function ESMDeclaration(keyword,specifiers,source){
 subclass$(ESMDeclaration,Statement);
 
 ESMDeclaration.prototype.variable = function(v){ return this._variable; }
-ESMDeclaration.prototype.setVariable = function(v){ this._variable = v; return this; };
-ESMDeclaration.prototype.source = function(v){ return this._source; }
-ESMDeclaration.prototype.setSource = function(v){ this._source = v; return this; };
-
 ESMDeclaration.prototype.addEnv = function (env){
 	this._envs || (this._envs = []);
 	this._envs.push(new EnvFlag(env));
@@ -14870,16 +14651,12 @@ AssetReference.prototype.setup = function (){
 	return this;
 };
 
-AssetReference.prototype.asset = function (){
-	return this._value;
-};
-
 AssetReference.prototype.c = function (){
 	let out = "";
 	let ref = this.value().ref.c();
 	let path = this.value().path;
-	if (this.asset().kind && path.indexOf('?') == -1) {
-		path += ("?" + (this.asset().kind));
+	if (this._value.kind && path.indexOf('?') == -1) {
+		path += ("?" + (this._value.kind));
 	};
 	if (STACK.tsc()) {
 		if (this.value().pathToken) {
@@ -15034,15 +14811,6 @@ function MixinReference(name,scope){
 MixinReference.prototype.name = function(v){ return this._name; }
 MixinReference.prototype.setName = function(v){ this._name = v; return this; };
 MixinReference.prototype.scope = function(v){ return this._scope; }
-MixinReference.prototype.setScope = function(v){ this._scope = v; return this; };
-
-MixinReference.prototype.options = function(v){ return this._options; }
-MixinReference.prototype.setOptions = function(v){ this._options = v; return this; };
-MixinReference.prototype.rule = function(v){ return this._rule; }
-MixinReference.prototype.setRule = function(v){ this._rule = v; return this; };
-
-
-
 function MixinExports(){ return Node.apply(this,arguments) };
 
 subclass$(MixinExports,Node);
@@ -15103,7 +14871,7 @@ Export.prototype.js = function (o){
 		return self.value().c();
 	};
 	
-	if ((self.value() instanceof Assign) && (self.value().left() instanceof VarReference)) {
+	if ((self.value() instanceof Assign) && (self.value()._left instanceof VarReference)) {
 		let ek = M('export',self.option('keyword'));
 		let dk = isDefault && M('default',self.option('default'));
 		return isDefault ? (("" + ek + " " + dk + " " + (self.value().c()))) : (("" + ek + " " + (self.value().c())));
@@ -15246,12 +15014,12 @@ StyleRuleSet.prototype.visit = function (stack,o){
 	if (keywordName[0] == '%') {
 		// need to be safely converted to a reference? Can do that later
 		this._mixin = this.scope__().mixin(keywordName.slice(1));
-		this._mixin.setRule(this);
-		this._mixin.options().id = this.cssid();
+		(this._mixin._rule = this,this._mixin);
+		this._mixin._options.id = this.cssid();
 	};
 	
 	if (this.option('export')) {
-		STACK.root().mixinExports().add(this._mixin.name(),this._mixin.options());
+		STACK.root().mixinExports().add(this._mixin.name(),this._mixin._options);
 	};
 	
 	let sel = String(this._selectors).trim();
@@ -15361,7 +15129,7 @@ StyleRuleSet.prototype.visit = function (stack,o){
 		};
 		
 		this._css = new StyleRule(null,this._sel,this._styles,opts).toString();
-		STACK.css().add(this._css,opts);
+		STACK._css.add(this._css,opts);
 	};
 	return this;
 };
@@ -15391,7 +15159,7 @@ StyleRuleSet.prototype.c = function (){
 			
 			// TODO optimize the css variable setters
 			if (true) {
-				add(("" + M(item.js(this.o()),item)));
+				add(("" + M(item.js(this._o),item)));
 			};
 		};
 		
@@ -15403,7 +15171,7 @@ StyleRuleSet.prototype.c = function (){
 	
 	if (STACK.tsc() && this._placeholders.length) {
 		let out = [];
-		for (let i = 0, items = iter$(this.placeholders()), len = items.length; i < len; i++) {
+		for (let i = 0, items = iter$(this._placeholders), len = items.length; i < len; i++) {
 			out.push(items[i].runtimeValue().c());
 		};
 		let expr = STACK.isExpression();
@@ -15434,7 +15202,7 @@ StyleBody.prototype.visit = function (){
 		item = ary[j];
 		if (!((item instanceof StyleDeclaration))) { continue; };
 		if (!item._property._name) {
-			item._property.setName(prevname);
+			item._property._name = prevname;
 		};
 		
 		prevname = item._property._name;
@@ -15485,7 +15253,7 @@ StyleDeclaration.prototype.clone = function (name,params){
 StyleDeclaration.prototype.visit = function (stack,o){
 	// see if property can be expanded
 	var self = this, v_;
-	let theme = stack.theme();
+	let theme = stack._theme;
 	let list = stack.parent();
 	let name = String(self._property.name());
 	let alias = theme.expandProperty(name);
@@ -15553,9 +15321,9 @@ StyleDeclaration.prototype.visit = function (stack,o){
 			key = JSON.stringify([o.selector,key]);
 		};
 		
-		if (self._property.isUnit()) {
-			if (self._property.number() != 1) {
-				val = LIT(("calc(" + (val.c()) + " / " + (self._property.number()) + ")"));
+		if (self._property._unit) {
+			if (self._property._number != 1) {
+				val = LIT(("calc(" + (val.c()) + " / " + (self._property._number) + ")"));
 			};
 		};
 		
@@ -15615,14 +15383,6 @@ function StyleProperty(token){
 
 subclass$(StyleProperty,StyleNode);
 
-StyleProperty.prototype.name = function(v){ return this._name; }
-StyleProperty.prototype.setName = function(v){ this._name = v; return this; };
-StyleProperty.prototype.number = function(v){ return this._number; }
-StyleProperty.prototype.setNumber = function(v){ this._number = v; return this; };
-StyleProperty.prototype.unit = function(v){ return this._unit; }
-StyleProperty.prototype.setUnit = function(v){ this._unit = v; return this; };
-StyleProperty.prototype.kind = function(v){ return this._kind; }
-StyleProperty.prototype.setKind = function(v){ this._kind = v; return this; };
 // modifiers
 // values
 StyleProperty.prototype.setName = function (value){
@@ -15642,16 +15402,12 @@ StyleProperty.prototype.name = function (){
 };
 
 StyleProperty.prototype.clone = function (newname){
-	return new StyleProperty([newname || this.name()].concat(this.modifiers()).join(""));
+	return new StyleProperty([newname || this._name].concat(this.modifiers()).join(""));
 };
 
 StyleProperty.prototype.addModifier = function (modifier){
 	this._parts.push(modifier);
 	return this;
-};
-
-StyleProperty.prototype.isUnit = function (){
-	return this._unit;
 };
 
 StyleProperty.prototype.isColor = function (){
@@ -15663,15 +15419,15 @@ StyleProperty.prototype.modifiers = function (){
 };
 
 StyleProperty.prototype.toJSON = function (){
-	return this.name() + this.modifiers().join("§");
+	return this._name + this.modifiers().join("§");
 };
 
 StyleProperty.prototype.toString = function (){
-	return this.name() + this.modifiers().join("§");
+	return this._name + this.modifiers().join("§");
 };
 
 StyleProperty.prototype.toKey = function (){
-	let name = this.isUnit() ? (("--u_" + (this._unit))) : ((this.isColor() ? (("--c_" + this._name.slice(1))) : this.name()));
+	let name = this._unit ? (("--u_" + (this._unit))) : ((this.isColor() ? (("--c_" + this._name.slice(1))) : this._name));
 	return [name].concat(this.modifiers()).join('§');
 };
 
@@ -15777,10 +15533,6 @@ StyleExpression.prototype.toArray = function (){
 	return this._nodes;
 };
 
-StyleExpression.prototype.toIterable = function (){
-	return this._nodes;
-};
-
 StyleExpression.prototype.addParam = function (param,op){
 	param._op = op;
 	this.last().addParam(param);
@@ -15872,7 +15624,7 @@ StyleTerm.prototype.visit = function (stack,o){
 	this._property = o.property;
 	this._propname = o.property && o.property._name;
 	this.alone = (stack.up() instanceof StyleExpression) && stack.up().values().length == 1;
-	let resolved = stack.theme().$value(this,0,this._propname);
+	let resolved = stack._theme.$value(this,0,this._propname);
 	if (!(stack.up(StyleParens) || stack.up(StyleFunction))) { this._resolvedValue = resolved };
 	return this;
 };
@@ -15880,10 +15632,6 @@ StyleTerm.prototype.visit = function (stack,o){
 Object.defineProperty(StyleTerm.prototype,'param',{get: function(){
 	return this._params && this._params[0];
 }, configurable: true});
-
-StyleTerm.prototype.kind = function (){
-	return this._kind;
-};
 
 StyleTerm.prototype.runtimeValue = function (){
 	return this.value();
@@ -16039,8 +15787,6 @@ function StyleIdentifier(){ return StyleTerm.apply(this,arguments) };
 
 subclass$(StyleIdentifier,StyleTerm);
 
-StyleIdentifier.prototype.color = function(v){ return this._color; }
-StyleIdentifier.prototype.setColor = function(v){ this._color = v; return this; };
 
 StyleIdentifier.prototype.visit = function (stack){
 	let raw = this.toString();
@@ -16051,9 +15797,9 @@ StyleIdentifier.prototype.visit = function (stack){
 		return this._resolvedValue = ("var(--u_" + (this._colormix._name) + raw.toUpperCase() + ")");
 	} else {
 		if (raw.match(/^([a-zA-Z]+\d+|black|white)$/)) {
-			this.setColor(("" + raw));
+			(this._color = "" + raw,this);
 			if (this.param) {
-				this.setColor(this.color() + "/" + this.param.toAlpha());
+				(this._color = this._color + "/" + this.param.toAlpha(),this);
 			};
 		};
 		return StyleIdentifier.prototype.__super__.visit.apply(this,arguments);
@@ -16065,8 +15811,8 @@ StyleIdentifier.prototype.c = function (o){
 		return ("var(--u_" + (this._colormix._name) + this.toString().toUpperCase() + ")");
 	};
 	
-	if (this.color()) {
-		let val = this.color().toString();
+	if (this._color) {
+		let val = this._color.toString();
 		let asvar = this.option('parameterize') || (this._property && this._property.isColor());
 		let pre = asvar ? '/*##*/' : '/*#*/';
 		return pre + val;
@@ -16119,10 +15865,6 @@ StyleColor.prototype.visit = function (){
 	};
 };
 
-StyleColor.prototype.lcha = function (){
-	return this._lcha;
-};
-
 StyleColor.prototype.c = function (o){
 	var ary;
 	let raw = this.toRaw();
@@ -16148,10 +15890,6 @@ subclass$(StyleColorMix,StyleTerm);
 
 StyleColorMix.prototype.params = function (){
 	return this.option('params');
-};
-
-StyleColorMix.prototype.lcha = function (){
-	return this._lcha;
 };
 
 StyleColorMix.prototype.visit = function (){
@@ -16180,7 +15918,7 @@ StyleColorMix.prototype.c = function (o){
 	var ary;
 	let raw = this.toRaw();
 	let name = raw.slice(1);
-	var ary = iter$(AST.cary(this.lcha()));let l = ary[0],c = ary[1],h = ary[2],a = ary[3];
+	var ary = iter$(AST.cary(this._lcha));let l = ary[0],c = ary[1],h = ary[2],a = ary[3];
 	return ("lch(" + l + " " + c + " " + h + " / " + a + ")");
 };
 
@@ -16203,10 +15941,6 @@ function StyleDimension(value){
 
 subclass$(StyleDimension,StyleTerm);
 
-StyleDimension.prototype.unit = function(v){ return this._unit; }
-StyleDimension.prototype.setUnit = function(v){ this._unit = v; return this; };
-StyleDimension.prototype.number = function(v){ return this._number; }
-StyleDimension.prototype.setNumber = function(v){ this._number = v; return this; };
 
 StyleDimension.prototype.clone = function (num,unit){
 	if(num === undefined) num = this._number;
@@ -16255,26 +15989,26 @@ StyleDimension.prototype.c = function (o){
 
 StyleDimension.prototype.valueOf = function (){
 	
-	if (this.unit() == 'u') {
-		return this.number() * 4 + 'px';
-	} else if (this.unit() == null) {
-		return this.number();
-	} else if (idx$(this.unit(),VALID_CSS_UNITS) >= 0) {
+	if (this._unit == 'u') {
+		return this._number * 4 + 'px';
+	} else if (this._unit == null) {
+		return this._number;
+	} else if (idx$(this._unit,VALID_CSS_UNITS) >= 0) {
 		return String(this._value);
 	} else {
-		let fallback = this._colormix ? '' : ((",1" + this.unit()));
-		if (this.number() == 1) {
-			return ("var(--u_" + this.unit() + fallback + ")");
+		let fallback = this._colormix ? '' : ((",1" + this._unit));
+		if (this._number == 1) {
+			return ("var(--u_" + this._unit + fallback + ")");
 		} else {
-			return ("calc(var(--u_" + this.unit() + fallback + ") * " + (this._number) + ")");
+			return ("calc(var(--u_" + this._unit + fallback + ") * " + (this._number) + ")");
 			// return String(@value)
 		};
 	};
 };
 
 StyleDimension.prototype.toAlpha = function (){
-	if (!(this.unit())) {
-		return this.number() + '%';
+	if (!(this._unit)) {
+		return this._number + '%';
 	} else {
 		return this.valueOf();
 	};
@@ -16295,8 +16029,6 @@ function Util(args){
 // this is how we deal with it now
 subclass$(Util,Node);
 
-Util.prototype.args = function(v){ return this._args; }
-Util.prototype.setArgs = function(v){ this._args = v; return this; };
 
 Util.extend = function (a,b){
 	return new Util.Extend([a,b]);
@@ -16441,7 +16173,7 @@ Util.Extend.prototype.helper = function (){
 };
 
 Util.Extend.prototype.js = function (o){
-	return this.called(AST.compact(this.args()),'extend$','extend$__');
+	return this.called(AST.compact(this._args),'extend$','extend$__');
 };
 
 Util.IndexOf = function IndexOf(){ return Util.apply(this,arguments) };
@@ -16452,7 +16184,7 @@ Util.IndexOf.prototype.helper = function (){
 };
 
 Util.IndexOf.prototype.js = function (o){
-	return this.called(this.args(),'idx$','idx$__');
+	return this.called(this._args,'idx$','idx$__');
 };
 
 
@@ -16460,15 +16192,15 @@ Util.Is = function Is(){ return Util.apply(this,arguments) };
 
 subclass$(Util.Is,Util);
 Util.Is.prototype.left = function (){
-	return this.args()[0];
+	return this._args[0];
 };
 
 Util.Is.prototype.right = function (){
-	return this.args()[1];
+	return this._args[1];
 };
 
 Util.Is.prototype.op = function (){
-	return this.args()[2];
+	return this._args[2];
 };
 
 Util.Is.prototype.stdfn = function (){
@@ -16480,11 +16212,11 @@ Util.Is.prototype.helper = function (){
 };
 
 Util.Is.prototype.clone = function (b){
-	return new this.constructor(this.args()[2] ? [this.args()[0],b,this.args()[2]] : [this.args()[0],b]);
+	return new this.constructor(this._args[2] ? [this._args[0],b,this._args[2]] : [this._args[0],b]);
 };
 
 Util.Is.prototype.js = function (o){
-	return this.called(this.args(),this.stdfn(),this.stdfn());
+	return this.called(this._args,this.stdfn(),this.stdfn());
 };
 
 Util.In = function In(){ return Util.Is.apply(this,arguments) };
@@ -16506,16 +16238,16 @@ Util.Isa.prototype.helper = function (){
 };
 
 Util.Isa.prototype.js = function (){
-	if (this.right() instanceof Str) {
+	if (this._right instanceof Str) {
 		// only need parens if left is caching...
-		return ("typeof (" + (this.left().c()) + ")===" + (this.right().c()));
+		return ("typeof (" + (this._left.c()) + ")===" + (this._right.c()));
 	};
 	
 	if (String(this.op()) == 'instanceof' || STACK.tsc()) {
-		return ("(" + (this.left().c()) + ") instanceof " + (this.right().c()));
+		return ("(" + (this._left.c()) + ") instanceof " + (this._right.c()));
 	};
 	
-	return this.called([this.left(),this.right()],'isa$','isa$');
+	return this.called([this._left,this._right],'isa$','isa$');
 };
 
 Util.Promisify = function Promisify(){ return Util.apply(this,arguments) };
@@ -16528,7 +16260,7 @@ Util.Promisify.prototype.helper = function (){
 
 Util.Promisify.prototype.js = function (o){
 	this.scope__().root().helper(this,this.helper());
-	return ("promise$__(" + this.args().map(function(v) { return v.c(); }).join(',') + ")");
+	return ("promise$__(" + this._args.map(function(v) { return v.c(); }).join(',') + ")");
 };
 
 Util.Iterable = function Iterable(){ return Util.apply(this,arguments) };
@@ -16541,8 +16273,8 @@ Util.Iterable.prototype.helper = function (){
 };
 
 Util.Iterable.prototype.js = function (o){
-	if (this.args()[0] instanceof Arr) { return this.args()[0].c() }; // or if we know for sure that it is an array
-	return this.called(this.args(),'iterable$','iter$__');
+	if (this._args[0] instanceof Arr) { return this._args[0].c() }; // or if we know for sure that it is an array
+	return this.called(this._args,'iterable$','iter$__');
 };
 
 Util.Array = function Array(){ return Util.apply(this,arguments) };
@@ -16550,7 +16282,7 @@ Util.Array = function Array(){ return Util.apply(this,arguments) };
 subclass$(Util.Array,Util);
 Util.Array.prototype.js = function (o){
 	// When this is triggered, we need to add it to the top of file?
-	return ("new Array(" + this.args().map(function(v) { return v.c(); }) + ")");
+	return ("new Array(" + this._args.map(function(v) { return v.c(); }) + ")");
 };
 
 function Entities(root){
@@ -16637,31 +16369,12 @@ function Scope(node,parent){
 };
 
 
-Scope.prototype.level = function(v){ return this._level; }
-Scope.prototype.setLevel = function(v){ this._level = v; return this; };
-Scope.prototype.context = function(v){ return this._context; }
-Scope.prototype.setContext = function(v){ this._context = v; return this; };
 Scope.prototype.node = function(v){ return this._node; }
-Scope.prototype.setNode = function(v){ this._node = v; return this; };
 Scope.prototype.parent = function(v){ return this._parent; }
-Scope.prototype.setParent = function(v){ this._parent = v; return this; };
-Scope.prototype.varmap = function(v){ return this._varmap; }
-Scope.prototype.setVarmap = function(v){ this._varmap = v; return this; };
-Scope.prototype.varpool = function(v){ return this._varpool; }
-Scope.prototype.setVarpool = function(v){ this._varpool = v; return this; };
 Scope.prototype.params = function(v){ return this._params; }
-Scope.prototype.setParams = function(v){ this._params = v; return this; };
 Scope.prototype.head = function(v){ return this._head; }
-Scope.prototype.setHead = function(v){ this._head = v; return this; };
-Scope.prototype.vars = function(v){ return this._vars; }
-Scope.prototype.setVars = function(v){ this._vars = v; return this; };
-Scope.prototype.counter = function(v){ return this._counter; }
-Scope.prototype.setCounter = function(v){ this._counter = v; return this; };
-Scope.prototype.entities = function(v){ return this._entities; }
-Scope.prototype.setEntities = function(v){ this._entities = v; return this; };
-
 Scope.prototype.p = function (){
-	if (STACK.loglevel() > 0) {
+	if (STACK._loglevel > 0) {
 		console.log.apply(console,arguments);
 	};
 	return this;
@@ -16710,7 +16423,7 @@ Scope.prototype.nextShortRef = function (){
 };
 
 Scope.prototype.staticsRef = function (){
-	return this._staticsRef || (this._staticsRef = this.declare('$statics$',CALL(STACK.corelib().statics$,[this.context()])));
+	return this._staticsRef || (this._staticsRef = this.declare('$statics$',CALL(STACK.corelib().statics$,[this._context])));
 };
 
 Scope.prototype.memovar = function (name,init){
@@ -16785,7 +16498,7 @@ Scope.prototype.context = function (){
 	// why do we need to make sure it is referenced?
 	if (!this._context) {
 		if (this.selfless()) {
-			this._context = this.parent().context().fromScope(this);
+			this._context = this._parent.context().fromScope(this);
 			// @context.reference(self)
 		} else {
 			this._context = new ScopeContext(this);
@@ -16795,7 +16508,7 @@ Scope.prototype.context = function (){
 };
 
 Scope.prototype.isInExtend = function (){
-	return this.closure().node().option('extension');
+	return this._closure.node().option('extension');
 };
 
 Scope.prototype.traverse = function (){
@@ -16805,10 +16518,10 @@ Scope.prototype.traverse = function (){
 Scope.prototype.visit = function (){
 	if (this._parent) { return this };
 	this._parent = STACK.scope(1); // the parent scope
-	this._level = STACK.scopes().length - 1;
+	this._level = STACK._scopes.length - 1;
 	
 	STACK.addScope(this);
-	this.root().scopes().push(this);
+	this.root()._scopes.push(this);
 	return this;
 };
 
@@ -16868,7 +16581,7 @@ Scope.prototype.register = function (name,decl,o){
 		return existing;
 	};
 	
-	let par = o.lookup && this.parent() && this.parent().lookup(name);
+	let par = o.lookup && this._parent && this._parent.lookup(name);
 	
 	// var type = o:system ? SystemVariable : Variable
 	var item = new (o.varclass || Variable)(this,name,decl,o);
@@ -16881,8 +16594,8 @@ Scope.prototype.register = function (name,decl,o){
 		this._varmap[name] = item;
 	};
 	
-	if (STACK.state() && (STACK.state().variables instanceof Array)) {
-		STACK.state().variables.push(item);
+	if (STACK._state && (STACK._state.variables instanceof Array)) {
+		STACK._state.variables.push(item);
 	};
 	
 	if (this._declListeners.length) {
@@ -16907,7 +16620,7 @@ Scope.prototype.declare = function (name,init,o){
 	// TODO create the variabledeclaration here instead?
 	// if this is a sysvar we need it to be renameable
 	var dec = this._vars.add(variable,init);
-	(declarator_ = variable.declarator()) || ((variable.setDeclarator(dec),dec));
+	(declarator_ = variable._declarator) || (((variable._declarator = dec,variable),dec));
 	return variable;
 };
 
@@ -16934,8 +16647,8 @@ Scope.prototype.temporary = function (decl,o,name){
 	if (o.pool) {
 		for (let i = 0, items = iter$(this._varpool), len = items.length, v; i < len; i++) {
 			v = items[i];
-			if (v.pool() == o.pool && v.declarator() == null) {
-				return v.reuse(decl);
+			if (v.pool() == o.pool && v._declarator == null) {
+				return (v._declarator = decl,v);
 			};
 		};
 	};
@@ -16956,7 +16669,7 @@ Scope.prototype.lookup = function (name){
 	if (this._varmap.hasOwnProperty(name)) {
 		ret = this._varmap[name];
 	} else {
-		ret = this.parent() && this.parent().lookup(name);
+		ret = this._parent && this._parent.lookup(name);
 		
 		if (ret) {
 			this._nonlocals || (this._nonlocals = {});
@@ -16978,7 +16691,7 @@ Scope.prototype.imba = function (){
 };
 
 Scope.prototype.autodeclare = function (variable){
-	return this.vars().add(variable); // only if it does not exist here!!!
+	return this._vars.add(variable); // only if it does not exist here!!!
 };
 
 Scope.prototype.free = function (variable){
@@ -17012,16 +16725,16 @@ Scope.prototype.c = function (o){
 	var body;
 	if(o === undefined) o = {};
 	o.expression = false;
-	this.node().body().setHead(this.head());
-	return body = this.node().body().c(o);
+	this._node.body()._head = this._head;
+	return body = this._node.body().c(o);
 };
 
 Scope.prototype.region = function (){
-	return this.node().body().region();
+	return this._node.body().region();
 };
 
 Scope.prototype.loc = function (){
-	return this.node().loc();
+	return this._node.loc();
 };
 
 Scope.prototype.dump = function (){
@@ -17031,13 +16744,13 @@ Scope.prototype.dump = function (){
 		// unless v.@declarator isa Scope
 		// 	console.log v.name, v.@declarator:constructor:name
 		// AST.dump(v)
-		return v.references().length ? AST.dump(v) : null;
+		return v._references.length ? AST.dump(v) : null;
 	});
 	
 	var desc = {
 		nr: self._nr,
 		type: self.constructor.name,
-		level: (self.level() || 0),
+		level: (self._level || 0),
 		vars: AST.compact(vars),
 		loc: self.loc()
 	};
@@ -17074,7 +16787,7 @@ function RootScope(){
 	
 	// register 'imba', self, type: 'global', varclass: GlobalReference
 	this.register('window',this,{type: 'global',varclass: WindowReference});
-	this.setDocument(this.register('document',this,{type: 'global',varclass: DocumentReference}));
+	(this._document = this.register('document',this,{type: 'global',varclass: DocumentReference}),this);
 	this.register('exports',this,{type: 'global'});
 	this.register('console',this,{type: 'global'});
 	this.register('process',this,{type: 'global'});
@@ -17110,7 +16823,7 @@ function RootScope(){
 	this._head = [this._vars];
 	this._symbolRefs = {};
 	this._importProxies = {};
-	this._vars.setSplit(true);
+	(this._vars._split = true,this._vars);
 	
 	this._imba = this.register('imba',this,{type: 'global',varclass: ImbaRuntime,path: 'imba'});
 	this._runtime = this._imba.proxy();
@@ -17119,20 +16832,6 @@ function RootScope(){
 
 subclass$(RootScope,Scope);
 
-RootScope.prototype.warnings = function(v){ return this._warnings; }
-RootScope.prototype.setWarnings = function(v){ this._warnings = v; return this; };
-RootScope.prototype.scopes = function(v){ return this._scopes; }
-RootScope.prototype.setScopes = function(v){ this._scopes = v; return this; };
-RootScope.prototype.entities = function(v){ return this._entities; }
-RootScope.prototype.setEntities = function(v){ this._entities = v; return this; };
-RootScope.prototype.object = function(v){ return this._object; }
-RootScope.prototype.setObject = function(v){ this._object = v; return this; };
-RootScope.prototype.options = function(v){ return this._options; }
-RootScope.prototype.setOptions = function(v){ this._options = v; return this; };
-RootScope.prototype.assets = function(v){ return this._assets; }
-RootScope.prototype.setAssets = function(v){ this._assets = v; return this; };
-RootScope.prototype.document = function(v){ return this._document; }
-RootScope.prototype.setDocument = function(v){ this._document = v; return this; };
 
 RootScope.prototype.importProxy = function (name,path,pre){
 	if(pre === undefined) pre = ("$" + name + "$");
@@ -17189,7 +16888,7 @@ RootScope.prototype.registerAsset = function (path,kind,context,pathToken){
 	};
 	
 	// console.log 'registering asset',!!STACK.lastImport
-	let insertAt = STACK.lastImport() || this.head();
+	let insertAt = STACK.lastImport() || this._head;
 	
 	let asset = this._assets[key] = {
 		path: path,
@@ -17264,7 +16963,7 @@ RootScope.prototype.requires = function (path,name){
 	var req = new Require(new Str("'" + path + "'"));
 	variable = new Variable(this,name,null,{system: true});
 	var dec = this._vars.add(variable,req);
-	(declarator_ = variable.declarator()) || ((variable.setDeclarator(dec),dec));
+	(declarator_ = variable._declarator) || (((variable._declarator = dec,variable),dec));
 	variable._requirePath = path;
 	this._requires[name] = variable;
 	return variable;
@@ -17292,9 +16991,9 @@ RootScope.prototype.c = function (o){
 	
 	let body = this.node().body().c(o);
 	
-	let sheet = STACK.css();
+	let sheet = STACK._css;
 	let pre = new Block([]);
-	pre.setHead(this.head());
+	pre._head = this._head;
 	
 	pre.add(LIT(sheet.js(this,STACK)));
 	
@@ -17536,7 +17235,7 @@ function WhileScope(){ return FlowScope.apply(this,arguments) };
 subclass$(WhileScope,FlowScope);
 
 WhileScope.prototype.autodeclare = function (variable){
-	return this.vars().add(variable);
+	return this._vars.add(variable);
 };
 
 function ForScope(){ return FlowScope.apply(this,arguments) };
@@ -17544,7 +17243,7 @@ function ForScope(){ return FlowScope.apply(this,arguments) };
 subclass$(ForScope,FlowScope);
 
 ForScope.prototype.autodeclare = function (variable){
-	return this.vars().add(variable);
+	return this._vars.add(variable);
 };
 
 function IfScope(){ return FlowScope.apply(this,arguments) };
@@ -17591,27 +17290,11 @@ function Variable(scope,name,decl,o){
 subclass$(Variable,Node);
 
 Variable.prototype.scope = function(v){ return this._scope; }
-Variable.prototype.setScope = function(v){ this._scope = v; return this; };
 Variable.prototype.name = function(v){ return this._name; }
 Variable.prototype.setName = function(v){ this._name = v; return this; };
 Variable.prototype.alias = function(v){ return this._alias; }
-Variable.prototype.setAlias = function(v){ this._alias = v; return this; };
 Variable.prototype.type = function(v){ return this._type; }
-Variable.prototype.setType = function(v){ this._type = v; return this; };
-Variable.prototype.options = function(v){ return this._options; }
-Variable.prototype.setOptions = function(v){ this._options = v; return this; };
-Variable.prototype.initialized = function(v){ return this._initialized; }
-Variable.prototype.setInitialized = function(v){ this._initialized = v; return this; };
-Variable.prototype.declared = function(v){ return this._declared; }
-Variable.prototype.setDeclared = function(v){ this._declared = v; return this; };
-Variable.prototype.declarator = function(v){ return this._declarator; }
-Variable.prototype.setDeclarator = function(v){ this._declarator = v; return this; };
-Variable.prototype.autodeclare = function(v){ return this._autodeclare; }
-Variable.prototype.setAutodeclare = function(v){ this._autodeclare = v; return this; };
 Variable.prototype.references = function(v){ return this._references; }
-Variable.prototype.setReferences = function(v){ this._references = v; return this; };
-Variable.prototype.export = function(v){ return this._export; }
-Variable.prototype.setExport = function(v){ this._export = v; return this; };
 Variable.prototype.value = function(v){ return this._value; }
 Variable.prototype.setValue = function(v){ this._value = v; return this; };
 Variable.prototype.datatype = function(v){ return this._datatype; }
@@ -17653,10 +17336,6 @@ Variable.prototype.closure = function (){
 	return this._scope.closure();
 };
 
-Variable.prototype.assignments = function (){
-	return this._assignments;
-};
-
 Variable.prototype.vartype = function (){
 	return this._vartype || (this._declarator && this._declarator.datatype && this._declarator.datatype());
 };
@@ -17693,7 +17372,7 @@ Variable.prototype.parents = function (){
 };
 
 Variable.prototype.resolve = function (scope,force){
-	if(scope === undefined) scope = this.scope();
+	if(scope === undefined) scope = this._scope;
 	if(force === undefined) force = false;
 	if (this._resolved && !force) { return this };
 	
@@ -17710,13 +17389,13 @@ Variable.prototype.resolve = function (scope,force){
 	};
 	
 	if (item == this) {
-		scope.varmap()[this._name] = this;
+		scope._varmap[this._name] = this;
 		return this;
 	} else if (item) {
 		// possibly redefine this inside, use it only in this scope
 		// if the item is defined in an outer scope - we reserve the
-		if (item.scope() != scope && (this.options().let || this._type == 'let')) {
-			scope.varmap()[this._name] = this;
+		if (item.scope() != scope && (this._options.let || this._type == 'let')) {
+			scope._varmap[this._name] = this;
 			// if we allow native let we dont need to rewrite scope?
 			if ((!this._virtual && !this._shadowing)) { return this };
 		};
@@ -17734,8 +17413,8 @@ Variable.prototype.resolve = function (scope,force){
 		};
 	};
 	
-	scope.varmap()[this._name] = this;
-	closure.varmap()[this._name] = this;
+	scope._varmap[this._name] = this;
+	closure._varmap[this._name] = this;
 	return this;
 };
 
@@ -17757,11 +17436,6 @@ Variable.prototype.traverse = function (){
 
 Variable.prototype.free = function (ref){
 	this._declarator = null;
-	return this;
-};
-
-Variable.prototype.reuse = function (ref){
-	this._declarator = ref;
 	return this;
 };
 
@@ -17805,7 +17479,7 @@ Variable.prototype.c = function (params){
 		};
 	} else {
 		if (!this._resolved) this.resolve();
-		var v = (this.alias() || this.name());
+		var v = (this._alias || this._name);
 		this._c = (typeof v == 'string') ? helpers.toValidIdentifier(v) : v.c({as: 'variable'});
 		// allow certain reserved words
 		// should warn on others though (!!!)
@@ -17858,7 +17532,7 @@ Variable.prototype.addReference = function (ref){
 Variable.prototype.autodeclare = function (){
 	if (this._declared) { return this };
 	this._autodeclare = true;
-	this.scope().autodeclare(this);
+	this._scope.autodeclare(this);
 	this._declared = true;
 	return this;
 };
@@ -17869,15 +17543,15 @@ Variable.prototype.predeclared = function (){
 };
 
 Variable.prototype.toString = function (){
-	return String(this.name());
+	return String(this._name);
 };
 
 Variable.prototype.dump = function (typ){
-	var name = this.name();
+	var name = this._name;
 	if (name[0].match(/[A-Z]/)) { return null };
 	
 	return {
-		type: this.type(),
+		type: this._type,
 		name: name,
 		refs: AST.dump(this._references,typ)
 	};
@@ -17897,7 +17571,7 @@ SystemVariable.prototype.pool = function (){
 
 // weird name for this
 SystemVariable.prototype.predeclared = function (){
-	this.scope().vars().remove(this);
+	this.scope()._vars.remove(this);
 	return this;
 };
 
@@ -18049,11 +17723,6 @@ function ImportProxy(){
 
 subclass$(ImportProxy,Variable);
 
-ImportProxy.prototype.proxy = function(v){ return this._proxy; }
-ImportProxy.prototype.setProxy = function(v){ this._proxy = v; return this; };
-ImportProxy.prototype.path = function(v){ return this._path; }
-ImportProxy.prototype.setPath = function(v){ this._path = v; return this; };
-
 ImportProxy.prototype.proxy = function (){
 	return this._proxy_;
 };
@@ -18071,7 +17740,7 @@ ImportProxy.prototype.head = function (){
 	let keys = Object.keys(self._exports);
 	let touches = Object.values(self._touched);
 	let js = [];
-	let path = self.path();
+	let path = self._path;
 	
 	if (path == 'imba') {
 		path = STACK.imbaPath() || 'imba';
@@ -18128,7 +17797,7 @@ ImbaRuntime.prototype.configure = function (options){
 	if (options.runtime == 'global' || STACK.tsc()) {
 		this._globalName = 'imba';
 	} else if (options.runtime) {
-		this.setPath(options.runtime);
+		(this._path = options.runtime,this);
 	};
 	return this;
 };
@@ -18163,12 +17832,8 @@ function ScopeContext(scope,value){
 subclass$(ScopeContext,Node);
 
 ScopeContext.prototype.scope = function(v){ return this._scope; }
-ScopeContext.prototype.setScope = function(v){ this._scope = v; return this; };
 ScopeContext.prototype.value = function(v){ return this._value; }
 ScopeContext.prototype.setValue = function(v){ this._value = v; return this; };
-ScopeContext.prototype.reference = function(v){ return this._reference; }
-ScopeContext.prototype.setReference = function(v){ this._reference = v; return this; };
-
 ScopeContext.prototype.namepath = function (){
 	return this._scope.namepath();
 };
@@ -18183,7 +17848,7 @@ ScopeContext.prototype.namepath = function (){
 
 ScopeContext.prototype.reference = function (thisValue){
 	// if we are in  constructor we do want to declare it after super
-	return this._reference || (this._reference = this.scope().lookup('self') || this.scope().declare("self",(thisValue == undefined) ? new This() : thisValue)); // {@scope.@level}_
+	return this._reference || (this._reference = this._scope.lookup('self') || this._scope.declare("self",(thisValue == undefined) ? new This() : thisValue)); // {@scope.@level}_
 };
 
 ScopeContext.prototype.fromScope = function (other){
@@ -18195,7 +17860,7 @@ ScopeContext.prototype.isConstant = function (){
 };
 
 ScopeContext.prototype.c = function (){
-	if (this._useReference && this._reference) { return this.reference().c() };
+	if (this._useReference && this._reference) { return this._reference.c() };
 	var val = this._value; // || @reference
 	return val ? val.c() : "this";
 };
@@ -18225,7 +17890,7 @@ IndirectScopeContext.prototype.reference = function (){
 };
 
 IndirectScopeContext.prototype.c = function (){
-	return this.reference().c();
+	return this._reference.c();
 };
 
 IndirectScopeContext.prototype.isGlobalContext = function (){
@@ -18263,10 +17928,6 @@ function Super(keyword,member){
 
 subclass$(Super,Node);
 
-Super.prototype.member = function(v){ return this._member; }
-Super.prototype.setMember = function(v){ this._member = v; return this; };
-Super.prototype.args = function(v){ return this._args; }
-Super.prototype.setArgs = function(v){ this._args = v; return this; };
 
 Super.prototype.visit = function (){
 	var m;
@@ -18285,7 +17946,7 @@ Super.prototype.visit = function (){
 		};
 	};
 	
-	if (this.args()) { this.args().traverse() };
+	if (this._args) { this._args.traverse() };
 	return this;
 };
 
@@ -18309,7 +17970,7 @@ Super.prototype.c = function (){
 	let op;
 	let top = this.option('top');
 	let virtual = m && m.option('inExtension');
-	let args = this.args();
+	let args = this._args;
 	
 	// need to know if our method is in the initial declaration
 	if (virtual && this._class) {
@@ -18319,17 +17980,17 @@ Super.prototype.c = function (){
 	
 	// when super is written all by itself - it means to do the default action
 	if (!((up instanceof Access) || (up instanceof Call))) {
-		if (m && m.isConstructor() && !(this.member())) {
+		if (m && m.isConstructor() && !(this._member)) {
 			
-			if (STACK.tsc() && this._class && !this._class.superclass()) {
+			if (STACK.tsc() && this._class && !this._class._superclass) {
 				return args ? (("[" + (args.c()) + "]")) : "";
 			};
 			
 			let target = this.option('target') || LIT('super');
 			let fallbackArgs = this.option('args') || [LIT('...arguments')];
 			return M(CALL(target,args || fallbackArgs).c(),this._keyword);
-		} else if (this.member()) {
-			op = OP('.',sup,this.member());
+		} else if (this._member) {
+			op = OP('.',sup,this._member);
 		} else if (m) {
 			op = OP('.',sup,m.name());
 			if (m.isSetter()) {
@@ -18346,8 +18007,8 @@ Super.prototype.c = function (){
 		return op ? ((M(op.c({mark: false}),this._keyword))) : '/**/';
 	};
 	
-	if (this.member()) {
-		return OP('.',sup,this.member()).c();
+	if (this._member) {
+		return OP('.',sup,this._member).c();
 	};
 	
 	if ((up instanceof Call) && m && !m.isConstructor()) {
