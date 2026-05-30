@@ -113,3 +113,32 @@ Compared against the post-`ALL_KEYWORDS` baseline, replacing the remaining simpl
 | Full compile phase mean | 2.551 ms | 2.459 ms |
 
 Interpretation: this is worth keeping as cleanup and it does reduce sampled `identifierToken` cost, but the total compile impact is within normal benchmark noise. The next larger logic-heavy target is still `basicContext` dispatch and the common `identifierToken` path.
+
+## 2026-05-30 Basic Context Dispatch
+
+Replacing the fixed recognizer chain in `Lexer.prototype.basicContext` with first-character dispatch produced a clear logic-heavy win. The implementation preserves the old chain for selector subcontext and keeps the important ambiguous fallbacks, including newline-comment handling where `lineToken()` intentionally returns `0` before `commentToken()` consumes the comment.
+
+| Metric | After lookup cleanup | After `basicContext` dispatch |
+| --- | ---: | ---: |
+| Parse wall time | 1.145 ms/parse over 5,000 runs | 0.979 ms/parse over 5,000 runs |
+| Lexer file sampled self share | 40.4% | 32.3% |
+| Lexer file sampled self time | 0.464 ms/parse | 0.318 ms/parse |
+| `Lexer.basicContext` sampled self time | 0.070 ms/parse | 0.066 ms/parse |
+| `Lexer.identifierToken` sampled self time | 0.093 ms/parse | 0.068 ms/parse |
+| `lexer.tokenize.main` mean | 0.495 ms | 0.362 ms |
+| Full compile phase mean | 2.459 ms | 2.216 ms |
+
+Validation: `node --check src/compiler/lexer.mjs`, the three profiling samples, and a direct compile sweep over 96 files in `test/apps/syntax`, `test/apps/style`, and `test/apps/issues` all passed with zero diagnostics.
+
+## 2026-05-30 Newline Count Cleanup
+
+`Lexer.prototype.moveHead` previously counted line breaks with `str.split("\n").length - 1`, which allocates an array and substrings just to count newlines. It now uses a direct `charCodeAt(i) == 10` scan.
+
+On the actual `moveHead` inputs from this sample, the direct scan was about 4x faster in isolation:
+
+| Counter | Time |
+| --- | ---: |
+| `split("\n").length - 1` | 1,923.787 ms |
+| direct char-code scan | 496.391 ms |
+
+Whole-compiler timing did not move clearly because the sample only had 183 `moveHead` inputs totaling 856 characters. Treat this as an allocation/GC cleanup rather than a measurable logic-heavy wall-time win.

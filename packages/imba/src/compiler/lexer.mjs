@@ -297,8 +297,12 @@ var last = function(array,back) {
 	return array[array.length - back - 1];
 };
 
-var count = function(str,substr) {
-	return str.split(substr).length - 1;
+var countLineBreaks = function(str) {
+	var count = 0;
+	for (let i = 0, len = str.length; i < len; i++) {
+		if (str.charCodeAt(i) == 10) count++;
+	};
+	return count;
 };
 
 var repeatString = function(str,times) {
@@ -467,7 +471,62 @@ Lexer.prototype.parse = function (code){
 };
 
 Lexer.prototype.basicContext = function (){
-	return this.selectorToken() || this.symbolToken() || this.identifierToken() || this.whitespaceToken() || this.lineToken() || this.commentToken() || this.heredocToken() || this.tagToken() || this.stringToken() || this.numberToken() || this.regexToken() || this.literalToken() || 0;
+	var chr = this._chunk.charAt(0);
+
+	if (this._end == '%') {
+		return this.selectorToken() || this.symbolToken() || this.identifierToken() || this.whitespaceToken() || this.lineToken() || this.commentToken() || this.heredocToken() || this.tagToken() || this.stringToken() || this.numberToken() || this.regexToken() || this.literalToken() || 0;
+	};
+
+	switch (chr) {
+		case ' ':
+		case '\t': {
+			return this.whitespaceToken() || this.commentToken() || this.literalToken() || 0;
+		}
+		case '\n': {
+			return this.whitespaceToken() || this.lineToken() || this.commentToken() || this.literalToken() || 0;
+		}
+		case '$':
+		case '%': {
+			return this.selectorToken() || this.identifierToken() || this.literalToken() || 0;
+		}
+		case '#': {
+			return this.identifierToken() || this.commentToken() || this.literalToken() || 0;
+		}
+		case '@': {
+			return this.identifierToken() || this.literalToken() || 0;
+		}
+		case ':': {
+			return this.symbolToken() || this.literalToken() || 0;
+		}
+		case '"':
+		case "'": {
+			return this.heredocToken() || this.stringToken() || this.literalToken() || 0;
+		}
+		case '`': {
+			return this.stringToken() || this.literalToken() || 0;
+		}
+		case '/': {
+			return this.commentToken() || this.regexToken() || this.literalToken() || 0;
+		}
+		case '<': {
+			return this.tagToken() || this.literalToken() || 0;
+		}
+		case '.':
+		case '-': {
+			return this.numberToken() || this.literalToken() || 0;
+		}
+	};
+
+	var code = chr.charCodeAt(0);
+	if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122) || chr == '_') {
+		return this.identifierToken() || this.literalToken() || 0;
+	};
+
+	if (code >= 48 && code <= 57) {
+		return this.numberToken() || this.literalToken() || 0;
+	};
+
+	return this.literalToken() || 0;
 };
 
 Lexer.prototype.prevChars = function (n){
@@ -1951,7 +2010,7 @@ Lexer.prototype.whitespaceToken = function (type){
 };
 
 Lexer.prototype.moveHead = function (str){
-	var br = count(str,'\n');
+	var br = countLineBreaks(str);
 	return br;
 };
 
