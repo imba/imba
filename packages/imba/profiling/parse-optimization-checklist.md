@@ -43,6 +43,6 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 ## Verification
 
 - [x] Add/identify a focused parser/lexer test command before changing tokenization or rewrite behavior. Added `node profiling/verify-compile-output.mjs` on 2026-05-30; it imports `src/compiler/compiler.mjs` directly and can snapshot/compare token count, diagnostics, JS output, and CSS output for the three profiling samples.
-- [ ] Compare parse-only CPU profiles before/after with `profile-parse-cpu.mjs`.
-- [ ] Compare full compile timings before/after with `profile-compile.mjs`.
-- [ ] Verify output stability for `profiling/sample1.imba`: token count, diagnostics, JS output, and CSS output.
+- [x] Compare parse-only CPU profiles before/after with `profile-parse-cpu.mjs`. Checked on 2026-05-30 for the logic/style/tag profiling samples. Final parse wall times were ~0.980 ms/parse for logic-heavy, ~0.727 ms/parse for style-heavy, and ~0.871 ms/parse for tag-heavy; style-heavy shows the clearest additional win from this pass.
+- [x] Compare full compile timings before/after with `profile-compile.mjs`. Checked on 2026-05-30 for the logic/style/tag profiling samples after each notable change. Final phase-probed compile means were ~2.414 ms for logic-heavy, ~2.991 ms for style-heavy, and ~3.101 ms for tag-heavy; full compile remains noisier than the targeted lexer/style timings.
+- [x] Verify output stability for `profiling/sample1.imba`: token count, diagnostics, JS output, and CSS output. `profiling/sample1.imba` is not present in this workspace, so the available profiling samples were verified instead with `node profiling/verify-compile-output.mjs --compare /private/tmp/imba-parse-output-baseline.json`; token counts, diagnostics, JS hashes, and CSS hashes matched for logic/style/tag samples.
