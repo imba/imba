@@ -41,6 +41,12 @@ var closerIndex = function(tokens,token) {
 	return token._closerIndex = tokens.indexOf(closer);
 };
 
+var tokenTypeAt = function(tokens,i) {
+	if (i < 0 || i >= tokens.length) { return null };
+	var tok = tokens[i];
+	return tok && tok._type;
+};
+
 // Tokens that indicate the close of a clause of an expression.
 var EXPRESSION_CLOSE = [')',']','}','STYLE_END','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}','TAG_END','CATCH','WHEN','ELSE','FINALLY'];
 
@@ -181,7 +187,10 @@ var IMPLICIT_INDENT_CALL = [
 ];
 // is not do an implicit call??
 
-var IMPLICIT_UNSPACED_CALL = ['+','-'];
+var IMPLICIT_UNSPACED_CALL_MAP = {
+	'+': 1,
+	'-': 1
+};
 
 // Tokens indicating that the implicit call must enclose a block of expressions.
 var IMPLICIT_BLOCK = ['{','[',',','BLOCK_PARAM_END','DO']; // '->', '=>',
@@ -231,6 +240,37 @@ var IMPLICIT_END_MAP = {
 // var SINGLE_LINERS    = ['ELSE', 'TRY', 'FINALLY', 'THEN','BLOCK_PARAM_END','DO','BEGIN','CATCH_VAR'] # '->', '=>', really?
 var SINGLE_CLOSERS = ['TERMINATOR','CATCH','FINALLY','ELSE','OUTDENT','LEADING_WHEN'];
 var LINEBREAKS = ['TERMINATOR','INDENT','OUTDENT']; // Tokens that end a line.
+
+var IMPLICIT_BRACE_NO_CONTEXT = {
+	IF: 1,
+	TERNARY: 1,
+	FOR: 1,
+	DEF: 1
+};
+
+var IMPLICIT_BRACE_OBJECT_SCOPE = {
+	CLASS: 1,
+	DEF: 1,
+	MODULE: 1,
+	TAG: 1,
+	STRUCT: 1
+};
+
+var IMPLICIT_BRACE_AUTO_CLOSE_PREV = {
+	INDENT: 1,
+	TERMINATOR: 1
+};
+
+var IMPLICIT_BRACE_DO_COMMA_PREV = {
+	NUMBER: 1,
+	STRING: 1,
+	REGEX: 1,
+	SYMBOL: 1,
+	']': 1,
+	'}': 1,
+	')': 1,
+	STRING_END: 1
+};
 
 var CALLCOUNT = 0;
 // Based on the original rewriter.coffee from CoffeeScript
@@ -476,18 +516,10 @@ Rewriter.prototype.addImplicitBraces = function (){
 	var stack = [];
 	var prevStack = null;
 	var start = null;
-	var startIndent = 0;
-	var startIdx = null;
 	var baseCtx = ['ROOT',0];
 	
 	var defType = 'DEF';
-	var noBraceContext = ['IF','TERNARY','FOR',defType];
-	
-	var noBrace = false;
-	
-	var action = function(token,i) {
-		return self._tokens.splice(i,0,T.RBRACKET);
-	};
+	var noBraceContext = IMPLICIT_BRACE_NO_CONTEXT;
 	
 	var open = function(token,i,scope) {
 		let tok = new Token('{','{',0,0,0); // : T.LBRACKET
@@ -547,7 +579,7 @@ Rewriter.prototype.addImplicitBraces = function (){
 			indents.shift();
 		};
 		
-		if (noBraceContext.indexOf(type) >= 0 && type != defType) {
+		if (noBraceContext[type] && type != defType) {
 			stack.push(stackToken(type,i));
 			return 1;
 		};
@@ -564,11 +596,11 @@ Rewriter.prototype.addImplicitBraces = function (){
 		
 		// no need to test for this here as well as in
 		if (EXPRESSION_START[type]) {
-			if (type === INDENT && noBraceContext.indexOf(ctx[0]) >= 0) {
+			if (type === INDENT && noBraceContext[ctx[0]]) {
 				stack.pop();
 			};
 			
-			let tt = self.tokenType(i - 1);
+			let tt = tokenTypeAt(tokens,i - 1);
 			
 			if (type === INDENT && (tt == '{' || tt == 'STYLE_START')) {
 				stack.push(stackToken('{',i)); // should not autogenerate another?
@@ -601,7 +633,7 @@ Rewriter.prototype.addImplicitBraces = function (){
 			return 1;
 		};
 		
-		if (noBraceContext.indexOf(ctx[0]) >= 0 && type === INDENT) {
+		if (noBraceContext[ctx[0]] && type === INDENT) {
 			stack.pop();
 			return 1;
 		};
@@ -617,9 +649,9 @@ Rewriter.prototype.addImplicitBraces = function (){
 		};
 		
 		// found a type
-		let isDefInObject = (type == defType) && idx$(indents[0],['CLASS','DEF','MODULE','TAG','STRUCT']) == -1;
+		let isDefInObject = (type == defType) && !IMPLICIT_BRACE_OBJECT_SCOPE[indents[0]];
 		// isDefInObject = isDefInObject and
-		if ((type == ':' || isDefInObject) && ctx[0] != '{' && ctx[0] != 'TERNARY' && (noBraceContext.indexOf(ctx[0]) == -1 || ctx[0] == defType)) {
+		if ((type == ':' || isDefInObject) && ctx[0] != '{' && ctx[0] != 'TERNARY' && (!noBraceContext[ctx[0]] || ctx[0] == defType)) {
 			// could just check if the end was right before this?
 			
 			var tprev = tokens[i - 2];
@@ -634,7 +666,7 @@ Rewriter.prototype.addImplicitBraces = function (){
 				idx = i - 2; // if start then start[1] - 1 else i - 2
 			};
 			
-			while (self.tokenType(idx - 1) === 'HERECOMMENT'){
+			while (tokenTypeAt(tokens,idx - 1) === 'HERECOMMENT'){
 				idx -= 2;
 			};
 			
@@ -645,15 +677,15 @@ Rewriter.prototype.addImplicitBraces = function (){
 			
 			// now what about interpolated stuff?
 			// different for def
-			if (!tprev || (idx$(tprev._type,['INDENT','TERMINATOR']) == -1)) {
+			if (!tprev || !IMPLICIT_BRACE_AUTO_CLOSE_PREV[tprev._type]) {
 				autoClose = true;
 			};
 			
-			if (indents[0] && idx$(indents[0],['CLASS','DEF','MODULE','TAG','STRUCT']) >= 0) {
+			if (indents[0] && IMPLICIT_BRACE_OBJECT_SCOPE[indents[0]]) {
 				autoClose = true;
 			};
 			
-			if (t0 && T.typ(t0) == '}' && t0.generated && ((t1._type == ',' && !t1.generated) || !(t0.scope && t0.scope.autoClose))) { //  and !autoClose
+			if (t0 && t0._type == '}' && t0.generated && ((t1._type == ',' && !t1.generated) || !(t0.scope && t0.scope.autoClose))) { //  and !autoClose
 				// console.log "merge with previous"
 				// if we find a closing token inserted here -- move it
 				tokens.splice(idx - 1,1);
@@ -666,7 +698,7 @@ Rewriter.prototype.addImplicitBraces = function (){
 					return 1;
 				};
 				return 0;
-			} else if (t0 && T.typ(t0) == ',' && self.tokenType(idx - 2) == '}') {
+			} else if (t0 && t0._type == ',' && tokenTypeAt(tokens,idx - 2) == '}') {
 				// console.log "comma",tokens[idx - 2]:scope
 				tokens.splice(idx - 2,1);
 				s = stackToken('{');
@@ -704,8 +736,8 @@ Rewriter.prototype.addImplicitBraces = function (){
 		// we probably need to run through autocall first?!
 		
 		if (type == 'DO') { // and ctx:generated"
-			var prev = T.typ(tokens[i - 1]);
-			if (['NUMBER','STRING','REGEX','SYMBOL',']','}',')','STRING_END'].indexOf(prev) >= 0) {
+			var prev = tokenTypeAt(tokens,i - 1);
+			if (IMPLICIT_BRACE_DO_COMMA_PREV[prev]) {
 				
 				var tok = T.token(',',',');
 				tok.generated = true;
@@ -727,12 +759,6 @@ Rewriter.prototype.addImplicitBraces = function (){
 		
 		return 1;
 	});
-};
-
-Rewriter.prototype.generateToken = function (typ,val){
-	let tok = T.token(typ,val);
-	tok.generated = true;
-	return tok;
 };
 
 // Methods may be optionally called without parentheses, for simple cases.
@@ -759,7 +785,9 @@ Rewriter.prototype.addImplicitParentheses = function (){
 	let currPair = null;
 	
 	var parensAction = function(token,i,tokens) {
-		return tokens.splice(i,0,self.generateToken('CALL_END',')'));
+		let tok = new Token('CALL_END',')',-1,0);
+		tok.generated = true;
+		return tokens.splice(i,0,tok);
 	};
 	
 	// function will not be optimized in single run
@@ -782,7 +810,7 @@ Rewriter.prototype.addImplicitParentheses = function (){
 			seenControl = true;
 		};
 		
-		var prev = self.tokenType(i - 1);
+		var prev = tokenTypeAt(tokens,i - 1);
 		
 		if ((type == '.' || type == '?.' || type == '::') && prev === OUTDENT) {
 			return true;
@@ -818,7 +846,7 @@ Rewriter.prototype.addImplicitParentheses = function (){
 			return true;
 		};
 		
-		if (!IMPLICIT_BLOCK_MAP[prev] && self.tokenType(i - 2) != 'CLASS' && !(post && ((post.generated && postTyp == '{') || IMPLICIT_CALL_MAP[postTyp]))) {
+		if (!IMPLICIT_BLOCK_MAP[prev] && tokenTypeAt(tokens,i - 2) != 'CLASS' && !(post && ((post.generated && postTyp == '{') || IMPLICIT_CALL_MAP[postTyp]))) {
 			return true;
 		};
 		
@@ -923,7 +951,7 @@ Rewriter.prototype.addImplicitParentheses = function (){
 		};
 		
 		// here we deal with :spaced and :newLine
-		if (!(callObject || callIndent || (prev && prev.spaced) && (prev.call || IMPLICIT_FUNC_MAP[pt]) && (IMPLICIT_CALL_MAP[type] || !(token.spaced || token.newLine) && IMPLICIT_UNSPACED_CALL.indexOf(type) >= 0))) {
+		if (!(callObject || callIndent || (prev && prev.spaced) && (prev.call || IMPLICIT_FUNC_MAP[pt]) && (IMPLICIT_CALL_MAP[type] || !(token.spaced || token.newLine) && IMPLICIT_UNSPACED_CALL_MAP[type]))) {
 			i += 1;continue;
 		};
 		
@@ -939,7 +967,9 @@ Rewriter.prototype.addImplicitParentheses = function (){
 		};
 		
 		// cache where we want to splice -- add them later
-		tokens.splice(i,0,self.generateToken('CALL_START','('));
+		let callStart = new Token('CALL_START','(',-1,0);
+		callStart.generated = true;
+		tokens.splice(i,0,callStart);
 		// CALLCOUNT++
 		
 		self.detectEnd(i + 1,parensCond,parensAction);
