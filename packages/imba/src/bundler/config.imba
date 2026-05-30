@@ -4,6 +4,7 @@ const optionTypes = {
 	hashing: 'boolean'
 	minify: 'boolean'
 	target: 'array'
+	splitting: 'boolean'
 }
 
 export const LOADER_SUFFIXES = {
