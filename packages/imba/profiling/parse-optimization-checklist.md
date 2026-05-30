@@ -11,8 +11,8 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 
 ## Lexer
 
-- [ ] Replace linear keyword checks such as `ALL_KEYWORDS.indexOf(id)` in `src/compiler/lexer.mjs` with a precomputed lookup map/set.
-- [ ] Audit other lexer membership checks using `idx$(...) >= 0`, especially repeated checks in `isKeyword` and `identifierToken`.
+- [x] Replace linear keyword checks such as `ALL_KEYWORDS.indexOf(id)` in `src/compiler/lexer.mjs` with a precomputed lookup map/set. Checked on 2026-05-30 against `sample-logic-heavy.imba`; `identifierToken` sampled self time improved, but full parse/compile timing did not change significantly.
+- [x] Audit other lexer membership checks using `idx$(...) >= 0`, especially repeated checks in `isKeyword` and `identifierToken`. Checked on 2026-05-30 against `sample-logic-heavy.imba`; removed `idx$` from `lexer.mjs` and replaced simple membership checks with direct comparisons or precomputed lookup maps. This lowered sampled `identifierToken` self time again, with only a small/noisy full compile change.
 - [ ] Profile `Lexer.prototype.basicContext`; consider a first-character dispatch table so every source position does not try the full recognizer chain.
 - [ ] Profile `Lexer.prototype.identifierToken`; split the common identifier path from rarer decorator, argvar, env flag, symbol, CSS mixin, and special keyword handling.
 - [ ] Profile `Lexer.prototype.lexStyleBody`; reduce repeated regex attempts in style-heavy files.

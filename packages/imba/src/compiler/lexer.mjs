@@ -6,10 +6,14 @@ import * as helpers from './helpers.mjs';
 function len$(a){
 	return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 };
-function idx$(a,b){
-	return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
-};
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
+function map$(list){
+	var map = Object.create(null);
+	for (let i = 0, items = iter$(list), len = items.length; i < len; i++) {
+		map[items[i]] = 1;
+	};
+	return map;
+};
 // helper for subclassing
 function subclass$(obj,sup) {
 	for (var k in sup) {
@@ -101,6 +105,7 @@ var ALL_KEYWORDS = [
 	'and','or','is','isnt','not','yes','no','isa','case','nil','module','export','static','extend',
 	'yield'
 ];
+var ALL_KEYWORDS_MAP = map$(ALL_KEYWORDS);
 
 // The list of keywords that are reserved by JavaScript, but not used, or are
 // used by Imba internally. We throw an error when these are encountered,
@@ -204,34 +209,43 @@ var COMPOUND_ASSIGN = [
 	'<<=','>>=','>>>=','&=','^=','|=','~=','=<','**=',
 	'=?','~=?','|=?','&=?','^=?'
 ];
+var COMPOUND_ASSIGN_MAP = map$(COMPOUND_ASSIGN);
 
 // Unary tokens.
 var UNARY = ['!','~','NEW','TYPEOF','DELETE'];
+var UNARY_MAP = map$(UNARY);
 
 // Logical tokens.
 var LOGIC = ['&&','||','??','and','or'];
+var LOGIC_MAP = map$(LOGIC);
 
 // Bit-shifting tokens.
 var SHIFT = ['<<','>>','>>>'];
+var SHIFT_MAP = map$(SHIFT);
 
 // Comparison tokens.
 var COMPARE = ['===','!==','==','!=','<','>','<=','>=','===','!==','&','|','^','!&'];
+var COMPARE_MAP = map$(COMPARE);
 
 // Mathematical tokens.
 var MATH = ['*','/','%','∪','∩','√'];
+var MATH_MAP = map$(MATH);
 
 // Relational tokens that are negatable with `not` prefix.
 var RELATION = ['IN','OF','INSTANCEOF','ISA'];
+var RELATION_MAP = map$(RELATION);
 
 // Boolean tokens.
 var BOOL = ['TRUE','FALSE','NULL','UNDEFINED'];
 
 // Our list is shorter, due to sans-parentheses method calls.
 var NOT_REGEX = ['NUMBER','REGEX','BOOL','TRUE','FALSE','++','--',']'];
+var NOT_REGEX_MAP = map$(NOT_REGEX);
 
 // If the previous token is not spaced, there are more preceding tokens that
 // force a division parse:
 var NOT_SPACED_REGEX = ['NUMBER','REGEX','BOOL','TRUE','FALSE','++','--',']',')','}','THIS','SELF','IDENTIFIER','STRING'];
+var NOT_SPACED_REGEX_MAP = map$(NOT_SPACED_REGEX);
 
 // Tokens which could legitimately be invoked or indexed. An opening
 // parentheses or bracket following these tokens will be recorded as the start
@@ -239,15 +253,18 @@ var NOT_SPACED_REGEX = ['NUMBER','REGEX','BOOL','TRUE','FALSE','++','--',']',')'
 // really?!
 
 var UNFINISHED = ['\\','.','UNARY','MATH','EXP','+','-','SHIFT','RELATION','COMPARE','THROW','EXTENDS'];
+var UNFINISHED_MAP = map$(UNFINISHED);
 
 // } should not be callable anymore!!! '}', '::',
 var CALLABLE = ['IDENTIFIER','SYMBOLID','STRING','REGEX',')',']','INDEX_END','THIS','SUPER','TAG_END','IVAR','SELF','NEW','ARGVAR','SYMBOL','RETURN','INDEX_END','CALL_END','DECORATOR','@','GENERICS'];
+var CALLABLE_MAP = map$(CALLABLE);
 
 // optimize for FixedArray
 var INDEXABLE = [
 	'IDENTIFIER','SYMBOLID','STRING','REGEX',')',']','THIS','SUPER','TAG_END','IVAR','SELF','NEW','ARGVAR','SYMBOL','RETURN','BANG',
 	'NUMBER','BOOL','TAG_SELECTOR','ARGUMENTS','}','TAG_TYPE','TAG_REF','INDEX_END','CALL_END','DO_VALUE'
 ];
+var INDEXABLE_MAP = map$(INDEXABLE);
 
 var NOT_KEY_AFTER = ['.','?','?.','UNARY','??','+','-','*'];
 
@@ -257,6 +274,13 @@ var GLOBAL_IDENTIFIERS = ['global','exports'];
 // occurs at the start of a line. We disambiguate these from trailing whens to
 // avoid an ambiguity in the grammar.
 var LINE_BREAK = ['INDENT','OUTDENT','TERMINATOR'];
+var LINE_BREAK_MAP = map$(LINE_BREAK);
+
+var DECLARE_START_MAP = map$(['INDENT','TERMINATOR','DECORATOR']);
+var PROPERTY_ACCESS_PREV_MAP = map$(['IDENTIFIER',')','}',']','NUMBER']);
+var SYMBOL_STRING_PREV_MAP = map$(['(','[','=']);
+var SPLAT_PREV_VALUE_MAP = map$([',','(','[','{','|','\n','\t']);
+var AMPER_REF_TIGHT_TOKENS = map$(['COMPARE','.','(','[']);
 
 function LexerError(message,file,line){
 	this.message = message;
@@ -1007,7 +1031,7 @@ Lexer.prototype.isKeyword = function (id,next){
 			let ctx = this._contexts[this._contexts.length - 1] || {};
 			let before = ctx.opener && this._tokens[this._tokens.indexOf(ctx.opener) - 1];
 			
-			if (idx$(this._lastTyp,['TERMINATOR','INDENT']) >= 0) {
+			if (this._lastTyp == 'TERMINATOR' || this._lastTyp == 'INDENT') {
 				if (before && (before._type == '=' || before._type == '{')) {
 					return true;
 				};
@@ -1024,21 +1048,21 @@ Lexer.prototype.isKeyword = function (id,next){
 		// experimental css inside tag trees - making css keyword everywhere
 		return true;
 		
-		if ((idx$(this._lastTyp,['TERMINATOR']) >= 0 || !this._lastTyp)) {
+		if ((this._lastTyp == 'TERMINATOR' || !this._lastTyp)) {
 			return true;
 		};
 		
-		if ((idx$(this._lastVal,['global','local','export','default']) >= 0)) {
+		if ((this._lastVal == 'global' || this._lastVal == 'local' || this._lastVal == 'export' || this._lastVal == 'default')) {
 			return true;
 		};
 		
-		if ((idx$(this._lastTyp,['=']) >= 0)) {
+		if ((this._lastTyp == '=')) {
 			return true;
 		};
 	};
 	
 	if (id == 'interface') {
-		if ((idx$(this._lastVal,['global','export','default','declare']) >= 0)) {
+		if ((this._lastVal == 'global' || this._lastVal == 'export' || this._lastVal == 'default' || this._lastVal == 'declare')) {
 			return true;
 		};
 	};
@@ -1055,17 +1079,17 @@ Lexer.prototype.isKeyword = function (id,next){
 		// 	return true
 		
 		if (id == 'declare') {
-			return incls && idx$(this._lastTyp,['INDENT','TERMINATOR','DECORATOR']) >= 0;
+			return incls && DECLARE_START_MAP[this._lastTyp] == 1;
 		};
 		
 		if (id == 'constructor') {
-			return incls && idx$(this._lastTyp,['INDENT','TERMINATOR','DECORATOR']) >= 0;
+			return incls && DECLARE_START_MAP[this._lastTyp] == 1;
 		};
 		
 		if (incls) { return true };
 	};
 	
-	return ALL_KEYWORDS.indexOf(id) >= 0;
+	return ALL_KEYWORDS_MAP[id] == 1;
 };
 
 // Matches identifying literals: variables, keywords, method names, etc.
@@ -1215,15 +1239,15 @@ Lexer.prototype.identifierToken = function (){
 			this.openDef();
 		} else if (typ == 'DO') {
 			if (this.context() == 'DEF') this.closeDef();
-		} else if (typ === 'WHEN' && LINE_BREAK.indexOf(this.lastTokenType()) >= 0) {
+		} else if (typ === 'WHEN' && LINE_BREAK_MAP[this.lastTokenType()] == 1) {
 			typ = 'LEADING_WHEN';
 		} else if (typ === 'FOR') {
 			this._seenFor = true;
 		} else if (typ === 'UNLESS') {
 			typ = 'IF'; // WARN
-		} else if (UNARY.indexOf(typ) >= 0) {
+		} else if (UNARY_MAP[typ] == 1) {
 			typ = 'UNARY';
-		} else if (RELATION.indexOf(typ) >= 0) {
+		} else if (RELATION_MAP[typ] == 1) {
 			if (typ != 'INSTANCEOF' && typ != 'ISA' && this._seenFor) {
 				typ = 'FOR' + typ; // ?
 				this._seenFor = false;
@@ -1398,7 +1422,7 @@ Lexer.prototype.numberToken = function (){
 	
 	var prev = last(this._tokens);
 	
-	if (match[0][0] == '.' && prev && !prev.spaced && ['IDENTIFIER',')','}',']','NUMBER'].indexOf(tT(prev)) >= 0) {
+	if (match[0][0] == '.' && prev && !prev.spaced && PROPERTY_ACCESS_PREV_MAP[tT(prev)] == 1) {
 		// console.log "got here"
 		this.token(".",".");
 		number = number.substr(1);
@@ -1414,7 +1438,7 @@ Lexer.prototype.symbolToken = function (){
 	symbol = match[0];
 	prev = last(this._tokens);
 	
-	if (!prev || prev.spaced || idx$(this._prevVal,['(','[','=']) >= 0) {
+	if (!prev || prev.spaced || SYMBOL_STRING_PREV_MAP[this._prevVal] == 1) {
 		let sym = helpers.dashToCamelCase(symbol.slice(1));
 		this.token('STRING','"' + sym + '"',match[0].length);
 		return match[0].length;
@@ -1630,11 +1654,11 @@ Lexer.prototype.regexToken = function (){
 	
 	prev = last(this._tokens);
 	// FIX
-	if (prev && (idx$(tT(prev),(prev.spaced ? 
-		NOT_REGEX
+	if (prev && ((prev.spaced ? 
+		NOT_REGEX_MAP
 	 : 
-		NOT_SPACED_REGEX
-	)) >= 0)) { return 0 };
+		NOT_SPACED_REGEX_MAP
+	)[tT(prev)] == 1)) { return 0 };
 	if (!(match = REGEX.exec(this._chunk))) { return 0 };
 	var ary = iter$(match);var m = ary[0],regex = ary[1],flags = ary[2];
 	
@@ -2100,13 +2124,13 @@ Lexer.prototype.literalToken = function (){
 		tokid = 'SEPARATOR';
 	} else if (value == '-' && pt == 'TERMINATOR' && this._chunk.match(/^\-\s*\n/)) {
 		tokid = 'SEPARATOR';
-	} else if (value == '*' && this._chunk.charAt(1).match(/[A-Za-z\_\@\[]/) && (prev.spaced || [',','(','[','{','|','\n','\t'].indexOf(pv) >= 0)) {
+	} else if (value == '*' && this._chunk.charAt(1).match(/[A-Za-z\_\@\[]/) && (prev.spaced || SPLAT_PREV_VALUE_MAP[pv] == 1)) {
 		tokid = "SPLAT";
 	} else if (value == '*' && (this.context() == 'IMPORT' || this.context() == 'EXPORT')) {
 		tokid = ("" + this.context() + "_ALL");
 	} else if (value == ',' && this.context() == 'IMPORT') {
 		tokid = "IMPORT_COMMA";
-	} else if (value == '!' && prev && !prev.spaced && ([']',')'].indexOf(pv) >= 0 || (pt == 'IDENTIFIER' || pt == 'SYMBOLID' || pt == 'SUPER'))) {
+	} else if (value == '!' && prev && !prev.spaced && ((pv == ']' || pv == ')') || (pt == 'IDENTIFIER' || pt == 'SYMBOLID' || pt == 'SUPER'))) {
 		tokid = 'BANG';
 	} else if (value == '&' && this._chunk.match(/^\&\s*[,\)\}\]]/)) {
 		tokid = 'DO_PLACEHOLDER';
@@ -2116,17 +2140,17 @@ Lexer.prototype.literalToken = function (){
 		tokid = 'EXP';
 	} else if (value == '%' && (pt == 'NUMBER' || pt == ')') && !prev.spaced) {
 		tokid = 'UNIT';
-	} else if (idx$(value,MATH) >= 0) {
+	} else if (MATH_MAP[value] == 1) {
 		tokid = 'MATH';
-	} else if (idx$(value,COMPARE) >= 0) {
+	} else if (COMPARE_MAP[value] == 1) {
 		tokid = 'COMPARE';
-	} else if (idx$(value,COMPOUND_ASSIGN) >= 0) {
+	} else if (COMPOUND_ASSIGN_MAP[value] == 1) {
 		tokid = 'COMPOUND_ASSIGN';
-	} else if (idx$(value,UNARY) >= 0) {
+	} else if (UNARY_MAP[value] == 1) {
 		tokid = 'UNARY';
-	} else if (idx$(value,SHIFT) >= 0) {
+	} else if (SHIFT_MAP[value] == 1) {
 		tokid = 'SHIFT';
-	} else if (idx$(value,LOGIC) >= 0) {
+	} else if (LOGIC_MAP[value] == 1) {
 		tokid = 'LOGIC'; // or value is '?' and prev?:spaced
 	} else if (prev && !prev.spaced) {
 		if (value == '{' && pt == 'IDENTIFIER') {
@@ -2135,20 +2159,20 @@ Lexer.prototype.literalToken = function (){
 			tokid = '{{';
 		};
 		
-		if (value === '(' && idx$(pt,CALLABLE) >= 0) {
+		if (value === '(' && CALLABLE_MAP[pt] == 1) {
 			tokid = 'CALL_START';
 		} else if (value === '(' && pt == 'DO') {
 			tokid = 'BLOCK_PARAM_START';
-		} else if (value === '[' && idx$(pt,INDEXABLE) >= 0) {
+		} else if (value === '[' && INDEXABLE_MAP[pt] == 1) {
 			tokid = 'INDEX_START';
 			if (pt == '?') { tTs(prev,'INDEX_SOAK') };
 		};
 	};
 	
 	if (pv == '&' && pt != 'AMPER_REF') {
-		if (!prev.spaced && idx$(tokid,['COMPARE','.','(','[']) >= 0) {
+		if (!prev.spaced && AMPER_REF_TIGHT_TOKENS[tokid] == 1) {
 			tTs(prev,pt = 'AMPER_REF');
-		} else if (prev.spaced && idx$(tokid,['COMPARE']) >= 0) {
+		} else if (prev.spaced && tokid == 'COMPARE') {
 			tTs(prev,pt = 'AMPER_REF');
 		};
 	};
@@ -2580,7 +2604,7 @@ Lexer.prototype.value = function (index,val){
 // Are we in the midst of an unfinished expression?
 Lexer.prototype.unfinished = function (){
 	if (LINE_CONTINUER.test(this._chunk) && (!this._context || !this._context.style)) { return true };
-	return (UNFINISHED.indexOf(this._lastTyp) >= 0 && this._platform != 'tsc');
+	return (UNFINISHED_MAP[this._lastTyp] == 1 && this._platform != 'tsc');
 };
 
 // Converts newlines for string literals.

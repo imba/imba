@@ -99,3 +99,17 @@ This is the best sample for identifier-heavy, expression-heavy parsing. It has n
 The parse-only profile points directly at `Lexer.identifierToken` and `Lexer.basicContext`, so this is the sample to use when testing `ALL_KEYWORDS` lookup changes, lexer membership-map changes, and first-character dispatch ideas.
 
 Full compile is less AST-dominated than the style/tag samples. Parser and lexer are both near 20% in the low-overhead phase timing, so front-end improvements should be easier to see here.
+
+## 2026-05-30 Membership Lookup Cleanup
+
+Compared against the post-`ALL_KEYWORDS` baseline, replacing the remaining simple `idx$(...) >= 0` / array-membership checks in `lexer.mjs` with direct comparisons or precomputed lookup maps produced a small lexer-local improvement, but not a clearly significant full-compile win.
+
+| Metric | Post-keyword baseline | After lookup cleanup |
+| --- | ---: | ---: |
+| Parse wall time | 1.166 ms/parse over 3,000 runs | 1.145 ms/parse over 5,000 runs |
+| `Lexer.identifierToken` sampled self share | 9.0% | 8.1% |
+| `Lexer.identifierToken` sampled self time | 0.106 ms/parse | 0.093 ms/parse |
+| `lexer.tokenize.main` mean | 0.493 ms | 0.495 ms |
+| Full compile phase mean | 2.551 ms | 2.459 ms |
+
+Interpretation: this is worth keeping as cleanup and it does reduce sampled `identifierToken` cost, but the total compile impact is within normal benchmark noise. The next larger logic-heavy target is still `basicContext` dispatch and the common `identifierToken` path.
