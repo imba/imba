@@ -36,9 +36,9 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 
 ## Style Parse / AST Construction
 
-- [ ] Cache parsed `StyleProperty` metadata by raw token string to avoid repeated regex replace/split work.
-- [ ] Audit `StyleProperty` constructor regexes and string conversions for fast paths.
-- [ ] Profile style-heavy samples separately from logic-heavy samples so style optimizations do not overfit `sample1.imba`.
+- [x] Cache parsed `StyleProperty` metadata by raw token string to avoid repeated regex replace/split work. Checked on 2026-05-30 against `sample-style-heavy.imba`; cached parsed parts/name/kind/unit metadata while copying `_parts` per instance to avoid shared mutation. `StyleProperty` sampled self time dropped from ~47 ms to ~32 ms over 1500 parse runs after the lexer style scanner change.
+- [x] Audit `StyleProperty` constructor regexes and string conversions for fast paths. Checked on 2026-05-30; replaced the constructor's unit/name-start checks and dotted-modifier rewrite with direct scanners, while keeping the split/variable normalization behind the metadata cache.
+- [x] Profile style-heavy samples separately from logic-heavy samples so style optimizations do not overfit `sample1.imba`. Checked on 2026-05-30 with `profiling/sample-style-heavy.imba`; style-specific changes were measured separately from the logic-heavy lexer work.
 
 ## Verification
 

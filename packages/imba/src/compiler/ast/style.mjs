@@ -29,6 +29,84 @@ export function defineStyleNodes(deps) {
 
   class StyleSelector extends StyleNode {}
 
+  const stylePropertyCache = new Map();
+
+  function parseStyleUnitName(value) {
+    let len = value.length;
+    let i = 0;
+    while (i < len) {
+      let code = value.charCodeAt(i);
+      if (code < 48 || code > 57) break;
+      i++;
+    }
+    if (i == 0 || i == len) return null;
+    let j = i;
+    while (j < len) {
+      let code = value.charCodeAt(j);
+      if (!((code >= 65 && code <= 90) || (code >= 97 && code <= 122))) {
+        return null;
+      }
+      j++;
+    }
+    return {
+      number: parseInt(value.slice(0, i)),
+      unit: value.slice(i),
+    };
+  }
+
+  function hasStyleNameStart(value) {
+    let code = value.charCodeAt(0);
+    return (
+      code == 35 ||
+      code == 45 ||
+      code == 95 ||
+      (code >= 48 && code <= 57) ||
+      (code >= 65 && code <= 90) ||
+      (code >= 97 && code <= 122)
+    );
+  }
+
+  function parseStylePropertyMetadata(raw, constants) {
+    let cached = stylePropertyCache.get(raw);
+    if (cached) return cached;
+
+    let parts = raw.replace(/(^|\b)\$/g, "--").split(/\b(?=[\^\.\@\!])/g);
+    for (let i = 0, len = parts.length; i < len; i++) {
+      let part = parts[i];
+      if (part[0] == "." && part[1] && part[1] != ".") {
+        parts[i] = "@." + part.slice(1);
+      }
+    }
+
+    let name = String(parts[0]);
+    let kind = null;
+    let colorError = false;
+    if (raw[0] == "#") {
+      kind = "color";
+      colorError = constants.HEX_REGEX.test(name);
+    }
+
+    let unit = parseStyleUnitName(name);
+    let number = unit && unit.number;
+    let unitName = unit && unit.unit;
+
+    if (!hasStyleNameStart(name)) {
+      parts = [null].concat(parts);
+      name = null;
+    }
+
+    cached = {
+      parts,
+      name,
+      kind,
+      number,
+      unit: unitName,
+      colorError,
+    };
+    stylePropertyCache.set(raw, cached);
+    return cached;
+  }
+
   // all weird parts of a selector? Or do we just compile it?
 
   class StyleRuleSet extends StyleNode {
@@ -483,52 +561,32 @@ export function defineStyleNodes(deps) {
   class StyleProperty extends StyleNode {
     constructor(token) {
       super(...arguments);
-      var m;
       this._token = token;
       let raw = String(this._token);
+      let meta = parseStylePropertyMetadata(raw, constants);
+      this._parts = meta.parts.slice();
+      this._name = meta.name;
+      this._kind = meta.kind;
+      this._number = meta.number;
+      this._unit = meta.unit;
 
-      // also split
-      this._parts = raw.replace(/(^|\b)\$/g, "--").split(/\b(?=[\^\.\@\!])/g); // .split(/[\.\@]/g)
-
-      for (
-        let i = 0, items = iter$(this._parts), len = items.length;
-        i < len;
-        i++
-      ) {
-        this._parts[i] = items[i].replace(/^\.(?=[^\.])/, "@.");
-      }
-
-      this._name = String(this._parts[0]);
-
-      if (raw[0] == "#") {
-        this._kind = "color";
-        if (constants.HEX_REGEX.test(this._name)) {
-          this.error(
-            "Color name " +
-              this._name +
-              " cannot be identical to valid hex color",
-            { loc: token[0] || token },
-          );
-        }
-      }
-
-      if ((m = this._name.match(/^(\d+)([a-zA-Z]+)$/))) {
-        this._number = parseInt(m[1]);
-        this._unit = m[2];
-      }
-
-      if (!this._name.match(/^[\#\w\-]/)) {
-        this._parts.unshift((this._name = null));
+      if (meta.colorError) {
+        this.error(
+          "Color name " +
+            this._name +
+            " cannot be identical to valid hex color",
+          { loc: token[0] || token },
+        );
       }
 
       this;
     }
 
     setName(value) {
-      var m;
-      if ((m = value.match(/^(\d+)([a-zA-Z]+)$/))) {
-        this._number = parseInt(m[1]);
-        this._unit = m[2];
+      let unit = parseStyleUnitName(value);
+      if (unit) {
+        this._number = unit.number;
+        this._unit = unit.unit;
       } else {
         this._number = this._unit = null;
       }
