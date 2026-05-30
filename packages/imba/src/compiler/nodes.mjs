@@ -19208,6 +19208,7 @@ class Scope {
     this._refcounter = 0;
     this._declListeners = [];
     this._level = (parent ? parent._level : -1) + 1;
+    this._context = null;
     this.setup();
   }
 
