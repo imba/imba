@@ -18,6 +18,7 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 - [x] Profile `Lexer.prototype.lexStyleBody`; reduce repeated regex attempts in style-heavy files. Checked on 2026-05-30 against `sample-style-heavy.imba`; replaced the hot `STYLE_PROPERTY.exec(...)` and selector-start regex tests with small scanners/predicates. `lexStyleBody` sampled self time dropped from ~130 ms to ~74 ms over 1500 parse runs, and `lexer.tokenize.main` improved from ~0.372 ms to ~0.313 ms in full compile timing.
 - [x] Review `Lexer.prototype.moveHead` / `count(str, "\n")`; avoid scanning whole chunks when the caller only needs line-break counts for known substrings. Checked on 2026-05-30 against `sample-logic-heavy.imba`; replaced `split("\n").length - 1` with a no-allocation char-code scan. Microbench on actual `moveHead` inputs was ~4x faster, while whole-compile timing was effectively unchanged/noisy.
 - [x] Guard full-source lexer normalization regexes. Checked on 2026-05-30 against the 210-file Lets corpus; clean files now skip full-string CR and trailing-space replacements unless the last character or source content makes them necessary.
+- [x] Test token hidden-class stabilization for rewriter fields. Checked on 2026-05-30 by initializing `scope`, `_closer`, `_closerIndex`, and `fromThen` in `Token`; sample output stayed stable, but the longer Lets paired run was slower (-3.3% mean, -4.7% median), so the extra constructor writes were not kept.
 
 ## Rewriter
 
