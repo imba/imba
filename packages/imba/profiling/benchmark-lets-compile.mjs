@@ -37,6 +37,7 @@ function parseArgs(argv) {
     runs: 15,
     warmup: 3,
     batches: 5,
+    minBatchMs: 0,
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -54,6 +55,9 @@ function parseArgs(argv) {
     } else if (key == "--batches") {
       args.batches = Number(next);
       i++;
+    } else if (key == "--min-batch-ms") {
+      args.minBatchMs = Number(next);
+      i++;
     } else if (key == "--all") {
       args.all = true;
     } else if (key == "--help" || key == "-h") {
@@ -65,11 +69,26 @@ Options:
   --runs <n>        Corpus passes per batch (default: 15)
   --warmup <n>      Warmup corpus passes before timing (default: 3)
   --batches <n>     Timed batches (default: 5)
+  --min-batch-ms <n>
+                    Keep adding corpus passes until each timed batch reaches n ms
 `);
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${key}`);
     }
+  }
+
+  if (!Number.isFinite(args.runs) || args.runs <= 0) {
+    throw new Error(`Invalid --runs: ${args.runs}`);
+  }
+  if (!Number.isFinite(args.warmup) || args.warmup < 0) {
+    throw new Error(`Invalid --warmup: ${args.warmup}`);
+  }
+  if (!Number.isFinite(args.batches) || args.batches <= 0) {
+    throw new Error(`Invalid --batches: ${args.batches}`);
+  }
+  if (!Number.isFinite(args.minBatchMs) || args.minBatchMs < 0) {
+    throw new Error(`Invalid --min-batch-ms: ${args.minBatchMs}`);
   }
 
   return args;
@@ -148,14 +167,56 @@ function runCorpus(inputs, passes) {
   };
 }
 
+function runBatch(inputs, passes, minBatchMs) {
+  let total = {
+    totalMs: 0,
+    compiles: 0,
+    passes: 0,
+    diagnostics: 0,
+    jsBytes: 0,
+    cssBytes: 0,
+    failures: [],
+  };
+
+  do {
+    let result = runCorpus(inputs, passes);
+    total.totalMs += result.totalMs;
+    total.compiles += result.compiles;
+    total.passes += passes;
+    total.diagnostics += result.diagnostics;
+    total.jsBytes += result.jsBytes;
+    total.cssBytes += result.cssBytes;
+    total.failures.push(...result.failures);
+    if (result.failures.length || result.diagnostics) break;
+  } while (minBatchMs > 0 && total.totalMs < minBatchMs);
+
+  return total;
+}
+
 function stats(values) {
   let sorted = values.slice().sort((a, b) => a - b);
   let sum = values.reduce((total, value) => total + value, 0);
+  let mean = sum / values.length;
+  let variance =
+    values.reduce((total, value) => total + (value - mean) ** 2, 0) /
+    values.length;
+  let trim = Math.floor(values.length * 0.1);
+  let trimmed =
+    trim > 0 && trim * 2 < sorted.length
+      ? sorted.slice(trim, sorted.length - trim)
+      : sorted;
+  let trimmedSum = trimmed.reduce((total, value) => total + value, 0);
   return {
-    mean: sum / values.length,
-    median: sorted[Math.floor(sorted.length / 2)],
+    mean,
+    median:
+      sorted.length % 2
+        ? sorted[(sorted.length - 1) / 2]
+        : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2,
+    trimmedMean: trimmedSum / trimmed.length,
     min: sorted[0],
     max: sorted[sorted.length - 1],
+    stddev: Math.sqrt(variance),
+    relativeStddev: mean ? Math.sqrt(variance) / Math.abs(mean) : 0,
   };
 }
 
@@ -167,7 +228,7 @@ function main() {
 
   let batches = [];
   for (let i = 0; i < args.batches; i++) {
-    let result = runCorpus(inputs, args.runs);
+    let result = runBatch(inputs, args.runs, args.minBatchMs);
     batches.push(result);
     if (result.failures.length || result.diagnostics) {
       break;
@@ -182,8 +243,11 @@ function main() {
     runs: args.runs,
     warmup: args.warmup,
     batches: batches.length,
-    compilesPerBatch: inputs.length * args.runs,
+    minBatchMs: args.minBatchMs,
+    compilesPerBatch: stats(batches.map((batch) => batch.compiles)),
+    passesPerBatch: stats(batches.map((batch) => batch.passes)),
     msPerCompile: stats(msPerCompile),
+    samples: msPerCompile,
     totalMs: stats(batches.map((batch) => batch.totalMs)),
     diagnostics: batches.reduce((total, batch) => total + batch.diagnostics, 0),
     failures: batches.reduce((total, batch) => total + batch.failures.length, 0),
