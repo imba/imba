@@ -1,17 +1,17 @@
 import { defineStyleNodes } from "./ast/style.mjs";
-import * as __helpers_module_0 from "./helpers.mjs";
-import * as __constants_module_1 from "./constants.mjs";
-import * as __fspath_module_2 from "path";
-import * as __conv_module_3 from "../../vendor/colors.mjs";
-import * as __colord_module_4 from "./colord.mjs";
-import * as __errors$_module_5 from "./errors.mjs";
+import * as helpers from "./helpers.mjs";
+import * as constants from "./constants.mjs";
+import * as fspath from "path";
+import { conv } from "../../vendor/colors.mjs";
+import { colord } from "./colord.mjs";
+import { ImbaParseError, ImbaTraverseError } from "./errors.mjs";
 import { Token as Token } from "./token.mjs";
 import { SourceMap as SourceMap } from "./sourcemap.mjs";
-import * as __imba$_module_6 from "./styler.mjs";
-import * as __Compilation_module_8 from "./compilation.mjs";
-import * as __SourceMapper_module_9 from "./sourcemapper.mjs";
+import { StyleRule, StyleTheme, Color, StyleSheet, parseColorString } from "./styler.mjs";
+import { Compilation } from "./compilation.mjs";
+import { SourceMapper } from "./sourcemapper.mjs";
 import { ClassFlags as ClassFlags } from "../imba/runtime.mjs";
-import * as __extractGenericNames_module_10 from "./utils.mjs";
+import { extractGenericNames } from "./utils.mjs";
 function len$(a) {
   return (a && (a.len instanceof Function ? a.len() : a.length)) || 0;
 }
@@ -26,29 +26,10 @@ var self = {};
 // imba$v2=0
 // TODO Create Expression - make all expressions inherit from these?
 
-var helpers = __helpers_module_0;
-var constants = __constants_module_1;
-var fspath = __fspath_module_2;
-var conv = __conv_module_3.conv;
-var colord = __colord_module_4.colord;
-
-var ImbaParseError = __errors$_module_5.ImbaParseError,
-  ImbaTraverseError = __errors$_module_5.ImbaTraverseError;
-
-var StyleRule = __imba$_module_6.StyleRule,
-  StyleTheme = __imba$_module_6.StyleTheme,
-  Color = __imba$_module_6.Color,
-  StyleSheet = __imba$_module_6.StyleSheet,
-  parseColorString = __imba$_module_6.parseColorString;
 var ReservedIdentifierRegex = helpers.ReservedIdentifierRegex,
   InternalPrefixes = helpers.InternalPrefixes,
   toJSIdentifier = helpers.toJSIdentifier,
   toCustomTagIdentifier = helpers.toCustomTagIdentifier;
-var Compilation = __Compilation_module_8.Compilation;
-
-var SourceMapper = __SourceMapper_module_9.SourceMapper;
-
-var extractGenericNames = __extractGenericNames_module_10.extractGenericNames;
 
 class MappedString {
   constructor(value, source) {
@@ -1375,10 +1356,6 @@ class Stack {
     return this.mode() == "production";
   }
 
-  isVite() {
-    return !!this._options.vite;
-  }
-
   env(key) {
     var e;
     var val = this._options["ENV_" + key];
@@ -1396,10 +1373,7 @@ class Stack {
       return this._options[lowercased];
     }
 
-    if (key == "VITE") {
-      this._meta.universal = false;
-      return this.isVite();
-    } else if (key == "WEB" || key == "BROWSER") {
+    if (key == "WEB" || key == "BROWSER") {
       this._meta.universal = false;
       return this.isWeb();
     } else if (key == "NODE") {
@@ -13882,7 +13856,7 @@ class TagAttr extends TagPart {
       } else if (tagName == "img") {
         kind = "img";
       } else if (tagName == "script") {
-        kind = STACK._options.vite ? "url&entry" : "web";
+        kind = "web";
       } else if (tagName == "style") {
         kind = "css";
       }

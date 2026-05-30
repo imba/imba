@@ -340,10 +340,6 @@ class Item
 
 ## 2.0.0-alpha.231
 
-* Allow using `$vite$` in compiler for vite-only code.
-
-* Various fixes for vite integration.
-
 * Add `rescue` keyword
 
     Acts like a combined try-catch wrapper for arbitrary expressions. It will return the result of the expression, _or_ the error if the expression throws. Very useful for catching rejected promises and other errors.
@@ -376,8 +372,6 @@ class Item
 * Runtime helpers are imported instead of inlined - so bundling will not lead to many duplicated tiny functions.
 
 ## 2.0.0-alpha.230
-
-* Improved integration with vite
 
 * `.env` traverse up file tree from file instead of cwd
 
@@ -630,14 +624,6 @@ Last version (with new features) before `beta.1`. This release contains breaking
 * Allow prefixing asset paths via `--base` option
 
     Ie, when building for github pages you would run `imba build --base /my-repo-name -o docs index.html` to build your files and assets with the correct prefix, into the `docs/` folder of your project to adhere to github pages convetions.
-
-* Support loading workers following vite conventions
-
-    ```
-    import MyWorker from './some/script?worker'
-    import MySharedWorker from './some/script?sharedworker'
-    import url from './some/script?worker&url'
-    ```
 
 * Set node14.13.0 as the default minimum target when building for node.
 

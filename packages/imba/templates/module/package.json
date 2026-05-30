@@ -11,13 +11,11 @@
     }
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "watch": "vite build --watch"
+    "dev": "imba -w index.html",
+    "build": "imba build src/main.imba --esm",
+    "watch": "imba build -w src/main.imba --esm"
   },
   "devDependencies": {
-    "vite": "*",
-    "imba": "*",
-    "vite-plugin-imba": "*"
+    "imba": "*"
   }
 }

@@ -1,4 +1,4 @@
-import * as __util_module_0 from './helpers.mjs';
+import * as util from './helpers.mjs';
 // helper for subclassing
 function subclass$(obj,sup) {
 	for (var k in sup) {
@@ -13,7 +13,6 @@ function subclass$(obj,sup) {
 // imba$inlineHelpers=1
 // create separate error-types with all the logic
 
-var util = __util_module_0;
 const meta = new WeakMap();
 
 function ImbaParseError(e,o){

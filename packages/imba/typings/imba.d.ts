@@ -570,14 +570,6 @@ declare namespace imba {
      */
     function commit(): Promise<void>;
     
-	type mode = "development" | "production"
-	interface setupCallback {
-		(dist:string) : any
-	}
-	interface setupOptions {
-		mode: mode
-		serverOptions: import("Vite").ServerOptions
-	}
     /**
      * Render elements in custom context
      */

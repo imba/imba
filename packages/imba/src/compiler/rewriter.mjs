@@ -1,5 +1,5 @@
-import * as __T_module_0 from './token.mjs';
-import * as __constants$_module_1 from './constants.mjs';
+import * as T from './token.mjs';
+import { INVERSES, BALANCED_PAIRS, TOK } from './constants.mjs';
 function idx$(a,b){
 	return (b && b.indexOf) ? b.indexOf(a) : [].indexOf.call(a,b);
 };
@@ -13,10 +13,7 @@ function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 // shorthand into the unambiguous long form, add implicit indentation and
 // parentheses, and generally clean things up.
 
-var T = __T_module_0;
 var Token = T.Token;
-
-var INVERSES = __constants$_module_1.INVERSES, BALANCED_PAIRS = __constants$_module_1.BALANCED_PAIRS, TOK = __constants$_module_1.TOK;
 
 // var TERMINATOR = TERMINATOR
 

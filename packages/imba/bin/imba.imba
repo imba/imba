@@ -1,5 +1,4 @@
 import np from 'path'
-import url from 'url'
 import nfs from 'fs'
 import {performance} from 'perf_hooks'
 import log from '../src/utils/logger'
@@ -12,8 +11,6 @@ import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
 import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
-import { spawn } from 'child_process'
-import { getConfigFilePath, ensurePackagesInstalled, imbaConfigPath } from '../src/utils/vite'
 import create from './create.imba'
 import * as dotenv from 'dotenv'
 
@@ -106,14 +103,6 @@ def parseOptions options, extras = []
 	options.command = command
 	options.extras = extras
 	options.config = await resolveConfig(options)
-	options.imbaConfig = await getConfigFilePath("root", {vite: options.vite})
-	# only overwrite if vite is present in the config file
-	options.vite = yes if options.imbaConfig.bundler == 'vite' and !options.esbuild
-
-	if const c = options.imbaConfig.imba..options
-		for own k,v of c
-			if options.config.options[k]
-				options.config.options[k] = {...options.config.options[k], ...v}
 
 	options.package = resolvePackage(options.cwd) or {}
 	options.dotenv = nfs.existsSync(np.resolve(options.cwd,'.env')) ? resolveFile('.env',options.cwd) : null
@@ -189,69 +178,20 @@ def parseOptions options, extras = []
 	options.#parsed = yes
 	return options
 
-def test(o, otherOptions)
-	const vitest-path = np.join(process.cwd(), "node_modules/.bin", "vitest")
-	await ensurePackagesInstalled(['vitest'], process.cwd!)
-
-	let testConfigPath = await getConfigFilePath("test", {mode: "development", command: "test", vite: yes})
-	try
-		let userTestConfig = (await import(String(url.pathToFileURL(testConfigPath)))).default
-
-		if userTestConfig.test.environment == 'jsdom'
-			await ensurePackagesInstalled(['@testing-library/dom', '@testing-library/jest-dom', 'jsdom'], process.cwd())
-
-	let configFile = testConfigPath
-
-	# create a temporary file and put the config there
-	configFile = np.join process.cwd(), "node_modules", "imba.vitest.config.mjs"
-	let content = nfs.readFileSync(imbaConfigPath, 'utf-8')
-	if testConfigPath
-		content = content.replace '/** REPLACE_ME */', `
-			let userTestConfig = (await import(String(url.pathToFileURL('{testConfigPath}')))).default;
-		`
-	nfs.writeFileSync(configFile, content)
-
-	let params = ["--config", configFile, "--root", process.cwd()]
-
-	params.unshift 'bench' if otherOptions..bench?
-
-	if !o.args.includes('--dir')
-		params.push "--dir", process.cwd()
-
-	params.push(...o.args)
-	const options =
-		cwd: process.cwd()
-		env: {
-			...process.env
-			FORCE_COLOR: yes
-		}
-		stdio: "inherit"
-	const vitest = spawn(vitest-path, params, options)
-	vitest.on('exit') do process.exit $1
-
-def bench o
-	test(o, {bench?: yes})
-
 def run entry, o, extras
-	if entry.._name == 'preview' or entry.._name == 'serve'
+	if entry.._name == 'serve'
 		# no args
 		let t = o
 		o = entry
 		entry = t
 		entry = entry[0] if entry..length
 
-	unless o._name == 'preview' or o._name == 'serve' or o._name == 'build'
+	unless o._name == 'serve' or o._name == 'build'
 		return cli.help! if o.args.length == 0
 
 	let prog = o = await parseOptions(o,extras)
 
-	if o.vite and (o.command == 'preview' or o.command == 'serve' or o.command == 'build') and !entry
-		if nfs.existsSync("index.html")
-			entry = "index.html"
-		else
-			return console.log "Imba {o.command} without an argument expects an index.html file. But none was found in the root of the project."
-
-	if (o.command == 'serve' or o.command == 'build') and !o.vite and !entry
+	if (o.command == 'serve' or o.command == 'build') and !entry
 		console.log "imba {o.command} error: missing required argument 'script'"
 		process.exit 1
 
@@ -261,10 +201,6 @@ def run entry, o, extras
 
 	o.cache = new Cache(o)
 	o.fs = new FileSystem(o.cwd,o)
-	if o.vite
-		const packagesToCheck = ['vite']
-		packagesToCheck.push 'vite-node' if o.command == 'run'
-		await ensurePackagesInstalled(packagesToCheck, process.cwd())
 
 	# TODO support multiple entrypoints - especially for html
 
@@ -296,144 +232,17 @@ def run entry, o, extras
 
 	let bundle = new Bundler(o,params)
 	let out
-	out = await bundle.build! unless o.vite
+	out = await bundle.build!
 
 	if const p = o.writeBundlePathTo
 		try nfs.writeFileSync(p, bundle.outdir)
 
-	if o.vite
-		let Vite = await import("vite")
-		if o.command == 'preview'
-			const previewServer = await Vite.preview
-				preview:
-					port: o.port
-			return previewServer.printUrls!
-
-		if o.command == 'serve'
-
-			const config = await getConfigFilePath("client", {command: "serve", mode: "development", vite: yes})
-			let plugins = config.plugins
-
-			if !entry.endsWith ".html"
-				const serve-entry = entry
-				def servePlugin
-
-					def configureServer(server)
-						# (in callback) -> execute after internal vite middlewares
-						do server.middlewares.use "/" do(req, res, next)
-
-							res.end """
-									<!DOCTYPE html>
-									<html lang="en">
-										<head>
-											<meta charset="utf-8" />
-											<meta name="viewport" content="width=device-width,initial-scale=1" />
-											<title>Imba app</title>
-											<script type="module" src="./{serve-entry}"></script>
-										</head>
-										<body></body>
-									</html>
-							"""
-
-					return {
-						name: "vite-plugin-imba-serve-plugin"
-						configureServer: configureServer
-					}
-				plugins.push servePlugin()
-				entry = undefined
-
-			config.configFile = no
-			viteServer = await Vite.createServer({
-				...config,
-				plugins: plugins,
-				server: {
-					...config.server,
-					port: o.port,
-					host: o.host,
-				},
-				build: {
-					...config.build,
-					rollupOptions: {...config.build.rollupOptions, input: entry}
-				}
-			})
-			await viteServer.listen!
-
-			return viteServer.printUrls!
-		if o.command == 'build'
-			# build client
-			let entry-points
-			const options = {command: "build", mode: "production", vite: yes}
-			let clientConfig = await getConfigFilePath("client", options)
-
-			if entry.endsWith("html") or o.web
-				entry-points = entry
-				await Vite.build({
-					...clientConfig,
-					build: {
-						ssrManifest: yes, # not yet leveraged in SSR
-						...clientConfig.build,
-						outDir: o.outdir,
-						rollupOptions: {
-							...clientConfig.build.rollupOptions,
-							input: entry-points
-						}
-					}
-				})
-				return
-
-			else
-				let serverConfig = await getConfigFilePath("server", options)
-
-				const serverBuild = await Vite.build({
-					...serverConfig,
-					configFile: no,
-					build: {
-						...serverConfig.build,
-						outDir: o.outdir,
-						rollupOptions: {
-							...serverConfig.build.rollupOptions,
-							input: np.join(process.cwd(), entry),
-						}
-					}
-				})
-
-				entry-points = []
-				for path in Object.keys(serverBuild.output[0].modules) when np.isAbsolute(path)
-					const url = new URL("file://{path}")
-					const params = new URLSearchParams(url.search)
-					if params.has('url') and params.has('entry')
-						params.delete('url')
-						params.delete('entry')
-						url.search = params.toString!
-						entry-points.push url.toString!.replace("file://", '')
-
-				return unless entry-points.length
-
-			await Vite.build({
-				...clientConfig,
-				build: {
-					...clientConfig.build,
-					rollupOptions: {
-						...clientConfig.build.rollupOptions,
-						output: {
-							...clientConfig.build.rollupOptions.output,
-							dir: np.join(o.outdir, "public")
-						}
-						input: entry-points
-					}
-				}
-			})
-			return
 	let run = do
 		o.name ||= entry
 		let runner = new Runner(bundle,o)
-		if o.vite
-			await runner.initVite!
 		runner.start!
 
-	if o.vite
-		run()
-	elif out..main and o.command != 'build'
+	if out..main and o.command != 'build'
 		run()
 	elif o.watch and o.command != 'build'
 		bundle.once('built',run)
@@ -456,9 +265,7 @@ def common cmd
 		.option("-d, --development","Use defaults for development")
 		.option("-p, --production","Use defaults for production")
 		.option("--br", "Compress assets with brotli")
-		.option("--vite", "Use Vite as a bundler")
 		.option("--fork", "Disable cluster mode")
-		.option("--esbuild", "Use the built-in bundler")
 		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
@@ -478,26 +285,12 @@ common(cli.command('build [script]').description('Build an imba/js/html entrypoi
 	.action(run)
 	# .option("--as <preset>", "Configuration preset","node")
 
-common(cli.command('preview').description('Locally preview production build (Vite only)'))
-	.option("--port <port>", "Specify port")
-	.action(run)
-
 # watch should be implied?
 common(cli.command('serve').description('Spawn a webserver for an imba/js/html entrypoint'))
 	.option("-i, --instances [count]", "Number of instances to start",fmt.i,1)
 	.option("--port <port>", "Specify port")
-	.option("--host [host]", "Specify host (true for 0.0.0.0) more in https://vitejs.dev/config/server-options.html#server-host")
+	.option("--host [host]", "Specify host (true for 0.0.0.0)")
 	.action(run)
-
-cli
-	.command('test').description('Run tests: This is a wrapper on top of vitest')
-	.option("-h, --help", "Display help (Link to https://vitest.dev/)")
-	.action(test)
-
-cli
-	.command('bench').description('Run benchmark tests: This is a wrapper on top of vitest bench')
-	.option("-h, --help", "Display help (Link to https://vitest.dev/guide/features.html#benchmarking-experimental)")
-	.action(bench)
 
 cli
 	.command('create [name]')

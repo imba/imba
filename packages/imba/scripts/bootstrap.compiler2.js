@@ -13312,9 +13312,6 @@ Stack.prototype.isDev = function() {
 Stack.prototype.isProd = function() {
   return this.mode() == "production";
 };
-Stack.prototype.isVite = function() {
-  return !!this._options.vite;
-};
 Stack.prototype.env = function(key) {
   var e3;
   var val2 = this._options["ENV_" + key];
@@ -13331,10 +13328,7 @@ Stack.prototype.env = function(key) {
     return this._options[lowercased];
   }
   ;
-  if (key == "VITE") {
-    this._meta.universal = false;
-    return this.isVite();
-  } else if (key == "WEB" || key == "BROWSER") {
+  if (key == "WEB" || key == "BROWSER") {
     this._meta.universal = false;
     return this.isWeb();
   } else if (key == "NODE") {
@@ -23450,7 +23444,7 @@ TagAttr.prototype.visit = function() {
     } else if (tagName == "img") {
       kind = "img";
     } else if (tagName == "script") {
-      kind = STACK._options.vite ? "url&entry" : "web";
+      kind = "web";
     } else if (tagName == "style") {
       kind = "css";
     }

@@ -90,40 +90,10 @@
       "browser": "./dist/compiler.mjs",
       "require": "./dist/compiler.cjs",
       "default": "./dist/compiler.mjs"
-    },
-    "./plugin": {
-      "browser": "./dist/plugin.mjs",
-      "require": "./dist/plugin.cjs",
-      "default": "./dist/plugin.mjs"
-    }
-  },
-  "peerDependencies": {
-    "@testing-library/dom": "*",
-    "@testing-library/jest-dom": "*",
-    "vite": "*",
-    "vite-node": "*",
-    "vitest": "*"
-  },
-  "peerDependenciesMeta": {
-    "@testing-library/dom": {
-      "optional": true
-    },
-    "@testing-library/jest-dom": {
-      "optional": true
-    },
-    "vite": {
-      "optional": true
-    },
-    "vite-node": {
-      "optional": true
-    },
-    "vitest": {
-      "optional": true
     }
   },
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.18",
-    "@rollup/pluginutils": "^5.0.2",
     "commander": "^6.2.1",
     "haikunator": "^2.1.2",
     "ignore": "^5.2.4",
@@ -135,23 +105,17 @@
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.1",
     "tree-kill": "^1.2.2",
-    "vite": "^4.4.9",
-    "vite-node": "^0.32.4",
-    "vitest": "^0.32.4",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
-    "@antfu/install-pkg": "^0.1.1",
     "chokidar": "^3.4.3",
     "colord": "^2.9.3",
     "cross-spawn": "^7.0.3",
-    "debug": "^4.3.4",
     "dotenv": "^16.0.3",
     "envinfo": "^7.8.1",
     "esbuild": "^0.24.2",
     "fdir": "^6.1.0",
     "get-port": "^5.1.1",
-    "local-pkg": "^0.4.2",
     "lodash.mergewith": "^4.6.2",
     "prompts": "^2.4.2"
   },

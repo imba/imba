@@ -20,6 +20,10 @@ let globalNames = {
 let distdir = np.resolve(__dirname, '..', 'dist')
 // Create the dist directory
 fs.mkdirSync(distdir, { recursive: true });
+for (let file of ["plugin.mjs", "plugin.cjs", "compiler.old.cjs"]) {
+	let path = np.join(distdir, file);
+	if (fs.existsSync(path)) fs.unlinkSync(path);
+}
 
 function plugin(build) {
 	// console.log('setting up plugin',build,this);
@@ -226,7 +230,6 @@ let bundles = [
 		entryPoints: ["src/imba/imba.imba"],
 		outdir: "dist",
 		platform: "browser",
-		external: [ "vite"],
 		format: "esm",
 		outExtension: { ".js": ".mjs" },
 	},
@@ -244,7 +247,7 @@ let bundles = [
 		outExtension: { ".js": ".node.js" },
 		format: "cjs",
 		outdir: "dist",
-		external: ["lodash.mergewith", "vite", 'local-pkg'],
+		external: ["lodash.mergewith"],
 		platform: "node",
 	},
 	{
@@ -252,7 +255,7 @@ let bundles = [
 		outExtension: { ".js": ".node.mjs" },
 		format: "esm",
 		outdir: "dist",
-		external: [ "vite", 'local-pkg', 'get-port'],
+		external: ['get-port'],
 		platform: "node",
 	},
 	{
@@ -286,7 +289,7 @@ let bundles = [
 		outExtension: { ".js": ".imba.js" },
 		minify: true,
 		
-		external: ["lodash.mergewith", "chokidar", "esbuild", "vite-node/client","vite-node/server", "vite"],
+		external: ["lodash.mergewith", "chokidar", "esbuild"],
 		outdir: ".",
 		format: "cjs",
 		platform: "node",
@@ -297,32 +300,10 @@ let bundles = [
 		],
 		outExtension: { ".js": ".browser.imba.js" },
 		minify: true,
-		external: ["chokidar", "esbuild", "vite-node/client","vite-node/server", "vite"],
+		external: ["chokidar", "esbuild"],
 		outdir: ".",
 		format: "esm",
 		platform: "browser",
-	},
-	{
-		entryPoints: [
-			"src/vite-plugin/plugin.imba"
-		],
-		outExtension: { ".js": ".mjs" },
-		minify: true,
-		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
-		outdir: "dist",
-		format: "esm",
-		platform: "node",
-	},
-	{
-		entryPoints: [
-			"src/vite-plugin/plugin.imba"
-		],
-		outExtension: { ".js": ".cjs" },
-		minify: true,
-		external: ["lodash.mergewith", "vite", "imba", "debug", "picomatch", "get-port", "esbuild"],
-		outdir: "dist",
-		format: "cjs",
-		platform: "node",
 	},
 	{
 		entryPoints: [

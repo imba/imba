@@ -1,14 +1,10 @@
-import * as __fs_module_0 from 'fs';
-import * as __path_module_1 from 'path';
-import * as __compiler_module_2 from './compiler.mjs';
-import * as __Module_module_3 from 'module';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as compiler from './compiler.mjs';
+import * as nodeModule from 'module';
 var self = {};
 // imba$v2=0
 // everything should be moved to this file instead
-var fs = __fs_module_0;
-var path = __path_module_1;
-
-var compiler = __compiler_module_2;
 var parser = compiler.parser;
 
 var tokenize = self.tokenize = function (code,o){
@@ -40,10 +36,10 @@ var run = self.run = function (code,pars){
 	if(!pars||pars.constructor !== Object) pars = {};
 	var filename = pars.filename !== undefined ? pars.filename : null;
 	var main = require.main;
+	var Module = nodeModule.Module;
 	main.filename = process.argv[1] = (filename ? fs.realpathSync(filename) : '.');
 	main.moduleCache && (main.moduleCache = {});
 	
-	var Module = __Module_module_3.Module;
 	main.paths = Module._nodeModulePaths(path.dirname(filename));
 	
 	if (path.extname(main.filename) != '.imba' || require.extensions) {

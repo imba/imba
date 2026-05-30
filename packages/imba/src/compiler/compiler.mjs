@@ -1,33 +1,21 @@
-import * as __T_module_0 from './token.mjs';
-import * as __util_module_1 from './helpers.mjs';
-import * as __lexer_module_2 from './lexer.mjs';
-import * as __rewriter_module_3 from './rewriter.mjs';
-import * as __parser_module_4 from './parser.mjs';
-import * as __ast_module_5 from './nodes.mjs';
-import * as __resolveConfigFile_module_6 from './imbaconfig.mjs';
+import * as util from './helpers.mjs';
+import { Lexer } from './lexer.mjs';
+import { Rewriter } from './rewriter.mjs';
+import { parser } from './parser.mjs';
+import * as ast from './nodes.mjs';
+import { resolveConfigFile } from './imbaconfig.mjs';
 import { ImbaParseError as ImbaParseError } from './errors.mjs';
-import * as __compilation$_module_7 from './compilation.mjs';
+import { Compilation } from './compilation.mjs';
 var self = {};
 // imba$inlineHelpers=1
 // imba$v2=0
 
 // var imba = require '../imba'
-var T = __T_module_0;
-var util = __util_module_1;
-var lexer = __lexer_module_2;
-var rewriter = __rewriter_module_3;
-var parser = __parser_module_4.parser;
-var ast = __ast_module_5;
-
-var resolveConfigFile = __resolveConfigFile_module_6.resolveConfigFile;
-
-var Compilation = __compilation$_module_7.Compilation;
 
 // Instantiate a Lexer for our use here.
-var lex = new (lexer.Lexer)();
-var Rewriter = rewriter.Rewriter;
+var lex = new Lexer();
 var helpers = util;
-rewriter = new Rewriter();
+var rewriter = new Rewriter();
 
 parser.lexer = lex.jisonBridge();
 parser.yy = ast; // everything is exported right here now

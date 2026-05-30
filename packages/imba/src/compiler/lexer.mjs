@@ -1,8 +1,8 @@
-import * as __T_module_0 from './token.mjs';
+import * as T from './token.mjs';
 import { INVERSES as INVERSES } from './constants.mjs';
-import * as __Compilation_module_1 from './compilation.mjs';
-import * as __ERR_module_2 from './errors.mjs';
-import * as __helpers_module_3 from './helpers.mjs';
+import { Compilation } from './compilation.mjs';
+import * as ERR from './errors.mjs';
+import * as helpers from './helpers.mjs';
 function len$(a){
 	return a && (a.len instanceof Function ? a.len() : a.length) || 0;
 };
@@ -24,15 +24,9 @@ function subclass$(obj,sup) {
 // imba$inlineHelpers=1
 // imba$v2=0
 
-var T = __T_module_0;
 var Token = T.Token;
 
-var Compilation = __Compilation_module_1.Compilation;
-
 var K = 0;
-
-var ERR = __ERR_module_2;
-var helpers = __helpers_module_3;
 
 // Constants
 // ---------

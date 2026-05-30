@@ -2,7 +2,6 @@ import nfs from 'fs'
 import np from 'path'
 import {createHash as cryptoCreateHash} from 'crypto'
 import os from 'os'
-import {getConfigFilePath} from '../utils/vite'
 
 import {resolve as parseConfig,merge as mergeConfig} from './config'
 import * as smc from 'sourcemap-codec'
@@ -156,8 +155,7 @@ export def resolveConfig options
 		config.#path = src
 		return parseConfig(config)
 	catch e
-		const config = options.vite and (await getConfigFilePath("imba", {vite: options.vite}))
-		return parseConfig(config or {})
+		return parseConfig({})
 
 export def extendObject obj,patch,path = []
 	mergeConfig(obj,patch,...path)
@@ -206,6 +204,5 @@ export def injectStringBefore target, toInject, patterns = ['']
 			return target.slice(0,idx) + toInject + target.slice(idx)
 	return target
 
-# vite utils
 export def slash(str)
 	str.replace(/\\/g, "/")

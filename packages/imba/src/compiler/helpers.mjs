@@ -1,9 +1,7 @@
-import * as __fnv1a_module_0 from '../../vendor/fnv1a.mjs';
+import { fnv1a } from '../../vendor/fnv1a.mjs';
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var self = {};
 // imba$v2=0
-
-var fnv1a = __fnv1a_module_0.fnv1a;
 
 var ansiMap = {
 	reset: [0,0],

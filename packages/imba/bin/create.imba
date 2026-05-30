@@ -18,22 +18,14 @@ const templates =
 		path: 'default'
 		name: 'Default'
 		desc: 'Client only application (Imba bundler)'
-	'vite':
-		path: 'vite'
-		name: 'Vite'
-		desc: 'Client only application (Vite bundler)'
 	'express':
 		path: 'express'
 		name: 'Express'
 		desc: 'Full stack application (Imba bundler)'
-	'vitest':
-		path: 'vitest'
-		name: 'Vitest'
-		desc: 'Client only application with vitest (Vite bundler)'
 	'module':
 		path: 'module'
 		name: 'Module'
-		desc: 'A module that can be used in any JavaScript project (Vite bundler)'
+		desc: 'A module that can be used in any JavaScript project'
 	'cli':
 		path: 'cli'
 		name: 'CLI Tool'

@@ -11,6 +11,6 @@ tag app
 		<img[s:20px] src="https://imba.io/logo.svg">
 		"count is {state.count}"
 
-if import.meta.env.MODE is 'development'
+if typeof document != 'undefined'
 	global css body bg:warm8 inset:0 d:vcc
 	imba.mount <app>

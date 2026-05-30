@@ -1,12 +1,9 @@
-import * as __path_module_0 from 'path';
-import * as __util_module_1 from './helpers.mjs';
+import * as path from 'path';
+import * as util from './helpers.mjs';
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 // imba$inlineHelpers=1
 // imba$v2=0
 // externs;
-
-var path = __path_module_0;
-var util = __util_module_1;
 
 var VLQ_SHIFT = 5;
 var VLQ_CONTINUATION_BIT = 1 << VLQ_SHIFT;
