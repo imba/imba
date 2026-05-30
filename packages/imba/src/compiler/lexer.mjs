@@ -159,6 +159,48 @@ var STYLE_PROPERTY = /^(\^?[\w\-\$\@\.\!\#\^]+)(?=\:([^\:]|$)|\s*\=)/;
 
 var STYLE_MODIFIERS = /^(\@?[\w\-\$]*\w[\w\-\$]*)([\.\@][\w\-\$]*\w[\w\-\$]*)*(\@[\w\-\$]*\w[\w\-\$]*)*(?=\:)/;
 
+var isStyleWordCode = function(code) {
+	return (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || code == 95;
+};
+
+var isStylePropertyCode = function(code) {
+	return isStyleWordCode(code) || code == 45 || code == 36 || code == 64 || code == 46 || code == 33 || code == 35 || code == 94;
+};
+
+var isStyleSpaceCode = function(code) {
+	return (code >= 9 && code <= 13) || code == 32 || code == 160 || code == 5760 || code == 65279 || code == 8232 || code == 8233 || code == 8239 || code == 8287 || code == 12288 || (code >= 8192 && code <= 8202);
+};
+
+var stylePropertyLengthAt = function(str,start) {
+	if(start === undefined) start = 0;
+	var i = start;
+	var len = str.length;
+	while (i < len && isStylePropertyCode(str.charCodeAt(i))) {
+		i++;
+	};
+	if (i == start) { return 0 };
+	if (str.charCodeAt(i) == 58 && str.charCodeAt(i + 1) != 58) {
+		return i - start;
+	};
+	var j = i;
+	while (j < len && isStyleSpaceCode(str.charCodeAt(j))) {
+		j++;
+	};
+	return str.charCodeAt(j) == 61 ? i - start : 0;
+};
+
+var canStartStyleSelector = function(str,chr) {
+	var code = chr.charCodeAt(0);
+	if (isStyleWordCode(code) || code == 94 || code == 37 || code == 42 || code == 38 || code == 36 || code == 62 || code == 47 || code == 46 || code == 91 || code == 64 || code == 33) {
+		return true;
+	};
+	if (code == 35) {
+		let next = str.charCodeAt(1);
+		return isStyleWordCode(next) || next == 45;
+	};
+	return code == 58 && str.charCodeAt(1) == 58;
+};
+
 var NUMBER = /^0x[\da-f_]+|^0b[01_]+|^0o[\d_]+|^[\-]?(?:\d[_\d]*)\.?\d[_\d]*(?:e[+-]?\d+)?|^[\-]?\d*\.?\d+(?:e[+-]?\d+)?/i;
 
 var HEREDOC = /^("""|''')([\s\S]*?)(?:\n[^\n\S]*)?\1/;
@@ -812,11 +854,11 @@ Lexer.prototype.findBalancedSelector = function (str){
 		};
 		
 		if (!end && letter == ' ') {
-			let after = str.slice(i + 1);
-			if (STYLE_PROPERTY.exec(after)) {
+			if (stylePropertyLengthAt(str,i + 1)) {
 				break;
 			};
 			
+			let after = str.slice(i + 1);
 			if (INLINE_COMMENT.exec(after)) {
 				break;
 			};
@@ -877,18 +919,18 @@ Lexer.prototype.lexStyleBody = function (){
 	let chr = this._chunk[0];
 	var m;
 	
-	let styleprop = STYLE_PROPERTY.exec(this._chunk);
+	let styleprop = stylePropertyLengthAt(this._chunk);
 	let ltyp = this._lastTyp;
 	
-	if (!styleprop && this._chunk.match(/^([\^\%\*\w\&\$\>\/\.\[\@\!]|\#[\w\-]|\:\:)/) && (ltyp == 'TERMINATOR' || ltyp == 'INDENT')) {
+	if (!styleprop && (ltyp == 'TERMINATOR' || ltyp == 'INDENT') && canStartStyleSelector(this._chunk,chr)) {
 		let sel = this.findBalancedSelector(this._chunk);
 		if (sel) { return this.lexStyleRule(0) };
 	};
 	
 	if (styleprop) {
 		// what is the last one?
-		this.token('CSSPROP',styleprop[0],styleprop[0].length);
-		return styleprop[0].length;
+		this.token('CSSPROP',this._chunk.slice(0,styleprop),styleprop);
+		return styleprop;
 	};
 	
 	if (chr[0] == '#' && (m = STYLE_HEX.exec(this._chunk))) {
@@ -929,7 +971,7 @@ Lexer.prototype.lexStyleBody = function (){
 		let id = 'CSSIDENTIFIER';
 		let val = m[0];
 		let len = val.length;
-		if (m[0].match(/^\-\-/)) {
+		if (val[0] == '-' && val[1] == '-') {
 			id = 'CSSVAR';
 		} else if (this._last && !this._last.spaced && (ltyp == '}' || ltyp == ')')) {
 			id = 'CSSUNIT';
