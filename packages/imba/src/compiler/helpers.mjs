@@ -1,5 +1,4 @@
-import * as __fnv1a_module_0 from '../../vendor/fnv1a.js';
-import * as __imba$_module_1 from '../utils/identifiers.imba';
+import * as __fnv1a_module_0 from '../../vendor/fnv1a.mjs';
 function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var self = {};
 // imba$v2=0
@@ -52,7 +51,60 @@ var ansi = {
 ansi.warn = ansi.yellow;
 ansi.error = ansi.red;
 
-var toImbaIdentifier = __imba$_module_1.toImbaIdentifier, toJSIdentifier = __imba$_module_1.toJSIdentifier;
+var InternalPrefixes = {
+	TAG: 'τ',
+	FLIP: 'ω',
+	VALUE: 'υ',
+	CACHE: 'ϲ',
+	KEY: 'κ',
+	ANY: 'φ',
+	SYM: 'ε',
+	SEP: 'ι',
+	PRIVATE: 'Ψ',
+	B: 'ι',
+	T: 'τ',
+	C: 'ρ',
+	V: 'υ',
+	K: 'κ',
+	D: 'Δ',
+	H: 'θ',
+	EXTEND: 'Ω'
+};
+
+var ReservedPrefixes = new Set(Object.values(InternalPrefixes));
+var ReservedIdentifierRegex = new RegExp("^[" + Array.from(ReservedPrefixes).join("") + "]","u");
+
+var ToJSMap = {
+	'-': 'Ξ',
+	'?': 'Φ',
+	'#': 'Ψ',
+	'@': 'α'
+};
+
+var toJSregex = /[-?#@]/gu;
+var toJSreplacer = function(m) { return ToJSMap[m]; };
+
+var toJSIdentifier = self.toJSIdentifier = function (raw){
+	return raw.replace(toJSregex,toJSreplacer);
+};
+
+var ToImbaMap = {
+	'Ξ': '-',
+	'Φ': '?',
+	'Ψ': '#',
+	'α': '@'
+};
+
+var toImbaRegex = new RegExp("[ΞΦΨα]","gu");
+var toImbaReplacer = function(m) { return ToImbaMap[m]; };
+
+var toImbaIdentifier = self.toImbaIdentifier = function (raw){
+	return raw.replace(toImbaRegex,toImbaReplacer);
+};
+
+var toCustomTagIdentifier = self.toCustomTagIdentifier = function (str){
+	return 'Γ' + toJSIdentifier(str);
+};
 
 var GreekLetters = "αβγδεζηθικλμνξοπρστυφχψω";
 
@@ -432,4 +484,127 @@ var deepAssign = self.deepAssign = function (base,assignment){
 	return base;
 };
 
-export { ansi, brace, bracketize, camelCase, clearLocationMarkers, dashToCamelCase, dasherize, deepAssign, flatten, fromValidIdentifier, identifierForPath, indent, isPlainObject, isSystemIdentifier, isValidIdentifier, locationToLineColMap, markLineColForTokens, normalizeIndentation, parenthesize, parseArgs, pascalCase, printExcerpt, printWarning, quote, setterSym, singlequote, snakeCase, symbolize, toValidIdentifier, unionOfLocations };
+var computeLineOffsets = self.computeLineOffsets = function (text,isAtLineStart,textOffset){
+	if (textOffset === undefined) {
+		textOffset = 0;
+	}
+	var result = isAtLineStart ? [textOffset] : [];
+	var i = 0;
+	while (i < text.length){
+		var ch = text.charCodeAt(i);
+		if (ch === 13 || ch === 10) {
+			if (ch === 13 && (i + 1 < text.length) && text.charCodeAt(i + 1) === 10) {
+				i++;
+			}
+			result.push(textOffset + i + 1);
+		}
+		i++;
+	}
+	return result;
+};
+
+class Position {
+	constructor(line,character,offset,value = null) {
+		this.line = line;
+		this.character = character;
+		this.offset = offset;
+	}
+
+	toString() {
+		return this.line + ":" + this.character;
+	}
+
+	valueOf() {
+		return this.offset;
+	}
+}
+
+class Range {
+	constructor(start,end) {
+		this.start = start;
+		this.end = end;
+	}
+
+	get offset() {
+		return this.start.offset;
+	}
+
+	get length() {
+		return this.end.offset - this.start.offset;
+	}
+
+	get 0() {
+		return this.start.offset;
+	}
+
+	get 1() {
+		return this.end.offset;
+	}
+
+	getText(str) {
+		return str.slice(this.start,this.end);
+	}
+
+	equals(other) {
+		return other.offset == this.offset && other.length == this.length;
+	}
+}
+
+var DiagnosticSeverity = {
+	Error: 1,
+	Warning: 2,
+	Information: 3,
+	Hint: 4,
+	error: 1,
+	warning: 2,
+	warn: 2,
+	info: 3,
+	hint: 4
+};
+
+const DOCMAP = new WeakMap();
+
+class Diagnostic {
+	constructor(data,doc = null) {
+		this.range = data.range;
+		this.severity = DiagnosticSeverity[data.severity] || data.severity;
+		this.code = data.code;
+		this.source = data.source;
+		this.message = data.message;
+		DOCMAP.set(this,doc);
+	}
+
+	get sourceDocument() {
+		return DOCMAP.get(this);
+	}
+
+	toSnippet() {
+		let source = this.sourceDocument;
+		let start = this.range.start;
+		let end = this.range.end;
+		let msg = source.sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
+		let line = source.doc.getLineText(start.line);
+		let stack = [msg,line];
+		stack.push(line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(end.character - start.character));
+		return stack.join('\n').replace(/\t/g,'    ') + "\n";
+	}
+
+	toError() {
+		let source = this.sourceDocument;
+		let start = this.range.start;
+		let end = this.range.end;
+		let msg = source.sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
+		let err = new SyntaxError(msg);
+		let line = source.doc.getLineText(start.line);
+		let stack = [msg,line];
+		stack.push(line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(end.character - start.character));
+		err.stack = "\n" + stack.join('\n').replace(/\t/g,'    ') + "\n";
+		return err;
+	}
+
+	raise() {
+		throw this.toError();
+	}
+}
+
+export { Diagnostic, DiagnosticSeverity, InternalPrefixes, Position, Range, ReservedIdentifierRegex, ReservedPrefixes, ToImbaMap, ToJSMap, ansi, brace, bracketize, camelCase, clearLocationMarkers, computeLineOffsets, dashToCamelCase, dasherize, deepAssign, flatten, fromValidIdentifier, identifierForPath, indent, isPlainObject, isSystemIdentifier, isValidIdentifier, locationToLineColMap, markLineColForTokens, normalizeIndentation, parenthesize, parseArgs, pascalCase, printExcerpt, printWarning, quote, setterSym, singlequote, snakeCase, symbolize, toCustomTagIdentifier, toImbaIdentifier, toJSIdentifier, toValidIdentifier, unionOfLocations };

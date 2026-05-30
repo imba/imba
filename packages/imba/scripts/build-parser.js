@@ -7,7 +7,16 @@ async function bundle(options){
 
 	let res = await require('esbuild').build(options);
     var parser = require('../build/grammar.js').parser;
-    fs.writeFileSync(__dirname + "/../build/parser.js", parser.generate());
+    var source = parser.generate();
+    fs.writeFileSync(__dirname + "/../build/parser.js", source);
+    var esmSource = source.replace(
+        /\n\nif \(typeof require !== 'undefined' && typeof exports !== 'undefined'\) \{\nexports\.parser = parser;\nexports\.Parser = parser\.Parser;\nexports\.parse = function \(\) \{ return parser\.parse\.apply\(parser, arguments\); \};\n\}\s*$/,
+        ""
+    );
+    fs.writeFileSync(
+        __dirname + "/../src/compiler/parser.mjs",
+        esmSource + "\n\nexport { parser };\nexport const Parser = parser.Parser;\nexport function parse() { return parser.parse.apply(parser, arguments); }\n"
+    );
     console.log('built parser');
 
 }

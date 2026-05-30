@@ -2,11 +2,11 @@ import * as __T_module_0 from './token.mjs';
 import * as __util_module_1 from './helpers.mjs';
 import * as __lexer_module_2 from './lexer.mjs';
 import * as __rewriter_module_3 from './rewriter.mjs';
-import * as __parser_module_4 from '../../build/parser.js';
+import * as __parser_module_4 from './parser.mjs';
 import * as __ast_module_5 from './nodes.mjs';
-import * as __resolveConfigFile_module_6 from './imbaconfig.imba';
+import * as __resolveConfigFile_module_6 from './imbaconfig.mjs';
 import { ImbaParseError as ImbaParseError } from './errors.mjs';
-import * as __compilation$_module_7 from './compilation.imba';
+import * as __compilation$_module_7 from './compilation.mjs';
 var self = {};
 // imba$inlineHelpers=1
 // imba$v2=0

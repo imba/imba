@@ -2,17 +2,16 @@ import { defineStyleNodes } from "./ast/style.mjs";
 import * as __helpers_module_0 from "./helpers.mjs";
 import * as __constants_module_1 from "./constants.mjs";
 import * as __fspath_module_2 from "path";
-import * as __conv_module_3 from "../../vendor/colors.js";
-import * as __colord_module_4 from "./colord.imba";
+import * as __conv_module_3 from "../../vendor/colors.mjs";
+import * as __colord_module_4 from "./colord.mjs";
 import * as __errors$_module_5 from "./errors.mjs";
 import { Token as Token } from "./token.mjs";
 import { SourceMap as SourceMap } from "./sourcemap.mjs";
-import * as __imba$_module_6 from "./styler.imba";
-import * as __imba$_module_7 from "../utils/identifiers.imba";
-import * as __Compilation_module_8 from "./compilation.imba";
-import * as __SourceMapper_module_9 from "./sourcemapper.imba";
+import * as __imba$_module_6 from "./styler.mjs";
+import * as __Compilation_module_8 from "./compilation.mjs";
+import * as __SourceMapper_module_9 from "./sourcemapper.mjs";
 import { ClassFlags as ClassFlags } from "../imba/runtime.mjs";
-import * as __extractGenericNames_module_10 from "./utils.imba";
+import * as __extractGenericNames_module_10 from "./utils.mjs";
 function len$(a) {
   return (a && (a.len instanceof Function ? a.len() : a.length)) || 0;
 }
@@ -41,10 +40,10 @@ var StyleRule = __imba$_module_6.StyleRule,
   Color = __imba$_module_6.Color,
   StyleSheet = __imba$_module_6.StyleSheet,
   parseColorString = __imba$_module_6.parseColorString;
-var ReservedIdentifierRegex = __imba$_module_7.ReservedIdentifierRegex,
-  InternalPrefixes = __imba$_module_7.InternalPrefixes,
-  toJSIdentifier = __imba$_module_7.toJSIdentifier,
-  toCustomTagIdentifier = __imba$_module_7.toCustomTagIdentifier;
+var ReservedIdentifierRegex = helpers.ReservedIdentifierRegex,
+  InternalPrefixes = helpers.InternalPrefixes,
+  toJSIdentifier = helpers.toJSIdentifier,
+  toCustomTagIdentifier = helpers.toCustomTagIdentifier;
 var Compilation = __Compilation_module_8.Compilation;
 
 var SourceMapper = __SourceMapper_module_9.SourceMapper;

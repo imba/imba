@@ -1,6 +1,6 @@
 import * as __T_module_0 from './token.mjs';
 import { INVERSES as INVERSES } from './constants.mjs';
-import * as __Compilation_module_1 from './compilation.imba';
+import * as __Compilation_module_1 from './compilation.mjs';
 import * as __ERR_module_2 from './errors.mjs';
 import * as __helpers_module_3 from './helpers.mjs';
 function len$(a){
