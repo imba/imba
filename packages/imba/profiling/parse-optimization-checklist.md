@@ -30,9 +30,9 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 
 ## Parser
 
-- [ ] Treat generated parser changes as lower priority until lexer/rewriter wins are exhausted.
-- [ ] Profile parser reductions after lexer/rewriter changes; current hot reductions include style/property/tag-heavy grammar paths, but absolute time is relatively low.
-- [ ] Check whether parser `performAction` object/array allocations show up after front-end improvements.
+- [x] Treat generated parser changes as lower priority until lexer/rewriter wins are exhausted. Checked on 2026-05-30; after lexer/style/rewriter passes, parser totals are still modest in the profiling samples, so no generated parser edits were made.
+- [x] Profile parser reductions after lexer/rewriter changes; current hot reductions include style/property/tag-heavy grammar paths, but absolute time is relatively low. Checked on 2026-05-30 with `profile-compile.mjs` attribution on logic/style/tag samples; the hottest reductions remain sample-specific (`IfBlock`/`Identifier`, `StyleTerm`/`StyleProperty`, `TagOptions`/`TagTypeName`) and are small compared with traversal/codegen and lexer/rewriter costs.
+- [x] Check whether parser `performAction` object/array allocations show up after front-end improvements. Checked on 2026-05-30; parse CPU and compile attribution did not show parser allocation/GC as a new dominant bottleneck, so generated `performAction` allocation work remains lower priority.
 
 ## Style Parse / AST Construction
 
