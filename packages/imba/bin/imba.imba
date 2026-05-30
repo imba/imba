@@ -265,7 +265,7 @@ def common cmd
 		.option("-p, --production","Use defaults for production")
 		.option("--br", "Compress assets with brotli")
 		.option("--fork", "Disable cluster mode")
-		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (micromatch format)")
+		.option("--skipReloadingFor <glob>", "Skip reloading server code for these globs (glob format)")
 		.option("--bundle", "Try to bundle all external dependencies")
 		.option("--base <url>", "Base url for your generated site","/")
 		.option("--assets-dir <url>", "Base dir for assets","assets")

@@ -1,6 +1,37 @@
 const APIBuilder = require("./apiBuilder");
-var pm = require("picomatch");
 var globCache = {};
+
+function globToRegex(pattern) {
+  let source = "^";
+  for (let i = 0; i < pattern.length; i++) {
+    const chr = pattern[i];
+    if (chr === "*") {
+      if (pattern[i + 1] === "*") {
+        i++;
+        if (pattern[i + 1] === "/") {
+          i++;
+          source += "(?:.*\\/)?";
+        } else {
+          source += ".*";
+        }
+      } else {
+        source += "[^\\/]*";
+      }
+    } else if (chr === "?") {
+      source += "[^\\/]";
+    } else if (chr === "/") {
+      source += "\\/";
+    } else {
+      source += chr.replace(/[-[\]{}()+?.,\\^$|#\s]/g, "\\$&");
+    }
+  }
+  return new RegExp(source + "$");
+}
+
+function compileGlob(patterns) {
+  const regexes = patterns.map((pattern) => globToRegex(String(pattern)));
+  return (path) => regexes.some((regex) => regex.test(path));
+}
 
 function Builder() {
   this.maxDepth = Infinity;
@@ -63,15 +94,9 @@ Builder.prototype.filter = function(filterFn) {
 };
 
 Builder.prototype.glob = function(...patterns) {
-  /* istanbul ignore next */
-  if (!pm) {
-    throw new Error(
-      `Please install picomatch: "npm i picomatch" to use glob matching.`
-    );
-  }
   var isMatch = globCache[patterns.join()];
   if (!isMatch) {
-    isMatch = pm(patterns, { dot: true });
+    isMatch = compileGlob(patterns);
     globCache[patterns.join()] = isMatch;
   }
   this.filters.push((path) => isMatch(path));

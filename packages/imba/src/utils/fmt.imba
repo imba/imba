@@ -1,4 +1,4 @@
-import { fdir } from 'fdir'
+import { fdir } from '../../vendor/fdir/index.js'
 import fs from 'fs'
 import cp from 'child_process'
 import np from 'path'
@@ -76,7 +76,7 @@ export default def fmt args, opts
 
 	let files = new fdir!
 		.withBasePath!
-		.glob("**/*.imba")
+		.filter(do $1.endsWith('.imba'))
 		.exclude(do ig.ignores($2))
 		.crawl(".")
 		.sync!

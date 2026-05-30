@@ -96,11 +96,9 @@
     "commander": "^6.2.1",
     "ignore": "^5.2.4",
     "image-size": "^0.9.3",
-    "micromatch": "^4.0.5",
-    "picomatch": "^2.2.2",
     "playwright": "^1.60.0",
     "sourcemap-codec": "^1.4.8",
-    "tmp": "^0.2.1",
+    "tmp": "^0.2.7",
     "workerpool": "^6.0.3"
   },
   "dependencies": {
@@ -109,7 +107,6 @@
     "dotenv": "^16.0.3",
     "envinfo": "^7.8.1",
     "esbuild": "^0.24.2",
-    "fdir": "^6.1.0",
     "get-port": "^5.1.1"
   },
   "directories": {},
