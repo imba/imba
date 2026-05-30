@@ -11,7 +11,6 @@ import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
 import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
-import create from './create.imba'
 import * as dotenv from 'dotenv'
 
 import tmp from 'tmp'
@@ -291,14 +290,6 @@ common(cli.command('serve').description('Spawn a webserver for an imba/js/html e
 	.option("--port <port>", "Specify port")
 	.option("--host [host]", "Specify host (true for 0.0.0.0)")
 	.action(run)
-
-cli
-	.command('create [name]')
-	.description('Create a new imba project')
-	.option('-t, --template [template]', 'Specify a template instead of selecting one interactively')
-	.option('-y, --yes', 'Say yes to any confirmation prompts')
-	.option('--fast', 'Generate random project name, choose default response for all prompts, and only print out resulting directory name, useful for bash scripts')
-	.action(do create($1, $2.opts!))
 
 cli
 	.command('info')
