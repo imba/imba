@@ -18966,7 +18966,7 @@ class StyleBody extends ListNode {
         continue;
       }
       if (!item._property._name) {
-        item._property._name = prevname;
+        item._property.setName(prevname);
       }
 
       prevname = item._property._name;
