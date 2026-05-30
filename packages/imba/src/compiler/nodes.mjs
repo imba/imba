@@ -16121,19 +16121,27 @@ class Tag extends TagLike {
     var parent = this.parent();
     var fragment = this.fragment();
     var component = this._tagDeclaration;
-    let oscope = this._tagDeclaration ? this._tagDeclaration.scope() : null;
+    var tagType = this.type();
+    var tagTypeValue = tagType._value;
+    var isSelf = tagType instanceof Self || tagType instanceof This;
+    var isFragment = this.isFragment();
+    var isSlot = this.isSlot();
+    var isComponent = this.isComponent();
+    var hasDynamicTagName = tagType instanceof ExpressionNode;
+    var isDynamicType = hasDynamicTagName || this._options.dynamic;
+    let oscope = component ? component.scope() : null;
 
-    let typ = this.isSelf()
+    let typ = isSelf
       ? "self"
-      : this.isFragment()
+      : isFragment
         ? "'fragment'"
-        : this.type().isClass && this.type().isClass()
-          ? this.type().toTypeArgument()
-          : "'" + this.type()._value + "'";
+        : tagType.isClass && tagType.isClass()
+          ? tagType.toTypeArgument()
+          : "'" + tagTypeValue + "'";
 
-    if (this.type()._value == "global" || this.type()._value == "teleport") {
+    if (tagTypeValue == "global" || tagTypeValue == "teleport") {
       // console.warn "global will be deprecated in favor of teleport in a future version. Please use teleport instead" unless type.@value == 'teleport'
-      typ = "'i-" + this.type()._value + "'";
+      typ = "'i-" + tagTypeValue + "'";
       STACK.use("dom_teleport");
     }
 
@@ -16150,7 +16158,7 @@ class Tag extends TagLike {
     var hasDynamicParts = true;
     var useRoutes =
       this._attrmap.route || this._attrmap.routeTo || this._attrmap["route-to"];
-    var shouldEnd = this.isComponent() || useRoutes || this.option("shouldEnd");
+    var shouldEnd = isComponent || useRoutes || this.option("shouldEnd");
 
     if (useRoutes) {
       stack.use("router");
@@ -16166,7 +16174,7 @@ class Tag extends TagLike {
 
     var slotPath = "";
 
-    if (this.isSlot()) {
+    if (isSlot) {
       if (this.root().isSelf()) {
         slotPath = OP(
           ".",
@@ -16192,53 +16200,49 @@ class Tag extends TagLike {
       }
       // if not we need to wrap the whole thing in an iife
       // let up = STACK.
-      if (this.type() instanceof TagTypeIdentifier && !this.isSelf()) {
-        if (this.type().isAsset()) {
-          add(
-            "var " + this.tvar() + " = new " + M("SVGSVGElement", this.type()),
-          );
-        } else if (this.type().isClass()) {
+      if (tagType instanceof TagTypeIdentifier && !isSelf) {
+        if (tagType.isAsset()) {
+          add("var " + this.tvar() + " = new " + M("SVGSVGElement", tagType));
+        } else if (tagType.isClass()) {
           add(
             M(
               "var " +
                 this.tvar() +
                 " = new " +
-                M(this.type().toClassName(), this.type()) +
+                M(tagType.toClassName(), tagType) +
                 ";" +
                 this.tvar(),
-              this.type(),
+              tagType,
             ),
           );
         } else {
           this.tvar()._datatype = new MappedString(
-            this.type().toClassName(),
-            this.type(),
+            tagType.toClassName(),
+            tagType,
           );
           add(
             M(
               "var " +
                 this.tvar() +
                 " = new " +
-                M(this.type().toClassName(), this.type()) +
+                M(tagType.toClassName(), tagType) +
                 ";" +
                 this.tvar(),
-              this.type(),
+              tagType,
             ),
           );
         }
-      } else if (this.isSelf()) {
+      } else if (isSelf) {
         this.tvar()._datatype = "this";
-        add("var " + this.tvar() + " = " + this.type().c());
-      } else if (this.isDynamicType()) {
+        add("var " + this.tvar() + " = " + tagType.c());
+      } else if (isDynamicType) {
         if (this._options.dynamic) {
-          add(
-            "var " + this.tvar() + " = " + this.type().c() + ";" + this.tvar(),
-          );
+          add("var " + this.tvar() + " = " + tagType.c() + ";" + this.tvar());
         } else {
-          add("var " + this.tvar() + " = new " + M("Γany", this.type()));
+          add("var " + this.tvar() + " = new " + M("Γany", tagType));
         }
       } else {
-        add("var " + this.tvar() + " = new " + M("HTMLElement", this.type()));
+        add("var " + this.tvar() + " = new " + M("HTMLElement", tagType));
       }
 
       for (
@@ -16295,18 +16299,18 @@ class Tag extends TagLike {
       this._attributes.length ||
       this.option("markWhenBuilt") ||
       this.isDetached() ||
-      this.isDynamicType() ||
+      isDynamicType ||
       !!this.option("key");
     // when it has any attributes? - but not text or
 
     var inCondition = parent && parent.option("condition");
 
-    if (this.isDynamicType()) {
+    if (isDynamicType) {
       ownCache = true;
       if (this.isMemoized()) {
         typ = "" + this.owncvar() + ".value";
       } else {
-        typ = this.type().c();
+        typ = tagType.c();
       }
       // @cref = "{parentCache}[{osym('$2')}]"
     }
@@ -16324,7 +16328,7 @@ class Tag extends TagLike {
       i++
     ) {
       closure = items[i];
-      if (closure._cssns && (!this.isSelf() || closure != oscope)) {
+      if (closure._cssns && (!isSelf || closure != oscope)) {
         this._classNames.push(closure._cssns);
       }
     }
@@ -16340,7 +16344,7 @@ class Tag extends TagLike {
       }
     }
 
-    if (component && !this.isSelf()) {
+    if (component && !isSelf) {
       if (
         (cname = component.cssref(
           this.option("reference") ? null : this.scope__(),
@@ -16352,7 +16356,7 @@ class Tag extends TagLike {
           this._classNames.splice(this._classNames.indexOf(orig), 1);
         }
 
-        if (this.isDynamicType() && true) {
+        if (isDynamicType && true) {
           this._styleName = cname;
         } else {
           this._classNames.push(cname);
@@ -16395,9 +16399,22 @@ class Tag extends TagLike {
         }
       }
 
-      names = names.filter(function (item, i) {
-        return names.indexOf(item) == i;
-      });
+      if (names.length > 1) {
+        let uniqueNames = [];
+        let seenNames = new Set();
+        for (
+          let i = 0, items = iter$(names), len = items.length, name;
+          i < len;
+          i++
+        ) {
+          name = items[i];
+          if (!seenNames.has(name)) {
+            seenNames.add(name);
+            uniqueNames.push(name);
+          }
+        }
+        names = uniqueNames;
+      }
       let q = dynamic ? "`" : "'";
       this._className = q + names.join(" ") + q;
     }
@@ -16420,8 +16437,8 @@ class Tag extends TagLike {
       nodes.length == 1 &&
       nodes[0] instanceof TagContent &&
       nodes[0].isStatic() &&
-      !this.isSelf() &&
-      !this.isSlot()
+      !isSelf &&
+      !isSlot
     ) {
       params[3] = nodes[0].value().c();
       nodes = [];
@@ -16433,7 +16450,7 @@ class Tag extends TagLike {
       this._dynamics.length == 0 &&
       !this.hasDynamicFlags() &&
       !dynamicKey &&
-      !this.isDynamicType() &&
+      !isDynamicType &&
       !this.option("slotted")
     ) {
       if (
@@ -16447,7 +16464,7 @@ class Tag extends TagLike {
         if (
           !shouldEnd &&
           !this.hasNonTagChildren() &&
-          !this.isSlot() &&
+          !isSlot &&
           !this.option("dynamic") &&
           !this.option("reference")
         ) {
@@ -16460,18 +16477,18 @@ class Tag extends TagLike {
       }
     }
 
-    if (this.isFragment() || this.isSlot()) {
+    if (isFragment || isSlot) {
       params = [this._flags].concat(params.slice(1, 2)); // .slice(1,3)
     }
 
-    if (this.isSlot()) {
+    if (isSlot) {
       // the slot is not supposed to be inserted immediately
       params[1] = "null";
     }
 
     var ctor = M(
       "" + this.create_() + "(" + params.join(",") + ")",
-      this.type(),
+      tagType,
     );
 
     if (this.option("reference")) {
@@ -16479,7 +16496,7 @@ class Tag extends TagLike {
       // what if it is on root?
       let par = params[1];
       params[1] = "null";
-      ctor = M("" + this.create_() + "(" + params.join(",") + ")", this.type());
+      ctor = M("" + this.create_() + "(" + params.join(",") + ")", tagType);
       this.set({ ctor: ctor });
       // ctor = OP('=',OP('.',scope__.context,option(:reference)),LIT(ctor)).c()
       ctor = OP(".", this.scope__().context(), this.option("reference")).c();
@@ -16533,7 +16550,7 @@ class Tag extends TagLike {
 
     // console.log "IS INLINE? {o:inline} {STACK.isExpression} {!!@consumedBy} {!!@parent} {isDetached}"
 
-    if (!parent && this.option("memoSelf") && !this.isSelf()) {
+    if (!parent && this.option("memoSelf") && !isSelf) {
       // scope__.@context # and scope__.@context.@reference
       // what if there is no parent cache here?
       add("" + this.parentCache() + ".this=this");
@@ -16542,7 +16559,7 @@ class Tag extends TagLike {
     if (!this._consumedBy) {
       this._ref = "" + this.tvar();
 
-      if (this.isSelf()) {
+      if (isSelf) {
         add("" + this.tvar() + "=this");
         add("" + this.tvar() + this.domCall("open") + "()");
         add(
@@ -16569,7 +16586,7 @@ class Tag extends TagLike {
         // let scop = scope__.closure
         let k = "" + this.parentCache() + "[" + this.osym() + "]";
 
-        if (this.isDynamicType() && this.isMemoized()) {
+        if (isDynamicType && this.isMemoized()) {
           if (this.option("key")) {
             // what if this is the only one, should be special?
             add(
@@ -16606,9 +16623,9 @@ class Tag extends TagLike {
               "=" +
               this.owncvar() +
               ".run(" +
-              this.type().c() +
+              tagType.c() +
               "," +
-              (this.hasDynamicTagName() ? 1 : 0) +
+              (hasDynamicTagName ? 1 : 0) +
               ")) || (" +
               this.bvar() +
               "=" +
@@ -16755,7 +16772,7 @@ class Tag extends TagLike {
             fragment.tvar() +
             ".attachShadow(\{mode:'open'\}))",
         );
-      } else if (this.isSlot() && !this.hasChildren()) {
+      } else if (isSlot && !this.hasChildren()) {
         add("" + this.tvar() + "=" + slotPath);
         if (!(parent instanceof TagSwitchFragment)) {
           let key = "" + this.cvar() + "[" + this.osym() + "]";
@@ -16774,7 +16791,7 @@ class Tag extends TagLike {
               "))",
           );
         }
-      } else if (this.isSlot() && this._consumed.length == 1) {
+      } else if (isSlot && this._consumed.length == 1) {
         // single child can act as slot?
         // if it is a string we dont really want to insert it at all
         this._consumed[0].set({ detached: true, slotted: true });
@@ -16788,7 +16805,7 @@ class Tag extends TagLike {
         let key = this.option("key");
 
         if (this.option("key")) {
-          if (this.isDynamicType()) {
+          if (isDynamicType) {
             add(
               "" +
                 this.owncvar() +
@@ -16798,7 +16815,7 @@ class Tag extends TagLike {
                 this.option("key").c() +
                 ")",
             );
-            let gets = "" + this.owncvar() + ".run(" + this.type().c() + ")";
+            let gets = "" + this.owncvar() + ".run(" + tagType.c() + ")";
             add(
               "(" +
                 this.bvar() +
@@ -16871,7 +16888,7 @@ class Tag extends TagLike {
               ")",
           );
         } else if (parent.isKeyed()) {
-          if (!this.isDynamicType()) {
+          if (!isDynamicType) {
             let gets =
               "(" +
               this.kvar() +
@@ -16910,13 +16927,13 @@ class Tag extends TagLike {
               "=" +
               this.dynamicContextFn() +
               "(" +
-              this.type().osym() +
+              tagType.osym() +
               "," +
               parent.kvar() +
               ")).run(" +
-              this.type().c() +
+              tagType.c() +
               "," +
-              (this.hasDynamicTagName() ? 1 : 0) +
+              (hasDynamicTagName ? 1 : 0) +
               ")"; // .get({parent.kvar})
             add(
               "(" +
@@ -16977,7 +16994,7 @@ class Tag extends TagLike {
           this._bvar = this.tagvar("B");
         }
 
-        if (this.isDynamicType()) {
+        if (isDynamicType) {
           if (key) {
             add(
               "" +
@@ -16997,7 +17014,7 @@ class Tag extends TagLike {
                 "=" +
                 this.renderContextFn() +
                 "(" +
-                this.type().osym() +
+                tagType.osym() +
                 ")",
             );
           }
@@ -17005,9 +17022,9 @@ class Tag extends TagLike {
             "" +
             this.owncvar() +
             ".run(" +
-            this.type().c() +
+            tagType.c() +
             "," +
-            (this.hasDynamicTagName() ? 1 : 0) +
+            (hasDynamicTagName ? 1 : 0) +
             ")";
           add(
             "(" +
@@ -17117,7 +17134,7 @@ class Tag extends TagLike {
       }
     }
 
-    if (this.isDynamicType()) {
+    if (isDynamicType) {
       add({ if: "" + this.tvar() + "[" + this.gsym("#isRichElement") + "]" });
       // ctx:condition =
     }
@@ -17136,7 +17153,7 @@ class Tag extends TagLike {
         name = keys[i];
         slot = o1[name];
         STACK.use("slots");
-        let fn = this.isDynamicType()
+        let fn = isDynamicType
           ? this.gsym("#getFunctionalSlot")
           : this.gsym("#getSlot");
         add(
@@ -17204,7 +17221,7 @@ class Tag extends TagLike {
           let val = item.name();
           let cref;
           let vref;
-          let batched = !this.isDynamicType();
+          let batched = !isDynamicType;
 
           if (cond && !cond.isPrimitive()) {
             cref = "" + this.cvar() + "[" + cond.osym() + "]";
@@ -17485,19 +17502,19 @@ class Tag extends TagLike {
 
     if (
       flagsToConcat.length ||
-      ((this.isSelf() || this.isDynamicType()) && this._className)
+      ((isSelf || isDynamicType) && this._className)
     ) {
       if (this._className) {
         flagsToConcat.unshift(this._className);
       }
       let cond = "" + this.dvar() + "&" + F.DIFF_FLAGS;
-      let meth = this.isSelf() ? "flagSelf$" : "flag$";
+      let meth = isSelf ? "flagSelf$" : "flag$";
       let extra = "null";
-      if (this.isSelf() || this.isDynamicType()) {
+      if (isSelf || isDynamicType) {
         cond = "(!" + this.bvar() + "||" + cond + ")";
       }
 
-      if (this.isDynamicType()) {
+      if (isDynamicType) {
         if (this._styleName) {
           extra = this._styleName.c();
         }
@@ -17612,7 +17629,7 @@ class Tag extends TagLike {
     }
 
     if (shouldEnd) {
-      if (!parent && !this.isSelf()) {
+      if (!parent && !isSelf) {
         foot.push(
           "" +
             this.bvar() +
@@ -17640,7 +17657,7 @@ class Tag extends TagLike {
             this.dvar() +
             ")",
         );
-      } else if (this.isSelf()) {
+      } else if (isSelf) {
         foot.push(
           "" + this.tvar() + this.domCall("close") + "(" + this.dvar() + ")",
         );
@@ -17666,7 +17683,7 @@ class Tag extends TagLike {
 
     // horrible hacks to work around the way we join the tag parts
     // to expressions and/or statements
-    if (this.isDynamicType()) {
+    if (isDynamicType) {
       foot.push({ endif: true });
     }
 
@@ -17688,7 +17705,7 @@ class Tag extends TagLike {
         foot.push("" + parent.kvar() + "++");
       }
     } else if (
-      this.isFragment() &&
+      isFragment &&
       parent &&
       !(parent instanceof TagSwitchFragment)
     ) {
@@ -17696,12 +17713,12 @@ class Tag extends TagLike {
     } else if (
       parent &&
       !(parent instanceof TagSwitchFragment) &&
-      (this.isComponent() || dynamicKey || this.option("reference"))
+      (isComponent || dynamicKey || this.option("reference"))
     ) {
       let pref = fragment.ref();
       let cref = this._cref;
 
-      if (dynamicKey || this.isDynamicType() || this.isDetached()) {
+      if (dynamicKey || isDynamicType || this.isDetached()) {
         if (fragment instanceof TagSlotProxy) {
           foot.push(
             "(" +
@@ -17810,7 +17827,7 @@ class Tag extends TagLike {
       js += ")";
 
       // let js = '(' + out.join(',\n') + ')'
-      if (this.isSlot() && this.hasChildren()) {
+      if (isSlot && this.hasChildren()) {
         let post = "";
         if (!(parent instanceof TagSwitchFragment)) {
           let key = "" + this.cvar() + "[" + this.osym() + "]";
@@ -17873,7 +17890,7 @@ class Tag extends TagLike {
     }
 
     // let js = out.join(";\n")
-    if (this.isSlot() && this.hasChildren()) {
+    if (isSlot && this.hasChildren()) {
       let post = "";
       if (!(parent instanceof TagSwitchFragment)) {
         let key = "" + this.cvar() + "[" + this.osym() + "]";
