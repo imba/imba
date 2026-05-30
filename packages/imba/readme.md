@@ -28,12 +28,7 @@ nodes.
 ## Get started
 
 Try Imba instantly in your browser with our
-[playground](https://imba.io/try/examples/apps/playground/app.imba),
-or create a new project with:
-
-```sh
-npx imba create
-```
+[playground](https://imba.io/try/examples/apps/playground/app.imba).
 
 ## Documentation
 
