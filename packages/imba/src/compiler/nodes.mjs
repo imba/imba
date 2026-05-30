@@ -498,6 +498,7 @@ var MLOC = function (a, b) {
 };
 
 var MPREV = [-1, -1, -1];
+var MARK_SOURCE = true;
 var M = function (val, mark, o) {
   if (mark == undefined) {
     mark = val;
@@ -506,6 +507,9 @@ var M = function (val, mark, o) {
 
   if (mark && mark.startLoc) {
     val = C(val, o);
+    if (!MARK_SOURCE) {
+      return val;
+    }
 
     // what if the value itself creates a location?
     let ref = STACK.incr("sourcePair");
@@ -725,7 +729,33 @@ var SPLAT = function (value) {
   //	Splat.new(value)
 };
 
-var SEMICOLON_TEST = /;(\s*\/\/.*)?[\n\s\t]*$/;
+var hasTrailingSemicolon = function (str) {
+  let i = str.length - 1;
+  if (str.charCodeAt(i) == 59) return true;
+  while (i >= 0) {
+    let code = str.charCodeAt(i);
+    if (!(code == 9 || code == 10 || code == 13 || code == 32)) {
+      break;
+    }
+    i--;
+  }
+  if (i < 0) return false;
+  if (str.charCodeAt(i) == 59) return true;
+
+  let lineStart = str.lastIndexOf("\n", i) + 1;
+  let comment = str.indexOf("//", lineStart);
+  if (comment < 0 || comment > i) return false;
+
+  let j = comment - 1;
+  while (j >= 0) {
+    let code = str.charCodeAt(j);
+    if (!(code == 9 || code == 10 || code == 13 || code == 32)) {
+      break;
+    }
+    j--;
+  }
+  return j >= 0 && str.charCodeAt(j) == 59;
+};
 var RESERVED_TEST = /^(default|char|for)$/;
 
 // captures error from parser
@@ -913,6 +943,17 @@ AST.truthy = function (node) {
   return undefined;
 };
 
+var indentGeneratedString = function (str) {
+  let idx = str.indexOf("\n");
+  if (idx < 0) {
+    return "\t" + str;
+  }
+  if (str[str.length - 1] == "\n") {
+    return "\t" + str.slice(0, -1).split("\n").join("\n\t") + "\n";
+  }
+  return "\t" + str.split("\n").join("\n\t");
+};
+
 class Indentation {
   constructor(a, b) {
     this._open = a;
@@ -949,12 +990,10 @@ class Indentation {
 
     // the first newline should not be indented?
 
-    str = post.replace(/^\n/, "") + str;
-
-    str = str
-      .replace(/^/g, "\t")
-      .replace(/\n/g, "\n\t")
-      .replace(/\n\t$/g, "\n");
+    if (post[0] == "\n") {
+      post = post.slice(1);
+    }
+    str = indentGeneratedString(post + str);
 
     str = pre + "\n" + str;
     if (out instanceof Terminator) {
@@ -1458,25 +1497,41 @@ class Stack {
   }
 
   indexOf(test) {
+    if (test && test.prototype instanceof Node) {
+      var i = this._nodes.length - 2;
+      while (i >= 0) {
+        if (this._nodes[i] instanceof test) {
+          return i;
+        }
+        i -= 1;
+      }
+      return -1;
+    }
     let res = this.up(test);
     return res ? this._nodes.indexOf(res) : -1;
   }
 
   up(test) {
-    test ||
-      (test = function (v) {
-        return !(v instanceof VarOrAccess);
-      });
-
     if (typeof test == "number") {
       return this._nodes[this._nodes.length - (1 + test)];
     }
 
     var i = this._nodes.length - 2;
+    var node;
+
+    if (!test) {
+      while (i >= 0) {
+        node = this._nodes[i--];
+        if (!(node instanceof VarOrAccess)) {
+          return node;
+        }
+      }
+      return null;
+    }
 
     if (test.prototype instanceof Node) {
       while (i >= 0) {
-        var node = this._nodes[i--];
+        node = this._nodes[i--];
         if (node instanceof test) {
           return node;
         }
@@ -2097,6 +2152,20 @@ class Node {
       return this.c_cached(ch);
     }
 
+    if (
+      !o &&
+      !ch &&
+      !this._indentation &&
+      this.shouldParenthesize == Node.prototype.shouldParenthesize &&
+      !(this._options && this._options.braces) &&
+      !OPTS.sourcemap
+    ) {
+      s.push(this);
+      let out = this.js(s);
+      s.pop(this);
+      return out;
+    }
+
     s.push(this);
     if (o && o.expression) this.forceExpression();
 
@@ -2106,7 +2175,11 @@ class Node {
 
     var out = this.js(s, o);
 
-    var paren = this.shouldParenthesize();
+    var shouldParenthesize = this.shouldParenthesize;
+    var paren =
+      shouldParenthesize == Node.prototype.shouldParenthesize
+        ? false
+        : shouldParenthesize.call(this);
 
     s.pop(this);
 
@@ -2942,7 +3015,7 @@ class Block extends ListNode {
 
     this._traversing = true;
     for (
-      let i = 0, items = iter$(this._nodes.slice(0)), len = items.length, node;
+      let i = 0, items = this._nodes.slice(0), len = items.length, node;
       i < len;
       i++
     ) {
@@ -3043,7 +3116,7 @@ class Block extends ListNode {
       return str;
     }
 
-    var hasSemiColon = SEMICOLON_TEST.test(out);
+    var hasSemiColon = hasTrailingSemicolon(out);
     if (!(hasSemiColon || node instanceof Meta)) {
       out += this.delimiter();
     }
@@ -3072,7 +3145,7 @@ class Block extends ListNode {
 
     var str = "";
     let empty = false;
-    for (let i = 0, items = iter$(ast), len = items.length; i < len; i++) {
+    for (let i = 0, items = ast, len = items.length; i < len; i++) {
       let vs = this.cpart(items[i]);
       // FIXME windows?
       if (vs[0] == "\n" && /^\n+$/.test(vs)) {
@@ -3091,7 +3164,7 @@ class Block extends ListNode {
     if (this._head && this._head.length > 0) {
       var prefix = "";
       for (
-        let i = 0, items = iter$(this._head), len = items.length;
+        let i = 0, items = this._head, len = items.length;
         i < len;
         i++
       ) {
@@ -5306,6 +5379,7 @@ class Root extends Code {
     STACK.SOURCECODE = script.sourceCode;
     ROOT = ((STACK._root = this._scope), this._scope);
     this._scope._imba.configure(o);
+    MARK_SOURCE = !!(o.sourcemap || o.raw || STACK.tsc());
     this.traverse();
 
     STACK._root = this._scope;
@@ -5395,7 +5469,7 @@ class Root extends Code {
           "'," +
           style +
           ");";
-        if (o.debug || true) {
+        if (o.debug) {
           script.js += "\n/*\n" + script.css + "\n*/\n"; // this we should only include when debugging
         }
       }
@@ -5418,8 +5492,12 @@ class Root extends Code {
     }
 
     if (!o.raw) {
-      script.css && (script.css = SourceMapper.strip(script.css));
-      script.js = SourceMapper.strip(script.js);
+      if (script.css && MARK_SOURCE) {
+        script.css = SourceMapper.strip(script.css);
+      }
+      if (MARK_SOURCE) {
+        script.js = SourceMapper.strip(script.js);
+      }
 
       if (STACK.tsc()) {
         // now combine comments - keep whitespace to not mess up sourcemapping
@@ -16110,10 +16188,13 @@ class Tag extends TagLike {
     var head = [];
     var out = [];
     var foot = [];
+    var hasControlParts = false;
 
     var add = function (val) {
       if (val instanceof Variable) {
         val = val.toString();
+      } else if (typeof val != "string") {
+        hasControlParts = true;
       }
       return out.push(val);
     };
@@ -16246,7 +16327,7 @@ class Tag extends TagLike {
       }
 
       for (
-        let i = 0, items = iter$(this._attributes), len = items.length, item;
+        let i = 0, items = this._attributes, len = items.length, item;
         i < len;
         i++
       ) {
@@ -16263,7 +16344,7 @@ class Tag extends TagLike {
         this;
       }
       let nodes = this.body() ? this.body().values() : [];
-      for (let i = 0, items = iter$(nodes), len = items.length; i < len; i++) {
+      for (let i = 0, items = nodes, len = items.length; i < len; i++) {
         add(items[i].c());
       }
 
@@ -16323,7 +16404,7 @@ class Tag extends TagLike {
     }
 
     for (
-      let i = 0, items = iter$(STACK.closures()), len = items.length, closure;
+      let i = 0, items = STACK.closures(), len = items.length, closure;
       i < len;
       i++
     ) {
@@ -16334,7 +16415,7 @@ class Tag extends TagLike {
     }
 
     for (
-      let i = 0, items = iter$(this.tagLikeParents()), len = items.length, par;
+      let i = 0, items = this.tagLikeParents(), len = items.length, par;
       i < len;
       i++
     ) {
@@ -16379,7 +16460,7 @@ class Tag extends TagLike {
       let names = [];
       let dynamic = false;
       for (
-        let i = 0, items = iter$(this._classNames), len = items.length, cls;
+        let i = 0, items = this._classNames, len = items.length, cls;
         i < len;
         i++
       ) {
@@ -16403,7 +16484,7 @@ class Tag extends TagLike {
         let uniqueNames = [];
         let seenNames = new Set();
         for (
-          let i = 0, items = iter$(names), len = items.length, name;
+          let i = 0, items = names, len = items.length, name;
           i < len;
           i++
         ) {
@@ -17173,7 +17254,7 @@ class Tag extends TagLike {
     let flagsToConcat = [];
 
     for (
-      let i = 0, items = iter$(this._attributes), len = items.length, item;
+      let i = 0, items = this._attributes, len = items.length, item;
       i < len;
       i++
     ) {
@@ -17874,18 +17955,22 @@ class Tag extends TagLike {
     o.inline = parentIsInlined;
 
     let js = "";
-    for (
-      let i = 0, items = iter$(out), len = items.length, item;
-      i < len;
-      i++
-    ) {
-      item = items[i];
-      if (item.if) {
-        js += "if(" + item.if + ")" + "{\n";
-      } else if (item.endif) {
-        js += "};\n";
-      } else {
-        js += item + ";\n";
+    if (!hasControlParts) {
+      js = out.length ? out.join(";\n") + ";\n" : "";
+    } else {
+      for (
+        let i = 0, items = iter$(out), len = items.length, item;
+        i < len;
+        i++
+      ) {
+        item = items[i];
+        if (item.if) {
+          js += "if(" + item.if + ")" + "{\n";
+        } else if (item.endif) {
+          js += "};\n";
+        } else {
+          js += item + ";\n";
+        }
       }
     }
 

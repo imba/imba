@@ -1669,7 +1669,10 @@ export class StyleSheet {
 	}
 	
 	parse(){
-		if (this[$string$]) { return this[$string$] };
+		if (this[$string$] !== undefined) { return this[$string$] };
+		if (this[$parts$].length == 0 && this[$apply$].transform_complex.length == 0 && this[$apply$].transform.length == 0) {
+			return this[$string$] = "";
+		};
 		
 		let js = [];
 		let parts = this[$parts$].slice(0);

@@ -442,7 +442,13 @@ Lexer.prototype.tokenize = function (code,o,script){
 			if (code.match(/^\s*$/g)) { return [] };
 		};
 		
-		code = code.replace(/\r/g,'').replace(/[\t ]+$/g,'');
+		if (code.indexOf('\r') >= 0) {
+			code = code.replace(/\r/g,'');
+		};
+		let lastCode = code.charCodeAt(code.length - 1);
+		if (lastCode == 9 || lastCode == 32) {
+			code = code.replace(/[\t ]+$/g,'');
+		};
 	};
 	
 	this._last = null;

@@ -323,25 +323,25 @@ Rewriter.prototype.rewrite = function (tokens,opts){
 		i++;
 	};
 	
-	this.step("all");
+	this.all();
 	if (CALLCOUNT) { console.log(CALLCOUNT) };
 	return this._tokens;
 };
 
 Rewriter.prototype.all = function (){
-	this.step("ensureFirstLine");
-	this.step("removeLeadingNewlines");
+	this.ensureFirstLine();
+	this.removeLeadingNewlines();
 	if (this._platform == 'tsc') {
-		this.step("addPlaceholderIdentifiers");
+		this.addPlaceholderIdentifiers();
 	};
 	
-	this.step("removeMidExpressionNewlines");
-	this.step("tagDefArguments");
-	this.step("closeOpenTags");
-	this.step("addImplicitIndentation");
-	this.step("tagPostfixConditionals");
-	this.step("addImplicitBraces");
-	return this.step("addImplicitParentheses");
+	this.removeMidExpressionNewlines();
+	this.tagDefArguments();
+	this.closeOpenTags();
+	this.addImplicitIndentation();
+	this.tagPostfixConditionals();
+	this.addImplicitBraces();
+	return this.addImplicitParentheses();
 };
 
 Rewriter.prototype.step = function (fn){
@@ -359,7 +359,7 @@ Rewriter.prototype.scanTokens = function (block){
 	
 	var i = 0;
 	while (i < tokens.length){
-		i += block.call(this,tokens[i],i,tokens);
+		i += block(tokens[i],i,tokens);
 	};
 	return true;
 };
