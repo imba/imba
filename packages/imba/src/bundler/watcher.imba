@@ -1,6 +1,7 @@
 import Component from './component'
 import ChangeLog from './changes'
 import np from 'path'
+$node$ import chokidar from 'chokidar'
 
 const FLAGS = {
 	CHANGE: 1
@@ -23,7 +24,7 @@ export default class Watcher < Component
 		if $node$
 			let normalize = do(src) src.split(np.sep).join(np.posix.sep)
 			let initial = Object.keys(map)
-			#watcher = require('chokidar').watch(initial,{
+			#watcher = chokidar.watch(initial,{
 				ignoreInitial: true,
 				depth: 1,
 				ignored: isIgnored.bind(self) # ['.*','.git/**','.cache/**',fs.resolve('dist')],

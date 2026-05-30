@@ -10,7 +10,6 @@ const $lcha$ = Symbol.for('#lcha'), $matcher$ = Symbol.for('#matcher'), $stack$ 
 
 /*body*/
 // imba$stdlib=1
-// var conv = require('../../vendor/colors')
 import * as selparser from './selparse.mjs';
 import {conv} from '../../vendor/colors.mjs';
 import {colord,toLchArray} from './colord.mjs';

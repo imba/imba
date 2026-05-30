@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as compiler from './compiler.mjs';
 import * as nodeModule from 'module';
+const require = nodeModule.createRequire(import.meta.url);
 var self = {};
 // imba$v2=0
 // everything should be moved to this file instead

@@ -30,7 +30,6 @@ function plugin(build) {
 	let options = this.options;
 	let self = this;
 	let watcher = this.watcher;
-	let fs = require('fs');
 	let basedir = np.resolve(__dirname, '..');
 	let outdir = options.outdir || np.dirname(options.outfile);
 	let distrel = './' + np.relative(distdir, outdir);

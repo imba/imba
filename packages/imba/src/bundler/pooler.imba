@@ -1,5 +1,5 @@
-const np = require 'path'
-const workerPool = require 'workerpool'
+import np from 'path'
+import * as workerPool from 'workerpool'
 const workerScript = np.resolve(__dirname,'..','workers.imba.js')
 
 let pool = null

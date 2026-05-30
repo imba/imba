@@ -1,14 +1,14 @@
 const fs = require('fs');
+const esbuild = require('esbuild');
 
 async function bundle(options){
 	options.resolveExtensions = ['.mjs','.imba','.ts','.cjs','.js','.css','.json'];
 	options.target = options.target || ['es2020']; // ['chrome58', 'firefox57', 'safari11', 'edge16'];
 	options.bundle = true;
 
-	let res = await require('esbuild').build(options);
+	let res = await esbuild.build(options);
     var parser = require('../build/grammar.js').parser;
     var source = parser.generate();
-    fs.writeFileSync(__dirname + "/../build/parser.js", source);
     var esmSource = source.replace(
         /\n\nif \(typeof require !== 'undefined' && typeof exports !== 'undefined'\) \{\nexports\.parser = parser;\nexports\.Parser = parser\.Parser;\nexports\.parse = function \(\) \{ return parser\.parse\.apply\(parser, arguments\); \};\n\}\s*$/,
         ""

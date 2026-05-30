@@ -1,12 +1,12 @@
-# TODO esmify
-const playwright = require "playwright"
-const path = require "path"
-const fs = require "fs"
-const compiler = require "../dist/compiler.cjs"
-const helpers = compiler.helpers
-const http = require('http')
+import * as playwright from 'playwright'
+import path from 'path'
+import fs from 'fs'
+import * as compiler from '../dist/compiler.cjs'
+import http from 'http'
+import * as esbuild from 'esbuild'
 
-const esbuild = require 'esbuild'
+const helpers = compiler.helpers
+
 const PORT = 8089
 
 const args = [
