@@ -1,1 +1,0 @@
-console.log "I don't need vite installed"
