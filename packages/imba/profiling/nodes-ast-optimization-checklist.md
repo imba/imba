@@ -63,7 +63,7 @@ Interpretation:
 
 ## Larger Wins / Deeper Changes
 
-- [ ] Split or specialize traversal passes. A single global `STACK`-driven `Node.traverse` is flexible but expensive; specialized passes for declarations, style AST, and tag bodies may reduce repeated ancestor scans.
+- [ ] Split or specialize traversal passes. A single global `STACK`-driven `Node.traverse` is flexible but expensive; specialized passes for declarations, style AST, and tag bodies may reduce repeated ancestor scans. A smaller `TagBody.consume()` in-place-loop probe was rejected on 2026-05-30 even though it removed a `.map()` allocation; the longer corpus run was slower (-6.0% mean), so manual polymorphic child loops need extra care.
 - [ ] Consider pass fusion for traversal plus metadata precomputation. For tags, compute stable facts during `visit` so `Tag.js` does less repeated classification work during codegen.
 - [ ] Prototype a structured codegen buffer. Recursive string concatenation plus regex post-processing in `Node.c`, `Block.cpart`, `Indentation.wrap`, and tag codegen may benefit from a small output builder that understands delimiters and indentation.
 - [ ] Revisit the tag pipeline. Static/dynamic tag classification, class/style aggregation, slot handling, and runtime-call selection are interleaved inside `Tag.js`; a precomputed tag-emission plan could make hot codegen simpler. A smaller temp-var accessor cache (`tvar`/`dvar`/`vvar`/`hvar`/`kvar`/`owncvar`) was rejected on 2026-05-30 because the added lazy fields slowed the corpus (-3.8% mean, -5.5% median), so this probably needs fewer tag codegen decisions rather than more per-instance caches.
