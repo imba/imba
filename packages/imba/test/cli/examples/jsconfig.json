@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "svg/*": ["assets/svg/*"],
-            "assets/*": ["assets/*"]
-        }
-    }
-}
