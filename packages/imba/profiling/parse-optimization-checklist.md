@@ -34,10 +34,6 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 - [ ] Profile parser reductions after lexer/rewriter changes; current hot reductions include style/property/tag-heavy grammar paths, but absolute time is relatively low.
 - [ ] Check whether parser `performAction` object/array allocations show up after front-end improvements.
 
-## Token Representation
-
-- [ ] Investigate replacing token type strings such as `TERMINATOR`, `INDENT`, and `IDENTIFIER` with numeric constants or a generated/inlined enum. This could reduce repeated string comparisons, map lookups, and token memory, but it is a high-blast-radius change because lexer, rewriter, parser, AST helpers, diagnostics, and debugging output all currently assume readable string token types. Prototype behind translation helpers first and compare parse CPU, full compile time, memory/GC pressure, and profile readability before committing to a migration.
-
 ## Style Parse / AST Construction
 
 - [ ] Cache parsed `StyleProperty` metadata by raw token string to avoid repeated regex replace/split work.
