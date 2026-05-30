@@ -99,3 +99,15 @@ This sample is the clearest rewriter stress case. Parse-only self time is led by
 `addImplicitParentheses` is the biggest rewrite target here, followed by `addImplicitBraces`. This sample should be useful for checking the payoff from closer-index caching, scan consolidation, and token-type lookup changes.
 
 Full compile is still mostly AST compilation. Unlike the style sample, JS generation is larger than traversal; the attribution run is dominated by `Tag` codegen and `TagBody` traversal, which is expected from 122 tag starts/ends.
+
+## 2026-05-30 Rewriter Closer / Scan Cleanup
+
+`addImplicitBraces` / `addImplicitParentheses` now use cached closer positions for style/tag skips when the lexer-provided `_closerIndex` still matches the token array. The same pass also replaced singleton no-rewrite array checks with a direct `STYLE_START` comparison and changed the braces balanced stack from `unshift` / `shift` to `push` / `pop`.
+
+| Metric | Initial profile | After rewriter cleanup |
+| --- | ---: | ---: |
+| `rewrite.total` mean | 0.417 ms | 0.395 ms |
+| `addImplicitBraces` mean | 0.101 ms | 0.088 ms |
+| `addImplicitParentheses` mean | 0.211 ms | 0.204 ms |
+
+Interpretation: tag-heavy remains the clearest rewriter stress sample. The cleanup is measurable but microscopic; `addImplicitParentheses` and `detectEnd` scan behavior are still the next interesting places to look.

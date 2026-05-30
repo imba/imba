@@ -99,3 +99,15 @@ This sample does what it is meant to do: it heavily exercises style lexing and s
 Full compile is dominated by AST traversal, not JS emission. The attribution run ranks `StyleRuleSet`, `StyleBody`, `StyleExpression`, and `StyleDeclaration` very high, so style value/property expansion is the first area to investigate with this sample.
 
 Rewriter cost is present but not dominant here. It is lower than in the tag-heavy and logic-heavy samples because the source spends more time inside style contexts.
+
+## 2026-05-30 Rewriter Closer / Scan Cleanup
+
+`addImplicitBraces` / `addImplicitParentheses` now use cached closer positions for style/tag skips when the lexer-provided `_closerIndex` still matches the token array. The same pass also replaced singleton no-rewrite array checks with a direct `STYLE_START` comparison and changed the braces balanced stack from `unshift` / `shift` to `push` / `pop`.
+
+| Metric | Initial profile | After rewriter cleanup |
+| --- | ---: | ---: |
+| `rewrite.total` mean | 0.215 ms | 0.202 ms |
+| `addImplicitBraces` mean | 0.045 ms | 0.040 ms |
+| `addImplicitParentheses` mean | 0.062 ms | 0.060 ms |
+
+Interpretation: this is a small cleanup. Style-heavy compile time is still dominated by style lexing, style AST work, and AST traversal.

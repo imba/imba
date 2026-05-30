@@ -106,6 +106,8 @@ var ALL_KEYWORDS = [
 	'yield'
 ];
 var ALL_KEYWORDS_MAP = map$(ALL_KEYWORDS);
+var KEYWORD_CANDIDATE_MAP = map$(ALL_KEYWORDS.concat(['mixin','guard','alter','watch','css','interface','attr','prop','get','set','constructor','declare']));
+var SPECIAL_IDENTIFIER_MAP = map$(['default','type','from','as','new','arguments']);
 
 // The list of keywords that are reserved by JavaScript, but not used, or are
 // used by Imba internally. We throw an error when these are encountered,
@@ -518,6 +520,10 @@ Lexer.prototype.basicContext = function (){
 	};
 
 	var code = chr.charCodeAt(0);
+	if ((code > 127 || code == 11 || code == 12 || code == 13) && WHITESPACE.test(this._chunk)) {
+		return this.whitespaceToken() || this.commentToken() || this.literalToken() || 0;
+	};
+
 	if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122) || chr == '_') {
 		return this.identifierToken() || this.literalToken() || 0;
 	};
@@ -1160,15 +1166,7 @@ Lexer.prototype.isKeyword = function (id,next){
 Lexer.prototype.identifierToken = function (){
 	var ary;
 	var match;
-	
-	var ctx0 = (this._ends.length > 0) ? this._ends[this._ends.length - 1] : null;
-	var ctx1 = (this._ends.length > 1) ? this._ends[this._ends.length - 2] : null;
-	var innerctx = ctx0;
 	var typ;
-	var reserved = false;
-	
-	var addLoc = false;
-	var inTag = ctx0 == 'TAG_END' || (ctx1 == 'TAG_END' && ctx0 == 'OUTDENT');
 	
 	if (!(match = IDENTIFIER.exec(this._chunk))) {
 		return 0;
@@ -1195,6 +1193,11 @@ Lexer.prototype.identifierToken = function (){
 	
 	if (colon && lastTyp == '?') { forcedIdentifier = false }; // for ternary
 	
+	if (!typ && !colon && (lastTyp == '.' || lastTyp == '?.')) {
+		this.token('IDENTIFIER',id,idlen);
+		return idlen;
+	};
+
 	// if we are not at the top level? -- hacky
 	if (id == 'tag' && this._chunk.indexOf("tag(") == 0) { // @chunk.match(/^tokid\(/)
 		forcedIdentifier = true;
@@ -1248,8 +1251,15 @@ Lexer.prototype.identifierToken = function (){
 		typ = 'IDENTIFIER';
 	};
 	
+	if (typ == 'IDENTIFIER' && !colon && !KEYWORD_CANDIDATE_MAP[id] && !SPECIAL_IDENTIFIER_MAP[id] && lastTyp != 'CATCH' && !(lastTyp == 'IDENTIFIER' && this._lastVal == 'protected') && !((lastTyp == 'NUMBER' || lastTyp == ')') && prev && !prev.spaced) && this._end != 'IMPORT' && this._end != 'EXPORT' && lastTyp != 'IMPORT') {
+		this.token('IDENTIFIER',id,idlen);
+		return idlen;
+	};
+
+	var ctx0 = this._end;
+
 	// this catches all
-	if (!forcedIdentifier && (isKeyword = this.isKeyword(id,this._chunk[id.length]))) {
+	if (!forcedIdentifier && KEYWORD_CANDIDATE_MAP[id] && (isKeyword = this.isKeyword(id,this._chunk[id.length]))) {
 		// (id in JS_KEYWORDS or id in IMBA_KEYWORDS)
 		
 		if (typeof isKeyword == 'string') {
@@ -1257,8 +1267,6 @@ Lexer.prototype.identifierToken = function (){
 		} else {
 			typ = id.toUpperCase();
 		};
-		
-		addLoc = true;
 		
 		if (typ == 'MODULE') {
 			if (!(/^module [a-zA-Z]/).test(this._chunk) || ctx0 == 'TAG_ATTR') {
@@ -1964,6 +1972,7 @@ Lexer.prototype.outdentToken = function (moveOut,noNewlines,newlineCount){
 				
 				this._last._opener = opener;
 				opener._closer = this._last;
+				opener._closerIndex = this._tokens.length - 1;
 				if (opener._type == 'CSS_SEL') {
 					this.token('CSS_END',"",0);
 				};
@@ -2296,6 +2305,7 @@ Lexer.prototype.literalToken = function (){
 	
 	if (opener) {
 		opener._closer = this._last;
+		opener._closerIndex = this._tokens.length - 1;
 	};
 	
 	if (this._platform == 'tsc') {

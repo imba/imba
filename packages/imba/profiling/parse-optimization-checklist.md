@@ -14,15 +14,17 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 - [x] Replace linear keyword checks such as `ALL_KEYWORDS.indexOf(id)` in `src/compiler/lexer.mjs` with a precomputed lookup map/set. Checked on 2026-05-30 against `sample-logic-heavy.imba`; `identifierToken` sampled self time improved, but full parse/compile timing did not change significantly.
 - [x] Audit other lexer membership checks using `idx$(...) >= 0`, especially repeated checks in `isKeyword` and `identifierToken`. Checked on 2026-05-30 against `sample-logic-heavy.imba`; removed `idx$` from `lexer.mjs` and replaced simple membership checks with direct comparisons or precomputed lookup maps. This lowered sampled `identifierToken` self time again, with only a small/noisy full compile change.
 - [x] Profile `Lexer.prototype.basicContext`; consider a first-character dispatch table so every source position does not try the full recognizer chain. Checked on 2026-05-30 against `sample-logic-heavy.imba`; first-character dispatch reduced parse wall time from ~1.145 ms/parse to ~0.979 ms/parse and `lexer.tokenize.main` from ~0.495 ms to ~0.362 ms.
-- [ ] Profile `Lexer.prototype.identifierToken`; split the common identifier path from rarer decorator, argvar, env flag, symbol, CSS mixin, and special keyword handling.
+- [x] Profile `Lexer.prototype.identifierToken`; split the common identifier path from rarer decorator, argvar, env flag, symbol, CSS mixin, and special keyword handling. Checked on 2026-05-30 against `sample-logic-heavy.imba`; short-circuited property-access identifiers and non-keyword ordinary identifiers, reducing `isKeyword()` calls from 367 to 103 and `lexer.tokenize.main` from ~0.363 ms to ~0.318 ms.
 - [ ] Profile `Lexer.prototype.lexStyleBody`; reduce repeated regex attempts in style-heavy files.
 - [x] Review `Lexer.prototype.moveHead` / `count(str, "\n")`; avoid scanning whole chunks when the caller only needs line-break counts for known substrings. Checked on 2026-05-30 against `sample-logic-heavy.imba`; replaced `split("\n").length - 1` with a no-allocation char-code scan. Microbench on actual `moveHead` inputs was ~4x faster, while whole-compile timing was effectively unchanged/noisy.
 
 ## Rewriter
 
-- [ ] Cache token closer indices or store numeric closer positions to avoid repeated `tokens.indexOf(token._closer)` inside style/tag skip paths.
-- [ ] Profile `addImplicitBraces`; look for avoidable scans, `splice` churn, and repeated balanced-stack work.
-- [ ] Profile `addImplicitParentheses`; look for similar skip/caching opportunities and repeated token-type lookups.
+- [x] Cache token closer indices or store numeric closer positions to avoid repeated `tokens.indexOf(token._closer)` inside style/tag skip paths. Checked on 2026-05-30; lexer now stamps `_closerIndex`, and the rewriter validates it before falling back to `tokens.indexOf`. This is a small style/tag-path cleanup, not a large logic-heavy win.
+- [x] Replace singleton `NO_IMPLICIT_BRACES` / `NO_IMPLICIT_PARENS` array checks with direct `STYLE_START` comparisons. Checked on 2026-05-30; these checks run in the hot rewriter scans.
+- [x] Replace the `addImplicitBraces` balanced-stack `unshift` / `shift` pair with `push` / `pop` and a cached current pair. Checked on 2026-05-30; this avoids array reindexing in the braces scan.
+- [ ] Profile `addImplicitBraces`; look for larger avoidable scans, `splice` churn, and repeated token-type lookups.
+- [ ] Profile `addImplicitParentheses`; look for similar skip/caching opportunities, `detectEnd` scan costs, and repeated token-type lookups.
 - [ ] Consider combining compatible full-token scans in `Rewriter.prototype.all` after correctness tests are in place.
 - [ ] Audit `detectEnd` callers for repeated forward scans over the same token ranges.
 
@@ -31,6 +33,10 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 - [ ] Treat generated parser changes as lower priority until lexer/rewriter wins are exhausted.
 - [ ] Profile parser reductions after lexer/rewriter changes; current hot reductions include style/property/tag-heavy grammar paths, but absolute time is relatively low.
 - [ ] Check whether parser `performAction` object/array allocations show up after front-end improvements.
+
+## Token Representation
+
+- [ ] Investigate replacing token type strings such as `TERMINATOR`, `INDENT`, and `IDENTIFIER` with numeric constants or a generated/inlined enum. This could reduce repeated string comparisons, map lookups, and token memory, but it is a high-blast-radius change because lexer, rewriter, parser, AST helpers, diagnostics, and debugging output all currently assume readable string token types. Prototype behind translation helpers first and compare parse CPU, full compile time, memory/GC pressure, and profile readability before committing to a migration.
 
 ## Style Parse / AST Construction
 

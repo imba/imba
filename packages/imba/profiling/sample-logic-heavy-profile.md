@@ -142,3 +142,41 @@ On the actual `moveHead` inputs from this sample, the direct scan was about 4x f
 | direct char-code scan | 496.391 ms |
 
 Whole-compiler timing did not move clearly because the sample only had 183 `moveHead` inputs totaling 856 characters. Treat this as an allocation/GC cleanup rather than a measurable logic-heavy wall-time win.
+
+## 2026-05-30 Identifier Common Path
+
+`Lexer.prototype.identifierToken` now short-circuits two common cases before the full keyword/contextual logic:
+
+- property access identifiers after `.` / `?.`
+- ordinary identifiers that are not keyword candidates, not special import/export ids, and not affected by catch/protected/unit context
+
+This keeps decorators, argvars, env flags, symbol ids, CSS mixins, keyword ids, import/export handling, and unit/catch/protected cases on the old path.
+
+| Metric | Before identifier shortcut | After identifier shortcut |
+| --- | ---: | ---: |
+| `isKeyword()` calls | 367 | 103 |
+| Parse wall time | 0.996 ms/parse over 5,000 runs | 0.953 ms/parse over 5,000 runs |
+| Lexer file sampled self time | 0.328 ms/parse | 0.299 ms/parse |
+| `Lexer.identifierToken` sampled self time | 0.079 ms/parse | 0.071 ms/parse |
+| `lexer.tokenize.main` mean | 0.363 ms | 0.318 ms |
+| Full compile phase mean | 2.251 ms | 2.032 ms |
+
+Validation: `node --check src/compiler/lexer.mjs`, the three profiling samples, `/Users/sindre/repos/letsdev/app/models/user.imba`, and the 96-file syntax/style/issues compile sweep all passed with zero diagnostics.
+
+## 2026-05-30 Rewriter Scan Cleanup
+
+`addImplicitBraces` / `addImplicitParentheses` now avoid a few small costs in their hot scans:
+
+- style/tag closer skips use lexer-stamped `_closerIndex` when still valid, falling back to `tokens.indexOf(token._closer)` only when needed
+- singleton `NO_IMPLICIT_BRACES` / `NO_IMPLICIT_PARENS` checks became a direct `STYLE_START` comparison
+- `addImplicitBraces` uses `push` / `pop` with a cached current pair instead of `unshift` / `shift`
+
+The logic-heavy sample does not exercise many style/tag closer jumps, so the main relevant changes here are the direct comparison and stack cleanup. The measured effect is small and close to normal noise, but the rewrite steps moved slightly in the right direction.
+
+| Metric | Before rewriter cleanup | After rewriter cleanup |
+| --- | ---: | ---: |
+| `rewrite.total` mean | 0.297 ms | 0.285 ms |
+| `addImplicitBraces` mean | 0.116 ms | 0.107 ms |
+| `addImplicitParentheses` mean | 0.098 ms | 0.096 ms |
+
+Validation: `node --check src/compiler/rewriter.mjs`, the three profiling samples, `/Users/sindre/repos/letsdev/app/models/user.imba`, and the 96-file syntax/style/issues compile sweep all passed with zero diagnostics.

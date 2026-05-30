@@ -33,6 +33,14 @@ var arrayToHash = function(ary) {
 	return hash;
 };
 
+var closerIndex = function(tokens,token) {
+	var closer = token._closer;
+	if (!closer) { return -1 };
+	var idx = token._closerIndex;
+	if (idx != null && tokens[idx] === closer) { return idx };
+	return token._closerIndex = tokens.indexOf(closer);
+};
+
 // Tokens that indicate the close of a clause of an expression.
 var EXPRESSION_CLOSE = [')',']','}','STYLE_END','OUTDENT','CALL_END','PARAM_END','INDEX_END','BLOCK_PARAM_END','STRING_END','}}','TAG_END','CATCH','WHEN','ELSE','FINALLY'];
 
@@ -66,8 +74,7 @@ var EXPRESSION_END = {
 	'TAG_END': 1
 };
 
-var NO_IMPLICIT_PARENS = ['STYLE_START'];
-var NO_IMPLICIT_BRACES = ['STYLE_START'];
+var NO_IMPLICIT_REWRITE = 'STYLE_START';
 
 var SINGLE_LINERS = {
 	ELSE: 1,
@@ -502,6 +509,7 @@ Rewriter.prototype.addImplicitBraces = function (){
 	
 	var indents = [];
 	var balancedStack = [];
+	var currPair = null;
 	
 	// method is called so many times
 	return self.scanTokens(function(token,i,tokens) {
@@ -509,22 +517,24 @@ Rewriter.prototype.addImplicitBraces = function (){
 		var v = token._value;
 		
 		if (type == 'CSS_SEL' && token._closer) {
-			let idx = tokens.indexOf(token._closer);
+			let idx = closerIndex(tokens,token);
 			// console.log 'CSS jump to',i,idx,idx - i,tokens[idx - i]
-			return idx - i + 1;
+			if (idx >= 0) { return idx - i + 1 };
 		};
 		
 		if (type == 'STYLE_START' && token._closer) {
-			return tokens.indexOf(token._closer) - i;
+			let idx = closerIndex(tokens,token);
+			if (idx >= 0) { return idx - i };
 		};
 		
 		if (BALANCED_PAIRS[type]) {
-			balancedStack.unshift(type);
-		} else if (INVERSES[type] && INVERSES[type] == balancedStack[0]) {
-			balancedStack.shift();
+			balancedStack.push(currPair = type);
+		} else if (INVERSES[type] && INVERSES[type] == currPair) {
+			balancedStack.pop();
+			currPair = balancedStack[balancedStack.length - 1];
 		};
 		
-		if (NO_IMPLICIT_BRACES.indexOf(balancedStack[0]) >= 0) {
+		if (currPair === NO_IMPLICIT_REWRITE) {
 			return 1;
 		};
 		
@@ -824,8 +834,11 @@ Rewriter.prototype.addImplicitParentheses = function (){
 		};
 		
 		if ((type == 'STYLE_START' || type == 'CSS_SEL') && token._closer) {
-			i = tokens.indexOf(token._closer) + 1;
-			continue;
+			let idx = closerIndex(tokens,token);
+			if (idx >= 0) {
+				i = idx + 1;
+				continue;
+			};
 		};
 		
 		if (BALANCED_PAIRS[type]) {
@@ -835,7 +848,7 @@ Rewriter.prototype.addImplicitParentheses = function (){
 			currPair = stack[stack.length - 1];
 		};
 		
-		if (NO_IMPLICIT_PARENS.indexOf(currPair) >= 0) {
+		if (currPair === NO_IMPLICIT_REWRITE) {
 			i++;
 			continue;
 		};
