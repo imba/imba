@@ -28,9 +28,34 @@ tag App
 			bd:1px solid #tile-border
 """
 
+fs.astHelpers = """
+global css .x
+	2gap:10px
+	color:black/50%
+"""
+
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
 	imbac.compile(fs[name],o)
+
+def walk node, fn, seen = new Set
+	return unless node and typeof node == 'object'
+	return if seen.has(node)
+	seen.add(node)
+	fn(node)
+	for key in Object.keys(node)
+		let value = node[key]
+		if Array.isArray(value)
+			for item in value
+				walk(item,fn,seen)
+		else
+			walk(value,fn,seen)
+
+def findNode root, fn
+	let found = null
+	walk(root) do |node|
+		found ||= node if !found and fn(node)
+	found
 
 test 'custom color' do
 	let res = compile('code1', config: {theme: {
@@ -63,3 +88,39 @@ test 'color variable aliases preserve lch channel references' do
 	ok res.css.match(/--u_tile-borderL:\s*var\(--u_tilebdL\)/)
 	ok !res.css.match(/--u_tilebgL:\s*0\b/)
 	ok !res.css.match(/--u_tile-borderL:\s*81\.3\b/)
+
+test 'style ast keeps imba1 helper accessors' do
+	let root = imbac.parse(fs.astHelpers, sourcePath: 'ast-helpers.imba')
+	let unitDecl = findNode(root) do |node|
+		node._property and node._property._name == '2gap'
+	let unitProp = unitDecl._property
+	let expr = unitDecl._expr._nodes[0]
+	let identifier = findNode(root) do |node|
+		node._value and String(node._value) == 'black'
+	let dimension = findNode(root) do |node|
+		node._unit == 'px' and node._number == 10
+
+	ok typeof unitProp.isUnit == 'function'
+	ok typeof unitProp.number == 'function'
+	ok typeof unitProp.unit == 'function'
+	ok typeof unitProp.kind == 'function'
+	ok typeof expr.toIterable == 'function'
+	ok typeof identifier.kind == 'function'
+	ok typeof identifier.color == 'function'
+	ok typeof identifier.setColor == 'function'
+	ok typeof dimension.number == 'function'
+	ok typeof dimension.setNumber == 'function'
+	ok typeof dimension.setUnit == 'function'
+
+	eq unitProp.isUnit(), 'gap'
+	eq unitProp.number(), 2
+	eq unitProp.unit(), 'gap'
+	eq expr.toIterable(), expr._nodes
+	eq identifier.setColor('white'), identifier
+	eq identifier.color(), 'white'
+	eq dimension.number(), 10
+	eq dimension.unit, 'px'
+	eq dimension.setNumber(12), dimension
+	eq dimension.number(), 12
+	eq dimension.setUnit('rem'), dimension
+	eq dimension.unit, 'rem'
