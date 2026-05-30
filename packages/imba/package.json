@@ -18,7 +18,7 @@
     "sync": "npm i && npm run build && npm link"
   },
   "engines": {
-    "node": ">=13.10.0"
+    "node": ">=20.19.0"
   },
   "bin": {
     "imba": "./bin/imba",
@@ -104,7 +104,7 @@
     "workerpool": "^6.0.3"
   },
   "dependencies": {
-    "chokidar": "^3.4.3",
+    "chokidar": "^5.0.0",
     "colord": "^2.9.3",
     "dotenv": "^16.0.3",
     "envinfo": "^7.8.1",
