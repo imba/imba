@@ -32,7 +32,7 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 
 ## Parser
 
-- [x] Treat generated parser changes as lower priority until lexer/rewriter wins are exhausted. Checked on 2026-05-30; after lexer/style/rewriter passes, parser totals are still modest in the profiling samples, so no generated parser edits were made.
+- [x] Treat generated parser changes as lower priority until lexer/rewriter wins are exhausted. Checked on 2026-05-30; after lexer/style/rewriter passes, parser totals are still modest in the profiling samples. A later parser reduce-loop probe that cached the production row and replaced repeated `pop()` calls with direct stack/vstack length truncation was rejected on the full Lets corpus (-7.5% mean, -11.2% median in the smoke run), so the generated parser stack loop was kept as-is.
 - [x] Profile parser reductions after lexer/rewriter changes; current hot reductions include style/property/tag-heavy grammar paths, but absolute time is relatively low. Checked on 2026-05-30 with `profile-compile.mjs` attribution on logic/style/tag samples; the hottest reductions remain sample-specific (`IfBlock`/`Identifier`, `StyleTerm`/`StyleProperty`, `TagOptions`/`TagTypeName`) and are small compared with traversal/codegen and lexer/rewriter costs.
 - [x] Check whether parser `performAction` object/array allocations show up after front-end improvements. Checked on 2026-05-30; parse CPU and compile attribution did not show parser allocation/GC as a new dominant bottleneck, so generated `performAction` allocation work remains lower priority.
 
