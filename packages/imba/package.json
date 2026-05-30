@@ -93,13 +93,11 @@
     }
   },
   "devDependencies": {
-    "@jridgewell/trace-mapping": "^0.3.18",
     "commander": "^6.2.1",
     "haikunator": "^2.1.2",
     "ignore": "^5.2.4",
     "image-size": "^0.9.3",
     "micromatch": "^4.0.5",
-    "ora": "^5.2.0",
     "picomatch": "^2.2.2",
     "puppeteer": "^22.12.1",
     "sourcemap-codec": "^1.4.8",

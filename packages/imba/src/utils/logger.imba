@@ -77,7 +77,6 @@ export def format str,...rest
 
 	return [str,...rest]
 
-let Spinner = null
 let Instance = null
 
 export class Logger
@@ -107,15 +106,7 @@ export class Logger
 		let [str,*rest] = format(*parts)
 		str = prefix + str if prefix
 
-		if #spinner and #spinner.isSpinning
-			if kind == 'success'
-				#spinner.clear!
-				console.log(sym + ' ' + str,*rest)
-				#spinner.frame!
-
-			#spinner.text = str
-		else
-			console.log(sym + ' ' + str,*rest)
+		console.log(sym + ' ' + str,*rest)
 
 	def log
 		let [str,*rest] = format(*arguments)
@@ -132,13 +123,6 @@ export class Logger
 		let diff = #last ? (now - #last) : 0
 		write('debug',*arguments,"+{diff.toFixed(1)}ms".blue)
 		#last = now
-
-	def spinner
-		return
-		Spinner = ora('Loading').start!
-
-	get #spinner
-		Spinner
 
 	get proxy
 		let fn = info
