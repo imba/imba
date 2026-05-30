@@ -247,7 +247,6 @@ let bundles = [
 		outExtension: { ".js": ".node.js" },
 		format: "cjs",
 		outdir: "dist",
-		external: ["lodash.mergewith"],
 		platform: "node",
 	},
 	{
@@ -288,8 +287,8 @@ let bundles = [
 		alias: aliases,
 		outExtension: { ".js": ".imba.js" },
 		minify: true,
-		
-		external: ["lodash.mergewith", "chokidar", "esbuild"],
+
+		external: ["chokidar", "esbuild"],
 		outdir: ".",
 		format: "cjs",
 		platform: "node",
