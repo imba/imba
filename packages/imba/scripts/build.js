@@ -1,5 +1,5 @@
 const imba1 = require('./bootstrap.compiler.js');
-const imba2 = require('./bootstrap.compiler2.js');
+const imba2 = require('../src/compiler/compiler.mjs');
 const chokidar = require('chokidar');
 const fs = require('fs');
 const np = require('path');
