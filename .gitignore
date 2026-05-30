@@ -10,6 +10,7 @@ test/dist
 packages/imba-core
 packages/imba/test/cli/examples/dist
 packages/imba/test/apps/**/*.js
+packages/imba/profiling/*.cpuprofile
 packages/imba/bin/temp-config.vite.js
 packages/e2e-tests/**/node_modules
 packages/e2e-tests/**/dist*
