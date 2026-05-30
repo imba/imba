@@ -63,7 +63,7 @@ export default class Watcher < Component
 				uniq.push(path)
 
 		if #watcher and uniq.length
-			#watcher.add(...uniq)
+			#watcher.add(uniq)
 		self
 
 	def close
