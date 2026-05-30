@@ -42,7 +42,7 @@ node profiling/profile-compile.mjs --runs 120 --warmup 30 --attribution-runs 5 -
 
 ## Verification
 
-- [ ] Add/identify a focused parser/lexer test command before changing tokenization or rewrite behavior.
+- [x] Add/identify a focused parser/lexer test command before changing tokenization or rewrite behavior. Added `node profiling/verify-compile-output.mjs` on 2026-05-30; it imports `src/compiler/compiler.mjs` directly and can snapshot/compare token count, diagnostics, JS output, and CSS output for the three profiling samples.
 - [ ] Compare parse-only CPU profiles before/after with `profile-parse-cpu.mjs`.
 - [ ] Compare full compile timings before/after with `profile-compile.mjs`.
 - [ ] Verify output stability for `profiling/sample1.imba`: token count, diagnostics, JS output, and CSS output.
