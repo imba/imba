@@ -1,5 +1,5 @@
 # TODO esmify
-const puppeteer = require "puppeteer"
+const playwright = require "playwright"
 const path = require "path"
 const fs = require "fs"
 const compiler = require "../dist/compiler.cjs"
@@ -42,22 +42,14 @@ let consoleMapping = {
 	endGroup: 'groupEnd'
 }
 
-let parseRemoteObject = do(obj)
-	return if obj === undefined
-	let result = obj.value or obj
-	if obj.type == 'object'
-		if obj.value
-			return obj.value
-		result = {}
-		if obj.preview
-			for item in obj.preview.properties
-				result[item.name] = parseRemoteObject(item)
-
-	elif obj.type == 'number'
-		result = parseFloat(obj.value)
-	elif obj.type == 'boolean'
-		result = (obj.value == 'true' or obj.value === true)
-	return result
+def parseConsoleArg arg
+	try
+		return await arg.jsonValue!
+	catch e
+		try
+			return await arg.evaluate(do(value) String(value))
+		catch e
+			return String(arg)
 
 let tests = []
 let runners = []
@@ -104,9 +96,9 @@ def spawnRunner
 	if runners[0]
 		return runners.shift!
 
-	let browser = await puppeteer.launch(args: args, headless: 'shell')
+	let browser = await playwright.chromium.launch(args: args, headless: true)
 	let runner = await browser.newPage!
-	runner.setViewport({width: 800, height: 600})
+	await runner.setViewportSize({width: 800, height: 600})
 	runner.nr = counter++
 	runner.meta = []
 	runner.pup = {
@@ -133,6 +125,9 @@ def spawnRunner
 		if str == 'mouse.up'
 			runner.pup.mousedown--
 
+		if str == 'setViewport'
+			return runner.setViewportSize(params[0])
+
 		while path.length
 			receiver = receiver[path.shift()]
 
@@ -143,8 +138,9 @@ def spawnRunner
 		return receiver[meth].apply(receiver,params)
 
 	runner.on 'console' do(msg)
-		let params = msg.args().map do |x|
-			parseRemoteObject(x.remoteObject())
+		let params = []
+		for arg in msg.args()
+			params.push(await parseConsoleArg(arg))
 
 		let str = String(params[0]) # .replace(':','')
 		if runner.HANDLERS and runner.HANDLERS[str]
