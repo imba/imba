@@ -1,5 +1,5 @@
 import {readFileSync} from "fs"
-import {parseAsset} from 'imba/compiler'
+import {parseAsset} from '../bundler/assets'
 
 def compile-svg(body\string, url\string)
 	let parsed = parseAsset({body})

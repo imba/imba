@@ -3,7 +3,7 @@ const micromatch = require 'micromatch'
 import nfs from 'fs'
 import np from 'path'
 import {fdir} from '../../vendor/fdir/index.js'
-import {parseAsset,parseHTML} from '../compiler/assets'
+import {parseAsset,parseHTML} from './assets'
 import Component from './component'
 import ChangeLog from './changes'
 
