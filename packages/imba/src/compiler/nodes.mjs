@@ -1064,6 +1064,10 @@ class Stack {
     this._counters = {};
     this._options = {};
     this._state = {};
+    this._root = null;
+    this.ROOT = null;
+    this.SOURCECODE = "";
+    this._analyzing = false;
     this._tag = null;
     this._sourceId = null;
     this._symbols = {};
@@ -1072,7 +1076,7 @@ class Stack {
     this._theme = null;
     this._meta = {};
     // @css = ''
-    this._runtime;
+    this._runtime = null;
     MPREV = [-1, -1, -1];
     return this;
   }
