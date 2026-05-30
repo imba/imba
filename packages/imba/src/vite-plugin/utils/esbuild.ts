@@ -8,6 +8,7 @@ import { Compiled } from './compile';
 import { log } from './log';
 import { CompileOptions, ResolvedOptions } from './options';
 import { toESBuildError } from './error';
+import { compileLegacyImba, isLegacyImba } from './legacy';
 
 type EsbuildOptions = NonNullable<DepOptimizationOptions['esbuildOptions']>;
 type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
@@ -22,7 +23,7 @@ export function esbuildImbaPlugin(options: ResolvedOptions): EsbuildPlugin {
 			// Otherwise this would heavily slow down the scanning phase.
 			// if (build.initialOptions.plugins?.some((v) => v.name === 'vite:dep-scan')) return;
 
-			const imbaExtensions = (options.extensions ?? ['.imba']).map((ext) => ext.slice(1));
+			const imbaExtensions = (options.extensions ?? ['.imba', '.imba1']).map((ext) => ext.slice(1));
 			const imbaFilter = new RegExp(`\\.(` + imbaExtensions.join('|') + `)(\\?.*)?$`);
 
 			build.onLoad({ filter: imbaFilter }, async ({ path: filename }) => {
@@ -82,7 +83,15 @@ async function compileImba(
 		  }
 		: compileOptions;
 
+	if (isLegacyImba(filename)) {
+		return compileLegacyImba(finalCode, finalCompileOptions).js;
+	}
+
 	const compiled = compile(finalCode, finalCompileOptions) as Compiled;
+
+	if (typeof compiled.js === 'string') {
+		return compiled.js;
+	}
 
 	return compiled.js.code + '//# sourceMappingURL=' + compiled.js.map.toUrl();
 }

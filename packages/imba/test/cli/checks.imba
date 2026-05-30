@@ -36,4 +36,7 @@ export default {
 	"imba build --web app/home.imba": {
 
 	}
+	"imba build --force --web app/legacy-host.imba": {
+
+	}
 }

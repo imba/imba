@@ -22,7 +22,7 @@ async function getModulePath(moduleName) {
 }
 const envPrefix = ["VITE_", "IMBA_", "OP_"]
 
-const extensions = ['.imba', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
+const extensions = ['.imba', '.imba1', '.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
 
 let userTestConfig = {}
 
@@ -94,7 +94,7 @@ let server = {
 				include: ["**/*.bench.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
 			},
 			include: ["**/*.{test,spec}.{imba,js,mjs,cjs,ts,mts,cts,jsx,tsx}", "features/**/*.feature"],
-			includeSource: ['**/*.imba'],
+			includeSource: ['**/*.imba', '**/*.imba1'],
 			environment: "node",
 			setupFiles,
 			exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*']

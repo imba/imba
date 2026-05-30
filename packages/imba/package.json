@@ -39,6 +39,7 @@
     "build",
     "typings",
     "vendor",
+    "scripts/bootstrap.compiler.js",
     "polyfills",
     "*.imba",
     "*.d.ts",

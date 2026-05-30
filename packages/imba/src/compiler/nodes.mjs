@@ -19692,6 +19692,10 @@ class StyleColor extends StyleTerm {
     }
   }
 
+  lcha() {
+    return this._lcha;
+  }
+
   c(o) {
     var ary;
     let raw = this.toRaw();
@@ -19719,6 +19723,10 @@ class StyleColor extends StyleTerm {
 class StyleColorMix extends StyleTerm {
   params() {
     return this.option("params");
+  }
+
+  lcha() {
+    return this._lcha;
   }
 
   visit() {

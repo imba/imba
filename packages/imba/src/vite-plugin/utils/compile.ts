@@ -7,6 +7,7 @@ import { ImbaRequest } from './id';
 import { safeBase64Hash } from './hash';
 import { log } from './log';
 import Cache from '../../bundler/cache.imba';
+import { compileLegacyImba, isLegacyImba } from './legacy';
 
 const scriptLangRE = /<script [^>]*lang=["']?([^"' >]+)["']?[^>]*>/;
 
@@ -101,6 +102,15 @@ const _createCompileImba = (imbaConfig, makeHot?: Function) =>
 		const mtime = nfs.existsSync(filename) ? nfs.statSync(filename).mtimeMs : 0;
 
 		const wrap_compile = (code,o) => {
+			if (isLegacyImba(filename)) {
+				const res = compileLegacyImba(code, o);
+				return {
+					js: {code: res.js, dependencies: [], map: res.sourcemap},
+					css: {code: res.css},
+					warnings: res.warnings,
+					errors: res.errors
+				}
+			}
 			const res = compile(code, o);
 			const map = res.sourcemap;
 			return {

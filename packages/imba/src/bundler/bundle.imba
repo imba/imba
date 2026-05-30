@@ -285,7 +285,7 @@ export default class Bundle < Component
 				"for-await": true
 				"top-level-await": true
 			}
-			resolveExtensions: ['.imba','.ts','.mjs','.cjs','.js','.svg']
+			resolveExtensions: ['.imba','.imba1','.ts','.mjs','.cjs','.js','.svg']
 		}
 
 		esoptions.entryPoints..sort!
@@ -941,7 +941,7 @@ export default class Bundle < Component
 				{loader: 'css', contents: ""}
 
 		# The main loader that compiles and returns imba files, and their stylesheets
-		esb.onLoad({ filter: /\.imba$/}) do({path,namespace,pluginData,suffix})
+		esb.onLoad({ filter: /\.imba1?$/}) do({path,namespace,pluginData,suffix})
 			let src = fs.lookup(path)
 
 			if suffix == '?styles'

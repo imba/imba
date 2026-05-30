@@ -92,6 +92,7 @@ export class FSNode
 		let types = {
 				'.json': JSONFile
 				'.imba': ImbaFile
+				'.imba1': Imba1File
 				'.svg': SVGFile
 			'.png': ImageFile
 			'.apng': ImageFile
@@ -302,6 +303,28 @@ export class ImbaFile < FileNode
 			let t = Date.now!
 			let out = await context.workers.exec('compile_imba', [code,o])
 			log.debug 'compile %path %path in %ms',rel,o.platform,Date.now! - t,o.sourceId
+			return out
+
+export class Imba1File < FileNode
+
+	def compile o,context = program
+		memo(o.platform) do
+			o = Object.assign({
+				platform: 'node',
+				format: 'esm',
+				sourcePath: rel,
+				filename: rel,
+				inlineHelpers: 1,
+				cwd: fs.cwd
+			},o)
+
+			o.target = o.platform
+
+			let code = await read!
+
+			let t = Date.now!
+			let out = await context.workers.exec('compile_imba1', [code,o])
+			log.success 'compile %path in %ms',rel,Date.now! - t
 			return out
 
 export class SVGFile < FileNode

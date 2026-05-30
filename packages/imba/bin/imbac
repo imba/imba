@@ -11,6 +11,8 @@ function iter$(a){ return a ? (a.toArray ? a.toArray() : a) : []; };
 var self = {};
 // imba$v2=0
 
+var imbac1;
+
 var stdin = process.stdin;
 var stdout = process.stdout;
 var ansi = helpers.ansi;
@@ -102,7 +104,7 @@ CLI.prototype.ensureDir = function (src){
 
 CLI.prototype.findRecursive = function (root,pattern){
 	var m;
-	if(pattern === undefined) pattern = /\.imba$/;
+	if(pattern === undefined) pattern = /\.imba\d?$/;
 	var results = [];
 	root = path.relative(process.cwd(),root);
 	root = path.normalize(root);
@@ -126,7 +128,7 @@ CLI.prototype.findRecursive = function (root,pattern){
 		};
 	};
 
-	if (m = root.match(/\/\*\.imba$/)) {
+	if (m = root.match(/\/\*\.imba\d?$/)) {
 		root = root.slice(0,-m[0].length);
 		read(root,1);
 	} else {
@@ -165,7 +167,7 @@ CLI.prototype.pathToSource = function (src,coll,o,root){
 
 	if (file.targetPath) {
 		var ext = ('.' + (o.outext || 'js')).replace(/^\.+/,'.');
-		file.targetPath = file.targetPath.replace(/\.imba$/,ext);
+		file.targetPath = file.targetPath.replace(/\.imba\d?$/,ext);
 	};
 
 	return coll.push(file);
@@ -344,9 +346,15 @@ CLI.prototype.compileFile = function (src){
 	opts.sourcePath = srcpAbs;
 
 	try {
-		out = compiler.compile(src.sourceBody,opts);
-		if(opts.runtime == 'inline'){
-			out.js = fs.readFileSync(path.resolve(__dirname,'..','dist','imba.js'),'utf8') + '\n' + out.js;
+		if (src.sourcePath.match(/\.imba1$/)) {
+			imbac1 || (imbac1 = require("../scripts/bootstrap.compiler.js"));
+			opts.filename = opts.sourcePath;
+			out = imbac1.compile(src.sourceBody,opts);
+		} else {
+			out = compiler.compile(src.sourceBody,opts);
+			if(opts.runtime == 'inline'){
+				out.js = fs.readFileSync(path.resolve(__dirname,'..','dist','imba.js'),'utf8') + '\n' + out.js;
+			}
 		}
 	} catch (e) {
 		console.log('error',e);

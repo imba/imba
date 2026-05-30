@@ -23,6 +23,10 @@ export def compile_imba code, o
 	if pool
 		pool.exec('compile_imba', [code,o])
 
+export def compile_imba1 code, o
+	if pool
+		pool.exec('compile_imba1', [code,o])
+
 export def startWorkers
 	incr!
 	return {
