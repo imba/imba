@@ -2,6 +2,31 @@
 
 Local measurements for compiler optimization probes. Entries should name the exact benchmark shape and whether output hashes were checked. Times are noisy; treat small changes as directional unless repeated runs agree.
 
+## 2026-05-31 Upstream Cut Recommendation
+
+Recommended production-code cut:
+
+- Keep code through `5f8767ff` (`Improve Lets compile throughput`), which measured as the last substantial whole-corpus win: ~15.9% mean / ~15.7% median on the 210-file Lets corpus.
+- Keep later profiling notes and harness improvements as local history/documentation.
+- Drop later production-code probes unless revalidated, especially the hidden-class initializer changes in `6227d5ae` and `9c59f81c`; their theoretical IC benefit was not tied to a clear full-corpus win.
+
+Rejected follow-up probes after the full-corpus speedup:
+
+- Tag.js direct `_options` specialization: output-stable, but slower on the full Lets smoke run (~-3.5% mean/median).
+- Rewriter indentation `tokenTypeAt` replacement: output-stable, but longer full-corpus run was negative (-3.1% mean, -0.5% median).
+- Split rewriter scan wrappers: output-stable, but longer full-corpus run was negative (-3.6% mean, -4.3% median).
+- Stack active-scope cache: repaired after a stale sibling-scope verifier failure, but longer full-corpus run was still negative (-1.8% mean, -2.1% median).
+- Root global registration fast path: output-stable, but full-corpus run was flat/slower (-0.38% mean, -0.16% median).
+- Parser reduce-loop truncation: output-stable, but full-corpus smoke run was clearly slower (-7.5% mean, -11.2% median).
+- Lexer newline-direct path: output-stable, but smoke run was noisy/negative (median -4.1%, mean dominated by a large negative outlier).
+- Token shape and cache-slot broadening probes repeatedly showed that extra constructor writes can cost more than the IC stabilization they promise.
+
+Future work:
+
+- Larger wins are more likely from reducing whole passes or tag/codegen decisions than from one-slot hidden-class tweaks.
+- If revisiting V8 traces, tie every candidate to both a CPU hotspot and a repeated deopt/IC site before editing.
+- Keep using paired full-corpus runs with alternating order; tiny single-file or single-round wins were not predictive.
+
 ## 2026-05-30 Tag.js Local Emission Cleanup
 
 Scope:

@@ -1064,10 +1064,6 @@ class Stack {
     this._counters = {};
     this._options = {};
     this._state = {};
-    this._root = null;
-    this.ROOT = null;
-    this.SOURCECODE = "";
-    this._analyzing = false;
     this._tag = null;
     this._sourceId = null;
     this._symbols = {};
@@ -1076,7 +1072,7 @@ class Stack {
     this._theme = null;
     this._meta = {};
     // @css = ''
-    this._runtime = null;
+    this._runtime;
     MPREV = [-1, -1, -1];
     return this;
   }
@@ -19208,7 +19204,6 @@ class Scope {
     this._refcounter = 0;
     this._declListeners = [];
     this._level = (parent ? parent._level : -1) + 1;
-    this._context = null;
     this.setup();
   }
 
