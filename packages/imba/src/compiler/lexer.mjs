@@ -79,7 +79,7 @@ var CONTEXTUAL_KEYWORDS = {
 	CLASS: {'global': 1,'declare': 1,static: 1,extend: 1,strict: 1,abstract: 1,mixin: 1},
 	MIXIN: {'global': 1,'declare': 1,extend: 1,strict: 1,abstract: 1},
 	INTERFACE: {'global': 1,'declare': 1,extend: 1,strict: 1,mixin: 1},
-	TAG: {'global': 1,'declare': 1,extend: 1,strict: 1,abstract: 1},
+	TAG: {'global': 1,'declare': 1,'local': 1,extend: 1,strict: 1,abstract: 1},
 	DEF: {'global': 1,'declare': 1,protected: 1},
 	PROP: {'static': 1},
 	ATTR: {'static': 1},
@@ -321,6 +321,8 @@ var LINE_BREAK = ['INDENT','OUTDENT','TERMINATOR'];
 var LINE_BREAK_MAP = map$(LINE_BREAK);
 
 var DECLARE_START_MAP = map$(['INDENT','TERMINATOR','DECORATOR']);
+var TAG_DECLARATION_START_MAP = map$(['INDENT','OUTDENT','TERMINATOR','EXPORT','DEFAULT','DECLARE','GLOBAL','LOCAL','EXTEND','ABSTRACT','STRICT','DECORATOR']);
+var TAG_DECLARATION_PREFIX_MAP = map$(['global','declare','local','extend','abstract','strict']);
 var PROPERTY_ACCESS_PREV_MAP = map$(['IDENTIFIER',')','}',']','NUMBER']);
 var SYMBOL_STRING_PREV_MAP = map$(['(','[','=']);
 var SPLAT_PREV_VALUE_MAP = map$([',','(','[','{','|','\n','\t']);
@@ -1125,6 +1127,10 @@ Lexer.prototype.inTag = function (){
 Lexer.prototype.isKeyword = function (id,next){
 	var m;
 	if(next === undefined) next = '';
+	if (id == 'tag') {
+		return this.isTagDeclarationKeyword();
+	};
+
 	if (id == 'mixin' && (!next || next == ' ')) {
 		if (MEMBER_KEYWORDS[this._lastTyp]) { return false };
 		return true;
@@ -1205,6 +1211,13 @@ Lexer.prototype.isKeyword = function (id,next){
 	return ALL_KEYWORDS_MAP[id] == 1;
 };
 
+Lexer.prototype.isTagDeclarationKeyword = function (){
+	var ltyp = this._lastTyp;
+	var lval = this._lastVal;
+	var atDeclarationStart = !ltyp || TAG_DECLARATION_START_MAP[ltyp] == 1 || (ltyp == 'IDENTIFIER' && TAG_DECLARATION_PREFIX_MAP[lval] == 1);
+	return atDeclarationStart && /^tag[^\n\S]+(\w[\w\d]*:)?(\w[\w\d]*)(-[\w\d]+)*/.test(this._chunk);
+};
+
 // Matches identifying literals: variables, keywords, method names, etc.
 // Check to ensure that JavaScript reserved words aren't being used as
 // identifiers. Because Imba reserves a handful of keywords that are
@@ -1246,11 +1259,6 @@ Lexer.prototype.identifierToken = function (){
 		return idlen;
 	};
 
-	// if we are not at the top level? -- hacky
-	if (id == 'tag' && this._chunk.indexOf("tag(") == 0) { // @chunk.match(/^tokid\(/)
-		forcedIdentifier = true;
-	};
-	
 	if (id == 'css' && (/css\s\:\:/).exec(this._chunk)) {
 		input = id + ' ';
 		colon = null;

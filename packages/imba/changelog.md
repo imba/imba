@@ -4,6 +4,10 @@
 
 * Refresh prerelease after a failed 2.0.0-alpha.250 publish.
 
+* Allow `tag` to be used as a regular identifier outside tag declarations. Bare calls like `tag value` are now reserved for tag declaration syntax; use `tag(value)` for function calls.
+
+* Allow regex literals as decorated class field names, compiling them to static string keys for field descriptors and field-registry metadata.
+
 ## 2.0.0-alpha.250
 
 * Add compiler-powered metadata for global `assert` and `eq` calls in specs, allowing failures to report the original expression plus captured operand values.

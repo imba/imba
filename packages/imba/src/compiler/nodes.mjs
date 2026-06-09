@@ -3456,7 +3456,12 @@ class ClassField extends Node {
     if (!(desc instanceof Descriptor)) {
       return null;
     }
-    if (!(this._name instanceof Identifier)) {
+    if (
+      !(
+        this._name instanceof Identifier ||
+        this._name instanceof RegExpIdentifier
+      )
+    ) {
       return null;
     }
     if (this._name instanceof SymbolIdentifier) {
@@ -8225,6 +8230,80 @@ class RegExp extends Literal {
   }
 }
 
+class RegExpIdentifier extends Node {
+  constructor(value) {
+    super(...arguments);
+
+    this._value = value;
+    this._raw = String(value);
+    this._loc = value && value._loc;
+    this._len = value && value._len;
+  }
+
+  raw() {
+    return this._raw;
+  }
+
+  safeSymbol() {
+    return (
+      this._safeSymbol ||
+      (this._safeSymbol = "regex$" + helpers.identifierForPath(this._raw))
+    );
+  }
+
+  startLoc() {
+    return this._value && this._value.startLoc
+      ? this._value.startLoc()
+      : null;
+  }
+
+  endLoc() {
+    return this._value && this._value.endLoc ? this._value.endLoc() : null;
+  }
+
+  region() {
+    return [this.startLoc(), this.endLoc()];
+  }
+
+  toRaw() {
+    return this._raw;
+  }
+
+  toString() {
+    return this._raw;
+  }
+
+  toJSON() {
+    return this.toString();
+  }
+
+  metaIdentifier() {
+    return new Identifier("αα" + this.safeSymbol());
+  }
+
+  toStr() {
+    return new Str(JSON.stringify(this._raw));
+  }
+
+  toAttrString() {
+    return this.toStr();
+  }
+
+  c(o) {
+    if (o) {
+      if (o.as == "value" || o.as == "meta") {
+        return JSON.stringify(this._raw);
+      }
+
+      if (o.as == "symbolpart") {
+        return this.safeSymbol();
+      }
+    }
+
+    return "[" + JSON.stringify(this._raw) + "]";
+  }
+}
+
 // Should inherit from ListNode - would simplify
 class Arr extends Literal {
   load(value) {
@@ -11876,9 +11955,8 @@ class Call extends Node {
         callee.value().value()._type = "EXTERN";
         return new ExternDeclaration(args);
       }
-      if (str == "tag") {
-        // console.log "ERROR - access args by some method"
-        return new TagWrapper(args && args.index ? args.index(0) : args[0]);
+      if (str == "tag" && args && args._generated) {
+        this._bareTagCall = true;
       }
       if (str == "export") {
         return new Export(args);
@@ -11911,6 +11989,9 @@ class Call extends Node {
   visit() {
     this._args.traverse();
     this._callee.traverse();
+    if (this._bareTagCall) {
+      this._callee.error("Bare calls to `tag` are reserved for tag declarations; use `tag(...)` instead");
+    }
     // if the callee is a PropertyAccess - better to immediately change it
 
     let runref = this._callee.isRuntimeReference();
@@ -21277,6 +21358,7 @@ export {
   Range,
   RawScript,
   RegExp,
+  RegExpIdentifier,
   Require,
   RequiredParam,
   RescueFunc,

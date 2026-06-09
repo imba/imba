@@ -17,6 +17,11 @@ if true
 	yes
 """
 
+fs.tagimplicitcall = """
+let tag = do(v) v * 2
+let value = tag 50
+"""
+
 def compile name, o = {}
 	o.sourcePath ||= "{name}.imba"
 	imbac.compile(fs[name],o)
@@ -46,6 +51,11 @@ test 'indentation error' do
 	eq res.errors.length, 1
 	eq res.errors[0].range.start.line,1
 	eq res.errors[0].range.start.character,1
+
+test 'tag implicit call error' do
+	let res = compile('tagimplicitcall')
+	eq res.errors.length, 1
+	ok res.errors[0].message.indexOf('use `tag(...)`') >= 0
 
 test 'raiseErrors' do
 	try

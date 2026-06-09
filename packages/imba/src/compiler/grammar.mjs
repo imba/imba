@@ -1068,6 +1068,7 @@ var grammar = {
 	
 	ClassFieldIdentifier: [
 		o('Identifier'),
+		o('REGEX',function() { return new RegExpIdentifier(A1); }),
 		o('SymbolIdentifier')
 	],
 	

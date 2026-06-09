@@ -24,6 +24,20 @@ test 'field decorator registry entry' do
 	ok js.match(/args:\s*\[typeof Variant\]/)
 	ok js.match(/interface Variant\s*\{\s*readonly "_\$INTERNAL\$_imbaFieldTarget:something:stuff:imba:[^"]+"\?: ImbaFieldRegistry\["_\$INTERNAL\$_imbaFieldRegistry:something:stuff:imba:[^"]+"\]/)
 
+test 'field decorator registry supports regex field names' do
+	let js = compile """
+	class Variant
+	class Item
+		/_\\w+\\d?/ @something(Variant)
+	"""
+
+	ok js.indexOf('get ["/_\\\\w+\\\\d?/"]') >= 0
+	ok js.match(/"_\$INTERNAL\$_imbaFieldRegistry:something:\/_\\\\w\+\\\\d\?\/:imba:[^"]+":/)
+	ok js.match(/field:\s*"\/_\\\\w\+\\\\d\?\/"/)
+	ok js.match(/decorator:\s*"something"/)
+	ok js.match(/firstArg:\s*Variant/)
+	ok js.match(/interface Variant\s*\{\s*readonly "_\$INTERNAL\$_imbaFieldTarget:something:\/_\\\\w\+\\\\d\?\/:imba:[^"]+"\?: ImbaFieldRegistry\["_\$INTERNAL\$_imbaFieldRegistry:something:\/_\\\\w\+\\\\d\?\/:imba:[^"]+"\]/)
+
 test 'field registry has one entry per decorated field' do
 	let js = compile """
 	class Variant
