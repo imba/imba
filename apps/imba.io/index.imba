@@ -29,7 +29,21 @@ app.get(/__sw(_\d+)?__\.js/) do(req,res)
 const monacoRoot = np.dirname(require.resolve('monaco-editor/package.json'))
 app.use('/monaco',express.static(monacoRoot,maxAge:'7d'))
 
+# the imba runtime for live examples - must match the compiler version.
+# resolve at runtime through node - aliased so the bundler leaves it alone
+const nodeRequire = require
+const imbaRoot = np.resolve(nodeRequire.resolve('imba/compiler'),'..','..')
+const runtimeAssets = {
+	'/vendor/imba.mjs': nfs.readFileSync(np.join(imbaRoot,'dist/imba.mjs'),'utf8')
+	'/vendor/imba-runtime.mjs': nfs.readFileSync(np.join(imbaRoot,'src/imba/runtime.mjs'),'utf8')
+}
+
+app.get(['/vendor/imba.mjs','/vendor/imba-runtime.mjs']) do(req,res)
+	res.type('application/javascript').send(runtimeAssets[req.path])
+
 app.use(express.static('dist/public',maxAge:'1m'))
+# static files that are not part of the bundle (preflight.css, imdb.js, images)
+app.use(express.static('public',maxAge:'1h'))
 
 app.get(/__blank__\.html/) do(req,res)
 	res.send String <div>
@@ -132,6 +146,12 @@ app.get(/\.*/) do(req,res)
 	# console.log 'handling',req.url,req.accepts(['image/*', 'html'])
 	# only render the html for requests that prefer an html response
 	unless req.accepts(['image/*', 'html']) == 'html'
+		return res.sendStatus(404)
+
+	# never serve the app shell to iframes/embeds - a stray iframe url would
+	# otherwise mount the entire site recursively inside itself
+	let dest = req.headers['sec-fetch-dest']
+	if dest and dest != 'document'
 		return res.sendStatus(404)
 
 	res.send String <html>
