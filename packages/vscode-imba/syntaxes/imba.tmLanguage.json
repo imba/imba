@@ -259,7 +259,11 @@
         },
         {
           "name": "storage.type.class.imba",
-          "match": "(tag|class|struct|mixin|interface)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
+          "match": "(class|struct|mixin|interface)(?![\\?_\\-$[:alnum:]])(?:(?=\\.\\.\\.)|(?!\\.))"
+        },
+        {
+          "name": "storage.type.class.imba",
+          "match": "(?<![_$[:alnum:]])(?:(?<=\\.\\.\\.)|(?<!\\.))(tag)(?=[ \\t]+\\w+(?:\\-\\w+)*(?:\\:\\w+(?:\\-\\w+)*)*[ \\t]*(?:[<#]|$))"
         },
         {
           "name": "storage.type.imba",

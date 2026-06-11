@@ -197,7 +197,11 @@ repository:
       match: '(protected|private)\s+(?=def|get|set)'
 
     - name: storage.type.class.imba
-      match: '(tag|class|struct|mixin|interface){{endOfIdentifier}}'
+      match: '(class|struct|mixin|interface){{endOfIdentifier}}'
+
+    # tag is only a keyword in `tag NAME` declarations - elsewhere it is a regular identifier
+    - name: storage.type.class.imba
+      match: '{{startOfIdentifier}}(tag)(?=[ \t]+{{tagTypeIdentifier}}[ \t]*(?:[<#]|$))'
 
     - name: storage.type.imba
       match: '(let|const|constructor){{endOfIdentifier}}'

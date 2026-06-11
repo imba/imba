@@ -681,6 +681,7 @@ export const states = {
 		[/((?:lazy )?)((?:static )?)(const|let|attr|prop|isa)(?=\s|$)/, ['keyword.lazy','keyword.static','keyword.$1','@_vardecl=field-$3']] # $2_body.$S2.$2.$S4
 		[/(declare\s+)(?=@fieldid)/,'keyword.declare']
 		[/(static\s+)(?=@fieldid)/,'keyword.static']
+		[/\/(?![\s=])(?:[^[\/\n\\]|\\[\s\S]|\[[^\]\n\\]*(?:\\[\s\S][^\]\n\\]*)*\])*\/[a-z]{0,8}(?!\w)/,'entity.name.field.regexp','@_field_1']
 		[/(@fieldid)(?=$)/,'entity.name.field']
 		[/(@fieldid)/,['entity.name.field','@_field_1']]
 	]
@@ -1342,7 +1343,7 @@ export const grammar = {
 		'if', 'elif', 'else', 'switch', 'for', 'while', 'do', 'try', 'catch', 'finally',
 		'class', 'extends', 'super',
 		'undefined', 'then', 'unless', 'until', 'loop', 'of', 'by', 'when',
-		'tag', 'prop', 'attr', 'export', 'import', 'extend',
+		'prop', 'attr', 'export', 'import', 'extend',
 		'var', 'let', 'const', 'require', 'isa', 'await'
 	],
 	boolean: ['true','false','yes','no','undefined','null']

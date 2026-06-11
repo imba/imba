@@ -378,7 +378,13 @@
             <key>name</key>
             <string>storage.type.class.imba</string>
             <key>match</key>
-            <string>(tag|class|struct|mixin|interface)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+            <string>(class|struct|mixin|interface)(?![\?_\-$[:alnum:]])(?:(?=\.\.\.)|(?!\.))</string>
+          </dict>
+          <dict>
+            <key>name</key>
+            <string>storage.type.class.imba</string>
+            <key>match</key>
+            <string>(?&lt;![_$[:alnum:]])(?:(?&lt;=\.\.\.)|(?&lt;!\.))(tag)(?=[ \t]+\w+(?:\-\w+)*(?:\:\w+(?:\-\w+)*)*[ \t]*(?:[&lt;#]|$))</string>
           </dict>
           <dict>
             <key>name</key>
