@@ -1,0 +1,29 @@
+{
+    "name": "imba-language-server",
+    "version": "0.0.1",
+    "private": true,
+    "description": "Imba language server built on Volar",
+    "author": "Sindre Aarsaether <sindre@identu.no>",
+    "type": "commonjs",
+    "main": "dist/index.js",
+    "bin": {
+        "imba-language-server": "./bin/imba-language-server.js"
+    },
+    "scripts": {
+        "build": "tsc -b",
+        "watch": "tsc -b -w"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/imba-language-server"
+    },
+    "dependencies": {
+        "@volar/language-server": "~2.4.28",
+        "imba-language-core": "file:../imba-language-core",
+        "volar-service-typescript": "~0.0.71"
+    },
+    "peerDependencies": {
+        "typescript": "*"
+    }
+}

@@ -38,3 +38,4 @@ dist/
 test/index.js
 test/apps/**/*.js
 **/.vite-node
+*.tsbuildinfo

@@ -1,0 +1,22 @@
+{
+    "name": "imba-typescript-plugin",
+    "version": "0.0.1",
+    "private": true,
+    "description": "tsserver plugin making TypeScript projects aware of .imba files (Volar-based)",
+    "author": "Sindre Aarsaether <sindre@identu.no>",
+    "type": "commonjs",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc -b",
+        "watch": "tsc -b -w"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/imba-typescript-plugin"
+    },
+    "dependencies": {
+        "@volar/typescript": "~2.4.28",
+        "imba-language-core": "file:../imba-language-core"
+    }
+}

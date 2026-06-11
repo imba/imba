@@ -1,8 +1,16 @@
 {
     "name": "imba-monorepo",
     "private": true,
+    "workspaces": [
+        "packages/imba-language-core",
+        "packages/imba-language-server",
+        "packages/imba-typescript-plugin"
+    ],
     "devDependencies": {
-        "lerna": "^9.0.7"
+        "lerna": "^9.0.7",
+        "@types/node": "^22.0.0",
+        "typescript": "^5.8.0",
+        "vitest": "^3.0.0"
     },
     "scripts": {
         "release": "lerna publish",
