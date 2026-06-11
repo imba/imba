@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Remove Vite support from the main `imba` package. Imba's own esbuild-based toolchain (`imba run`, `imba build`, `imba serve`) is now the only supported bundling path.
+
+    This removes the `imba/plugin` export (the Vite plugin), the Vite-powered `imba preview` command, the Vitest-based `imba test` and `imba bench` commands, the `vite` and `vitest` templates from `imba create`, the `$vite$` compile-time constant, and the optional `vite`/`vite-node`/`vitest`/`@testing-library/*` peer dependencies.
+
 * Consolidate the editor grammar/tokenizer into a single source. `imba/src/program` was a stale fork of the grammar that `imba-monarch` (used by vscode-imba and typescript-imba-plugin) had long since evolved past. The `imba/program` and `compiler.program` apis now re-export from imba-monarch, so web-based highlighting (e.g. imba.io) gets the same maintained grammar as the editors - including several years of fixes the old copy lacked.
 
 * Fix server rendering of attributes with `null`/`undefined` values - they are now omitted instead of rendering the literal string `"undefined"`. This regressed when first-render attribute setting was made unconditional.
@@ -364,6 +368,10 @@ class Item
 
 ## 2.0.0-alpha.231
 
+* Allow using `$vite$` in compiler for vite-only code.
+
+* Various fixes for vite integration.
+
 * Add `rescue` keyword
 
     Acts like a combined try-catch wrapper for arbitrary expressions. It will return the result of the expression, _or_ the error if the expression throws. Very useful for catching rejected promises and other errors.
@@ -396,6 +404,8 @@ class Item
 * Runtime helpers are imported instead of inlined - so bundling will not lead to many duplicated tiny functions.
 
 ## 2.0.0-alpha.230
+
+* Improved integration with vite
 
 * `.env` traverse up file tree from file instead of cwd
 
@@ -648,6 +658,14 @@ Last version (with new features) before `beta.1`. This release contains breaking
 * Allow prefixing asset paths via `--base` option
 
     Ie, when building for github pages you would run `imba build --base /my-repo-name -o docs index.html` to build your files and assets with the correct prefix, into the `docs/` folder of your project to adhere to github pages convetions.
+
+* Support loading workers following vite conventions
+
+    ```
+    import MyWorker from './some/script?worker'
+    import MySharedWorker from './some/script?sharedworker'
+    import url from './some/script?worker&url'
+    ```
 
 * Set node14.13.0 as the default minimum target when building for node.
 
