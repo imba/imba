@@ -363,8 +363,8 @@ export const states = {
 	]
 
 	comment_: [
-		[/#(\s.*)?(?=\n)/, 'comment']
-		# [/#(\s.*)?(\n|$)/, 'comment']
+		# also match at end of file without trailing newline
+		[/#(\s.*)?(?=\n|$)/, 'comment']
 	]
 
 	block_comment_: [

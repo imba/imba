@@ -8,6 +8,8 @@
 
 * `imba-monarch` is now bundled (never externalized) in node builds, like `imba` itself - it is imba source that cannot be required at runtime.
 
+* Fix editor/highlighting grammar tokenizing a `#` comment on the last line of a file (without trailing newline) as invalid code.
+
 * Allow `tag` to be used as a regular identifier outside tag declarations. Bare calls like `tag value` are now reserved for tag declaration syntax; use `tag(value)` for function calls.
 
 * Allow regex literals as decorated class field names, compiling them to static string keys for field descriptors and field-registry metadata.
