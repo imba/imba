@@ -62,12 +62,26 @@ export class ImbaDocument
 	get lineOffsets
 		_lineOffsets ||= computeLineOffsets(content,yes)
 
-	def getText range = null
+	def getText range = null, end = null
+		# supports lsp ranges, {start,length} spans and plain offsets -
+		# the scope/symbol analysis calls the numeric form
+		if typeof range == 'number'
+			return content.substring(range, end == null ? content.length : end)
+		if range and typeof range.start == 'number'
+			return content.substring(range.start, range.start + range.length)
 		if range
 			let start = offsetAt(range.start)
-			let end = offsetAt(range.end)
-			return content.substring(start, end)
+			let to = offsetAt(range.end)
+			return content.substring(start, to)
 		return content
+
+	def expandSpanToLines span
+		# expand span to start at the beginning of its line
+		let pos = positionAt(span.start)
+		let lineStart = lineOffsets[pos.line]
+		span.length = (span.length or 0) + (span.start - lineStart)
+		span.start = lineStart
+		return span
 
 	def getLineText line
 		let start = lineOffsets[line]

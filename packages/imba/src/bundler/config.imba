@@ -113,7 +113,9 @@ export const defaultConfig = {
 			platform: 'node'
 			format: 'cjs'
 			target: ['node14.13.0']
-			external: ['dependencies','!imba']
+			# imba and imba-monarch are always bundled - they are imba source
+			# and can never be required at runtime
+			external: ['dependencies','!imba','!imba-monarch']
 		}
 
 		esm: {
