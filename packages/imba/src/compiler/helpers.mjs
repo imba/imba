@@ -582,21 +582,19 @@ class Diagnostic {
 		let end = this.range.end;
 		let msg = source.sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
 		let line = source.doc.getLineText(start.line);
+		// for multi-line ranges, underline to the end of the first line
+		let until = end.line == start.line ? end.character : line.length;
+		let carets = Math.max(until - start.character, 1);
 		let stack = [msg,line];
-		stack.push(line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(end.character - start.character));
+		stack.push(line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(carets));
 		return stack.join('\n').replace(/\t/g,'    ') + "\n";
 	}
 
 	toError() {
-		let source = this.sourceDocument;
 		let start = this.range.start;
-		let end = this.range.end;
-		let msg = source.sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
+		let msg = this.sourceDocument.sourcePath + ":" + (start.line + 1) + ":" + (start.character + 1) + ": " + this.message;
 		let err = new SyntaxError(msg);
-		let line = source.doc.getLineText(start.line);
-		let stack = [msg,line];
-		stack.push(line.replace(/[^\t]/g,' ').slice(0,start.character) + "^".repeat(end.character - start.character));
-		err.stack = "\n" + stack.join('\n').replace(/\t/g,'    ') + "\n";
+		err.stack = "\n" + this.toSnippet();
 		return err;
 	}
 

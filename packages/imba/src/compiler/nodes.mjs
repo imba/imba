@@ -11838,8 +11838,13 @@ class Argvar extends ValueNode {
     if (v > 0) {
       var s = this.scope__();
       // params need to go up to the closeste method-scope
-      var par = s.params().at(v - 1, true);
-      out = "" + AST.c(par.name()); // c
+      var params = s.params && s.params();
+      if (params) {
+        var par = params.at(v - 1, true);
+        out = "" + AST.c(par.name()); // c
+      } else {
+        this.error("'$" + v + "' is only available inside a method or block");
+      }
     }
 
     return M(out, this._token || this._value);

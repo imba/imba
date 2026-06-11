@@ -483,7 +483,7 @@ Lexer.prototype.tokenize = function (code,o,script){
 	
 	
 	if (this._ends.length) {
-		this.error(("missing " + (this._ends.pop())));
+		this.unclosedError("end of file");
 	};
 	
 	if (this._platform == 'tsc') {
@@ -1023,7 +1023,7 @@ Lexer.prototype.tagToken = function (){
 		//	return 0
 		
 		this.token('TAG_START','<',1);
-		this.pushEnd(INVERSES.TAG_START);
+		this.pushEnd(INVERSES.TAG_START,{i: this._tokens.length - 1});
 		
 		if (match = TAG_TYPE.exec(this._chunk.substr(1,40))) {
 			let next = this._chunk[match[0].length + 1];
@@ -2388,7 +2388,7 @@ Lexer.prototype.sanitizeHeredoc = function (doc,options){
 	
 	if (herecomment) {
 		if (HEREDOC_ILLEGAL.test(doc)) {
-			this.error("block comment cannot contain '*/' starting");
+			this.error("block comment cannot contain '*/'",{length: 2});
 		};
 		
 		if (doc.indexOf('\n') <= 0) { return doc };
@@ -2510,8 +2510,13 @@ Lexer.prototype.balancedString = function (str,end){
 		};
 		prev = letter;
 	};
-	
-	return this.error(("missing " + (stack.pop()) + ", starting"));
+
+	var missing = stack.pop();
+	var line = this.lineAt(this._loc);
+	if (missing == '}') {
+		return this.error(("unclosed interpolation in string starting on line " + line + " - expected '}'"),{length: 1});
+	};
+	return this.error(("unterminated string starting on line " + line + " - expected closing " + missing),{length: 1});
 };
 
 // Expand variables and expressions inside double-quoted strings using
@@ -2662,8 +2667,69 @@ Lexer.prototype.balancedSelector = function (str,end){
 		};
 		prev = letter; // what, why?
 	};
-	
-	return this.error(("missing " + (stack.pop()) + ", starting"));
+
+	return this.error(("unclosed selector starting on line " + (this.lineAt(this._loc)) + " - expected '" + (stack.pop()) + "'"),{length: 1});
+};
+
+// Friendly descriptions of the pair-tokens tracked on the @ends stack,
+// keyed by the closing token we are waiting for.
+var END_OPENER_NAMES = {
+	')': "'('",
+	']': "'['",
+	'}': "'{'",
+	'TAG_END': "tag",
+	'TAG': "tag declaration",
+	'TAG_ATTR': "tag attribute value",
+	'DEF': "method",
+	'IMPORT': "import",
+	'EXPORT': "export",
+	'%': "selector",
+	'|': "block parameters",
+	'OUTDENT': "indented block"
+};
+
+var END_CLOSER_NAMES = {
+	')': "')'",
+	']': "']'",
+	'}': "'}'",
+	'TAG_END': "'>'",
+	'|': "'|'"
+};
+
+// Describe the innermost unclosed pair on the @ends stack, locating the
+// token that opened it (when known) so errors can point back to it.
+Lexer.prototype.unclosedInfo = function (){
+	var idx = this._ends.length - 1;
+	var end = this._ends[idx];
+	var ctx = this._contexts[idx];
+	var opener = null;
+	if (ctx) {
+		opener = ctx.opener || (ctx.i != null && this._tokens[ctx.i]) || null;
+	};
+	if (opener && !(opener._loc >= 0)) { opener = null };
+	return {
+		end: end,
+		opener: opener,
+		what: END_OPENER_NAMES[end] || ("'" + end + "'"),
+		closer: END_CLOSER_NAMES[end]
+	};
+};
+
+// Report the innermost unclosed pair, anchored at the token that opened it.
+Lexer.prototype.unclosedError = function (until){
+	var info = this.unclosedInfo();
+	var msg = "unclosed " + info.what;
+	if (info.closer) { msg += " - expected " + info.closer };
+	if (until) { msg += " before " + until };
+	var params = {length: 1};
+	if (info.opener) {
+		params.range = this._script.rangeAt(info.opener._loc,info.opener._loc + (info.opener._len || 1));
+	};
+	return this.error(msg,params);
+};
+
+Lexer.prototype.lineAt = function (loc){
+	return this._script.positionAt(loc).line + 1;
 };
 
 // Pairs up a closing token, ensuring that all listed pairs of tokens are
@@ -2672,7 +2738,21 @@ Lexer.prototype.pair = function (tok){
 	var wanted = last(this._ends);
 	if (tok != wanted) {
 		if (!('OUTDENT' === wanted)) {
-			this.error(("unmatched " + tok),{length: tok.length});
+			if (tok == 'OUTDENT') {
+				// the code dedented (or the file ended) while an explicit
+				// pair was still open - point back to where it was opened
+				this.unclosedError(("the block ends (line " + (this.lineAt(this._loc)) + ")"));
+			} else if (!wanted) {
+				this.error(("unmatched " + (END_CLOSER_NAMES[tok] || ("'" + tok + "'"))),{length: 1});
+			} else {
+				let info = this.unclosedInfo();
+				let msg = "unmatched " + (END_CLOSER_NAMES[tok] || ("'" + tok + "'"));
+				if (info.closer) {
+					msg += " - expected " + info.closer + " to close " + info.what;
+					if (info.opener) { msg += " (line " + (this.lineAt(info.opener._loc)) + ")" };
+				};
+				this.error(msg,{length: 1});
+			};
 		};
 		var size = last(this._indents);
 		this._indent -= size;

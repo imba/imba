@@ -1018,16 +1018,40 @@ parse: function parse(input, script = null) {
             var tok = self2.terminals_[symbol] || symbol;
             let tidx = lexer2.tokens.indexOf(tsym);
             let ttok = tsym;
-            while (ttok && ttok._loc == -1) {
+            while (ttok && !(ttok._loc >= 0)) {
               ttok = lexer2.tokens[--tidx];
+            }
+            if (!ttok) {
+              let k = lexer2.tokens.length;
+              while (--k >= 0) {
+                let t = lexer2.tokens[k];
+                if (t && t._loc >= 0) {
+                  ttok = t;
+                  break;
+                }
+              }
             }
             var tloc = ttok ? ttok._loc : -1;
             var tend = tloc > -1 ? tloc + (ttok._len || 0) : -1;
             var tpos = tloc != -1 ? "[" + ttok._loc + ":" + ttok._len + "]" : "[0:0]";
+            var tokenDescriptions = {
+              TERMINATOR: "newline",
+              INDENT: "indentation",
+              OUTDENT: "end of block",
+              EMPTY_BLOCK: "empty block",
+              CALL_END: "')'",
+              CALL_START: "'('",
+              INDEX_END: "']'",
+              INDEX_START: "'['",
+              STRING_START: "start of string",
+              STRING_END: "end of string",
+              TAG_START: "'<'",
+              TAG_END: "'>'"
+            };
             if (lexer2.showPosition) {
               errStr = "Parse error at " + tpos + ":\n" + lexer2.showPosition() + "\nExpecting " + expected.join(", ") + ", got '" + tok + "'";
             } else {
-              errStr = "Unexpected " + (symbol == EOF2 ? "end of input" : "'" + tok + "'");
+              errStr = "Unexpected " + (symbol == EOF2 ? "end of input" : tokenDescriptions[tok] || "'" + tok + "'");
             }
             if (script) {
               let err = script.addDiagnostic("error", {

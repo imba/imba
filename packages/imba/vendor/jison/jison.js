@@ -1303,19 +1303,45 @@ parser.parse = function parse (input, script = null) {
             // Find closest non-generated token
             let tidx = lexer.tokens.indexOf(tsym);
             let ttok = tsym;
-            while(ttok && ttok._loc == -1){
+            while(ttok && !(ttok._loc >= 0)){
                 ttok = lexer.tokens[--tidx];
+            }
+
+            // fall back to the last token with a real location so the
+            // error never jumps to the top of the file
+            if(!ttok){
+                let k = lexer.tokens.length;
+                while(--k >= 0){
+                    let t = lexer.tokens[k];
+                    if(t && t._loc >= 0){ ttok = t; break; }
+                }
             }
 
             var tloc = ttok ? ttok._loc : -1;
             var tend = tloc > -1 ? (tloc + (ttok._len || 0)) : -1;
             var tpos = tloc != -1 ? "[" + ttok._loc + ":" + ttok._len + "]" : '[0:0]';
 
+            // friendlier names for the structural tokens users can't see
+            var tokenDescriptions = {
+                TERMINATOR: 'newline',
+                INDENT: 'indentation',
+                OUTDENT: 'end of block',
+                EMPTY_BLOCK: 'empty block',
+                CALL_END: "')'",
+                CALL_START: "'('",
+                INDEX_END: "']'",
+                INDEX_START: "'['",
+                STRING_START: 'start of string',
+                STRING_END: 'end of string',
+                TAG_START: "'<'",
+                TAG_END: "'>'"
+            };
+
             if (lexer.showPosition) {
                 errStr = 'Parse error at '+(tpos)+":\n"+lexer.showPosition()+"\nExpecting "+expected.join(', ') + ", got '" + (tok)+ "'";
             } else {
                 // errStr = 'Parse error at '+(tpos)+": Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
-                errStr = "Unexpected " + (symbol == EOF ? "end of input" : ("'"+(tok)+"'"));
+                errStr = "Unexpected " + (symbol == EOF ? "end of input" : (tokenDescriptions[tok] || ("'"+(tok)+"'")));
             }
 
             if(script){

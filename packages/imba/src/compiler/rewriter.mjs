@@ -521,15 +521,21 @@ Rewriter.prototype.addImplicitBraces = function (){
 	var defType = 'DEF';
 	var noBraceContext = IMPLICIT_BRACE_NO_CONTEXT;
 	
+	// anchor generated braces at the token they are inserted around, so
+	// errors involving them point to the right place rather than offset 0
+	var anchorLoc = function(token) {
+		return (token && token._loc >= 0) ? token._loc : -1;
+	};
+
 	var open = function(token,i,scope) {
-		let tok = new Token('{','{',0,0,0); // : T.LBRACKET
+		let tok = new Token('{','{',anchorLoc(token),0,0); // : T.LBRACKET
 		tok.generated = true;
 		tok.scope = scope;
 		return self._tokens.splice(i,0,tok); // T.LBRACKET
 	};
-	
+
 	var close = function(token,i,scope) {
-		let tok = new Token('}','}',0,0,0); // : T.LBRACKET
+		let tok = new Token('}','}',anchorLoc(token),0,0); // : T.LBRACKET
 		tok.generated = true;
 		tok.scope = scope;
 		return self._tokens.splice(i,0,tok); // T.RBRACKET
