@@ -296,8 +296,8 @@ tag app-code-block < app-code
 		<self.p3d.snippet.{options.preview}.{fflags} .preview-{options.preview} .multi=(files.length > 1)
 			tabIndex=-1
 			@click.sel('.scope-rule *,.scope-rule')=focusStyleRule
-			@click.sel('.doc-ref').!mod=(router.go(e.target.#entity.href))
-			@click.sel('.doc-ref').mod=(window.open(e.target.#entity.href))
+			@click.sel('.doc-ref').!mod=router.go(e.target.#entity.href)
+			@click.sel('.doc-ref').mod=window.open(e.target.#entity.href)
 			@keydown.esc.stop=(#clickedRules = no)
 			@pointerover.silent=pointerover
 			@intersect.silent=intersecting

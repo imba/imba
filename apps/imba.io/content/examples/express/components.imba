@@ -5,7 +5,7 @@ tag story-item < li
 		<div>
 			<span[fs:sm/1.2 c:gray9]> data.title or "-"
 			<span[ml:1 prefix:"(" suffix:")" d@empty:none]>
-				if data.url then <a href=data.url.href> data.url.hostname
+				data.url && <a href=data.url.href> data.url.hostname
 		<div> "{data.score} points by {data.by}"
 
 tag story-list
