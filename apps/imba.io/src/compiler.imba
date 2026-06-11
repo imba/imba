@@ -1,8 +1,10 @@
 import * as esml from 'es-module-lexer'
 
+# examples are compiled with the bundled imba compiler, so they must run
+# against the matching runtime - served locally by the site itself
 const ResolveMap = {
-	'imba': 'https://unpkg.com/imba@2.0.0-alpha.243/dist/imba.mjs'
-	'imba/runtime': 'https://unpkg.com/imba@2.0.0-alpha.243/src/imba/runtime.mjs'
+	'imba': '/vendor/imba.mjs'
+	'imba/runtime': '/vendor/imba-runtime.mjs'
 	'imdb': '/imdb.js'
 }
 
