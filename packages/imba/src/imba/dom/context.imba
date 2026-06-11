@@ -56,15 +56,18 @@ export class RenderContext < Map
 			# Means it was not correctly popped inside
 			renderContext.context = null
 
-		# Handling of plain text nodes returned from this
-		if typeof value == 'number'
-			value = String(value)
-
-		if typeof value == 'string' and flags == 0
-			let node = self.text ||= renderContext.createTextNode(value)
-			if value != node.textContent
-				node.textContent = value
-			return node
+		# Handling of plain text nodes returned from this. The number
+		# coercion must only happen on this path - for keyed lookups the
+		# value must stay untouched so it matches what cache() stores.
+		if flags == 0
+			let text = value
+			if typeof text == 'number'
+				text = String(text)
+			if typeof text == 'string'
+				let node = self.text ||= renderContext.createTextNode(text)
+				if text != node.textContent
+					node.textContent = text
+				return node
 
 		return self.get(value)
 

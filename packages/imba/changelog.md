@@ -14,6 +14,8 @@
 
 * Fix editor/highlighting grammar tokenizing a `#` comment on the last line of a file (without trailing newline) as invalid code.
 
+* Fix elements with numeric keys (`<div key=100>`) being recreated on every render. The number was stringified when looking up the cached element but not when storing it, so the lookup never hit - remounting the element (and its entire subtree) on each commit.
+
 * Allow `tag` to be used as a regular identifier outside tag declarations. Bare calls like `tag value` are now reserved for tag declaration syntax; use `tag(value)` for function calls.
 
 * Allow regex literals as decorated class field names, compiling them to static string keys for field descriptors and field-registry metadata.
