@@ -3,6 +3,7 @@ import Script from './src/script'
 
 export default Script
 
+export { ImbaDocument } from './src/document'
 export { Monarch } from './src/monarch'
 export { lexer, Token } from './src/lexer'
 export { grammar } from './src/grammar'

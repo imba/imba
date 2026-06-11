@@ -1,5 +1,5 @@
 # imba$stdlib=1
-import { Monarch } from '../program/monarch'
+import { Monarch } from 'imba-monarch/src/monarch.imba'
 
 export def parseAsset raw,name
 	# what if we cannot parse this asset?

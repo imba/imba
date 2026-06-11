@@ -99,7 +99,8 @@
     "playwright": "^1.60.0",
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.7",
-    "workerpool": "^6.0.3"
+    "workerpool": "^6.0.3",
+    "imba-monarch": "file:../imba-monarch"
   },
   "dependencies": {
     "chokidar": "^5.0.0",
