@@ -514,7 +514,13 @@ export class Element < Node
 		self
 
 	def setAttribute key, value
-		self.attributes[key] = value
+		# match browser-observable behavior for imba tags - setting an
+		# attribute to null/undefined removes it rather than rendering
+		# the literal string "undefined"
+		if value === undefined or value === null
+			delete self.attributes[key]
+		else
+			self.attributes[key] = value
 		self
 
 	def setAttributeNS ns, key, value

@@ -4,6 +4,10 @@
 
 * Consolidate the editor grammar/tokenizer into a single source. `imba/src/program` was a stale fork of the grammar that `imba-monarch` (used by vscode-imba and typescript-imba-plugin) had long since evolved past. The `imba/program` and `compiler.program` apis now re-export from imba-monarch, so web-based highlighting (e.g. imba.io) gets the same maintained grammar as the editors - including several years of fixes the old copy lacked.
 
+* Fix server rendering of attributes with `null`/`undefined` values - they are now omitted instead of rendering the literal string `"undefined"`. This regressed when first-render attribute setting was made unconditional.
+
+* `imba-monarch` is now bundled (never externalized) in node builds, like `imba` itself - it is imba source that cannot be required at runtime.
+
 * Allow `tag` to be used as a regular identifier outside tag declarations. Bare calls like `tag value` are now reserved for tag declaration syntax; use `tag(value)` for function calls.
 
 * Allow regex literals as decorated class field names, compiling them to static string keys for field descriptors and field-registry metadata.
