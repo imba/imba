@@ -1,0 +1,24 @@
+{
+	"paths": {},
+	"options": {
+		"node": {
+			"external": [
+				"dependencies",
+				"imba/compiler",
+				"!imba-monarch"
+			]
+		}
+	},
+	"theme": {
+		"fonts": {
+			"mono": [
+				"Source Code Pro",
+				"Consolas",
+				"Menlo",
+				"Monaco",
+				"Courier",
+				"monospace"
+			]
+		}
+	}
+}

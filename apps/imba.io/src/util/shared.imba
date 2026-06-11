@@ -1,0 +1,2 @@
+extend class HTMLIFrameElement
+	replify

@@ -1,0 +1,11 @@
+.DS_Store
+.vscode/
+node_modules
+tmp
+npm-debug.log
+.netlify
+dist/
+public/reference.js
+public/content.json.js
+public/examples.json
+data/

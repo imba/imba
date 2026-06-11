@@ -1,0 +1,65 @@
+{
+  "name": "imba.io",
+  "description": "Official website for Imba",
+  "keywords": [
+    "imba",
+    "website"
+  ],
+  "author": "Sindre Aarsaether",
+  "bugs": "https://github.com/somebee/imba.io/issues",
+  "version": "1.0.0",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/somebee/imba.io/raw/master/LICENSE"
+    }
+  ],
+  "engines": {
+    "node": ">=13.10.0"
+  },
+  "scripts": {
+    "dev": "npm run build && concurrently \"npm run watch-content\" \"npm run watch-imba\"",
+    "watch-imba": "imba -wSM index.imba",
+    "watch-content": "imba scripts/build-content.imba -- -w",
+    "build": "npm run build-content && npm run build-api-docs && imba build index.imba",
+    "build-site": "imba build index.imba",
+    "build-content": "imba scripts/build-content.imba",
+    "build-api-docs": "imba --node.external typescript scripts/build-api-docs.imba",
+    "build-examples": "cd content/examples/express && imba build app.imba",
+    "docker-build": "docker build -t imba.io:`git log --pretty=format:'%h' HEAD -n1` .",
+    "docker-deploy": "docker push imba.io:`git log --pretty=format:'%h' HEAD -n1`",
+    "docker-run": "docker run -p3011:3011 -t -i imba.io:`git log --pretty=format:'%h' HEAD -n1`"
+  },
+  "files": [],
+  "directories": {},
+  "main": "./index.imba",
+  "homepage": "http://imba.io",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/imba/imba.io.git"
+  },
+  "dependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^13.13.52",
+    "chokidar": "^3.5.2",
+    "es-module-lexer": "^1.0.3",
+    "esbuild": "^0.15.10",
+    "express": "^4.17.1",
+    "imba": "file:../../packages/imba",
+    "imba-codicons": "^1.0.0",
+    "imba-monarch": "file:../../packages/imba-monarch",
+    "marked": "^4.1.0",
+    "monaco-editor": "^0.20.0",
+    "node-fetch": "^3.2.10",
+    "passport": "^0.6.0",
+    "perfect-arrows": "^0.3.3",
+    "quick-score": "^0.0.13",
+    "svgpath": "^2.3.0"
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "typescript": "5.7",
+    "typescript-imba-plugin": "^1.8.1"
+  },
+  "private": true
+}

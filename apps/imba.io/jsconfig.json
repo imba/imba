@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "target": "esnext",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "paths": {
+            "codicons/*": ["src/assets/codicons/*"],
+            "icons/*": ["src/assets/icons/*"]
+        }
+    },
+    "include": ["index.imba","src/**/*"]
+}

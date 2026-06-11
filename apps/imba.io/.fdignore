@@ -1,0 +1,8 @@
+old-content
+docs/vault
+scripts
+*.ts
+*.js
+*.json
+public
+src/assets

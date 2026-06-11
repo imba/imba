@@ -1,0 +1,19 @@
+{
+	"apps": [{
+		"name": "imba.io",
+		"log_date_format": "DD-MM-YYYY HH:mm:ss.SSS",
+		"script": "./dist/index.js",
+		"watch": ["./dist/manifest.json"],
+		"env": {
+			"PORT": 5000
+		}
+	},{
+		"name": "simple-hn",
+		"log_date_format": "DD-MM-YYYY HH:mm:ss.SSS",
+		"script": "./content/examples/express/dist/app.js",
+		"watch": ["./content/examples/express/dist/manifest.json"],
+		"env": {
+			"PORT": 8001
+		}
+	}]
+}

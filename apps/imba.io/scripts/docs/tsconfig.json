@@ -1,0 +1,29 @@
+{
+    "include": [
+        "index.ts"
+    ],
+		"compilerOptions": {
+      "allowJs": true,
+      "checkJs": false,
+      "noEmit": true,
+      "skipLibCheck": false,
+      "skipDefaultLibCheck": false,
+      "allowUnreachableCode": true,
+      "allowArbitraryExtensions": true,
+      "allowSyntheticDefaultImports": true,
+      "esModuleInterop": true,
+      "suppressImplicitAnyIndexErrors": false,
+      "resolveJsonModule": true,
+      "module": "esnext",
+      "target": "esnext",
+      "newLine": "lf",
+      "moduleResolution": "bundler",
+      "strict": false,
+      "jsx":"preserve",
+      "downlevelIteration": true,
+      "verbatimModuleSyntax": true,
+      "baseUrl": ".",
+      "paths": {
+      }
+    }
+}

@@ -1,0 +1,79 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Imba - The friendly full-stack language</title>
+    <link href="/preflight.css" rel="stylesheet">
+    <script src="/content.json.js"></script>
+    <script src="/monaco/min/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { 'vs': '/monaco/min/vs' } });
+        window.loadMonaco = function (cb) { require(['vs/editor/editor.main'], cb) };
+    </script>
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="57x57" href="/images/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/images/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/images/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/images/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/images/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/images/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/images/apple-icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="144x144" href="/images/android-icon-144x144.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="152x152" href="/images/android-icon-152x152.png">
+    <link rel="icon" type="image/png" sizes="36x36" href="/images/android-icon-36x36.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/images/android-icon-48x48.png">
+    <link rel="icon" type="image/png" sizes="72x72" href="/images/android-icon-72x72.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/android-icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="/images/favicon-64x64.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/images/favicon-96x96.png">
+    <!-- <link rel="manifest" href="/manifest.json"> -->
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- HTML Meta Tags -->
+    <title>Imba - The friendly full-stack language</title>
+    <meta name="description" content="Imba is a programming language for building web applications with insane performance. You can use it both for the server and client.">
+
+    <!-- Google / Search Engine Tags -->
+    <meta itemprop="name" content="Imba - The friendly full-stack language">
+    <meta itemprop="description" content="Imba is a programming language for building web applications with insane performance. You can use it both for the server and client.">
+    <meta itemprop="image" content="https://v2.imba.io/images/social-card-preview.jpg">
+
+    <!-- Facebook Meta Tags -->
+    <meta property="og:url" content="https://v2.imba.io">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Imba - The friendly full-stack language">
+    <meta property="og:description" content="Imba is a programming language for building web applications with insane performance. You can use it both for the server and client.">
+    <meta property="og:image" content="https://v2.imba.io/images/social-card-preview.jpg">
+
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Imba - The friendly full-stack language">
+    <meta name="twitter:description" content="Imba is a programming language for building web applications with insane performance. You can use it both for the server and client.">
+    <meta name="twitter:image" content="https://v2.imba.io/images/social-card-preview.jpg">
+
+    <!-- Docusearch
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script> -->
+</head>
+
+<body tabindex='-1'>
+    <script src="/index.js"></script>
+    <app-root></app-root>
+    <!-- 
+    <script type="text/javascript"> docsearch({
+        apiKey: '2af325f2ba4e22a291c91dbbb7e21c4c',
+        indexName: 'imba',
+        inputSelector: '#search',
+        debug: false // Set debug to true if you want to inspect the dropdown
+    });
+    </script>        
+    Docusearch END -->
+</body>
+
+</html>

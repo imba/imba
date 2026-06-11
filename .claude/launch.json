@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "imba.io",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd apps/imba.io && PORT=3011 node dist/index.js"],
+      "port": 3011
+    }
+  ]
+}
