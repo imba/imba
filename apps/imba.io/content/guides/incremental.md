@@ -19,11 +19,12 @@ preference.
 
 ### With Vite
 
-The easiest way to use Imba in your existing non-Imba project is
-with [Vite](https://vitejs.dev/). If your existing project
-doesn't use Vite, try
-[#with-npm](#step-1-importing-imba-files-to-nonimba-projects-with-npm)
-instead (or consider switching to Vite 😝).
+> Note: Vite support has been removed from the main Imba package, and
+[vite-plugin-imba](https://www.npmjs.com/package/vite-plugin-imba) is no
+longer officially maintained. If your existing project uses Vite the plugin
+may still work, but we recommend the
+[npm approach](#step-1-importing-imba-files-to-nonimba-projects-with-npm)
+below instead.
 
 - Add `imba` and `vite-plugin-imba` to your existing project:
 	```bash

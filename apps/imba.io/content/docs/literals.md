@@ -60,7 +60,7 @@ method`string text {expression} string text`
 
 ### Tagged templates [tip]
 
-Tagged templates from JavaScript are on the roadmap, but not currently supported.
+Tagged templates from JavaScript are supported. Note that interpolation uses `{expression}` rather than JavaScript's `${expression}`.
 
 ### Dimension Strings
 

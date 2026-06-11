@@ -66,22 +66,10 @@ await imba.awaits do
 
 ## No Hashing
 
-If you want to bundle with no hashing, for now you need to use Vite as a bundler and specify the output filename:
-
-```
-export default defineConfig({
-  ...
-  build: {
-    rollupOptions: {
-      output: {
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
-      }
-    }
-  }
-})
-```
+The bundler currently always hashes output filenames (e.g. `assets/client.VYSTTIWZ.js`).
+There is no supported option for disabling hashing at the moment. The generated
+`dist/manifest.json` maps source entrypoints to their hashed output paths if you
+need to reference the files from outside the project.
 
 ## General code events
 
@@ -459,32 +447,12 @@ tag app
 
 ## PWAs With Imba
 
-This assumes you're using the Vite bundler.
-You can create an imba project that uses the vite bundler with `npx imba create`.
-
-It's insanely easy to get caching with service workers using Vite.
-Literally all you have to do is install a vite plugin and add it to the plugin list:
-
-```sh
-npm i vite-plugin-pwa -D
-```
-
-vite.config.js:
-
-```imba
-import { imba } from 'vite-plugin-imba';
-import { defineConfig } from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
-
-export default defineConfig({
-	base: '',
-	plugins: [imba(),VitePWA()],
-});
-
-```
-
-When you run `vite build`, it'll automatically create a service worker for you
-and cache requests so your page will load offline and instantly.
+Imba's bundler has built-in support for importing service workers - see
+[importing workers](/docs/assets#importing-workers) for how to bundle and
+reference a service worker script with `import.worker`. Registering the worker
+and choosing a caching strategy is up to you (there is no automatic
+PWA/offline-caching plugin like Vite's `vite-plugin-pwa` - Vite support has
+been removed from Imba).
 
 ## Any @ Selector Gets Collapsed
 

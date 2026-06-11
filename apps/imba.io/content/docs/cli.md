@@ -1,6 +1,6 @@
 # Command Line
 
-> ! Run `npm -g install imba@latest` to get access to the CLI
+> ! Run `npm -g install imba@latest` to get access to the CLI. Imba requires Node v20.19 or later.
 
 Once installed, you have access to the `imba` command, which can execute scripts, serve files for development, and build projects for production. If you are starting from templates you might never be exposed to the underlying cli, and instead use commands like `npm run build` etc. But imba is a very capable language for writing everything from small scripts to large fullstack applications.
 

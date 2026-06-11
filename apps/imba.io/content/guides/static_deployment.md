@@ -11,11 +11,12 @@ These providers do have some
 such as 500 builds per month maximum with a free plan, but most
 of us aren't deploying our applications 16.67 times a day.
 
-## Vite
+## Building
 
-If you created an Imba project using Vite, you can follow the
-straightforward deployment examples Vite has for many popular
-static hosts [here](https://vitejs.dev/guide/static-deploy.html).
+Build your project for production with `imba build` (see the
+[CLI documentation](/docs/cli)). The bundled output is written to
+the `dist` directory by default - this is the directory you point
+your static host at.
 
 ## FAQ
 

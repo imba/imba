@@ -134,8 +134,10 @@ x === y # Strict equality
 ### is [op=compare]
 
 ```imba
-x is y # Also strict equality
+x is y # Loose equality (==), with support for custom matchers
 ```
+
+> `is` compiles to `x == y`, with a fallback that lets the right-hand value customize matching by implementing a `Symbol.for('#matcher')` method. Use `===` if you need strict equality.
 
 ### !== [op=compare]
 
@@ -146,8 +148,10 @@ x !== y # Strict inequality
 ### isnt [op=compare]
 
 ```imba
-x isnt y # Also strict inequality
+x isnt y # Negation of is - loose inequality
 ```
+
+> `isnt` is the negation of `is`, so it also uses loose equality. Use `!==` if you need strict inequality.
 
 ### > [op=compare]
 
