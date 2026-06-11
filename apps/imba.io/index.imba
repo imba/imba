@@ -21,6 +21,11 @@ const importMap = {
 	imports: ResolveMap
 }
 
+if process.env.LOG_REQUESTS
+	app.use do(req,res,next)
+		console.log "REQ {req.method} {req.url} dest={req.headers['sec-fetch-dest'] or '-'} ref={req.headers.referer or '-'}"
+		next!
+
 app.get(/__sw(_\d+)?__\.js/) do(req,res)
 	const asset = import('./src/sw/worker.imba?worker')
 	res.sendFile asset.path
