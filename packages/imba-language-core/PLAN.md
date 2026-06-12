@@ -105,6 +105,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | E1 | Go to definition (TS-backed) | intercept + convertLocationsToImba | Volar mapping | M0* | ✅ |
 | E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | service plugin over workspace token index | M3.3 | ⬜ |
 | E3 | Definition filtering (`__new` removal, prefer .imba over .d.ts, meta suppression) | intercept.getDefinitionAndBoundSpan | wrapper around TS definitions | M2.7 | ⬜ |
+| E11 | Def/hover on tag usage (`<cool-widget>`) + attributes | checker.getTagSymbol/getTagAttrSymbol | **two-tier (key architecture validation):** attributes flow through TS mappings for free (exact spans, once Γ globals resolve — compiler already emits `declare global` registrations per tag declaration!); the tag NAME token (unequal span vs Γ-name) bridges via `createImbaTagsPlugin` + workspace index | M2.2 | ✅ |
 | E4 | Find references / rename (TS-backed) | intercepts + conversion | Volar mapping; rename name conversion via `navigation.resolveRenameNewName/EditText` mapping hooks | M3.10 | ⬜ |
 | E5 | Document symbols / outline | doc.getOutline (monarch) replacing navtree | `createImbaDocumentSymbolsPlugin` (monarch outline → LSP DocumentSymbols, TS symbols suppressed for imba docs) | M2.8 | ✅ |
 | E6 | Workspace symbols (imba + TS merged, scope config) | getNavigateToItems override | service plugin + forwarded TS results | M3.3 | ⬜ |
@@ -183,6 +184,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — Tag usage def/hover (E11): the two-tier answer + a tsc-target gap
+- Sindre's question ("do we want TS-based lookup once a tag is used? otherwise goto-def on attributes is hard") — answered empirically: **attributes already work through TS mappings** (`message=` → `prop message` in the declaring file, typed hover) because the compiler's tsc target ALREADY emits per-tag global registrations (`namespace Global` + `declare global { globalThis.Γname; HTMLElementTagNameMap entry }`) — a chunk of A9 exists compiler-side! The tag NAME token can't ride mappings (source `cool-widget` vs generated `ΓcoolΞwidget`, unequal) → `createImbaTagsPlugin` resolves def/hover via the shared workspace tag index (now records declaration offsets; `getTagIndex(roots)` shared across plugins).
+- **tsc-target gap found:** tag classes are registered globally but NOT exported as module members, while the runtime target exports them — so user-written `import { my-tag } from './x'` is runtime-correct but a false 2305. Suppressed when the named member is a known workspace tag (wrapper + shared index). **Compiler follow-up: export tag classes from the module in the tsc target too**, then drop the suppression.
+- Cosmetic note: attr hover shows `(property) Global.cool-widget.message` — the `Global.` namespace prefix leaks from the tsc-target wrapper; revisit with C2/A9 polish.
 
 ### 2026-06-12 — D2 tag-name completions: the ultrafast-index design
 - Design decision (Sindre's question answered): tag listings do NOT go through TS. `ImbaTagIndex` regex-scans workspace .imba files for `(export|global)? tag name` (mtime-cached, throttled walk) — TS can't see tags in never-imported files anyway, and the old getExportedTags/getExportInfoMap crawl was the slowest completion path. HTML tags come from `HTMLElementTagNameMap` via the cached-per-program checker lookup (so global custom-element augmentations appear too). Auto-import edits via monarch `createImportEdit` (dedupes existing imports; offsets→positions conversion).

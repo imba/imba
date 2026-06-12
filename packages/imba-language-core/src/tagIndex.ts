@@ -9,10 +9,25 @@ import * as path from 'node:path';
 export interface WorkspaceTag {
 	name: string;
 	fileName: string;
+	/** offset of the tag name within the declaring file */
+	offset: number;
 	/** `global tag` — web component, usable without import */
 	global: boolean;
 	/** `export tag` — importable */
 	exported: boolean;
+}
+
+const sharedIndexes = new Map<string, ImbaTagIndex>();
+
+/** one index per workspace-roots set — shared across service plugins */
+export function getTagIndex(roots: string[]): ImbaTagIndex {
+	const key = [...roots].sort().join('|');
+	let index = sharedIndexes.get(key);
+	if (!index) {
+		index = new ImbaTagIndex(roots);
+		sharedIndexes.set(key, index);
+	}
+	return index;
 }
 
 const TAG_DECL = /^[ \t]*(export[ \t]+)?(global[ \t]+)?tag[ \t]+([A-Za-z][\w-]*)/;
@@ -96,16 +111,19 @@ export class ImbaTagIndex {
 			return;
 		}
 		const tags: WorkspaceTag[] = [];
+		let lineStart = 0;
 		for (const line of source.split('\n')) {
 			const m = TAG_DECL.exec(line);
 			if (m) {
 				tags.push({
 					name: m[3],
 					fileName: file,
+					offset: lineStart + line.indexOf(m[3], m[0].length - m[3].length),
 					global: !!m[2],
 					exported: !!m[1],
 				});
 			}
+			lineStart += line.length + 1;
 		}
 		this.#byFile.set(file, tags);
 	}

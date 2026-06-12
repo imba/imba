@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import type * as ts from 'typescript';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { ImbaTagIndex } from '../tagIndex';
+import { getTagIndex, type ImbaTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
 
 // parity: completions.imba tagnames() — but the listing comes from the
@@ -27,20 +27,13 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 			},
 		},
 		create(context) {
-			const tagIndexes = new Map<string, ImbaTagIndex>();
 			const htmlTagSymbols = new WeakMap<ts.Program, Map<string, ts.Symbol>>();
 
-			function getTagIndex(): ImbaTagIndex {
+			function workspaceTagIndex(): ImbaTagIndex {
 				const roots = (context.env.workspaceFolders ?? [])
 					.filter(uri => uri.scheme === 'file')
 					.map(uri => uri.fsPath);
-				const key = roots.join('|');
-				let index = tagIndexes.get(key);
-				if (!index) {
-					index = new ImbaTagIndex(roots);
-					tagIndexes.set(key, index);
-				}
-				return index;
+				return getTagIndex(roots);
 			}
 
 			function getHtmlTags(): Map<string, ts.Symbol> {
@@ -113,7 +106,7 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					const items = [];
 					const seen = new Set<string>();
 
-					const index = getTagIndex();
+					const index = workspaceTagIndex();
 					index.refresh();
 					for (const tag of index.tags) {
 						if (seen.has(tag.name)) {

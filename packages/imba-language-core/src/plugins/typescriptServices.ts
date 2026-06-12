@@ -2,9 +2,34 @@ import type { LanguageServiceContext, LanguageServicePlugin } from '@volar/langu
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { create as createBaseTypeScriptServices } from 'volar-service-typescript';
-import { toImbaString } from '../conversion';
+import { toImbaIdentifier, toImbaString } from '../conversion';
+import { getTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
 import { filterTsDiagnostic } from './tsDiagnosticRules';
+
+const NO_EXPORTED_MEMBER = /has no exported member '([^']+)'/;
+
+/**
+ * The compiler's tsc target registers tag classes globally (namespace Global
+ * + declare global) but does NOT export them as module members — while the
+ * runtime target does. A user-written `import { my-tag } from './x'` is
+ * therefore correct at runtime but a false 2305 in the type world. Suppress
+ * when the named member is a known workspace tag. Compiler follow-up tracked
+ * in PLAN A9: export tag classes from the module in the tsc target too.
+ */
+function isKnownTagImport(context: LanguageServiceContext, message: string): boolean {
+	const match = message.match(NO_EXPORTED_MEMBER);
+	if (!match) {
+		return false;
+	}
+	const name = toImbaIdentifier(match[1]);
+	const roots = (context.env.workspaceFolders ?? [])
+		.filter(uri => uri.scheme === 'file')
+		.map(uri => uri.fsPath);
+	const index = getTagIndex(roots);
+	index.refresh();
+	return index.tags.some(tag => tag.name === name);
+}
 
 /**
  * volar-service-typescript with imba presentation applied:
@@ -204,6 +229,9 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 						const messageText = typeof diag.message === 'string' ? diag.message : diag.message.value;
 						if (filter) {
 							if (!mapsCleanly(context, document.uri, document, diag.range, messageText)) {
+								continue;
+							}
+							if (Number(diag.code) === 2305 && isKnownTagImport(context, messageText)) {
 								continue;
 							}
 							const verdict = filterTsDiagnostic({

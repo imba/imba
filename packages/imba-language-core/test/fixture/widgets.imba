@@ -1,6 +1,7 @@
 export tag cool-widget
+	prop message = ''
 	<self>
-		"widget"
+		"widget {message}"
 
 global tag x-comp
 	<self>

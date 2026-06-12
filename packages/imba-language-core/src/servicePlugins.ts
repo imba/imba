@@ -3,6 +3,7 @@ import { createImbaCompletionsPlugin } from './plugins/imbaCompletions';
 import { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 import { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
 import { createImbaEventsPlugin } from './plugins/imbaEvents';
+import { createImbaTagsPlugin } from './plugins/imbaTags';
 import { createImbaSemanticTokensPlugin } from './plugins/imbaSemanticTokens';
 import { createTypeScriptServices } from './plugins/typescriptServices';
 
@@ -26,5 +27,8 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		createImbaEventsPlugin(ts),
 		// tag-name completions: workspace tag index + HTML tag map
 		createImbaCompletionsPlugin(ts),
+		// tag-name usage definition/hover via the workspace tag index
+		// (attributes flow through TS mappings and need no bridge)
+		createImbaTagsPlugin(),
 	];
 }
