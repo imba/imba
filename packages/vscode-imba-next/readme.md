@@ -4,13 +4,25 @@ Preview VS Code extension for the next-generation Imba tooling track ([imba-lang
 
 ## Run it (development host)
 
-From the repo root, after building (`npx tsc -b packages/imba-language-core packages/imba-language-server packages/imba-typescript-plugin packages/vscode-imba-next`):
+Easiest — rebuilds everything and launches, preferring VS Code **Insiders** when installed (so stable VS Code with the regular Imba extension keeps running side by side):
 
 ```sh
-code --extensionDevelopmentPath="$PWD/packages/vscode-imba-next" --disable-extensions /path/to/your/imba/project
+./packages/vscode-imba-next/dev.sh [/path/to/your/imba/project]   # default: apps/imba.io
 ```
 
-`--disable-extensions` keeps the regular Imba extension (`scrimba.vsimba`) from double-serving `.imba` files; the built-in TypeScript extension is unaffected.
+Manual equivalent (Insiders):
+
+```sh
+"/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code" \
+  --extensionDevelopmentPath="$PWD/packages/vscode-imba-next" \
+  --disable-extension scrimba.vsimba \
+  /path/to/your/imba/project
+```
+
+Notes:
+- `--disable-extension scrimba.vsimba` (singular) disables only the regular Imba extension — it is installed in Insiders too and would double-serve `.imba` files. Other extensions and the built-in TypeScript extension stay active.
+- To get a `code-insiders` command on PATH: in Insiders, Cmd+Shift+P → "Shell Command: Install 'code-insiders' command in PATH".
+- After changing tooling source: re-run `dev.sh` (it rebuilds), or rebuild manually and "Developer: Reload Window" in the dev host.
 
 ## What works in this preview
 
