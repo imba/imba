@@ -17,3 +17,5 @@ Exact-length spans (identifiers, literals) are emitted before container spans so
 - ⏳ Monarch-driven imba completions/semantic tokens (styles, tags, events) — M2
 
 Run tests: `npx vitest run` in this directory.
+
+**The full feature-parity plan and working log live in [PLAN.md](PLAN.md)** — read its "Status & resume pointer" before continuing work on this track.
