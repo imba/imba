@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -74,11 +75,31 @@ describe('M2.3: event name + modifier intelligence', () => {
 		expect(text.toLowerCase()).toContain('meta key');
 	});
 
-	it('go-to-def on a modifier lands in the events typings', async () => {
+	function textAtTarget(def: { targetUri: { toString(): string }; targetSelectionRange: { start: { line: number } } }): string {
+		const file = def.targetUri.toString().replace('file://', '');
+		return fs.readFileSync(decodeURIComponent(file), 'utf8').split('\n')[def.targetSelectionRange.start.line] ?? '';
+	}
+
+	it('go-to-def on a modifier lands ON the modifier declaration', async () => {
 		const loc = locate(appImba, 'silent', 1);
 		const defs = (await ls.getDefinition(loc.uri, loc.position)) ?? [];
 		expect(defs.length).toBeGreaterThan(0);
-		expect(defs.some(d => d.targetUri.toString().includes('imba.events.d.ts'))).toBe(true);
+		expect(defs[0].targetUri.toString()).toContain('imba.events.d.ts');
+		// dev-host report was a WRONG POSITION inside the right file —
+		// always assert the target line content, never just the file
+		expect(textAtTarget(defs[0])).toContain('αsilent');
+	});
+
+	it('go-to-def on event names lands on the exact property', async () => {
+		const clickLoc = locate(appImba, '@click', 1);
+		const clickDefs = (await ls.getDefinition(clickLoc.uri, clickLoc.position)) ?? [];
+		expect(clickDefs.length).toBeGreaterThan(0);
+		expect(textAtTarget(clickDefs[0])).toContain('click: MouseEvent');
+
+		const boomLoc = locate(appImba, '@boom', 1);
+		const boomDefs = (await ls.getDefinition(boomLoc.uri, boomLoc.position)) ?? [];
+		expect(boomDefs.length).toBeGreaterThan(0);
+		expect(textAtTarget(boomDefs[0])).toContain('[event: string]');
 	});
 
 	it('the modifier usage itself produces no error diagnostics', async () => {

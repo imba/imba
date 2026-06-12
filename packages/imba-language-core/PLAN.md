@@ -185,6 +185,10 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Event-def positions: report not reproducible; tests now assert target lines
+- Dev-host report: clicking `@intersect` landed on `abort: Event;` (first ImbaEvents property, line 902). Probed current build: declared events → exact property line (intersect→988), custom events → index signature (1088), modifiers → exact α-line. NO code path yields 902. Suspect: stale pre-`languages:[]` build where tsserver double-served and could contribute its own definition for the mapped addEventListener string literal. Awaiting retest after relaunch.
+- **Testing convention hardened:** definition tests must assert the TARGET LINE CONTENT, never just the file (the old file-only assertion let position bugs hide). m2-events now checks all three def categories by reading the target line.
+
 ### 2026-06-12 — Touch modifier typings drift (@touch.meta false 2339)
 - Dev-host report: `@touch.meta` flagged 2339 on type Touch. Ground truth from runtime source (events/touch.imba): Touch implements `@shift/@alt/@ctrl/@meta` (proxying originalEvent key state) plus `@mouse/@pen/@touch/@pressure/@left/@middle/@right/@end/@css/@log` — the handwritten imba.Touch interface in imba.events.d.ts was missing the entire family. Added them with docs (packages/imba typings commit).
 - **A9 evidence item #3**: every typings bug so far (module hijack, missing dataForTagName, doc escaping, this drift) is the manual-mirror problem Sindre called out — the real definitions sit in stdlib imba source. When triaging a "false" diagnostic, ALWAYS check runtime source first; the diagnostic may be correctly reporting a stale mirror.
