@@ -753,19 +753,23 @@ declare module "imba/runtime" {
 }
 
 
-declare module "imba" {
+// NOTE: these config interfaces are intentionally global. Wrapping them in
+// `declare module "imba"` made the ambient declaration shadow the real module
+// (resolved from the stdlib source via the 'imba' exports condition), so
+// `import * as imba from 'imba'` lost mount/commit/Component etc. for any
+// consumer loading these typings. No code references import("imba").ImbaConfig.
 
-	interface ThemeColors {
-		[key: string]: {
-			[key: string]: string;
-		};
-	}
-	
-	interface Theme {
-		colors?: ThemeColors;
-	}
+interface ImbaThemeColors {
+	[key: string]: {
+		[key: string]: string;
+	};
+}
 
-	interface ImbaConfig {
+interface ImbaTheme {
+	colors?: ImbaThemeColors;
+}
+
+interface ImbaConfig {
 		/**
 		* create aliases for color keywords, make your own keywords,
 		* or redefine the default keywords to new color values
@@ -782,8 +786,7 @@ declare module "imba" {
 		*						"0": "hsl(40,33%,98%)",
 		*						"4": "hsl(6,56%,65%)",
 		*						"9": "hsl(6,52%,15%)"
-		*		}}}}
-		**/
-		theme?: Theme
-	}
+	*		}}}}
+	**/
+	theme?: ImbaTheme
 }
