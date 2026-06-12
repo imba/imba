@@ -26,6 +26,15 @@ if process.env.LOG_REQUESTS
 		console.log "REQ {req.method} {req.url} dest={req.headers['sec-fetch-dest'] or '-'} ref={req.headers.referer or '-'}"
 		next!
 
+# debug helper: answer module-imports of svg files with instrumented js that
+# records the importer, so we can find who import()s an svg url
+if process.env.DEBUG_SVG_IMPORTS
+	app.get(/^\/assets\/.+\.svg$/) do(req,res,next)
+		if req.headers['sec-fetch-dest'] == 'script'
+			res.type('application/javascript')
+			return res.send "globalThis.__svgImports ||= [];globalThis.__svgImports.push(\{url: import.meta.url, stack: new Error().stack\});console.warn('SVG-AS-MODULE', import.meta.url, new Error().stack);export default null;"
+		next!
+
 app.get(/__sw(_\d+)?__\.js/) do(req,res)
 	const asset = import('./src/sw/worker.imba?worker')
 	res.sendFile asset.path

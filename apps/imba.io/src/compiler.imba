@@ -2,7 +2,7 @@ import * as esml from 'es-module-lexer'
 
 # examples are compiled with the bundled imba compiler, so they must run
 # against the matching runtime - served locally by the site itself
-const ResolveMap = {
+export const ResolveMap = {
 	'imba': '/vendor/imba.mjs'
 	'imba/runtime': '/vendor/imba-runtime.mjs'
 	'imdb': '/imdb.js'

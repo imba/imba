@@ -1,13 +1,7 @@
 const imbac = require 'imba/compiler'
 global.imbac = imbac
 
-import {rewriteImports} from '../compiler'
-
-const ResolveMap = {
-	'imba': 'https://unpkg.com/imba@2.0.0-alpha.243/dist/imba.mjs'
-	'imba/runtime': 'https://unpkg.com/imba@2.0.0-alpha.243/src/imba/runtime.mjs'
-	'imdb': '/imdb.js'
-}
+import {rewriteImports, ResolveMap} from '../compiler'
 
 const importMap = {
 	imports: ResolveMap
