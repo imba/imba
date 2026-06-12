@@ -985,7 +985,8 @@ var grammar = {
 	ClassBody: [
 		o('INDENT OUTDENT',function() { return new ClassBody([]).indented(A1,A2); }),
 		o('INDENT ClassBodyBlock OUTDENT',function() { return A2.indented(A1,A3); }),
-		o('INDENT TERMINATOR ClassBodyBlock OUTDENT',function() { return A3.prebreak(A2).indented(A1,A4); })
+		o('INDENT TERMINATOR ClassBodyBlock OUTDENT',function() { return A3.prebreak(A2).indented(A1,A4); }),
+		o('INDENT TERMINATOR OUTDENT',function() { return new ClassBody([]).indented(A1,A3); })
 	],
 	
 	ClassBodyBlock: [
