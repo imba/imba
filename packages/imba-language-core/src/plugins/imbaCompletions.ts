@@ -4,8 +4,10 @@ import * as path from 'node:path';
 import type * as ts from 'typescript';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
+import { toImbaIdentifier } from '../conversion';
 import { getTagIndex, type ImbaTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
+import { detailOf, findGlobalInterface, getTypeScriptService, summaryOf } from './checkerUtils';
 
 // parity: completions.imba tagnames() — but the listing comes from the
 // workspace tag index (ultrafast scan) + cached HTMLElementTagNameMap lookup
@@ -23,7 +25,7 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 		name: 'imba-completions',
 		capabilities: {
 			completionProvider: {
-				triggerCharacters: ['<'],
+				triggerCharacters: ['<', '@', '.'],
 			},
 		},
 		create(context) {
@@ -37,15 +39,9 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 			}
 
 			function getHtmlTags(): Map<string, ts.Symbol> {
-				const empty = new Map<string, ts.Symbol>();
-				let program: ts.Program | undefined;
-				try {
-					program = (context.inject('typescript/languageService') as ts.LanguageService)?.getProgram();
-				} catch {
-					return empty;
-				}
+				const program = getTypeScriptService(context)?.getProgram();
 				if (!program) {
-					return empty;
+					return new Map();
 				}
 				let cached = htmlTagSymbols.get(program);
 				if (cached) {
@@ -53,21 +49,10 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 				}
 				cached = new Map();
 				const checker = program.getTypeChecker();
-				outer: for (const file of program.getSourceFiles()) {
-					if (!file.fileName.endsWith('.d.ts')) {
-						continue;
-					}
-					for (const statement of file.statements) {
-						if (typescript.isInterfaceDeclaration(statement) && statement.name.text === 'HTMLElementTagNameMap') {
-							const symbol = checker.getSymbolAtLocation(statement.name);
-							if (symbol) {
-								const type = checker.getDeclaredTypeOfSymbol(symbol);
-								for (const prop of type.getProperties()) {
-									cached.set(prop.escapedName as string, prop);
-								}
-								break outer;
-							}
-						}
+				const symbol = findGlobalInterface(typescript, program, checker, 'HTMLElementTagNameMap');
+				if (symbol) {
+					for (const prop of checker.getDeclaredTypeOfSymbol(symbol).getProperties()) {
+						cached.set(prop.escapedName as string, prop);
 					}
 				}
 				htmlTagSymbols.set(program, cached);
@@ -91,17 +76,28 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					const offset = document.offsetAt(position);
 					const mctx = root.monarchDoc.getContextAtOffset(offset);
 					const flags = mctx.suggest?.flags ?? 0;
-					if (!CompletionTypes || !(flags & CompletionTypes.TagName)) {
+					if (!CompletionTypes) {
 						return;
 					}
 
-					// replace the partial tag name when one is being typed
 					const tok = mctx.token;
-					const range =
-						tok && tok.match('tag.name') && tok.offset <= offset
+					// replace the partial name token when one is being typed
+					const tokenRange = (nameTokenType: string) =>
+						tok && tok.match(nameTokenType) && tok.offset <= offset
 							? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
 							: { start: position, end: position };
 
+					if (flags & CompletionTypes.TagEvent) {
+						return eventNameItems(context, typescript, tokenRange('tag.event.name'));
+					}
+					if (flags & CompletionTypes.TagEventModifier) {
+						return eventModifierItems(context, typescript, mctx.eventName, tokenRange('tag.event-modifier.name'));
+					}
+					if (!(flags & CompletionTypes.TagName)) {
+						return;
+					}
+
+					const range = tokenRange('tag.name');
 					const currentFile = decoded[0].fsPath;
 					const items = [];
 					const seen = new Set<string>();
@@ -149,6 +145,96 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 			};
 		},
 	};
+}
+
+type LspRange = { start: { line: number; character: number }; end: { line: number; character: number } };
+
+// parity: completions.imba `if flags & CT.TagEvent → add checker.props("ImbaEvents")`
+function eventNameItems(context: LanguageServiceContext, typescript: typeof ts, range: LspRange) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return;
+	}
+	const checker = program.getTypeChecker();
+	const imbaEvents = findGlobalInterface(typescript, program, checker, 'ImbaEvents');
+	if (!imbaEvents) {
+		return;
+	}
+	const items = [];
+	for (const prop of checker.getDeclaredTypeOfSymbol(imbaEvents).getProperties()) {
+		const name = prop.escapedName as string;
+		if (name.startsWith('α') || name.startsWith('__')) {
+			continue;
+		}
+		const declaration = prop.valueDeclaration ?? prop.declarations?.[0];
+		const type = declaration ? checker.getTypeOfSymbolAtLocation(prop, declaration) : undefined;
+		const summary = summaryOf(prop, checker);
+		items.push({
+			label: '@' + name,
+			filterText: name,
+			sortText: '1' + name,
+			kind: 23, // Event
+			detail: type ? checker.typeToString(type) : undefined,
+			documentation: summary ? { kind: 'markdown' as const, value: toImbaIdentifier(summary) } : undefined,
+			commitCharacters: ['.', '=', '('],
+			textEdit: { range, newText: name },
+		});
+	}
+	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba CT.TagEventModifier → checker.getEventModifiers(ctx.eventName)
+function eventModifierItems(
+	context: LanguageServiceContext,
+	typescript: typeof ts,
+	eventName: string | undefined,
+	range: LspRange
+) {
+	if (!eventName) {
+		return;
+	}
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return;
+	}
+	const checker = program.getTypeChecker();
+	const imbaEvents = findGlobalInterface(typescript, program, checker, 'ImbaEvents');
+	if (!imbaEvents) {
+		return;
+	}
+	const eventsType = checker.getDeclaredTypeOfSymbol(imbaEvents);
+	const eventProp = eventsType.getProperty(eventName);
+	const stringIndex = checker
+		.getIndexInfosOfType(eventsType)
+		.find(info => info.keyType.flags & typescript.TypeFlags.String);
+	const eventType = eventProp
+		? checker.getTypeOfSymbolAtLocation(eventProp, eventProp.valueDeclaration ?? eventProp.declarations![0])
+		: stringIndex?.type;
+	if (!eventType) {
+		return;
+	}
+
+	const items = [];
+	for (const prop of eventType.getApparentProperties()) {
+		const raw = prop.escapedName as string;
+		if (!raw.startsWith('α') || raw === 'αoptions') {
+			continue;
+		}
+		const name = toImbaIdentifier(raw.slice(1));
+		const detail = detailOf(prop, checker);
+		const summary = summaryOf(prop, checker);
+		items.push({
+			label: name,
+			sortText: '1' + name,
+			kind: 23, // Event
+			detail: detail ? toImbaIdentifier(detail) : undefined,
+			documentation: summary ? { kind: 'markdown' as const, value: toImbaIdentifier(summary) } : undefined,
+			// parity: old plugin added '(' as commit char when the modifier takes args
+			commitCharacters: detail?.startsWith('(') ? ['.', '=', '('] : ['.', '='],
+			textEdit: { range, newText: name },
+		});
+	}
+	return { isIncomplete: false, items: items as never[] };
 }
 
 function importEditsFor(

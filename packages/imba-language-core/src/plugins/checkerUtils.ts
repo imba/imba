@@ -1,0 +1,68 @@
+import type { LanguageServiceContext } from '@volar/language-service';
+import type * as ts from 'typescript';
+
+// Shared checker plumbing for the imba service plugins: resolve a global
+// interface (ImbaEvents, HTMLElementTagNameMap, ...) by walking program d.ts
+// statements — public API only — cached per (program, name).
+
+const cache = new WeakMap<ts.Program, Map<string, ts.Symbol | null>>();
+
+export function getTypeScriptService(context: LanguageServiceContext): ts.LanguageService | undefined {
+	try {
+		return context.inject('typescript/languageService') as ts.LanguageService;
+	} catch {
+		return undefined;
+	}
+}
+
+export function findGlobalInterface(
+	typescript: typeof ts,
+	program: ts.Program,
+	checker: ts.TypeChecker,
+	name: string
+): ts.Symbol | undefined {
+	let byName = cache.get(program);
+	if (!byName) {
+		byName = new Map();
+		cache.set(program, byName);
+	}
+	if (byName.has(name)) {
+		return byName.get(name) ?? undefined;
+	}
+	let found: ts.Symbol | null = null;
+	outer: for (const file of program.getSourceFiles()) {
+		if (!file.fileName.endsWith('.d.ts')) {
+			continue;
+		}
+		for (const statement of file.statements) {
+			if (typescript.isInterfaceDeclaration(statement) && statement.name.text === name) {
+				const symbol = checker.getSymbolAtLocation(statement.name);
+				if (symbol) {
+					found = symbol;
+					break outer;
+				}
+			}
+		}
+	}
+	byName.set(name, found);
+	return found ?? undefined;
+}
+
+/** one-line summary from the @summary jsdoc tag, identifier-converted by the caller */
+export function summaryOf(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
+	for (const tag of symbol.getJsDocTags(checker)) {
+		if (tag.name === 'summary') {
+			return (tag.text ?? []).map(part => part.text).join('');
+		}
+	}
+	return undefined;
+}
+
+export function detailOf(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
+	for (const tag of symbol.getJsDocTags(checker)) {
+		if (tag.name === 'detail') {
+			return (tag.text ?? []).map(part => part.text).join('');
+		}
+	}
+	return undefined;
+}

@@ -85,7 +85,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D1 | Plain-code completions (vars, props, implicit self, globals, classes) | 100% hand-assembled (values/access in completions.imba) | **forward to TS** over virtual code at mapped positions; hand-roll only what TS can't see | M2.1 | ⬜ |
 | D2 | Tag names (html, local components, snippets) | tagnames() + checker.getLocalTags + getExportedTags via export-info crawl | `createImbaCompletionsPlugin` + **`ImbaTagIndex`** (regex scan over workspace .imba files, mtime-cached — the "ultrafast path", replaces the export-info crawl which was the old plugin's slowest completion) + HTMLElementTagNameMap via cached checker lookup + auto-import via monarch createImportEdit. Snippets pending | M2.2 | ✅ |
 | D3 | Tag attrs/props per tag | tagattrs() + isTagAttr filtering | service plugin + injected checker | M2.2 | ⬜ |
-| D4 | Tag events + event modifiers | ImbaEvents props + getEventModifiers | service plugin | M2.2 | ⬜ |
+| D4 | Tag events + event modifiers | ImbaEvents props + getEventModifiers | `@`-triggered event names (ImbaEvents props, type details, @summary docs) + `.`-triggered modifiers (α-props of the event type incl. custom events via index signature, @detail signatures, αoptions excluded, names converted). TS completions SUPPRESSED at imba-special contexts (tag/event/modifier) — they leaked event-object members and raw α names through the placeholder mappings | M2.2 | ✅ |
 | D5 | Style properties (abbr config), values per property, modifiers, selectors | styleprops/stylevalues/stylemods via imbacss symbols | service plugin — **Sindre leans toward serving these OUTSIDE the TS system** (static tables per imba version instead of imbacss symbol queries; old plugin only used TS because it had no other channel). Decide shape at M2.2 spike; static-first unless type-dependent values prove necessary | M2.2 | ⬜ |
 | D6 | Style vars / colorvars, custom units, number units | cross-file token scans (findImbaTokensOfType) | workspace token index over open imba docs | M2.2 / M3.3 | ⬜ |
 | D7 | Mixins | getMixinReferences | same as D6 | M2.2 | ⬜ |
@@ -184,6 +184,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — D4: event + modifier completions; TS suppressed at imba contexts
+- `@` → event names from ImbaEvents (label `@click`, filterText bare name, type detail, @summary doc, commit chars `.=(`); `.` after an event → modifiers from the event type's apparent α-properties (works for custom events via the index-signature type; @detail as signature detail; `(`-commit only when args; names via toImbaIdentifier so `αmovedΞx` shows as `moved-x`).
+- **TS completions are now suppressed at TagName/TagEvent/TagEventModifier contexts** (wrapper checks monarch flags at the source offset, mapping back from the embedded TS doc): the placeholder-mapping fix had given modifier positions a completion path, leaking event-object members and RAW α/Φ names. The imba plugins are authoritative at these contexts, like the old plugin.
+- Refactor: `checkerUtils.ts` — shared `findGlobalInterface` (per-program cache), `getTypeScriptService`, `summaryOf`/`detailOf`; imbaEvents + html-tag-map now use it.
+- Per-state fixtures (ev-at/ev-partial/mod-dot/mod-partial/mod-touch): parse-recovered caret states differ from final states — pin each in isolation ($CARET$ lesson applied to test design).
 
 ### 2026-06-12 — Event-def positions: report not reproducible; tests now assert target lines
 - Dev-host report: clicking `@intersect` landed on `abort: Event;` (first ImbaEvents property, line 902). Probed current build: declared events → exact property line (intersect→988), custom events → index signature (1088), modifiers → exact α-line. NO code path yields 902. Suspect: stale pre-`languages:[]` build where tsserver double-served and could contribute its own definition for the mapped addEventListener string literal. Awaiting retest after relaunch.

@@ -1,4 +1,5 @@
 import type { LanguageServiceContext, LanguageServicePlugin } from '@volar/language-service';
+import * as monarchModule from 'imba-monarch';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { create as createBaseTypeScriptServices } from 'volar-service-typescript';
@@ -6,6 +7,10 @@ import { toImbaIdentifier, toImbaString } from '../conversion';
 import { getTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
 import { filterTsDiagnostic } from './tsDiagnosticRules';
+
+// defensive CJS/ESM interop, same as virtualCode.ts
+const CompletionTypes: typeof import('imba-monarch').CompletionTypes =
+	(monarchModule as any).CompletionTypes ?? (monarchModule as any).default?.CompletionTypes;
 
 const NO_EXPORTED_MEMBER = /has no exported member '([^']+)'/;
 
@@ -49,6 +54,47 @@ function isImbaBacked(context: LanguageServiceContext, documentUri: string): boo
 		return false;
 	}
 	return context.language.scripts.get(decoded[0])?.generated?.root instanceof ImbaVirtualCode;
+}
+
+function inImbaCompletionContext(
+	context: LanguageServiceContext,
+	document: TextDocument,
+	position: { line: number; character: number }
+): boolean {
+	if (!CompletionTypes) {
+		return false;
+	}
+	const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
+	if (!decoded) {
+		return false;
+	}
+	const sourceScript = context.language.scripts.get(decoded[0]);
+	const root = sourceScript?.generated?.root;
+	if (!sourceScript || !(root instanceof ImbaVirtualCode)) {
+		return false;
+	}
+
+	// the TS plugin runs on the embedded TS document — map the generated
+	// position back to a source offset before asking monarch for flags
+	let sourceOffset: number | undefined;
+	if (decoded[1] === root.id) {
+		sourceOffset = document.offsetAt(position);
+	} else {
+		const virtualCode = sourceScript.generated?.embeddedCodes.get(decoded[1]);
+		if (!virtualCode) {
+			return false;
+		}
+		const mapper = context.language.maps.get(virtualCode, sourceScript);
+		for (const [mapped] of mapper.toSourceLocation(document.offsetAt(position))) {
+			sourceOffset = mapped;
+			break;
+		}
+	}
+	if (sourceOffset === undefined) {
+		return false;
+	}
+	const flags = root.monarchDoc.getContextAtOffset(sourceOffset)?.suggest?.flags ?? 0;
+	return !!(flags & (CompletionTypes.TagName | CompletionTypes.TagEvent | CompletionTypes.TagEventModifier));
 }
 
 const UNUSED_NAME = /^'([^']+)' is declared but/;
@@ -161,6 +207,13 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 			return {
 				...instance,
 				async provideCompletionItems(document, position, completionContext, token) {
+					// parity: the imba-specific completion contexts (tag names,
+					// events, modifiers) are served EXCLUSIVELY by the imba
+					// plugins — TS member completions at the mapped positions
+					// (event-object properties, raw α-methods) are noise there
+					if (inImbaCompletionContext(context, document, position)) {
+						return undefined;
+					}
 					const result = await provideCompletionItems?.(document, position, completionContext, token);
 					if (result && isImbaBacked(context, document.uri)) {
 						for (const item of result.items) {

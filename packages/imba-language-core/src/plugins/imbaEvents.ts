@@ -4,6 +4,7 @@ import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { toImbaString } from '../conversion';
 import { ImbaVirtualCode } from '../virtualCode';
+import { findGlobalInterface, getTypeScriptService } from './checkerUtils';
 
 // parity: typescript-imba-plugin script.imba getInfoAt (tag.event.name /
 // tag.event-modifier.name branches) + checker.imba getEventModifier —
@@ -31,42 +32,6 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 			definitionProvider: true,
 		},
 		create(context) {
-			const imbaEventsSymbols = new WeakMap<ts.Program, ts.Symbol | null>();
-
-			function getTsService(): ts.LanguageService | undefined {
-				try {
-					return context.inject('typescript/languageService') as ts.LanguageService;
-				} catch {
-					return undefined;
-				}
-			}
-
-			function getImbaEventsSymbol(program: ts.Program, checker: ts.TypeChecker): ts.Symbol | undefined {
-				if (imbaEventsSymbols.has(program)) {
-					return imbaEventsSymbols.get(program) ?? undefined;
-				}
-				let found: ts.Symbol | null = null;
-				for (const file of program.getSourceFiles()) {
-					if (!file.fileName.endsWith('.d.ts')) {
-						continue;
-					}
-					for (const statement of file.statements) {
-						if (typescript.isInterfaceDeclaration(statement) && statement.name.text === 'ImbaEvents') {
-							const symbol = checker.getSymbolAtLocation(statement.name);
-							if (symbol) {
-								found = symbol;
-								break;
-							}
-						}
-					}
-					if (found) {
-						break;
-					}
-				}
-				imbaEventsSymbols.set(program, found);
-				return found ?? undefined;
-			}
-
 			function resolveAt(document: TextDocument, offset: number): ResolvedSymbol | undefined {
 				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
 				if (!decoded) {
@@ -93,12 +58,12 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 					return undefined;
 				}
 
-				const program = getTsService()?.getProgram();
+				const program = getTypeScriptService(context)?.getProgram();
 				if (!program) {
 					return undefined;
 				}
 				const checker = program.getTypeChecker();
-				const imbaEvents = getImbaEventsSymbol(program, checker);
+				const imbaEvents = findGlobalInterface(typescript, program, checker, 'ImbaEvents');
 				if (!imbaEvents) {
 					return undefined;
 				}
