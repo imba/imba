@@ -8,8 +8,8 @@ This is a *living working document*. Any session (human or agent) picking up thi
 
 ## Status & resume pointer
 
-- **Current milestone:** M2 — **daily-drivable preview**: `./packages/vscode-imba-next/dev.sh [project]`
-- **Next action:** **A9 design spike** (typings-from-source — see expanded A9 row; inputs: old dtsutil.imba mechanics, compiler `declare global` emit option, stdlib extend-class declarations in events/core.imba). Then M2.2 completions, remaining C3 contexts
+- **Current milestone:** M2 — **daily-drivable preview**: `./packages/vscode-imba-next/dev.sh [project]`. The M2.2 completion suite is essentially complete (tags/attrs/events/modifiers/styles/values/vars/mixins/decorators/keywords).
+- **Next action:** **A9 design spike** — the last big M2 rock. This is a DESIGN decision involving compiler changes (extend-class Ω output → global types; tsc-target tag exports), so present options to Sindre rather than implement unilaterally. After A9: G4 keep-last-good, remaining C3 hover contexts, then M3 rows
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -103,7 +103,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | E1 | Go to definition (TS-backed) | intercept + convertLocationsToImba | Volar mapping | M0* | ✅ |
-| E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | service plugin over workspace token index | M3.3 | ⬜ |
+| E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | **Defs + hover ✅** (imbaTags plugin: usage-token → declaration-token mapping table, program-wide via monarch docs, snapshot-based ranges; covers --vars, $vars, mixins both directions). References/rename for these tokens still pending (E4) | M3.3 | 🚧 |
 | E3 | Definition filtering (`__new` removal, prefer .imba over .d.ts, meta suppression) | intercept.getDefinitionAndBoundSpan | `preferImbaDefinitions` in the TS wrapper (imba source beats typings d.ts entries; never empties the list). `__new` rule obsolete — current compiler emits real constructors | M2.7 | ✅ |
 | E11 | Def/hover on tag usage (`<cool-widget>`) + attributes | checker.getTagSymbol/getTagAttrSymbol | **two-tier (key architecture validation):** attributes flow through TS mappings for free (exact spans, once Γ globals resolve — compiler already emits `declare global` registrations per tag declaration!); the tag NAME token (unequal span vs Γ-name) bridges via `createImbaTagsPlugin` + workspace index | M2.2 | ✅ |
 | E4 | Find references / rename (TS-backed) | intercepts + conversion | Volar mapping; rename name conversion via `navigation.resolveRenameNewName/EditText` mapping hooks | M3.10 | ⬜ |
@@ -167,6 +167,20 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 4. One release cycle dual-shipping → flip default → deprecate old plugin.
 
 ---
+
+## A9 design brief (decision needed — Sindre)
+
+**Problem:** three type surfaces still depend on mechanisms that don't exist in the new stack: (1) user `extend tag`/`extend class` across files (112 dogfood errors — `'route' does not exist on 'story-list'`), (2) custom event modifiers declared in user/stdlib source, (3) the handwritten typings mirror that keeps drifting (module hijack, dataForTagName, Touch modifiers, doc escaping — four bugs in two days). The compiler ALREADY solves the analogous problem for tag *declarations* (namespace Global + declare global + HTMLElementTagNameMap merge in the tsc target).
+
+**Option A — compiler emits global merges for extend-class too (recommended).** The tsc target compiles `extend tag story-list` / `extend class Event` into `declare global { interface ... { ...members } }` blocks inline in the generated module, exactly like it already does for tag declarations. Tooling needs zero new machinery (mappings flow through the existing spans); types are correct in ANY consumer of the compiled output (tsc CLI checks too); and it directly enables typings-from-source — stdlib modifiers could migrate out of imba.events.d.ts at your pace. Cost: compiler work in the tsc backend (your side); interface-merge semantics need care for non-interface targets (classes merge via interface declaration with the same name — workable since Γ/instance types are interfaces in the output).
+
+**Option B — tooling-side dts sidecars (the old dtsutil approach, modernized).** The language server compiles each file's declarations, rewrites Ω/extend output into `declare global` blocks, and injects them via Volar's `getExtraServiceScripts`. No compiler changes, but: a second compile per file (or d.ts emit), the fragile regex rewriting dtsutil did, sidecar invalidation complexity, and it only fixes editors — `tsc` checking imba output stays wrong. This is the old plugin's architecture and its maintenance burden.
+
+**Option C — hybrid quick fix.** Tooling appends synthesized `declare global` text to the generated snapshot for extend-class constructs it can detect via monarch (we control the embedded text). Cheaper than B, no compiler change, but type info is approximate (no checker-derived member types — we'd synthesize `any`-ish members), which silences the 2551s without real typing.
+
+**Recommendation:** A, with C as an optional stopgap if A's compiler work has a long lead time. Also fold in the two known tsc-target gaps while in there: export tag classes as module members (kills the 2305 suppression), and declare `dataForTagName` (kills that suppression).
+
+**Decisions needed:** (1) A vs B vs C (or A+C staging); (2) if A: should I attempt the compiler change in `src/compiler/` myself or is that yours; (3) typings-from-source migration appetite (stdlib `extend class Event` docs become the canonical hover source).
 
 ## Testing strategy
 
