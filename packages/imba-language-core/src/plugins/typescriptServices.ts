@@ -93,7 +93,12 @@ function inImbaCompletionContext(
 	if (sourceOffset === undefined) {
 		return false;
 	}
-	const flags = root.monarchDoc.getContextAtOffset(sourceOffset)?.suggest?.flags ?? 0;
+	const sourceContext = root.monarchDoc.getContextAtOffset(sourceOffset);
+	// mixin positions carry no completion flag — suppress by token
+	if (sourceContext?.token?.match('tag.mixin.name tag.mixin.prefix')) {
+		return true;
+	}
+	const flags = sourceContext?.suggest?.flags ?? 0;
 	return !!(
 		flags &
 		(CompletionTypes.TagName |

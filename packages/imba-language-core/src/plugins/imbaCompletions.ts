@@ -110,6 +110,15 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					if (flags & CompletionTypes.Decorator) {
 						return decoratorItems(context, root, document.offsetAt(position), tokenRange('decorator.name'));
 					}
+					// mixins have no monarch completion flag — token-driven
+					// (parity: old `tok.match('.mixin')` special case)
+					if (tok?.match('tag.mixin.name tag.mixin.prefix')) {
+						const mixinRange =
+							tok.match('tag.mixin.name') && tok.offset <= offset
+								? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
+								: { start: position, end: position };
+						return { isIncomplete: false, items: mixinItems(context, decoded[0].fsPath, mixinRange) as never[] };
+					}
 					const styleTokenRange = () =>
 						tok && /^style\.value/.test(tok.type) && /^[-$\w]*$/.test(tok.value) && tok.offset <= offset
 							? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
@@ -388,6 +397,42 @@ function styleVarItems(context: LanguageServiceContext, currentFile: string, ran
 				sortText: '0' + token.value,
 				detail: local ? undefined : path.basename(root.fileName),
 				commitCharacters: [' '],
+				textEdit: { range, newText: token.value },
+			});
+		}
+	}
+	return items;
+}
+
+// parity: completions.imba — mixins from style.selector.mixin.name
+// declarations across all program files (old: checker.getMixinReferences)
+function mixinItems(context: LanguageServiceContext, currentFile: string, range: LspRange) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return [];
+	}
+	const seen = new Set<string>();
+	const items = [];
+	for (const sourceFile of program.getSourceFiles()) {
+		if (!sourceFile.fileName.endsWith('.imba')) {
+			continue;
+		}
+		const root = context.language.scripts.get(URI.file(sourceFile.fileName))?.generated?.root;
+		if (!(root instanceof ImbaVirtualCode)) {
+			continue;
+		}
+		for (const token of root.monarchDoc.getMatchingTokens('style.selector.mixin.name')) {
+			if (seen.has(token.value)) {
+				continue;
+			}
+			seen.add(token.value);
+			const local = root.fileName === currentFile;
+			items.push({
+				label: token.value,
+				kind: 6, // Variable
+				sortText: '0' + token.value,
+				detail: local ? undefined : path.basename(root.fileName),
+				commitCharacters: ['>', ' ', '.', '['],
 				textEdit: { range, newText: token.value },
 			});
 		}
