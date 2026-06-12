@@ -184,6 +184,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Completion double-dot report (FLAGS..RELUNIT): not reproducible; defenses added
+- Sindre reported accepting `RELUNIT` after `FLAGS.RE` yielding `FLAGS..RELUNIT`. Probed via harness with both plain and nullable `FLAGS`: the item's textEdit is clean in the current stack (replaces exactly `RE`). Likely the stale pre-fix dev host again (tsserver double-serving could deliver unmapped edits) — needs re-test on the rebuilt stack.
+- Defenses landed regardless: completion items for imba-backed docs translate leading `?.` inserts to imba's `..` (TS optional-chain completions would otherwise inject invalid syntax — the old plugin disabled them outright via includeAutomaticOptionalChainCompletions: false; translation preserves the feature). Regression test applies the accepted textEdit to the source and asserts single-dot result (m2-completions.test.ts, fixtures completion-probe.imba/flags*.{imba,ts}).
+- If reproduced on the fresh stack: capture the item via the probe pattern in m2-completions.test.ts (dump textEdit/insertText) — the answer is in the item, not the apply.
+
 ### 2026-06-12 — Second dev-host round: double-serving, typings bugs, doc rendering
 - **Double-serving fixed:** `typescriptServerPlugins.languages` was `['imba']` (copied from Vue's hybrid mode, where tsserver owns TS features). Our LSP owns them — so tsserver was ALSO serving .imba docs unfiltered/unconverted (`ts-plugin(2339)` with raw `ΓdocΞanchor`, duplicate hovers, false 2882s). Now `languages: []`: the plugin still loads for ts/js→imba interop, but tsserver never sees imba documents.
 - **`declare module "imba"` hijack fixed at source** (packages/imba/typings/imba.d.ts — justified modification, zero in-repo consumers): the ambient block (only there to type ImbaConfig theming) shadowed the stdlib-source-resolved module, deleting mount/commit/Component for any consumer of the real package typings. Interfaces unwrapped to global scope (ImbaTheme/ImbaThemeColors renames). Old plugin never hit it — its frozen typings copy predates the block.

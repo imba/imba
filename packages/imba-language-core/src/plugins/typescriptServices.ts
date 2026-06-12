@@ -92,11 +92,31 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 			const provideDiagnostics = instance.provideDiagnostics?.bind(instance);
 			const provideHover = instance.provideHover?.bind(instance);
 			const provideDocumentSymbols = instance.provideDocumentSymbols?.bind(instance);
-			if (!provideDiagnostics && !provideHover && !provideDocumentSymbols) {
+			const provideCompletionItems = instance.provideCompletionItems?.bind(instance);
+			if (!provideDiagnostics && !provideHover && !provideDocumentSymbols && !provideCompletionItems) {
 				return instance;
 			}
 			return {
 				...instance,
+				async provideCompletionItems(document, position, completionContext, token) {
+					const result = await provideCompletionItems?.(document, position, completionContext, token);
+					if (result && isImbaBacked(context, document.uri)) {
+						// TS optional-chain completions insert `?.name` (over a
+						// range that includes the dot); imba spells it `..name`
+						for (const item of result.items) {
+							if (item.textEdit?.newText.startsWith('?.')) {
+								item.textEdit.newText = '..' + item.textEdit.newText.slice(2);
+							}
+							if (item.insertText?.startsWith('?.')) {
+								item.insertText = '..' + item.insertText.slice(2);
+							}
+							if (typeof item.filterText === 'string' && item.filterText.startsWith('?.')) {
+								item.filterText = '..' + item.filterText.slice(2);
+							}
+						}
+					}
+					return result;
+				},
 				async provideDocumentSymbols(document, token) {
 					// parity: getNavigationTree intercept — the monarch outline
 					// REPLACES TS symbols for imba files (avoids duplicates and
