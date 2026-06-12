@@ -1,0 +1,53 @@
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { createFixtureLanguageService, locate } from './harness';
+
+// parity: M2.3 — script.imba getInfoAt event branches + checker.getEventModifier.
+// Mirrors Sindre's dev-host report: hover/click on `@intersect.silent` did
+// nothing because event tokens never exist in the generated TS.
+
+const fixtureDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixture');
+const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+const appImba = path.join(fixtureDir, 'app.imba');
+
+function hoverText(hover: unknown): string {
+	return JSON.stringify(hover ?? '');
+}
+
+describe('M2.3: event name + modifier intelligence', () => {
+	const ls = createFixtureLanguageService(tsconfigPath);
+
+	it('hover over an event name resolves through ImbaEvents', async () => {
+		const loc = locate(appImba, '@click', 1);
+		const hover = await ls.getHover(loc.uri, loc.position);
+		const text = hoverText(hover);
+		expect(text).toContain('ImbaEvents');
+		expect(text).toContain('click');
+		expect(text).not.toContain('α');
+	});
+
+	it('hover over a modifier shows the modifier with its docs', async () => {
+		const loc = locate(appImba, 'silent', 1);
+		const hover = await ls.getHover(loc.uri, loc.position);
+		const text = hoverText(hover);
+		expect(text).toContain('@silent');
+		// the typings document silent as suppressing imba.commit
+		expect(text.toLowerCase()).toContain('commit');
+		expect(text).not.toContain('αsilent');
+	});
+
+	it('go-to-def on a modifier lands in the events typings', async () => {
+		const loc = locate(appImba, 'silent', 1);
+		const defs = (await ls.getDefinition(loc.uri, loc.position)) ?? [];
+		expect(defs.length).toBeGreaterThan(0);
+		expect(defs.some(d => d.targetUri.toString().includes('imba.events.d.ts'))).toBe(true);
+	});
+
+	it('the modifier usage itself produces no error diagnostics', async () => {
+		// guards the original screenshot bug: 2339 "@silent does not exist"
+		const diagnostics = await ls.getDiagnostics(locate(appImba, 'tag App').uri);
+		const errors = (diagnostics ?? []).filter((d: { severity?: number }) => d.severity === 1);
+		expect(errors.map((d: { message: unknown }) => d.message)).toEqual([]);
+	});
+});

@@ -1,6 +1,7 @@
 import type { LanguageServicePlugin } from '@volar/language-service';
 import { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 import { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
+import { createImbaEventsPlugin } from './plugins/imbaEvents';
 import { createImbaSemanticTokensPlugin } from './plugins/imbaSemanticTokens';
 import { createTypeScriptServices } from './plugins/typescriptServices';
 
@@ -20,5 +21,7 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		createImbaSemanticTokensPlugin(),
 		// monarch-driven outline / breadcrumbs
 		createImbaDocumentSymbolsPlugin(),
+		// event names + modifiers: monarch token → ImbaEvents lookup
+		createImbaEventsPlugin(ts),
 	];
 }

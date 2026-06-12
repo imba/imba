@@ -8,7 +8,7 @@ tag App
 		imba.commit!
 
 	<self>
-		<button @click=bump> "count is {count}"
+		<button @click.silent=bump> "count is {count}"
 		<div> greet("imba")
 
 setTimeout(&,100) do

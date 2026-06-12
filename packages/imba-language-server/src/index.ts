@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import { createConnection, createServer, loadTsdkByPath } from '@volar/language-server/node';
 import { createTypeScriptProject } from '@volar/language-server/lib/project/typescriptProject';
-import { createImbaLanguagePlugin, createImbaServicePlugins } from 'imba-language-core';
+import { createImbaLanguagePlugin, createImbaServicePlugins, setupImbaProject } from 'imba-language-core';
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -17,6 +17,9 @@ connection.onInitialize(params => {
 		params,
 		createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => ({
 			languagePlugins: [createImbaLanguagePlugin()],
+			// inject imba compiler options + global typings into every
+			// project (parity: setCompilerOptions patch + typings lib)
+			setup: setupImbaProject,
 		})),
 		createImbaServicePlugins(tsdk.typescript)
 	);

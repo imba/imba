@@ -17,6 +17,19 @@ declare module 'imba-monarch' {
 		type: string;
 		value: string;
 		symbol?: MonarchSym | null;
+		/** space-separated alternatives, e.g. 'tag.event.name tag.event-modifier.name' */
+		match(types: string | RegExp): boolean;
+		next?: MonarchToken | null;
+		prev?: MonarchToken | null;
+	}
+
+	/** context object from getContextAtOffset (meta fields merged onto it) */
+	export interface MonarchContext {
+		token?: MonarchToken | null;
+		eventName?: string;
+		eventModifierName?: string;
+		tagName?: string;
+		tagAttrName?: string;
 	}
 
 	export interface MonarchOutlineSpan {
@@ -39,7 +52,7 @@ declare module 'imba-monarch' {
 		constructor(owner: { fileName: string }, code: string | unknown);
 		tokens: MonarchToken[];
 		getOutline(walker?: unknown): MonarchOutlineItem;
-		getContextAtOffset(offset: number, forwardLooking?: boolean): unknown;
+		getContextAtOffset(offset: number, forwardLooking?: boolean): MonarchContext;
 		varsAtOffset(offset: number, globals?: boolean): unknown[];
 	}
 }

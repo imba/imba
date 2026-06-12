@@ -8,8 +8,8 @@ This is a *living working document*. Any session (human or agent) picking up thi
 
 ## Status & resume pointer
 
-- **Current milestone:** M2 — **daily-drivable preview exists**: `code --extensionDevelopmentPath="$PWD/packages/vscode-imba-next" --disable-extensions <project>`
-- **Next action:** triage Sindre's first dev-host feedback; then M2.2 (monarch completion contexts) and M2.6 (A9 — confirmed the #1 real gap by dogfood data)
+- **Current milestone:** M2 — **daily-drivable preview**: `./packages/vscode-imba-next/dev.sh [project]`
+- **Next action:** continue dev-host feedback triage; remaining C3 contexts (tag names/attrs, styles), M2.2 completions, M2.6/A9
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -49,8 +49,8 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | A2 | Imports with explicit `./foo.imba` | TSBase.resolveModuleName rewrite (`.imba.ts` → `.imba`) | handled by `@volar/typescript` resolution | M0 | ✅ |
 | A3 | Extensionless imports `./foo` → `foo.imba` | `moduleSuffixes: ['.web.imba','.imba','']` + fileExists trick (System patch) | `typescript.resolveHiddenExtensions: true` — Volar formalized the old trick | M1.1 | ✅ |
 | A4 | `.web.imba` platform variants | same moduleSuffixes | second extraFileExtensions entry `'web.imba'` listed before `'imba'` (priority test in m1-resolution.test.ts) | M1.1 | ✅ |
-| A5 | Compiler options injection (lib, customConditions `['tsimba','imba']`, RequiredCompilerOptions) | Project.setCompilerOptions patch | per-mode: server → host wrapper; tsserver plugin → document required tsconfig + validate; kit → fixture tsconfig | M1.2 | ⬜ |
-| A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | proven manually (fixture: `globals.d.ts` reference + tsconfig `customConditions: ['imba']` resolves `'imba'` to compiled stdlib source!); automatic injection for arbitrary projects folds into A5 | M1.3 | 🚧 |
+| A5 | Compiler options injection (lib, customConditions `['tsimba','imba']`, RequiredCompilerOptions) | Project.setCompilerOptions patch | `setupImbaProject` (projectSetup.ts) wraps the LS host in the server's project `setup` hook — required options forced, defaults only when project hasn't chosen. tsserver-plugin mode still needs an equivalent (M3) | M2.3 | ✅ |
+| A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | `resolveImbaTypings` (prefers the **project's own** imba install, falls back to tooling copy) appended to `getScriptFileNames` in setupImbaProject | M2.3 | ✅ |
 | A7 | Virtual jsconfig for config-less projects | createVirtualProjectConfig + virtual file System patch | language server: default project for inferred workspaces | M3.6 | ⬜ |
 | A8 | Asset imports (`./icon.svg` etc., ImbaAsset types) | EXTRA_EXTENSIONS in resolveImportPath, `allowArbitraryExtensions` | `allowArbitraryExtensions` + asset `.d.ts`; verify per asset kind | M3.5 | ⬜ |
 | A9 | Global `extend class` / global tags across files (Ω dts sidecar) | dts.imba/dtsutil.imba: rewrite compiled dts → `.imba._.d.ts` virtual roots | 🤔 design: `getExtraServiceScripts` per file, or compiler emits `declare global` inline in tsc target (preferred — ask compiler) | M2.6 | 🤔 |
@@ -74,7 +74,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | C1 | TS hover at mapped positions | intercept.getQuickInfoAtPosition | volar-service-typescript via mappings; explicit e2e via `test/harness.ts` (full LanguageService over fixtures — reuse for all feature tests) | M1.7 | ✅ |
 | C2 | Identifier conversion in hover display | toImbaDisplayParts | `provideHover` wrap in typescriptServices.ts (all MarkupContent/MarkedString shapes); Ω-prefixed internal names revisited with A9 | M2.4 | ✅ |
-| C3 | Imba-context hover: style props/values, units, mixins, style vars/colorvars, events, event modifiers, tag names/attrs, meta symbols, MDN links | script.getInfoAt + checker.getSymbolInfo (700+ lines) | monarch-driven hover service plugin; type queries via injected TS languageService | M2.3 | ⬜ |
+| C3 | Imba-context hover: style props/values, units, mixins, style vars/colorvars, events, event modifiers, tag names/attrs, meta symbols, MDN links | script.getInfoAt + checker.getSymbolInfo (700+ lines) | monarch-driven plugins; type queries via injected TS LS. **Events + modifiers done** (`imbaEvents.ts`: hover w/ docs+tags, go-to-def into typings — the @intersect.silent case). Styles/tags/units/mixins remain | M2.3 | 🚧 |
 
 *C1 is exercised indirectly (mapping round-trips + diagnostics); add an explicit hover e2e test in M1.7.
 
@@ -183,6 +183,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — First dev-host feedback (@intersect.silent) → A5/A6 + events intelligence
+- Sindre's screenshots split into two causes, both fixed:
+  1. `Property '@silent' does not exist on type 'Event'` → the server wasn't injecting compiler options/typings (A5/A6). Now: `setupImbaProject` in the server's project `setup` hook wraps `getCompilationSettings` (RequiredCompilerOptions parity, memoized on base identity) and appends `resolveImbaTypings(projectDir)` to root files — **preferring the project's own `node_modules/imba/typings`** so types match the runtime.
+  2. Hover/click on `@intersect`/`.silent` dead → those tokens never exist in generated TS (compiled to addEventListener strings). `imbaEvents.ts` ports the old getInfoAt recipe: monarch context token → `interface ImbaEvents` member → modifier as `α`-method on the event type, via PUBLIC checker APIs only (getDeclaredTypeOfSymbol/getProperty/getTypeOfSymbolAtLocation; ImbaEvents found by walking d.ts statements, cached per program). Hover shows display + docs + jsdoc tags (converted); go-to-def lands in imba.events.d.ts.
+- Gotcha ported from old plugin: at the boundary after `@`/`.` the context token is the start sigil — hop `tok.next` to the name token.
+- This validates the architecture question: token-syntax → global-declarations lookups work cleanly as service plugins on the identity-mapped root doc. Tags/attrs/styles hover (rest of C3) and completions (M2.2) follow the same recipe.
 
 ### 2026-06-12 — F4: vscode-imba-next preview extension (dev-host)
 - `packages/vscode-imba-next` (added to workspaces glob): language + grammar (copied from vscode-imba, which stays untouched), LanguageClient over node-IPC to imba-language-server, `typescriptServerPlugins` entry for imba-typescript-plugin (`languages: ['imba']`, Vue-style) so ts/js files resolve imba imports inside the built-in TS extension.
