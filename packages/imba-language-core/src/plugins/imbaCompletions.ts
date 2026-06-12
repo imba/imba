@@ -258,7 +258,11 @@ export function createImbaKeywordsPlugin(): LanguageServicePlugin {
 
 					const mctx = root.monarchDoc.getContextAtOffset(sourceOffset);
 					const flags = mctx.suggest?.flags ?? 0;
-					if (!CompletionTypes || flags & (CompletionTypes.TagName | CompletionTypes.StyleProp | CompletionTypes.StyleValue)) {
+					// Type: D9 — type positions are TS-served; keywords are noise
+					if (
+						!CompletionTypes ||
+						flags & (CompletionTypes.TagName | CompletionTypes.StyleProp | CompletionTypes.StyleValue | CompletionTypes.Type)
+					) {
 						return;
 					}
 					const keywords = mctx.suggest?.keywords?.filter(k => !JS_KEYWORDS.has(k));

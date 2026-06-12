@@ -51,7 +51,7 @@ export class ImbaVirtualCode implements VirtualCode {
 				id: 'ts',
 				languageId: 'typescript',
 				snapshot: createGeneratedSnapshot(this.compilation.js),
-				mappings: spansToMappings(this.compilation.spans),
+				mappings: spansToMappings(this.compilation.spans, source, this.compilation.js),
 			},
 		];
 	}

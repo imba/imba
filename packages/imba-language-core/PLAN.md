@@ -90,7 +90,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D6 | Style vars / colorvars, custom units, number units | cross-file token scans (findImbaTokensOfType) | `styleVarItems`: `style.property.var` tokens across ALL program files (monarch docs forced+cached per virtual code) — `$`-vars at StyleVar contexts, `--`-vars merged into value lists, cross-file with file attribution. Note: current monarch unifies `--`/`$` declarations under one token type. Units pending | M2.2 | 🚧 |
 | D7 | Mixins | getMixinReferences | `mixinItems`: `style.selector.mixin.name` declarations across program files; token-driven branch (monarch sets NO completion flag at mixin positions — TS suppression also extended by token match) | M2.2 | ✅ |
 | D8 | Decorators | local vars + imba builtins + exported αdecorators | `decoratorItems`: local @-vars (monarch varsAtOffset) + stdlib α-exports via `findModuleExportsByFileSuffix` (@lazy/@bound/@thenable with docs). Decorator added to TS-suppression mask. Workspace-exported decorators → D13 | M2.2 | ✅ |
-| D9 | Types after `\` | getSymbols('Type') + snippets | service plugin | M2.5 | ⬜ |
+| D9 | Types after `\` | getSymbols('Type') + snippets | **mapping fix, not a plugin**: annotation spans cover `\str` in source vs `str` generated (off-by-one container → ALL position features dead at type positions). spansToMappings shifts text-verified backslash-spans to exact — TS type-position completions/hover/defs flow natively; keywords plugin skips Type contexts | M2.5 | ✅ |
 | D10 | Path completions in imports | paths() via directoryStructureHost | ❌ dropped — Sindre: not needed (2026-06-12) | — | ❌ |
 | D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | `createImbaKeywordsPlugin` (ADDITIONAL completion source; imba-only keywords — TS provides the JS set; monarch's contextual list, weight-800 parity). Snippets pending | M2.2 | 🚧 |
 | D12 | Auto-imports: values/types (TS-backed) | importer.imba getExportInfoMap machinery | mostly free via D1 forwarding (TS auto-imports map edits back); verify import path gets `.imba`-stripped/extensionless form | M3.1 | ⬜ |
@@ -199,6 +199,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — D9 was a mapping bug: type annotations were invisible to every feature
+- Probe: completions after `a\str` returned ONLY the 21 imba keywords. Root cause far better than expected: the compiler's annotation spans cover `\str` (4 source chars) against `str` (3 generated chars) — the systematic off-by-one made them CONTAINERS, so type positions had no completion/hover/navigation at all. Not just D9: hover and go-to-def on every type annotation were dead.
+- Fix in spansToMappings: when sourceLength === generatedLength + 1 and the texts verify (`source[s0] === '\\'` and the rest matches the generated slice), shift the span past the sigil and emit it exact. Text-verified — no guessing. TS then serves type-position completions natively (string/Point with edits covering exactly the typed partial), plus hover (`type Poi = …`) and defs.
+- Keywords plugin now skips CompletionTypes.Type contexts (keywords are noise in a type position).
+- Suite at 116; dogfood unchanged (212/51). Old plugin needed getSymbols('Type') + snippets for this — the mapping path replaces all of it.
 
 ### 2026-06-12 — F3 + B5: configuration spine, show-suppressed debugging
 - `config.ts`: three settings for now (useImbaFromProject, debugLevel, workspaceSymbolsScope), full-section semantics (a partial update resets unspecified keys — the client always sends the whole imba.* section), side effect wiring to the A10 flag. suggest.* knobs from the old schema deferred until dev-hosting shows a need.

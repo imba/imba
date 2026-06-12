@@ -74,7 +74,11 @@ export const PLACEHOLDER_FEATURES: CodeInformation = {
  * candidate mappings in array order, so precise leaf spans win over container
  * fallbacks when both match an offset.
  */
-export function spansToMappings(spans: readonly (readonly number[])[]): CodeMapping[] {
+export function spansToMappings(
+	spans: readonly (readonly number[])[],
+	sourceText?: string,
+	generatedText?: string
+): CodeMapping[] {
 	// exact spans grouped by translation delta (generated - source): the
 	// hierarchical compiler spans nest same-delta exact spans (identifier
 	// inside expression inside statement), and Volar yields one generated
@@ -101,19 +105,34 @@ export function spansToMappings(spans: readonly (readonly number[])[]): CodeMapp
 		}
 		seen.add(key);
 
-		const sourceLength = s1 - s0;
+		let sourceStart = s0;
+		let sourceLength = s1 - s0;
 		const generatedLength = g1 - g0;
 
+		// type annotations: source `\str` maps to generated `str` — the span
+		// includes the backslash sigil, making an off-by-one container that
+		// carries no position features (D9: completions/hover/defs at type
+		// positions were dead). Verified against the texts, shift to exact.
+		if (
+			sourceLength === generatedLength + 1 &&
+			sourceText?.[s0] === '\\' &&
+			generatedText !== undefined &&
+			sourceText.slice(s0 + 1, s1) === generatedText.slice(g0, g1)
+		) {
+			sourceStart = s0 + 1;
+			sourceLength -= 1;
+		}
+
 		if (sourceLength === generatedLength) {
-			const delta = g0 - s0;
+			const delta = g0 - sourceStart;
 			let group = exactByDelta.get(delta);
 			if (!group) {
 				exactByDelta.set(delta, (group = []));
 			}
-			group.push([s0, s1]);
+			group.push([sourceStart, sourceStart + sourceLength]);
 		} else {
 			containers.push({
-				sourceOffsets: [s0],
+				sourceOffsets: [sourceStart],
 				generatedOffsets: [g0],
 				lengths: [sourceLength],
 				generatedLengths: [generatedLength],
