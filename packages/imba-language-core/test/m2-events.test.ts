@@ -42,6 +42,27 @@ describe('M2.3: event name + modifier intelligence', () => {
 		expect(text).not.toContain('*@click*');
 	});
 
+	it('custom events resolve through the ImbaEvents index signature', async () => {
+		// parity: old checker.member() getStringIndexType fallback — dev-host
+		// report: hover dead on `@intercept` (not a declared ImbaEvents member)
+		const loc = locate(appImba, '@boom', 1);
+		const hover = await ls.getHover(loc.uri, loc.position);
+		const text = hoverText(hover);
+		expect(text).toContain('ImbaEvents.boom');
+		expect(text).toContain('CustomEvent');
+		expect(text).toContain('custom event');
+
+		// modifiers on custom events resolve against the index value type
+		const modLoc = locate(appImba, 'boom.silent', 'boom.'.length);
+		const modHover = await ls.getHover(modLoc.uri, modLoc.position);
+		expect(hoverText(modHover)).toContain('@silent');
+
+		// go-to-def on the custom event lands on the index signature
+		const defs = (await ls.getDefinition(loc.uri, loc.position)) ?? [];
+		expect(defs.length).toBeGreaterThan(0);
+		expect(defs[0].targetUri.toString()).toContain('imba.events.d.ts');
+	});
+
 	it('go-to-def on a modifier lands in the events typings', async () => {
 		const loc = locate(appImba, 'silent', 1);
 		const defs = (await ls.getDefinition(loc.uri, loc.position)) ?? [];

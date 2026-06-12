@@ -16,7 +16,10 @@ import { ImbaVirtualCode } from '../virtualCode';
 
 interface ResolvedSymbol {
 	display: string;
-	symbol: ts.Symbol;
+	symbol?: ts.Symbol;
+	/** definition target when there is no symbol (index-signature members) */
+	declaration?: ts.Declaration;
+	note?: string;
 	checker: ts.TypeChecker;
 }
 
@@ -101,18 +104,33 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 				}
 				const imbaEventsType = checker.getDeclaredTypeOfSymbol(imbaEvents);
 
+				// custom events resolve through the index signature
+				// ([event: string]: CustomEvent) — parity: old checker.member()
+				// fell back to getStringIndexType
+				const stringIndex = checker
+					.getIndexInfosOfType(imbaEventsType)
+					.find(info => info.keyType.flags & typescript.TypeFlags.String);
+
 				if (isEventName) {
 					const name = tok.value.replace(/^@/, '');
 					const prop = imbaEventsType.getProperty(name);
-					if (!prop) {
-						return undefined;
+					if (prop) {
+						const type = typeOf(checker, prop);
+						return {
+							symbol: prop,
+							checker,
+							display: `(property) ImbaEvents.${name}: ${checker.typeToString(type)}`,
+						};
 					}
-					const type = typeOf(checker, prop);
-					return {
-						symbol: prop,
-						checker,
-						display: `(property) ImbaEvents.${name}: ${checker.typeToString(type)}`,
-					};
+					if (stringIndex) {
+						return {
+							declaration: stringIndex.declaration,
+							checker,
+							display: `(property) ImbaEvents.${name}: ${checker.typeToString(stringIndex.type)}`,
+							note: 'custom event',
+						};
+					}
+					return undefined;
 				}
 
 				const eventName = ctx.eventName;
@@ -120,10 +138,10 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 					return undefined;
 				}
 				const eventProp = imbaEventsType.getProperty(eventName);
-				if (!eventProp) {
+				const eventType = eventProp ? typeOf(checker, eventProp) : stringIndex?.type;
+				if (!eventType) {
 					return undefined;
 				}
-				const eventType = typeOf(checker, eventProp);
 				const modifier = eventType.getProperty('α' + tok.value);
 				if (!modifier) {
 					return undefined;
@@ -164,12 +182,16 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 						return;
 					}
 					const lines = [`\`\`\`typescript\n${toImbaString(resolved.display)}\n\`\`\``];
-					let docs = resolved.symbol
-						.getDocumentationComment(resolved.checker)
-						.map(part => part.text)
-						.join('');
+					if (resolved.note) {
+						lines.push(`*${resolved.note}*`);
+					}
+					let docs =
+						resolved.symbol
+							?.getDocumentationComment(resolved.checker)
+							.map(part => part.text)
+							.join('') ?? '';
 					const meta: string[] = [];
-					for (const tag of resolved.symbol.getJsDocTags(resolved.checker)) {
+					for (const tag of resolved.symbol?.getJsDocTags(resolved.checker) ?? []) {
 						const text = (tag.text ?? []).map(part => part.text).join('');
 						if (/^(detail|color|snippet)$/.test(tag.name)) {
 							continue;
@@ -198,7 +220,7 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 					}
 					const offset = document.offsetAt(position);
 					const resolved = resolveAt(document, offset);
-					const declaration = resolved?.symbol.declarations?.[0];
+					const declaration = resolved?.symbol?.declarations?.[0] ?? resolved?.declaration;
 					if (!resolved || !declaration) {
 						return;
 					}
