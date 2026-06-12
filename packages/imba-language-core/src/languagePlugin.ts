@@ -35,12 +35,24 @@ export function createImbaLanguagePlugin<T extends ScriptIdLike | string>(): Lan
 		},
 		typescript: {
 			extraFileExtensions: [
+				// 'web.imba' before 'imba': platform variants win when both
+				// exist, matching the old plugin's moduleSuffixes order
+				// ['.web.imba', '.imba', '']
+				{
+					extension: 'web.imba',
+					isMixedContent: false,
+					scriptKind: 7, // ts.ScriptKind.Deferred
+				},
 				{
 					extension: 'imba',
 					isMixedContent: false,
 					scriptKind: 7, // ts.ScriptKind.Deferred
 				},
 			],
+			// Makes extensionless `import './foo'` resolve to foo.imba: TS
+			// probes foo.d.ts, Volar answers yes when foo.imba exists and
+			// rewrites the resolution to the .imba source.
+			resolveHiddenExtensions: true,
 			getServiceScript(root) {
 				return {
 					code: root,

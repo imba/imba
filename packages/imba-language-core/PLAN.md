@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M1
-- **Next action:** M1.1 — extensionless/`.web.imba` module resolution (spike notes in Working log)
+- **Next action:** M1.4 (B2) — imba parse diagnostics service plugin; then M1.3 (A6) real typings
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -47,8 +47,8 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | A1 | `.imba` files visible to TS as virtual TS | patches.imba: ScriptInfo/TextStorage/ScriptVersionCache patching | `ImbaVirtualCode` + mappings | M0 | ✅ |
 | A2 | Imports with explicit `./foo.imba` | TSBase.resolveModuleName rewrite (`.imba.ts` → `.imba`) | handled by `@volar/typescript` resolution | M0 | ✅ |
-| A3 | Extensionless imports `./foo` → `foo.imba` | `moduleSuffixes: ['.web.imba','.imba','']` + fileExists trick (System patch) | inject moduleSuffixes / wrap resolution host — **spike** | M1.1 | 🚧 |
-| A4 | `.web.imba` platform variants | same moduleSuffixes | same as A3 | M1.1 | 🚧 |
+| A3 | Extensionless imports `./foo` → `foo.imba` | `moduleSuffixes: ['.web.imba','.imba','']` + fileExists trick (System patch) | `typescript.resolveHiddenExtensions: true` — Volar formalized the old trick | M1.1 | ✅ |
+| A4 | `.web.imba` platform variants | same moduleSuffixes | second extraFileExtensions entry `'web.imba'` listed before `'imba'` (priority test in m1-resolution.test.ts) | M1.1 | ✅ |
 | A5 | Compiler options injection (lib, customConditions `['tsimba','imba']`, RequiredCompilerOptions) | Project.setCompilerOptions patch | per-mode: server → host wrapper; tsserver plugin → document required tsconfig + validate; kit → fixture tsconfig | M1.2 | ⬜ |
 | A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | add typings as root files via project host (server) / `files` guidance (tsserver mode) | M1.3 | ⬜ |
 | A7 | Virtual jsconfig for config-less projects | createVirtualProjectConfig + virtual file System patch | language server: default project for inferred workspaces | M3.6 | ⬜ |
@@ -182,6 +182,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — M1.1 done: extensionless + .web.imba resolution (A3/A4)
+- `@volar/typescript`'s `createResolveModuleName` already implements the old plugin's fileExists trick behind `typescript.resolveHiddenExtensions` — TS probes `foo.d.ts` for extensionless `./foo`, Volar answers yes when `foo.imba` exists and rewrites the resolution. One flag + one extra extension entry replaced three patched classes.
+- `.web.imba` handled by an `extraFileExtensions` entry `'web.imba'` ordered before `'imba'` → platform variant wins when both exist (test: `m1-resolution.test.ts` with conflicting return types).
+- **Accepted deviation:** when `foo.ts` AND `foo.imba` both exist, `./foo` now resolves to `foo.ts` (TS probes .ts before .d.ts); the old moduleSuffixes order preferred `foo.imba`. Revisit at dogfooding if real projects hit it.
+- Perf note: `resolveHiddenExtensions` adds up to 2 extra fileExists probes per failed `.d.ts` lookup during resolution — fold into G5 measurement.
+- Works for ts→imba, imba→imba, and imba→ts directions (fixture imports cover all three).
 
 ### 2026-06-12 — Plan created; M1 begun
 - Parity matrix built from a full read of the old plugin (~6k lines, all files).
