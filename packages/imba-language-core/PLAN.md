@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M1
-- **Next action:** M1.3 (A6) — real imba typings replacing the fixture shim; then B3/B4 (suppression rules + identifier presentation)
+- **Next action:** M1.7 — hover/go-to-def e2e harness; then G1/G2 (worker compile + cache); then the M1.9 dogfood checkpoint over an imba.io app dir (with A5 strategy writeup)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -50,7 +50,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | A3 | Extensionless imports `./foo` → `foo.imba` | `moduleSuffixes: ['.web.imba','.imba','']` + fileExists trick (System patch) | `typescript.resolveHiddenExtensions: true` — Volar formalized the old trick | M1.1 | ✅ |
 | A4 | `.web.imba` platform variants | same moduleSuffixes | second extraFileExtensions entry `'web.imba'` listed before `'imba'` (priority test in m1-resolution.test.ts) | M1.1 | ✅ |
 | A5 | Compiler options injection (lib, customConditions `['tsimba','imba']`, RequiredCompilerOptions) | Project.setCompilerOptions patch | per-mode: server → host wrapper; tsserver plugin → document required tsconfig + validate; kit → fixture tsconfig | M1.2 | ⬜ |
-| A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | add typings as root files via project host (server) / `files` guidance (tsserver mode) | M1.3 | ⬜ |
+| A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | proven manually (fixture: `globals.d.ts` reference + tsconfig `customConditions: ['imba']` resolves `'imba'` to compiled stdlib source!); automatic injection for arbitrary projects folds into A5 | M1.3 | 🚧 |
 | A7 | Virtual jsconfig for config-less projects | createVirtualProjectConfig + virtual file System patch | language server: default project for inferred workspaces | M3.6 | ⬜ |
 | A8 | Asset imports (`./icon.svg` etc., ImbaAsset types) | EXTRA_EXTENSIONS in resolveImportPath, `allowArbitraryExtensions` | `allowArbitraryExtensions` + asset `.d.ts`; verify per asset kind | M3.5 | ⬜ |
 | A9 | Global `extend class` / global tags across files (Ω dts sidecar) | dts.imba/dtsutil.imba: rewrite compiled dts → `.imba._.d.ts` virtual roots | 🤔 design: `getExtraServiceScripts` per file, or compiler emits `declare global` inline in tsc target (preferred — ask compiler) | M2.6 | 🤔 |
@@ -63,8 +63,8 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | B1 | TS diagnostics in imba coordinates | Session.sendDiagnosticsEvent + o2iRange mapping | Volar mapping | M0 | ✅ |
 | B2 | Imba compiler parse diagnostics | script.getImbaDiagnostics (save-gated) | `createImbaDiagnosticsPlugin` over the identity-mapped root doc (live, not save-gated) | M1.4 | ✅ |
-| B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | port table → `shouldReport` on container mappings + post-filter in TS plugin wrapper (needs message regex access → wrapper, not shouldReport alone) | M1.5 | ⬜ |
-| B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | wrap `provideDiagnostics` result messages only | M1.6 | ⬜ |
+| B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | `tsDiagnosticRules.ts` table + `createTypeScriptServices` wrapper (filters only imba-backed docs; plain .ts untouched) | M1.5 | ✅ |
+| B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | `conversion.ts` applied per diagnostic message in the wrapper | M1.6 | ✅ |
 | B5 | debugLevel≥2 "show suppressed as warnings" | filterDiagnostics | config flag on the wrapper | M3.9 | ⬜ |
 
 ### C. Hover / quick info
@@ -182,6 +182,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — M1.3/M1.5/M1.6: real typings, suppression rules, identifier presentation
+- **The full real-world chain works:** fixture tsconfig with `customConditions: ['imba']` + `allowArbitraryExtensions` resolves `import 'imba'` through the exports map to `src/imba/imba.imba` — the actual stdlib source — which our language plugin compiles like any user file (with `nocheck`, parity with old compiler.imba). A tag component using `@click`, `imba.commit!`, `imba.mount` and the global typings checks **clean**; a deliberate misuse through the same chain still errors (proves checking is live, not silently absent).
+- Global typings wired via a one-line `globals.d.ts` referencing the old plugin's `typings/imba.d.ts` (read-only). Automatic injection for arbitrary projects remains under A5.
+- B3 ported as a data table (`tsDiagnosticRules.ts`) preserving the old control flow (suppress stops, downgrade continues); applied in a `createTypeScriptServices` wrapper that **only filters imba-backed documents** — plain .ts diagnostics pass through (old plugin's `continue unless mapper`).
+- B4: Greek-letter conversion applied per diagnostic message — the whole-protocol JSON rewrite is gone for good (matrix F7 ❌ by design).
+- Stdlib program cost: checker construction over the fixture incl. full stdlib ≈ 1s in tests — acceptable; G2 cache will absorb it for real projects.
 
 ### 2026-06-12 — M1.4 done: parse diagnostics (B2) + root/child restructure
 - **Architecture change (important):** root virtual code is now the imba source with an identity mapping; generated TS moved to `embeddedCodes[0]`. Forced by Volar's `documentFeatureWorker`: plugins only ever see *embedded* documents, and only those with feature-enabled mappings — a failed compile (empty mappings) made files invisible to every feature. The identity-mapped root fixes that and is the document imba-side plugins (M2 hover/completions/semantic tokens) will run against. `getServiceScript` now returns `root.tsCode`.

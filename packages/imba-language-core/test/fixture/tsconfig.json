@@ -3,11 +3,13 @@
         "target": "esnext",
         "module": "esnext",
         "moduleResolution": "bundler",
-        "lib": ["esnext", "dom"],
+        "lib": ["esnext", "dom", "dom.iterable"],
         "strict": false,
         "noEmit": true,
         "skipLibCheck": true,
-        "allowJs": true
+        "allowJs": true,
+        "allowArbitraryExtensions": true,
+        "customConditions": ["imba"]
     },
     "include": ["**/*"]
 }

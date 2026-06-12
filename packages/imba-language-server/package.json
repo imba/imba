@@ -20,8 +20,7 @@
     },
     "dependencies": {
         "@volar/language-server": "~2.4.28",
-        "imba-language-core": "file:../imba-language-core",
-        "volar-service-typescript": "~0.0.71"
+        "imba-language-core": "file:../imba-language-core"
     },
     "peerDependencies": {
         "typescript": "*"
