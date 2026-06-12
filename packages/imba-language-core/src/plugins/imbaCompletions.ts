@@ -7,7 +7,14 @@ import { URI } from 'vscode-uri';
 import { toImbaIdentifier, toJSIdentifier } from '../conversion';
 import { getTagIndex, type ImbaTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
-import { detailOf, findGlobalInterface, findGlobalNamespaceExports, getTypeScriptService, summaryOf } from './checkerUtils';
+import {
+	detailOf,
+	findGlobalInterface,
+	findGlobalNamespaceExports,
+	findModuleExportsByFileSuffix,
+	getTypeScriptService,
+	summaryOf,
+} from './checkerUtils';
 
 // parity: completions.imba tagnames() — but the listing comes from the
 // workspace tag index (ultrafast scan) + cached HTMLElementTagNameMap lookup
@@ -99,6 +106,9 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					}
 					if (flags & CompletionTypes.TagEventModifier) {
 						return eventModifierItems(context, typescript, mctx.eventName, tokenRange('tag.event-modifier.name'));
+					}
+					if (flags & CompletionTypes.Decorator) {
+						return decoratorItems(context, root, document.offsetAt(position), tokenRange('decorator.name'));
 					}
 					if (flags & CompletionTypes.StyleValue && mctx.suggest?.styleProperty) {
 						const valueRange =
@@ -335,6 +345,62 @@ function stylePropertyItems(context: LanguageServiceContext, typescript: typeof 
 			textEdit: { range, newText: name },
 		});
 	}
+	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba decorators() — local @-vars in scope plus the
+// imba builtins (α-prefixed exports of the stdlib module, e.g. @lazy/@bound).
+// Workspace-exported decorators arrive with D13 auto-import work.
+function decoratorItems(
+	context: LanguageServiceContext,
+	root: ImbaVirtualCode,
+	offset: number,
+	range: LspRange
+) {
+	const items: Record<string, unknown>[] = [];
+	const seen = new Set<string>();
+
+	for (const variable of root.monarchDoc.varsAtOffset(offset)) {
+		if (variable.name.startsWith('@') && !seen.has(variable.name)) {
+			seen.add(variable.name);
+			items.push({
+				label: variable.name,
+				kind: 3, // Function
+				sortText: '0' + variable.name,
+				commitCharacters: [' ', '('],
+				textEdit: { range, newText: variable.name },
+			});
+		}
+	}
+
+	const program = getTypeScriptService(context)?.getProgram();
+	if (program) {
+		const checker = program.getTypeChecker();
+		for (const symbol of findModuleExportsByFileSuffix(program, checker, '/src/imba/imba.imba')) {
+			const raw = symbol.escapedName as string;
+			if (!raw.startsWith('α')) {
+				continue;
+			}
+			const name = '@' + toImbaIdentifier(raw.slice(1));
+			if (seen.has(name)) {
+				continue;
+			}
+			seen.add(name);
+			const docs = symbol
+				.getDocumentationComment(checker)
+				.map(part => part.text)
+				.join('');
+			items.push({
+				label: name,
+				kind: 3, // Function
+				sortText: '1' + name,
+				documentation: docs ? { kind: 'markdown' as const, value: toImbaIdentifier(docs) } : undefined,
+				commitCharacters: [' ', '('],
+				textEdit: { range, newText: name },
+			});
+		}
+	}
+
 	return { isIncomplete: false, items: items as never[] };
 }
 

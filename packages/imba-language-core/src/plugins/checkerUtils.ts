@@ -87,6 +87,27 @@ export function findGlobalNamespaceExports(
 	return symbol ? checker.getExportsOfModule(symbol) : [];
 }
 
+/** exports of the module whose (virtual) source file path ends with `suffix` — e.g. the imba stdlib entry */
+export function findModuleExportsByFileSuffix(
+	program: ts.Program,
+	checker: ts.TypeChecker,
+	suffix: string
+): ts.Symbol[] {
+	let byName = cache.get(program);
+	if (!byName) {
+		byName = new Map();
+		cache.set(program, byName);
+	}
+	const key = 'mod:' + suffix;
+	if (!byName.has(key)) {
+		const file = program.getSourceFiles().find(f => f.fileName.endsWith(suffix));
+		const symbol = file ? checker.getSymbolAtLocation(file) : undefined;
+		byName.set(key, symbol ?? null);
+	}
+	const symbol = byName.get(key);
+	return symbol ? checker.getExportsOfModule(symbol) : [];
+}
+
 /** one-line summary from the @summary jsdoc tag, identifier-converted by the caller */
 export function summaryOf(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
 	for (const tag of symbol.getJsDocTags(checker)) {

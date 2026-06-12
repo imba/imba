@@ -89,7 +89,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D5 | Style properties (abbr config), values per property, modifiers, selectors | styleprops/stylevalues/stylemods via imbacss symbols | Properties + @-modifiers (slice 1) and **values per property (slice 2 ✅)**: `suggest.styleProperty` → imbacss export (abbreviations follow @proxy, dashed names via new `toJSIdentifier`) → declared-type members with docs (`d:` offers block/flex/grid…). Remaining: named colors/Ψglobals merge-in, selectors context, abbr-preference config | M2.2 | 🚧 |
 | D6 | Style vars / colorvars, custom units, number units | cross-file token scans (findImbaTokensOfType) | workspace token index over open imba docs | M2.2 / M3.3 | ⬜ |
 | D7 | Mixins | getMixinReferences | same as D6 | M2.2 | ⬜ |
-| D8 | Decorators | local vars + imba builtins + exported αdecorators | service plugin | M2.2 | ⬜ |
+| D8 | Decorators | local vars + imba builtins + exported αdecorators | `decoratorItems`: local @-vars (monarch varsAtOffset) + stdlib α-exports via `findModuleExportsByFileSuffix` (@lazy/@bound/@thenable with docs). Decorator added to TS-suppression mask. Workspace-exported decorators → D13 | M2.2 | ✅ |
 | D9 | Types after `\` | getSymbols('Type') + snippets | service plugin | M2.5 | ⬜ |
 | D10 | Path completions in imports | paths() via directoryStructureHost | ❌ dropped — Sindre: not needed (2026-06-12) | — | ❌ |
 | D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | `createImbaKeywordsPlugin` (ADDITIONAL completion source; imba-only keywords — TS provides the JS set; monarch's contextual list, weight-800 parity). Snippets pending | M2.2 | 🚧 |
