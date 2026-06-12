@@ -39,3 +39,4 @@ test/index.js
 test/apps/**/*.js
 **/.vite-node
 *.tsbuildinfo
+packages/zed-imba/target

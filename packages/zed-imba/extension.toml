@@ -1,0 +1,11 @@
+id = "imba"
+name = "Imba (Next Preview)"
+version = "0.0.1"
+schema_version = 1
+authors = ["Sindre Aarsaether <sindre@identu.no>"]
+description = "Imba language support via imba-language-server (Volar-based, preview)"
+repository = "https://github.com/imba/imba"
+
+[language_servers.imba-language-server]
+name = "Imba Language Server"
+languages = ["Imba"]

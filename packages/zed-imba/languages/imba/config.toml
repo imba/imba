@@ -1,0 +1,20 @@
+# No tree-sitter grammar yet — highlighting comes from the language server's
+# semantic tokens (set `"semantic_tokens": "full"` in Zed settings). The
+# monarch lexer behind the server is imba's fault-tolerant grammar already.
+name = "Imba"
+path_suffixes = ["imba"]
+line_comments = ["# "]
+tab_size = 1
+hard_tabs = true
+autoclose_before = ";:.,=}])>"
+word_characters = ["-", "?", "!", "$", "@", "#"]
+brackets = [
+    { start = "{", end = "}", close = true, newline = true },
+    { start = "[", end = "]", close = true, newline = true },
+    { start = "(", end = ")", close = true, newline = true },
+    # <> autoclosing matters: tag completions fire in the `<|>` state
+    { start = "<", end = ">", close = true, newline = false },
+    { start = "\"", end = "\"", close = true, newline = false },
+    { start = "'", end = "'", close = true, newline = false },
+    { start = "`", end = "`", close = true, newline = false },
+]
