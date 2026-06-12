@@ -122,7 +122,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | LSP custom notifications (typed) in preview extension. Health check: at project init verify `imba.Component` resolves; if not, ONE clear "imba types not loaded" signal instead of a 2339 cascade on every tag (dev-host finding: broken env reads as thousands of cryptic `typeof import("imba")` errors) | M2.12 | ⬜ |
 | F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | LSP configuration; port schema to preview extension | M3.9 | ⬜ |
 | F4 | Preview VS Code extension (`imba-next` style) | n/a | `packages/vscode-imba-next`: LSP client → imba-language-server, grammar copied from vscode-imba, tsserver plugin contribution. Dev-host only (`code --extensionDevelopmentPath=… --disable-extensions`); vsce packaging needs bundling, M3 | M2.11 | ✅ |
-| F8 | Zed extension (architecture dividend: server is plain LSP) | n/a | `packages/zed-imba`: Rust/WASM glue (cargo-check clean) + language config; server over stdio; Zed now supports LSP semantic tokens (`"full"` mode) so highlighting can come from the server. **Enabler:** extend F1 to emit monarch's full token stream (keywords/strings/comments — currently identifiers only) so Zed gets complete colors without a tree-sitter grammar | M2 | 🚧 |
+| F8 | Zed extension (architecture dividend: server is plain LSP) | github.com/imba/zed-imba already existed: tree-sitter grammar (imba/tree-sitter-imba) + queries + a monarch mini-LSP (imba-tags) | `packages/zed-imba` now mirrors the official repo's structure with the mini-LSP replaced by imba-language-server (workspace/monorepo resolution + settings override; cargo-check clean on zed_extension_api 0.7). Sync back to imba/zed-imba = plain copy. Highlighting: tree-sitter base + semantic tokens "combined" (their semantic_token_rules.json kept) | M2 | ✅ |
 | F5 | Selection tracking / save notifications | ipc onDidChangeTextEditorSelection/didSave | not needed (LSP didSave; live parse diagnostics replace save-gating) | — | ❌ |
 | F6 | Standalone tsserver wrapper (typescript-imba-service) | separate package | superseded by imba-language-server (any LSP editor) | — | ❌ |
 | F7 | Protocol-wide greek-letter rewrite of every message | Session.send JSON round-trip | ❌ dropped by design — conversion happens at feature boundaries only (B4, C2, D-resolve) | — | ❌ |
@@ -186,10 +186,15 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
-### 2026-06-12 — F8: Zed extension scaffold (the LSP dividend)
+### 2026-06-12 — F8 v2: rebased onto the official imba/zed-imba extension
+- **Correction to the entry below:** imba/zed-imba AND imba/tree-sitter-imba already exist (Sindre). The official extension ships the tree-sitter grammar (pinned rev), highlight/outline/indent/locals queries, semantic_token_rules.json, and an embedded monarch mini-LSP (`imba-tags`: workspace symbols, doc symbols, basic tag goto-def, semantic tokens).
+- `packages/zed-imba` rebuilt as a 1:1 mirror of the official repo with ONE change: the mini-LSP replaced by `imba-language-server` (workspace node_modules → monorepo path → settings override). All mini-LSP features are superseded by the full server; running both would double-serve (the VS Code lesson). cargo check clean (zed_extension_api 0.7).
+- Highlighting in Zed: tree-sitter base + `"semantic_tokens": "combined"` augmentation — the F1 full-token-stream extension is now optional polish rather than the enabler.
+- Sync path: copy `packages/zed-imba` over the standalone repo (their grammar-rev update script kept). PR to imba/zed-imba is Sindre's call.
+
+### 2026-06-12 — F8: Zed extension scaffold (the LSP dividend) [superseded by v2 above]
 - `packages/zed-imba`: extension.toml + languages/imba/config.toml (incl. `<>` autoclose for the tag-completion state, dashed word chars, hard tabs) + Rust glue resolving the server from workspace node_modules with a settings-override path for monorepo dev. `cargo check` clean against zed_extension_api 0.6.
-- Verified externally: **Zed supports LSP semantic tokens** (`"semantic_tokens": "full"` replaces tree-sitter highlighting) — so imba can be fully colored in Zed from the server once F1 emits monarch's complete token stream (keywords/strings/comments; currently identifier-symbols only). That F1 extension is the single biggest Zed-experience item and benefits any semantic-token client.
-- No tree-sitter grammar exists for imba; not required for the LSP feature set, only relevant as an alternative highlighting base layer.
+- Verified externally: **Zed supports LSP semantic tokens** (`"semantic_tokens": "full"` replaces tree-sitter highlighting).
 - ts↔imba interop in Zed: vtsls can load tsserver plugins (documented in readme, modeled on Vue's setup, untested).
 
 ### 2026-06-12 — D4: event + modifier completions; TS suppressed at imba contexts

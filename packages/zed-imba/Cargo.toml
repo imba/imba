@@ -1,13 +1,13 @@
 [package]
-name = "zed-imba"
+name = "zed_imba"
 version = "0.0.1"
 edition = "2021"
 publish = false
 license = "MIT"
 
 [lib]
-path = "src/lib.rs"
+path = "src/imba.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-zed_extension_api = "0.6.0"
+zed_extension_api = "0.7.0"

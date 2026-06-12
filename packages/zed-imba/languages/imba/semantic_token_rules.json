@@ -1,0 +1,40 @@
+[
+  {
+    "token_type": "parameter",
+    "style": ["variable.parameter", "parameter", "variable"],
+    "font_style": "italic"
+  },
+  {
+    "token_type": "variable",
+    "token_modifiers": ["declaration"],
+    "style": ["variable.declaration", "variable"],
+    "font_weight": "bold"
+  },
+  {
+    "token_type": "variable",
+    "token_modifiers": ["readonly"],
+    "style": ["constant", "variable.constant", "variable"]
+  },
+  {
+    "token_type": "variable",
+    "token_modifiers": ["global"],
+    "style": ["variable.special", "variable.global", "variable"]
+  },
+  {
+    "token_type": "variable",
+    "token_modifiers": ["root"],
+    "style": ["variable.special", "variable"]
+  },
+  {
+    "token_type": "namespace",
+    "style": ["namespace", "module", "variable.special"]
+  },
+  {
+    "token_type": "member",
+    "style": ["property", "variable.member", "variable"]
+  },
+  {
+    "token_type": "function",
+    "style": ["function", "variable"]
+  }
+]

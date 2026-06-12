@@ -1,63 +1,89 @@
-# zed-imba (preview)
+# Imba for Zed
 
-Zed extension for the next-generation Imba tooling — the same `imba-language-server` the VS Code preview uses, over plain LSP. Part of the [Volar tooling track](../imba-language-core/PLAN.md).
+Zed language extension for Imba.
 
-## Install (dev extension)
+This extension wires Zed to the standalone Tree-sitter Imba grammar and ships the first set of Tree-sitter queries for syntax highlighting, CSS injections, bracket matching, indentation, and outline entries.
 
-1. Build the tooling once from the repo root:
-   `npx tsc -b packages/imba-language-core packages/imba-language-server`
-2. In Zed: `cmd-shift-p` → **zed: install dev extension** → select `packages/zed-imba`.
-   Zed compiles the extension to WASM with your local Rust toolchain (`rustup target add wasm32-wasip2` if asked).
-3. Point Zed at the monorepo server build and enable semantic highlighting — in Zed `settings.json`:
+It wires Zed to `imba-language-server` — the Volar-based language server from the imba monorepo, shared with the VS Code preview. Over plain LSP that provides: live type-checked diagnostics (with the imba forgiveness rules), hover with docs for events/modifiers/tags, go to definition (tag declarations, typings, cross-file), references and rename, document symbols and semantic tokens from the monarch parser, and completions for tag names (with auto-import), events, and event modifiers.
+
+The server is resolved from the workspace (`node_modules/imba-language-server`, or `packages/imba-language-server` when opening the imba monorepo itself). For development against a local build, override it in Zed settings:
 
 ```json
 {
-  "semantic_tokens": "full",
   "lsp": {
     "imba-language-server": {
       "binary": {
         "path": "node",
-        "arguments": [
-          "/Users/sindre/repos/imba/packages/imba-language-server/dist/index.js",
-          "--stdio"
-        ]
+        "arguments": ["/path/to/imba/packages/imba-language-server/dist/index.js", "--stdio"]
       }
     }
   }
 }
 ```
 
-(Without the override, the extension looks for `node_modules/imba-language-server` in the workspace.)
+## Installation
 
-## What works over plain LSP
+Once published in the Zed extension registry, install it from `zed: extensions` by searching for `Imba`.
 
-Everything server-side: live diagnostics with the imba forgiveness rules, hover (events, modifiers, tags), go to definition (incl. tag declarations + the d.ts typings), references/rename, document symbols, tag/event/modifier completions with auto-import, the typings auto-injection.
+Until then, install it as a dev extension:
 
-## Known gaps
+1. Clone this repository.
+2. Install Rust through `rustup` if you have not already.
+3. In Zed, open the command palette.
+4. Run `zed: install dev extension`.
+5. Select the cloned `zed-imba` directory.
+6. Open an `.imba` file.
 
-- **Highlighting**: there is no tree-sitter grammar for imba, so colors come exclusively from LSP semantic tokens (`"semantic_tokens": "full"`). The server currently emits identifier-level tokens only — keywords/strings/comments are uncolored until the semantic-token provider is extended to emit monarch's full token stream (tracked in PLAN as the Zed-highlighting enabler).
-- **ts/js ↔ imba interop**: Zed's TypeScript support runs through vtsls, which can load tsserver plugins. Untested, but modeled on how Vue wires its plugin:
+The extension downloads the Tree-sitter grammar from `https://github.com/imba/treesitter-imba` at the revision pinned in `extension.toml`, so users do not need a local grammar checkout.
+
+If Zed does not pick up changes, reinstall or reload the dev extension and check `zed: open log`.
+
+## Development
+
+The language server lives in the imba monorepo (`packages/imba-language-server`); build it with `npx tsc -b packages/imba-language-core packages/imba-language-server` from the monorepo root. Its test suite (`npx vitest run` in `packages/imba-language-core`) exercises the same features Zed consumes over LSP.
+
+Zed dev extensions that include language servers are Rust extensions, so local extension development needs Rust installed through `rustup`.
+
+To update the pinned grammar revision after committing and pushing grammar changes:
+
+```sh
+node scripts/update-local-grammar-rev.js ../treesitter-imba
+```
+
+That command reads the local grammar checkout, but writes the public grammar repository URL into `extension.toml`. For private local grammar experiments only, pass `--local` to write a `file://` grammar URL.
+
+To use the language server for the outline and breadcrumbs instead of `outline.scm`, add this to your Zed settings:
 
 ```json
 {
-  "lsp": {
-    "vtsls": {
-      "settings": {
-        "vtsls": {
-          "tsserver": {
-            "globalPlugins": [
-              {
-                "name": "imba-typescript-plugin",
-                "location": "/Users/sindre/repos/imba/packages",
-                "enableForWorkspaceTypeScriptVersions": true
-              }
-            ]
-          }
-        }
-      }
+  "languages": {
+    "Imba": {
+      "document_symbols": "on"
     }
   }
 }
 ```
 
-- The Rust glue is compile-checked only in Zed's dev-extension flow; `zed_extension_api` version may need bumping to match your Zed.
+To test semantic tokens, enable them in Zed settings:
+
+```json
+{
+  "languages": {
+    "Imba": {
+      "semantic_tokens": "combined"
+    }
+  }
+}
+```
+
+## Publishing
+
+Before publishing:
+
+- Make sure `extension.toml` uses a public grammar repository URL, not `file://`.
+- Make sure the pinned grammar `rev` has been pushed to the grammar repository.
+- Make sure this repository has been pushed publicly.
+- Keep an accepted license file at the extension root.
+- Bump `version` in `extension.toml` for releases.
+
+To publish to the Zed registry, open a PR to `zed-industries/extensions` that adds this repo as a submodule under `extensions/imba`, adds an `[imba]` entry to `extensions.toml`, and runs `pnpm sort-extensions`.

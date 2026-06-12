@@ -1,7 +1,7 @@
-use zed_extension_api::{self as zed, LanguageServerId, Result};
+use zed_extension_api::{self as zed, Result};
 
-// Launches imba-language-server (a standard LSP server) over stdio. The
-// server is resolved from the workspace's node_modules; during monorepo
+// Launches imba-language-server (the Volar-based server shared with the
+// VS Code preview) over stdio. Resolved from the workspace; during monorepo
 // development, override via Zed settings instead:
 //
 //   "lsp": {
@@ -15,7 +15,7 @@ use zed_extension_api::{self as zed, LanguageServerId, Result};
 
 const SERVER_CANDIDATES: &[&str] = &[
     "node_modules/imba-language-server/dist/index.js",
-    // monorepo layout: opening a project inside the imba repo itself
+    // monorepo layout: opening the imba repo itself
     "packages/imba-language-server/dist/index.js",
 ];
 
@@ -23,12 +23,12 @@ struct ImbaExtension;
 
 impl zed::Extension for ImbaExtension {
     fn new() -> Self {
-        ImbaExtension
+        Self
     }
 
     fn language_server_command(
         &mut self,
-        _language_server_id: &LanguageServerId,
+        _language_server_id: &zed::LanguageServerId,
         worktree: &zed::Worktree,
     ) -> Result<zed::Command> {
         let root = worktree.root_path();
@@ -44,8 +44,8 @@ impl zed::Extension for ImbaExtension {
         }
         Err(concat!(
             "imba-language-server not found in the workspace. ",
-            "Install it (npm i -D imba-language-server) or point Zed at a local build via ",
-            "settings: lsp.imba-language-server.binary.{path:\"node\",arguments:[\"<repo>/packages/imba-language-server/dist/index.js\",\"--stdio\"]}",
+            "Install it (npm i -D imba-language-server) or point Zed at a local build via settings: ",
+            "lsp.imba-language-server.binary = { path: \"node\", arguments: [\"<repo>/packages/imba-language-server/dist/index.js\", \"--stdio\"] }",
         )
         .to_string())
     }

@@ -1,11 +1,15 @@
 id = "imba"
-name = "Imba (Next Preview)"
+name = "Imba"
+description = "Imba language support."
 version = "0.0.1"
 schema_version = 1
-authors = ["Sindre Aarsaether <sindre@identu.no>"]
-description = "Imba language support via imba-language-server (Volar-based, preview)"
-repository = "https://github.com/imba/imba"
+authors = ["Imba maintainers"]
+repository = "https://github.com/imba/zed-imba"
 
 [language_servers.imba-language-server]
 name = "Imba Language Server"
 languages = ["Imba"]
+
+[grammars.imba]
+repository = "https://github.com/imba/tree-sitter-imba"
+rev = "19185dc5137c8fffe356bcada4b5d52cee5922c3"
