@@ -1,4 +1,6 @@
 import type { LanguageServiceContext, LanguageServicePlugin } from '@volar/language-service';
+import { getSourceRange, type DocumentsAndMap } from '@volar/language-service/lib/utils/featureWorkers';
+import { transformCompletionItem as volarTransformCompletionItem } from '@volar/language-service/lib/utils/transform';
 import * as monarchModule from 'imba-monarch';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
@@ -349,6 +351,44 @@ function stripImbaSpecifierEndings(edit: {
 	}
 }
 
+type AutoImportData = {
+	fileName?: string;
+	originalItem?: { name?: string; source?: string; data?: { exportName?: string } };
+	original?: { data?: AutoImportData };
+};
+
+/**
+ * D12: import edits in imba SOURCE coordinates via monarch's createImportEdit
+ * (it merges into existing import statements). Specifiers stay extensionless.
+ */
+function buildImportEdits(
+	root: ImbaVirtualCode,
+	sourceDocument: TextDocument,
+	inner: AutoImportData
+): { range: { start: { line: number; character: number }; end: { line: number; character: number } }; newText: string }[] | undefined {
+	const originalItem = inner.originalItem;
+	const source = originalItem?.source;
+	const exportName = originalItem?.data?.exportName ?? originalItem?.name;
+	if (!source || !exportName) {
+		return undefined;
+	}
+	const specifier = String(source).replace(/(\.web)?\.imba$/, '');
+	const name = toImbaIdentifier(String(exportName));
+	let changes: { start: number; length: number; newText: string }[] | undefined;
+	try {
+		changes = root.monarchDoc.createImportEdit(specifier, name)?.changes;
+	} catch {
+		return undefined;
+	}
+	return changes?.map(change => ({
+		range: {
+			start: sourceDocument.positionAt(change.start),
+			end: sourceDocument.positionAt(change.start + change.length),
+		},
+		newText: change.newText,
+	}));
+}
+
 function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 	return {
 		...base,
@@ -444,6 +484,52 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 						}
 					}
 					return result;
+				},
+				transformCompletionItem(item) {
+					// D12: TS puts auto-import edits in the generated preamble,
+					// which has no source mapping — the default resolve
+					// transform silently drops them and the import is lost.
+					// For auto-import items on imba-backed docs, run the
+					// default transform ourselves and attach monarch-built
+					// import edits in source coordinates. Returning undefined
+					// keeps Volar's default path for everything else.
+					const raw = item.data as AutoImportData | undefined;
+					const inner = raw?.originalItem ? raw : raw?.original?.data;
+					if (!inner?.fileName || !inner.originalItem?.source) {
+						return undefined;
+					}
+					const sourceScript = context.language.scripts.get(URI.file(inner.fileName));
+					const root = sourceScript?.generated?.root;
+					if (!sourceScript || !(root instanceof ImbaVirtualCode)) {
+						return undefined;
+					}
+					const virtualCode = root.tsCode;
+					const embeddedDocument = context.documents.get(
+						context.encodeEmbeddedDocumentUri(sourceScript.id, virtualCode.id),
+						virtualCode.languageId,
+						virtualCode.snapshot
+					);
+					const sourceDocument = context.documents.get(
+						sourceScript.id,
+						sourceScript.languageId,
+						sourceScript.snapshot
+					);
+					const docs: DocumentsAndMap = [
+						sourceDocument,
+						embeddedDocument,
+						context.language.maps.get(virtualCode, sourceScript),
+					];
+					const transformed = volarTransformCompletionItem(
+						item,
+						range => getSourceRange(docs, range),
+						embeddedDocument,
+						context
+					);
+					const edits = buildImportEdits(root, sourceDocument, inner);
+					if (edits?.length) {
+						transformed.additionalTextEdits = edits as never;
+					}
+					return transformed;
 				},
 				async provideDocumentSymbols(document, token) {
 					// parity: getNavigationTree intercept — the monarch outline

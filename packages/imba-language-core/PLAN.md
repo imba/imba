@@ -93,8 +93,8 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D9 | Types after `\` | getSymbols('Type') + snippets | **mapping fix, not a plugin**: annotation spans cover `\str` in source vs `str` generated (off-by-one container → ALL position features dead at type positions). spansToMappings shifts text-verified backslash-spans to exact — TS type-position completions/hover/defs flow natively; keywords plugin skips Type contexts | M2.5 | ✅ |
 | D10 | Path completions in imports | paths() via directoryStructureHost | ❌ dropped — Sindre: not needed (2026-06-12) | — | ❌ |
 | D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | `createImbaKeywordsPlugin` (ADDITIONAL completion source; imba-only keywords — TS provides the JS set; monarch's contextual list, weight-800 parity). Snippets pending | M2.2 | 🚧 |
-| D12 | Auto-imports: values/types (TS-backed) | importer.imba getExportInfoMap machinery | mostly free via D1 forwarding (TS auto-imports map edits back); verify import path gets `.imba`-stripped/extensionless form | M3.1 | ⬜ |
-| D13 | Auto-imports: exported tags, decorators, export-star namespace groups (EXPORT_NS) | importer.imba custom grouping | custom contributions on top of D12 | M3.2 | ⬜ |
+| D12 | Auto-imports: values/types (TS-backed) | importer.imba getExportInfoMap machinery | **NOT free** — TS's import edits target the generated preamble (unmappable → silently dropped by the default resolve transform; accepting inserted the name without its import). `transformCompletionItem` hook on the TS wrapper runs the default transform and attaches monarch `createImportEdit` edits in source coordinates: imba-style statements, extensionless specifiers, merge into existing imports | M3.1 | ✅ |
+| D13 | Auto-imports: exported tags, decorators, export-star namespace groups (EXPORT_NS) | importer.imba custom grouping | tags covered by D2's workspace-index path; remaining slice: workspace-exported decorators in decoratorItems (+ import edit), EXPORT_NS grouping if dev-hosting shows demand | M3.2 | 🚧 |
 | D14 | Completion resolve: docs markdown, import edits via `doc.createImportEdit` | SymbolCompletion.resolve | resolve handler in service plugin (monarch createImportEdit reused) | M2.2 | ⬜ |
 | D15 | Commit characters / weights / filterText shaping | per-category logic in completions.imba | port per-category table | M2.2 | ⬜ |
 
@@ -199,6 +199,14 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — D12 auto-imports were silently broken; transformCompletionItem is the right seam
+- Probe: auto-import candidates and resolve labels worked ("Add import from ./util.imba") but `additionalTextEdits` arrived EMPTY at the service level — TS inserts the import into the generated preamble, which has no source mapping, so Volar's resolve transform dropped the edit. Accepting a completion inserted the bare name and never the import.
+- Failed approach worth remembering: synthesizing edits in embedded coordinates for Volar to map home — import insertion points (line starts, offset 0) are exactly the positions exact spans DON'T cover, so forward-translation bails. Don't anchor edits at line starts through the mapping.
+- Working seam: the plugin-level `transformCompletionItem` hook REPLACES Volar's default resolve transform when defined. For auto-import items on imba-backed docs (detected via item.data originalItem.source), run the default transform manually (Volar exports it), then attach monarch `createImportEdit` edits in plain source coordinates — no mapping involved. Everything else returns undefined → default path.
+- Result: `import { double } from './util'` (extensionless, imba-style) at the file top; merges into existing import statements (TS reuses the existing specifier spelling in labelDetails — `./main`, not `./main.imba`).
+- D13 reduced: tags already covered by D2's index path; remaining slice is workspace-exported decorators.
+- test/m3-auto-imports.test.ts (2 tests). Suite at 130.
 
 ### 2026-06-12 — C3 style hover: the typings already carry everything
 - Hover on `style.property.name` tokens: abbreviation entries (`bd`) follow their @proxy to the full property (`border`), whose generated docs already EMBED the MDN link — title renders as `bd (border)`, docs come from the proxied symbol. Full names render directly. `style.property.modifier` tokens (`@hover`) render @detail (css selector equivalent) + docs.
