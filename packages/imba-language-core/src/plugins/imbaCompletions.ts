@@ -93,6 +93,13 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					if (flags & CompletionTypes.TagEventModifier) {
 						return eventModifierItems(context, typescript, mctx.eventName, tokenRange('tag.event-modifier.name'));
 					}
+					if (flags & CompletionTypes.TagProp && mctx.tagName) {
+						const elementSymbol = getHtmlTags().get(mctx.tagName);
+						if (elementSymbol) {
+							return tagAttrItems(context, typescript, elementSymbol, tokenRange('tag.attr'));
+						}
+						return;
+					}
 					if (!(flags & CompletionTypes.TagName)) {
 						return;
 					}
@@ -177,6 +184,66 @@ function eventNameItems(context: LanguageServiceContext, typescript: typeof ts, 
 			detail: type ? checker.typeToString(type) : undefined,
 			documentation: summary ? { kind: 'markdown' as const, value: toImbaIdentifier(summary) } : undefined,
 			commitCharacters: ['.', '=', '('],
+			textEdit: { range, newText: name },
+		});
+	}
+	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba tagattrs() + patches.imba isTagAttr — settable,
+// non-readonly properties of the element type; HTMLElementTagNameMap covers
+// custom tags too via the compiler's per-tag declare-global merge
+function tagAttrItems(
+	context: LanguageServiceContext,
+	typescript: typeof ts,
+	elementSymbol: ts.Symbol,
+	range: LspRange
+) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return;
+	}
+	const checker = program.getTypeChecker();
+	const declaration = elementSymbol.valueDeclaration ?? elementSymbol.declarations?.[0];
+	if (!declaration) {
+		return;
+	}
+	const elementType = checker.getTypeOfSymbolAtLocation(elementSymbol, declaration);
+
+	const items = [];
+	for (const prop of elementType.getApparentProperties()) {
+		const raw = prop.escapedName as string;
+		if (/^(α|Ψ|__|on[a-z])/.test(raw) || raw === 'className' || raw.endsWith('__')) {
+			continue;
+		}
+		const settable =
+			prop.flags & (typescript.SymbolFlags.Property | typescript.SymbolFlags.SetAccessor) &&
+			!(prop.flags & (typescript.SymbolFlags.Method | typescript.SymbolFlags.Function));
+		if (!settable) {
+			continue;
+		}
+		const decl = prop.valueDeclaration ?? prop.declarations?.[0];
+		if (!decl) {
+			continue;
+		}
+		// skip readonly + event-handler interface noise
+		if (typescript.getCombinedModifierFlags(decl) & typescript.ModifierFlags.Readonly) {
+			continue;
+		}
+		const owner = decl.parent;
+		if (typescript.isInterfaceDeclaration(owner) && owner.name.text === 'GlobalEventHandlers') {
+			continue;
+		}
+		const name = toImbaIdentifier(raw);
+		const type = checker.getTypeOfSymbolAtLocation(prop, decl);
+		const summary = summaryOf(prop, checker);
+		items.push({
+			label: name,
+			kind: 10, // Property
+			sortText: '1' + name,
+			detail: toImbaIdentifier(checker.typeToString(type)),
+			documentation: summary ? { kind: 'markdown' as const, value: toImbaIdentifier(summary) } : undefined,
+			commitCharacters: ['='],
 			textEdit: { range, newText: name },
 		});
 	}

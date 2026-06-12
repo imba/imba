@@ -94,7 +94,10 @@ function inImbaCompletionContext(
 		return false;
 	}
 	const flags = root.monarchDoc.getContextAtOffset(sourceOffset)?.suggest?.flags ?? 0;
-	return !!(flags & (CompletionTypes.TagName | CompletionTypes.TagEvent | CompletionTypes.TagEventModifier));
+	return !!(
+		flags &
+		(CompletionTypes.TagName | CompletionTypes.TagEvent | CompletionTypes.TagEventModifier | CompletionTypes.TagProp)
+	);
 }
 
 const UNUSED_NAME = /^'([^']+)' is declared but/;
