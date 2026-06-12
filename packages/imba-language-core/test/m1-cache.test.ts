@@ -10,7 +10,12 @@ process.env.IMBA_CACHE_DIR = cacheDir;
 const { clearCompileMemoryCache, compileCacheKey, compileImba } = await import('../src/index');
 
 afterAll(() => {
-	fs.rmSync(cacheDir, { recursive: true, force: true });
+	// fire-and-forget disk writes can race this cleanup — best effort only
+	try {
+		fs.rmSync(cacheDir, { recursive: true, force: true, maxRetries: 3 });
+	} catch {
+		// temp dir; the OS will collect it
+	}
 });
 
 const SOURCE = 'export def cachedFn a\\number\n\ta * 2\n';

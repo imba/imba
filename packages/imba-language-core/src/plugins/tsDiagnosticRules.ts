@@ -35,6 +35,10 @@ const RULES: Rule[] = [
 	{ code: 2339, message: /^Property '(--|ΞΞ)/ },
 	// compiler-generated tag temporaries leaking into odd code shapes
 	{ code: 2304, message: /^Cannot find name 'τ/ },
+	// the compiler emits this.dataForTagName(...) in every tag class but the
+	// runtime API is missing from the typings (dev-host finding 2026-06-12;
+	// suppress until the declaration lands in imba/typings)
+	{ code: 2339, message: /^Property 'dataForTagName'/ },
 	{ code: 2322, text: /^\$\d+/ },
 	{ code: 2610 }, // accessor overridden by property
 	{ code: 2611 },

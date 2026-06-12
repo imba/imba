@@ -43,7 +43,7 @@
             {
                 "name": "imba-typescript-plugin",
                 "enableForWorkspaceTypeScriptVersions": true,
-                "languages": ["imba"]
+                "languages": []
             }
         ]
     },

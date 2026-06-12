@@ -1,1 +1,1 @@
-/// <reference path="../../../typescript-imba-plugin/typings/imba.d.ts" />
+/// <reference path="../../../imba/typings/imba.d.ts" />

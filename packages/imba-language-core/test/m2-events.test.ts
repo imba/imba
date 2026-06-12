@@ -35,6 +35,11 @@ describe('M2.3: event name + modifier intelligence', () => {
 		// the typings document silent as suppressing imba.commit
 		expect(text.toLowerCase()).toContain('commit');
 		expect(text).not.toContain('αsilent');
+		// TS chops `@click`/`@intersect` inside the doc example into bogus
+		// jsdoc tags (the typings don't escape them) — the renderer must
+		// stitch the example back together (dev-host finding 2026-06-12)
+		expect(text).toContain('@click.silent=handler');
+		expect(text).not.toContain('*@click*');
 	});
 
 	it('go-to-def on a modifier lands in the events typings', async () => {

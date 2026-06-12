@@ -164,20 +164,29 @@ export function createImbaEventsPlugin(typescript: typeof ts): LanguageServicePl
 						return;
 					}
 					const lines = [`\`\`\`typescript\n${toImbaString(resolved.display)}\n\`\`\``];
-					const docs = resolved.symbol
+					let docs = resolved.symbol
 						.getDocumentationComment(resolved.checker)
 						.map(part => part.text)
 						.join('');
-					if (docs) {
-						lines.push(toImbaString(docs));
-					}
+					const meta: string[] = [];
 					for (const tag of resolved.symbol.getJsDocTags(resolved.checker)) {
+						const text = (tag.text ?? []).map(part => part.text).join('');
 						if (/^(detail|color|snippet)$/.test(tag.name)) {
 							continue;
 						}
-						const text = (tag.text ?? []).map(part => part.text).join('');
-						lines.push(toImbaString(`*@${tag.name}* — ${text}`));
+						if (/^(summary|custom|deprecated|see|example|param|returns)$/.test(tag.name)) {
+							meta.push(toImbaString(`*@${tag.name}* — ${text}`));
+						} else {
+							// TS's jsdoc parser chops `@word` inside doc examples
+							// (even in fenced code blocks) into bogus tags —
+							// stitch them back into the doc text in order
+							docs += `@${tag.name}${text}`;
+						}
 					}
+					if (docs) {
+						lines.push(toImbaString(docs));
+					}
+					lines.push(...meta);
 					return {
 						contents: { kind: 'markdown' as const, value: lines.join('\n\n') },
 						range: tokenRange(document, offset),

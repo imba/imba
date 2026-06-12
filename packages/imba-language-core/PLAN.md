@@ -184,6 +184,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Second dev-host round: double-serving, typings bugs, doc rendering
+- **Double-serving fixed:** `typescriptServerPlugins.languages` was `['imba']` (copied from Vue's hybrid mode, where tsserver owns TS features). Our LSP owns them — so tsserver was ALSO serving .imba docs unfiltered/unconverted (`ts-plugin(2339)` with raw `ΓdocΞanchor`, duplicate hovers, false 2882s). Now `languages: []`: the plugin still loads for ts/js→imba interop, but tsserver never sees imba documents.
+- **`declare module "imba"` hijack fixed at source** (packages/imba/typings/imba.d.ts — justified modification, zero in-repo consumers): the ambient block (only there to type ImbaConfig theming) shadowed the stdlib-source-resolved module, deleting mount/commit/Component for any consumer of the real package typings. Interfaces unwrapped to global scope (ImbaTheme/ImbaThemeColors renames). Old plugin never hit it — its frozen typings copy predates the block.
+- **Hover doc mangling fixed in renderer:** TS's jsdoc parser chops `@word` inside doc examples (even fenced) into bogus tags; unknown tags are now stitched back into the doc text in order (imbaEvents.ts). Known meta tags (summary/custom/…) still render styled. Fixture now references the REAL package typings (unescaped) so this path stays tested.
+- `dataForTagName` 2339 suppressed: the compiler emits it in every tag class but the runtime API is missing from typings — declaration should land in imba/typings eventually (flagged).
+- Fixture/test note: the old-plugin typings copy and the package copy genuinely differ (escapes, module block, router ref) — the package copy is canonical for us now.
+
 ### 2026-06-12 — First dev-host feedback (@intersect.silent) → A5/A6 + events intelligence
 - Sindre's screenshots split into two causes, both fixed:
   1. `Property '@silent' does not exist on type 'Event'` → the server wasn't injecting compiler options/typings (A5/A6). Now: `setupImbaProject` in the server's project `setup` hook wraps `getCompilationSettings` (RequiredCompilerOptions parity, memoized on base identity) and appends `resolveImbaTypings(projectDir)` to root files — **preferring the project's own `node_modules/imba/typings`** so types match the runtime.
