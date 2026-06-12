@@ -46,6 +46,12 @@
                 "languages": []
             }
         ],
+        "commands": [
+            {
+                "command": "imba-next.restartServer",
+                "title": "Imba Next: Restart Language Server"
+            }
+        ],
         "configuration": {
             "title": "Imba Next",
             "properties": {

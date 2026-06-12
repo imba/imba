@@ -1,7 +1,14 @@
 import * as path from 'node:path';
 import { createConnection, createServer, loadTsdkByPath } from '@volar/language-server/node';
 import { createTypeScriptProject } from '@volar/language-server/lib/project/typescriptProject';
-import { applyImbaConfig, createImbaLanguagePlugin, createImbaServicePlugins, setupImbaProject } from 'imba-language-core';
+import { URI } from 'vscode-uri';
+import {
+	applyImbaConfig,
+	createImbaLanguagePlugin,
+	createImbaServicePlugins,
+	ImbaVirtualCode,
+	setupImbaProject,
+} from 'imba-language-core';
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -26,6 +33,31 @@ connection.onInitialize(params => {
 		})),
 		createImbaServicePlugins(tsdk.typescript)
 	);
+});
+
+// F2: the status bar pulls per-file compile state (G4 keep-last-good) for
+// the active editor — cheap pull model instead of per-keystroke pushes
+connection.onRequest('imba/fileStatus', async (params: { uri?: string }) => {
+	if (!params?.uri) {
+		return { imba: false };
+	}
+	try {
+		const uri = URI.parse(params.uri);
+		const languageService = await server.project.getLanguageService(uri);
+		const root = (languageService as unknown as {
+			context: { language: { scripts: { get(uri: URI): { generated?: { root?: unknown } } | undefined } } };
+		}).context.language.scripts.get(uri)?.generated?.root;
+		if (!(root instanceof ImbaVirtualCode)) {
+			return { imba: false };
+		}
+		return {
+			imba: true,
+			recovered: root.compilation.recovered === true,
+			crashed: root.compilation.error !== undefined,
+		};
+	} catch {
+		return { imba: false };
+	}
 });
 
 connection.onDidChangeConfiguration(change => {

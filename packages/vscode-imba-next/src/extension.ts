@@ -2,14 +2,16 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import {
 	LanguageClient,
+	State,
 	TransportKind,
 	type LanguageClientOptions,
 	type ServerOptions,
 } from 'vscode-languageclient/node';
 
 let client: LanguageClient | undefined;
+let statusItem: vscode.StatusBarItem | undefined;
 
-export async function activate(_context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	// resolved through node_modules (workspace symlink during development)
 	const serverModule = require.resolve('imba-language-server');
 
@@ -33,10 +35,72 @@ export async function activate(_context: vscode.ExtensionContext) {
 	};
 
 	client = new LanguageClient('imba-next', 'Imba Next', serverOptions, clientOptions);
+
+	// F2: status bar — server state at a glance, per-file keep-last-good
+	// indicator for the active imba editor, click to restart
+	statusItem = vscode.window.createStatusBarItem('imba-next.status', vscode.StatusBarAlignment.Right, 99);
+	statusItem.name = 'Imba';
+	statusItem.command = 'imba-next.restartServer';
+	context.subscriptions.push(
+		statusItem,
+		vscode.commands.registerCommand('imba-next.restartServer', async () => {
+			await client?.restart();
+		}),
+		vscode.window.onDidChangeActiveTextEditor(() => void updateStatus()),
+		vscode.languages.onDidChangeDiagnostics(event => {
+			const active = vscode.window.activeTextEditor?.document.uri;
+			if (active && event.uris.some(uri => uri.toString() === active.toString())) {
+				void updateStatus();
+			}
+		}),
+		client.onDidChangeState(() => void updateStatus())
+	);
+
 	await client.start();
+	void updateStatus();
+}
+
+async function updateStatus(): Promise<void> {
+	if (!statusItem) {
+		return;
+	}
+	const editor = vscode.window.activeTextEditor;
+	if (editor?.document.languageId !== 'imba') {
+		statusItem.hide();
+		return;
+	}
+	statusItem.show();
+	if (!client || client.state !== State.Running) {
+		statusItem.text = '$(error) Imba';
+		statusItem.tooltip = 'Imba language server is not running — click to restart';
+		statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+		return;
+	}
+	let status: { imba?: boolean; recovered?: boolean; crashed?: boolean } = {};
+	try {
+		status = await client.sendRequest('imba/fileStatus', { uri: editor.document.uri.toString() });
+	} catch {
+		// server busy/restarting — keep the neutral state
+	}
+	if (status.crashed) {
+		statusItem.text = '$(error) Imba';
+		statusItem.tooltip = 'The imba compiler crashed on this file — click to restart the server';
+		statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+	} else if (status.recovered) {
+		statusItem.text = '$(warning) Imba';
+		statusItem.tooltip =
+			'This file does not parse right now — features are served from the last good compilation';
+		statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+	} else {
+		statusItem.text = '$(check) Imba';
+		statusItem.tooltip = 'Imba language server is running — click to restart';
+		statusItem.backgroundColor = undefined;
+	}
 }
 
 export function deactivate(): Thenable<void> | undefined {
+	statusItem?.dispose();
+	statusItem = undefined;
 	return client?.stop();
 }
 

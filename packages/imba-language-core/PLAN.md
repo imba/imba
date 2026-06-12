@@ -119,7 +119,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | `createImbaSemanticTokensPlugin` — standard LSP token types from monarch tokens on the root document (works in any LSP client, no tsserver) | M2.10 | ✅ |
-| F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | **Health check ✅:** one warning at 0:0 ("imba types are not loaded…") when ImbaEvents is unresolvable, cached per program (imbaDiagnostics plugin; bare-project fixture test). Status-bar UX via LSP notifications still pending | M2.12 | 🚧 |
+| F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | Health check: one warning at 0:0 when ImbaEvents is unresolvable, cached per program. **Status bar**: extension item for active imba editors — ✓ running / ⚠ file unparsable (G4 keep-last-good active) / ✗ compiler crash or server down — fed by a custom `imba/fileStatus` pull request (updates on editor/diagnostics/state changes); click = `imba-next.restartServer` | M2.12 | ✅ |
 | F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | `config.ts` (applyImbaConfig/getImbaConfig, full-section semantics, side-effects to A10 flag); server applies initializationOptions.imba + didChangeConfiguration (then project.reload()); vscode-imba-next contributes imba.useImbaFromProject / imba.debugLevel / imba.workspaceSymbolsScope and forwards changes. suggest.* knobs deferred until a real need shows up in dev-hosting | M3.9 | ✅ |
 | F4 | Preview VS Code extension (`imba-next` style) | n/a | `packages/vscode-imba-next`: LSP client → imba-language-server, grammar copied from vscode-imba, tsserver plugin contribution. Dev-host only (`code --extensionDevelopmentPath=… --disable-extensions`); vsce packaging needs bundling, M3 | M2.11 | ✅ |
 | F8 | Zed extension (architecture dividend: server is plain LSP) | github.com/imba/zed-imba already existed: tree-sitter grammar (imba/tree-sitter-imba) + queries + a monarch mini-LSP (imba-tags) | `packages/zed-imba` now mirrors the official repo's structure with the mini-LSP replaced by imba-language-server (workspace/monorepo resolution + settings override; cargo-check clean on zed_extension_api 0.7). Sync back to imba/zed-imba = plain copy. Highlighting: tree-sitter base + semantic tokens "combined" (their semantic_token_rules.json kept) | M2 | ✅ |
@@ -199,6 +199,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — F2 status bar: pull model over the G4 recovered flag
+- Server: custom `imba/fileStatus` request returns `{imba, recovered, crashed}` straight off the script's ImbaVirtualCode compilation — the G4 keep-last-good flag finally has its UI. Pull model (client asks for the active editor on editor/diagnostics/state changes) instead of per-keystroke pushes.
+- Extension: status bar item for imba editors — `$(check) Imba` normally, `$(warning)` while a file is being served from its last good compilation (tooltip explains), `$(error)` on compiler crash or server-down. Click → new `imba-next.restartServer` command (client.restart()).
+- Untestable in the vitest harness (VS Code UI + live IPC); verify in the next dev-host session. Server + extension typecheck clean; core suite still 131.
 
 ### 2026-06-12 — D13: workspace decorators complete the auto-import story
 - `export def @memo` compiles to an `αmemo` module export, and `import {@memo} from './x'` is valid imba — so decoratorItems now sweeps program .imba files (stdlib + current file excluded) for α-exports, offering them with a relative-path detail and a ready-made import edit through the same createImportEdit path tag names use. Sorted below locals (0) and stdlib (1).
