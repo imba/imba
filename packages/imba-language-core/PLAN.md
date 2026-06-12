@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M1
-- **Next action:** G2 compile cache; then the M1.9 dogfood checkpoint over an imba.io app dir (with A5 strategy writeup)
+- **Next action:** M1.9 dogfood checkpoint over an imba.io app dir + A5 strategy writeup — last M1 items
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -128,8 +128,8 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 
 | # | Item | Notes | Milestone | Status |
 |---|---|---|---|---|
-| G1 | Worker-thread compilation | compiler is CJS-self-contained; results structured-cloneable. Sync fallback for tsserver-plugin mode (must stay sync there — Volar plugin mode is synchronous) | M1.8 | ⬜ |
-| G2 | Content-hash compile cache (disk, `node_modules/.cache/imba-tooling`) | deterministic compile output; fixes cold-open | M1.8 | ⬜ |
+| G1 | Worker-thread compilation | **redefined:** `createVirtualCode` is sync in Volar, so workers can't remove compile from the critical path — instead an async pool that *pre-warms the G2 cache* at project load (sync path then hits warm cache). Build when server dogfooding shows cold-open pain that G2 alone doesn't fix | M2.13 | ⬜ |
+| G2 | Content-hash compile cache | `src/cache.ts`: bounded memory layer + fire-and-forget disk layer (tmpdir, `IMBA_CACHE_DIR` override), keyed schema+compiler-version+flags+fileName+content — deterministic, so no revalidation. Parse failures cached; thrown errors not | M1.8 | ✅ |
 | G3 | Incremental snapshot updates (`getChangeRange` via fast-diff between generated outputs) | preserves TS incremental parsing; old plugin's diff.imba trick, done right | M2.13 | ⬜ |
 | G4 | Compile-failure handling: keep-last-good vs empty module | currently empty module + stored error; needs UX decision once dogfooding | M2.14 | 🤔 |
 | G5 | Mapping perf on big files | spans → thousands of singleton mappings; measure, consider batching sorted runs into one Mapping | M3.14 | ⬜ |

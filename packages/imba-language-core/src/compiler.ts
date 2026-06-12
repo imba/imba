@@ -1,4 +1,5 @@
 import { compile, type ImbaRawDiagnostic } from 'imba/compiler';
+import { compileCacheKey, getCachedCompilation, setCachedCompilation } from './cache';
 
 export interface ImbaCompilation {
 	js: string;
@@ -26,19 +27,30 @@ const BASE_OPTIONS = {
 const STDLIB_PATH = /node_modules\/imba\/src\/imba\/|\/packages\/imba\/src\/imba\//;
 
 export function compileImba(fileName: string, source: string): ImbaCompilation {
+	const nocheck = STDLIB_PATH.test(fileName.split('\\').join('/'));
+	const key = compileCacheKey(fileName, source, nocheck ? 'nocheck' : '');
+
+	const cached = getCachedCompilation(key);
+	if (cached) {
+		return cached;
+	}
+
 	try {
 		const res = compile(source, {
 			...BASE_OPTIONS,
 			fileName,
 			sourcePath: fileName,
-			nocheck: STDLIB_PATH.test(fileName.split('\\').join('/')) || undefined,
+			nocheck: nocheck || undefined,
 		});
-		return {
+		const result: ImbaCompilation = {
 			js: res.js || EMPTY_JS,
 			spans: res.locs?.spans ?? [],
 			diagnostics: res.diagnostics ?? [],
 		};
+		setCachedCompilation(key, result);
+		return result;
 	} catch (error) {
+		// environment-specific failures are not cacheable
 		return { js: EMPTY_JS, spans: [], diagnostics: [], error };
 	}
 }

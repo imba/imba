@@ -6,3 +6,4 @@ export { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 export { createTypeScriptServices } from './plugins/typescriptServices';
 export { filterTsDiagnostic } from './plugins/tsDiagnosticRules';
 export { toImbaIdentifier, toImbaString } from './conversion';
+export { clearCompileMemoryCache, compileCacheKey, getCacheDir } from './cache';
