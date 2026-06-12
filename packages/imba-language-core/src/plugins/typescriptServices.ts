@@ -96,7 +96,13 @@ function inImbaCompletionContext(
 	const flags = root.monarchDoc.getContextAtOffset(sourceOffset)?.suggest?.flags ?? 0;
 	return !!(
 		flags &
-		(CompletionTypes.TagName | CompletionTypes.TagEvent | CompletionTypes.TagEventModifier | CompletionTypes.TagProp)
+		(CompletionTypes.TagName |
+			CompletionTypes.TagEvent |
+			CompletionTypes.TagEventModifier |
+			CompletionTypes.TagProp |
+			CompletionTypes.StyleProp |
+			CompletionTypes.StyleModifier |
+			CompletionTypes.StyleValue)
 	);
 }
 

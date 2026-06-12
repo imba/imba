@@ -7,7 +7,7 @@ import { URI } from 'vscode-uri';
 import { toImbaIdentifier } from '../conversion';
 import { getTagIndex, type ImbaTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
-import { detailOf, findGlobalInterface, getTypeScriptService, summaryOf } from './checkerUtils';
+import { detailOf, findGlobalInterface, findGlobalNamespaceExports, getTypeScriptService, summaryOf } from './checkerUtils';
 
 // parity: completions.imba tagnames() — but the listing comes from the
 // workspace tag index (ultrafast scan) + cached HTMLElementTagNameMap lookup
@@ -92,6 +92,18 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					}
 					if (flags & CompletionTypes.TagEventModifier) {
 						return eventModifierItems(context, typescript, mctx.eventName, tokenRange('tag.event-modifier.name'));
+					}
+					if (flags & (CompletionTypes.StyleProp | CompletionTypes.StyleModifier)) {
+						// the partial token's TYPE is ambiguous in style
+						// contexts (selector vs property) — trust the flags,
+						// take the range from any word-ish style token
+						const styleRange =
+							tok && /^style\./.test(tok.type) && /^[\w-]*$/.test(tok.value) && tok.offset <= offset
+								? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
+								: { start: position, end: position };
+						return flags & CompletionTypes.StyleModifier
+							? styleModifierItems(context, typescript, styleRange)
+							: stylePropertyItems(context, typescript, styleRange);
 					}
 					if (flags & CompletionTypes.TagProp && mctx.tagName) {
 						const elementSymbol = getHtmlTags().get(mctx.tagName);
@@ -188,6 +200,85 @@ function eventNameItems(context: LanguageServiceContext, typescript: typeof ts, 
 		});
 	}
 	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba CT.StyleProp → checker.styleprops (imbacss
+// namespace exports; full names carry @alias abbreviations, abbreviation
+// entries carry @proxy back-references shown as the qualifier)
+function stylePropertyItems(context: LanguageServiceContext, typescript: typeof ts, range: LspRange) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return;
+	}
+	const checker = program.getTypeChecker();
+	const items = [];
+	for (const symbol of findGlobalNamespaceExports(typescript, program, checker, 'imbacss')) {
+		const raw = symbol.escapedName as string;
+		// old isStyleProp: /^[a-zA-ZΞ]/ — excludes α modifiers, Ψ types, _ base
+		if (!/^[a-zA-ZΞ]/.test(raw) || raw === '_') {
+			continue;
+		}
+		const name = toImbaIdentifier(raw);
+		const proxy = tagText(symbol, checker, 'proxy');
+		const alias = tagText(symbol, checker, 'alias');
+		const docs = symbol
+			.getDocumentationComment(checker)
+			.map(part => part.text)
+			.join('');
+		items.push({
+			label: name,
+			kind: 10, // Property
+			sortText: '1' + name,
+			detail: proxy ? `→ ${toImbaIdentifier(proxy)}` : alias ? `alias: ${toImbaIdentifier(alias)}` : undefined,
+			documentation: docs ? { kind: 'markdown' as const, value: toImbaIdentifier(docs) } : undefined,
+			commitCharacters: [':'],
+			textEdit: { range, newText: name },
+		});
+	}
+	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba CT.StyleModifier → checker.stylemods (α-prefixed
+// imbacss exports; @detail carries the css selector equivalent)
+function styleModifierItems(context: LanguageServiceContext, typescript: typeof ts, range: LspRange) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return;
+	}
+	const checker = program.getTypeChecker();
+	const items = [];
+	for (const symbol of findGlobalNamespaceExports(typescript, program, checker, 'imbacss')) {
+		const raw = symbol.escapedName as string;
+		if (!raw.startsWith('α')) {
+			continue;
+		}
+		const name = toImbaIdentifier(raw.slice(1));
+		const detail = detailOf(symbol, checker);
+		const docs = symbol
+			.getDocumentationComment(checker)
+			.map(part => part.text)
+			.join('');
+		items.push({
+			label: '@' + name,
+			filterText: name,
+			kind: 23, // Event (matches the old 'event' kind for modifiers)
+			sortText: '1' + name,
+			detail: detail ? toImbaIdentifier(detail) : undefined,
+			documentation: docs ? { kind: 'markdown' as const, value: toImbaIdentifier(docs) } : undefined,
+			commitCharacters: [':', '=', ' '],
+			textEdit: { range, newText: name },
+		});
+	}
+	return { isIncomplete: false, items: items as never[] };
+}
+
+function tagText(symbol: ts.Symbol, checker: ts.TypeChecker, tagName: string): string | undefined {
+	for (const tag of symbol.getJsDocTags(checker)) {
+		if (tag.name === tagName) {
+			return (tag.text ?? []).map(part => part.text).join('');
+		}
+	}
+	return undefined;
 }
 
 // parity: completions.imba tagattrs() + patches.imba isTagAttr — settable,

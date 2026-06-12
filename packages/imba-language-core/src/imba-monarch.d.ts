@@ -44,6 +44,10 @@ declare module 'imba-monarch' {
 		TagProp: number;
 		StyleProp: number;
 		StyleValue: number;
+		StyleModifier: number;
+		StyleSelector: number;
+		StyleVar: number;
+		StyleColor: number;
 		Value: number;
 		Type: number;
 		Path: number;

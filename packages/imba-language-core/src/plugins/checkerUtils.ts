@@ -48,6 +48,45 @@ export function findGlobalInterface(
 	return found ?? undefined;
 }
 
+/** resolve a global `declare namespace X` (e.g. imbacss) and return its exports */
+export function findGlobalNamespaceExports(
+	typescript: typeof ts,
+	program: ts.Program,
+	checker: ts.TypeChecker,
+	name: string
+): ts.Symbol[] {
+	let byName = cache.get(program);
+	if (!byName) {
+		byName = new Map();
+		cache.set(program, byName);
+	}
+	const key = 'ns:' + name;
+	if (!byName.has(key)) {
+		let found: ts.Symbol | null = null;
+		outer: for (const file of program.getSourceFiles()) {
+			if (!file.fileName.endsWith('.d.ts')) {
+				continue;
+			}
+			for (const statement of file.statements) {
+				if (
+					typescript.isModuleDeclaration(statement) &&
+					typescript.isIdentifier(statement.name) &&
+					statement.name.text === name
+				) {
+					const symbol = checker.getSymbolAtLocation(statement.name);
+					if (symbol) {
+						found = symbol;
+						break outer;
+					}
+				}
+			}
+		}
+		byName.set(key, found);
+	}
+	const symbol = byName.get(key);
+	return symbol ? checker.getExportsOfModule(symbol) : [];
+}
+
 /** one-line summary from the @summary jsdoc tag, identifier-converted by the caller */
 export function summaryOf(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
 	for (const tag of symbol.getJsDocTags(checker)) {
