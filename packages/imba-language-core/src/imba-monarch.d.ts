@@ -34,6 +34,7 @@ declare module 'imba-monarch' {
 			flags?: number;
 			prefix?: string;
 			keywords?: string[];
+			styleProperty?: string;
 		};
 	}
 

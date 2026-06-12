@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import type * as ts from 'typescript';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
-import { toImbaIdentifier } from '../conversion';
+import { toImbaIdentifier, toJSIdentifier } from '../conversion';
 import { getTagIndex, type ImbaTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
 import { detailOf, findGlobalInterface, findGlobalNamespaceExports, getTypeScriptService, summaryOf } from './checkerUtils';
@@ -99,6 +99,13 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					}
 					if (flags & CompletionTypes.TagEventModifier) {
 						return eventModifierItems(context, typescript, mctx.eventName, tokenRange('tag.event-modifier.name'));
+					}
+					if (flags & CompletionTypes.StyleValue && mctx.suggest?.styleProperty) {
+						const valueRange =
+							tok && tok.match('style.value') && /^[\w-]*$/.test(tok.value) && tok.offset <= offset
+								? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
+								: { start: position, end: position };
+						return styleValueItems(context, typescript, mctx.suggest.styleProperty, valueRange);
 					}
 					if (flags & (CompletionTypes.StyleProp | CompletionTypes.StyleModifier)) {
 						// the partial token's TYPE is ambiguous in style
@@ -325,6 +332,63 @@ function stylePropertyItems(context: LanguageServiceContext, typescript: typeof 
 			detail: proxy ? `→ ${toImbaIdentifier(proxy)}` : alias ? `alias: ${toImbaIdentifier(alias)}` : undefined,
 			documentation: docs ? { kind: 'markdown' as const, value: toImbaIdentifier(docs) } : undefined,
 			commitCharacters: [':'],
+			textEdit: { range, newText: name },
+		});
+	}
+	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba stylevalue() → checker.stylevalues — the generated
+// style typings declare each property's value keywords as interface members
+// with docs; abbreviations resolve through @proxy to the full property
+function styleValueItems(
+	context: LanguageServiceContext,
+	typescript: typeof ts,
+	propertyName: string,
+	range: LspRange
+) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return;
+	}
+	const checker = program.getTypeChecker();
+	const exports = findGlobalNamespaceExports(typescript, program, checker, 'imbacss');
+	const byName = new Map(exports.map(symbol => [symbol.escapedName as string, symbol]));
+
+	let symbol = byName.get(toJSIdentifier(propertyName));
+	for (let hops = 0; symbol && hops < 3; hops++) {
+		const proxy = tagText(symbol, checker, 'proxy');
+		if (!proxy) {
+			break;
+		}
+		symbol = byName.get(toJSIdentifier(proxy)) ?? symbol;
+		if (!tagText(symbol, checker, 'proxy')) {
+			break;
+		}
+	}
+	if (!symbol) {
+		return;
+	}
+
+	const type = checker.getDeclaredTypeOfSymbol(symbol);
+	const items = [];
+	for (const prop of type.getProperties()) {
+		const raw = prop.escapedName as string;
+		if (raw === 'set' || /^[αΨ_]/.test(raw) || prop.flags & typescript.SymbolFlags.Method) {
+			continue;
+		}
+		const name = toImbaIdentifier(raw);
+		const docs = prop
+			.getDocumentationComment(checker)
+			.map(part => part.text)
+			.join('');
+		items.push({
+			label: name,
+			kind: 12, // Value
+			// parity: old weighted '-'-prefixed values below the rest
+			sortText: (name.startsWith('-') ? '2' : '1') + name,
+			documentation: docs ? { kind: 'markdown' as const, value: toImbaIdentifier(docs) } : undefined,
+			commitCharacters: [' '],
 			textEdit: { range, newText: name },
 		});
 	}

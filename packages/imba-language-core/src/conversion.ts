@@ -19,6 +19,20 @@ export function toImbaIdentifier(raw: string): string {
 	return raw ? raw.replace(TO_IMBA_REGEX, m => TO_IMBA[m]) : raw;
 }
 
+const TO_JS: Record<string, string> = {
+	'-': 'Ξ',
+	'?': 'Φ',
+	'#': 'Ψ',
+	'@': 'α',
+};
+
+const TO_JS_REGEX = /[-?#@]/g;
+
+/** imba identifier → compiler-encoded JS identifier (align-items → alignΞitems) */
+export function toJSIdentifier(raw: string): string {
+	return raw.replace(TO_JS_REGEX, m => TO_JS[m]);
+}
+
 /**
  * Convert compiler-encoded identifiers inside a human-readable message.
  * Unlike the old plugin this is applied per feature result (diagnostic
