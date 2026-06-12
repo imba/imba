@@ -3,6 +3,7 @@ import { createImbaCompletionsPlugin, createImbaKeywordsPlugin } from './plugins
 import { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 import { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
 import { createImbaEventsPlugin } from './plugins/imbaEvents';
+import { createImbaFoldingPlugin } from './plugins/imbaFolding';
 import { createImbaTagsPlugin } from './plugins/imbaTags';
 import { createImbaWorkspaceSymbolsPlugin } from './plugins/imbaWorkspaceSymbols';
 import { createImbaSemanticTokensPlugin } from './plugins/imbaSemanticTokens';
@@ -35,5 +36,7 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		createImbaTagsPlugin(),
 		// project-wide symbol search (cmd-T) from monarch symbols
 		createImbaWorkspaceSymbolsPlugin(),
+		// indentation folding (TS folding is suppressed for imba docs)
+		createImbaFoldingPlugin(),
 	];
 }

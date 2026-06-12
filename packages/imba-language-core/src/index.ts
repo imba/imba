@@ -10,6 +10,8 @@ export { createImbaEventsPlugin } from './plugins/imbaEvents';
 export { createImbaCompletionsPlugin, createImbaKeywordsPlugin } from './plugins/imbaCompletions';
 export { createImbaTagsPlugin } from './plugins/imbaTags';
 export { createImbaWorkspaceSymbolsPlugin } from './plugins/imbaWorkspaceSymbols';
+export { createImbaFoldingPlugin, computeIndentFoldingRanges } from './plugins/imbaFolding';
+export { warmImbaCompileCache } from './warmer';
 export { ImbaTagIndex, getTagIndex, type WorkspaceTag } from './tagIndex';
 export { setupImbaProject } from './projectSetup';
 export { resolveImbaTypings, resolveImbaPackageDir } from './typings';

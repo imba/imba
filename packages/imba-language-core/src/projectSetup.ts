@@ -1,6 +1,9 @@
 import type { Language, ProjectContext } from '@volar/language-service';
 import type {} from '@volar/typescript';
 import { resolveImbaTypings } from './typings';
+import { warmImbaCompileCache } from './warmer';
+
+const warmedHosts = new WeakSet<object>();
 
 /**
  * Server-side project setup (A5/A6): make any project imba-capable without
@@ -50,5 +53,22 @@ export function setupImbaProject({ project }: { language: Language; project: Pro
 			const names = getScriptFileNames();
 			return names.includes(typings) ? names : [...names, typings];
 		};
+	}
+
+	// G1: warm the compile cache for the project's imba files in the
+	// background — Volar's sync createVirtualCode then hits warm entries on
+	// first interaction instead of cold-compiling. Delayed so the initially
+	// opened files (compiled on demand anyway) win the first second.
+	if (!warmedHosts.has(tsHost)) {
+		warmedHosts.add(tsHost);
+		setTimeout(() => {
+			let names: string[] = [];
+			try {
+				names = tsHost.getScriptFileNames().filter(name => name.endsWith('.imba'));
+			} catch {
+				return;
+			}
+			void warmImbaCompileCache(names);
+		}, 1000).unref?.();
 	}
 }

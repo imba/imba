@@ -458,6 +458,15 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 					}
 					return instance.provideDocumentSemanticTokens?.call(instance, document, range, legend, token);
 				},
+				async provideFoldingRanges(document, token) {
+					// TS folding mapped from the generated code is degenerate
+					// noise for imba docs (E7) — the imba-folding plugin owns
+					// them; plain ts/js keeps TS folding
+					if (isImbaBacked(context, document.uri)) {
+						return undefined;
+					}
+					return instance.provideFoldingRanges?.call(instance, document, token);
+				},
 				async provideHover(document, position, token) {
 					const hover = await provideHover?.(document, position, token);
 					// parity: util.imba toImbaDisplayParts — convert encoded
