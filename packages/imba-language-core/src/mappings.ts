@@ -1,9 +1,34 @@
 import type { CodeInformation, CodeMapping } from '@volar/language-core';
+import { toImbaIdentifier, toJSIdentifier } from './conversion';
 
 /**
  * Exact 1:1 spans (identifiers, literals) support every feature.
+ *
+ * The navigation hooks make rename round-trip the identifier encoding (E4):
+ * a user renaming `fancy-pad` types the imba spelling, but TS renames the
+ * generated `fancyΞpad` — so the new name is encoded on the way in, and edit
+ * texts landing back in imba source are decoded. Edits in plain ts/js files
+ * never travel these mappings and correctly keep the encoded name.
  */
 export const EXACT_FEATURES: CodeInformation = {
+	verification: true,
+	completion: true,
+	semantic: true,
+	navigation: {
+		resolveRenameNewName: toJSIdentifier,
+		resolveRenameEditText: toImbaIdentifier,
+	},
+	structure: true,
+};
+
+/**
+ * The root virtual code's identity mapping (imba source → root imba doc).
+ * Everything enabled, but WITHOUT the rename encoding hooks — those only
+ * make sense crossing into generated TS. On the root layer the monarch-token
+ * plugins handle names verbatim (a style-var rename to `--gutter` must not
+ * arrive as `ΞΞgutter`).
+ */
+export const IDENTITY_FEATURES: CodeInformation = {
 	verification: true,
 	completion: true,
 	semantic: true,

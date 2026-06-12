@@ -1,7 +1,7 @@
 import type { CodeMapping, IScriptSnapshot, TextChangeRange, VirtualCode } from '@volar/language-core';
 import * as monarchModule from 'imba-monarch';
 import { compileImba, type ImbaCompilation } from './compiler';
-import { spansToMappings, EXACT_FEATURES } from './mappings';
+import { spansToMappings, IDENTITY_FEATURES } from './mappings';
 
 type ImbaScriptInfo = import('imba-monarch').default;
 
@@ -42,7 +42,7 @@ export class ImbaVirtualCode implements VirtualCode {
 				sourceOffsets: [0],
 				generatedOffsets: [0],
 				lengths: [source.length],
-				data: EXACT_FEATURES,
+				data: IDENTITY_FEATURES,
 			},
 		];
 

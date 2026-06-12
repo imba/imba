@@ -14,6 +14,15 @@ const STYLE_DECL_FOR: Record<string, { decl: string; label: string }> = {
 	'style.selector.mixin.name': { decl: 'tag.mixin.name', label: 'mixin usage' },
 };
 
+// references/rename treat declaration + usage tokens as one symbol family
+// (parity: E4 — these tokens never reach TS, so the monarch index is the
+// whole truth; token values are symmetric across sides, sigils included
+// for vars (`--gap`, `$accent`) and bare for mixins (`card`))
+const STYLE_TOKEN_FAMILIES: string[][] = [
+	['style.property.var', 'style.value.var'],
+	['tag.mixin.name', 'style.selector.mixin.name'],
+];
+
 interface StyleDeclHit {
 	label: string;
 	targets: { fileName: string; text: string; offset: number; length: number }[];
@@ -65,6 +74,8 @@ export function createImbaTagsPlugin(): LanguageServicePlugin {
 		capabilities: {
 			definitionProvider: true,
 			hoverProvider: true,
+			referencesProvider: true,
+			renameProvider: { prepareProvider: true },
 		},
 		create(context) {
 			function tagAt(documentUri: string, offset: number): { tags: WorkspaceTag[]; range: [number, number] } | undefined {
@@ -116,7 +127,78 @@ export function createImbaTagsPlugin(): LanguageServicePlugin {
 				return undefined;
 			}
 
+			function styleFamilyAt(
+				documentUri: string,
+				offset: number
+			): { targets: StyleDeclHit['targets']; range: [number, number] } | undefined {
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(documentUri));
+				if (!decoded) {
+					return undefined;
+				}
+				const root = context.language.scripts.get(decoded[0])?.generated?.root;
+				if (!(root instanceof ImbaVirtualCode) || decoded[1] !== root.id) {
+					return undefined;
+				}
+				const tok = root.monarchDoc.getContextAtOffset(offset)?.token;
+				if (!tok) {
+					return undefined;
+				}
+				const family = STYLE_TOKEN_FAMILIES.find(types => types.some(type => tok.match(type)));
+				if (!family) {
+					return undefined;
+				}
+				const targets = family.flatMap(type => findStyleDeclarations(context, type, tok.value));
+				return { targets, range: [tok.offset, tok.endOffset] };
+			}
+
 			return {
+				provideReferences(document, position) {
+					if (document.languageId !== 'imba') {
+						return;
+					}
+					const hit = styleFamilyAt(document.uri, document.offsetAt(position));
+					if (!hit?.targets.length) {
+						return;
+					}
+					return hit.targets.map(target => ({
+						uri: URI.file(target.fileName).toString(),
+						range: rangeInText(target.text, target.offset, target.length),
+					})) as never;
+				},
+				provideRenameRange(document, position) {
+					if (document.languageId !== 'imba') {
+						return;
+					}
+					const hit = styleFamilyAt(document.uri, document.offsetAt(position));
+					if (!hit) {
+						return;
+					}
+					return {
+						start: document.positionAt(hit.range[0]),
+						end: document.positionAt(hit.range[1]),
+					};
+				},
+				provideRenameEdits(document, position, newName) {
+					if (document.languageId !== 'imba') {
+						return;
+					}
+					const hit = styleFamilyAt(document.uri, document.offsetAt(position));
+					if (!hit?.targets.length) {
+						return;
+					}
+					// the token carries its sigil for vars (`--gap`) and rename
+					// replaces the full token — newName is inserted verbatim,
+					// exactly what the prefilled rename box hands back
+					const changes: Record<string, { range: ReturnType<typeof rangeInText>; newText: string }[]> = {};
+					for (const target of hit.targets) {
+						const uri = URI.file(target.fileName).toString();
+						(changes[uri] ??= []).push({
+							range: rangeInText(target.text, target.offset, target.length),
+							newText: newName,
+						});
+					}
+					return { changes } as never;
+				},
 				provideDefinition(document, position) {
 					if (document.languageId !== 'imba') {
 						return;

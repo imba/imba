@@ -103,10 +103,10 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | E1 | Go to definition (TS-backed) | intercept + convertLocationsToImba | Volar mapping | M0* | ✅ |
-| E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | **Defs + hover ✅** (imbaTags plugin: usage-token → declaration-token mapping table, program-wide via monarch docs, snapshot-based ranges; covers --vars, $vars, mixins both directions). References/rename for these tokens still pending (E4) | M3.3 | 🚧 |
+| E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | imbaTags plugin: usage-token → declaration-token mapping table, program-wide via monarch docs, snapshot-based ranges; covers --vars, $vars, mixins both directions. References/rename via token families (E4) | M3.3 | ✅ |
 | E3 | Definition filtering (`__new` removal, prefer .imba over .d.ts, meta suppression) | intercept.getDefinitionAndBoundSpan | `preferImbaDefinitions` in the TS wrapper (imba source beats typings d.ts entries; never empties the list). `__new` rule obsolete — current compiler emits real constructors | M2.7 | ✅ |
 | E11 | Def/hover on tag usage (`<cool-widget>`) + attributes | checker.getTagSymbol/getTagAttrSymbol | **two-tier (key architecture validation):** attributes flow through TS mappings for free (exact spans, once Γ globals resolve — compiler already emits `declare global` registrations per tag declaration!); the tag NAME token (unequal span vs Γ-name) bridges via `createImbaTagsPlugin` + workspace index | M2.2 | ✅ |
-| E4 | Find references / rename (TS-backed) | intercepts + conversion | Volar mapping; rename name conversion via `navigation.resolveRenameNewName/EditText` mapping hooks | M3.10 | ⬜ |
+| E4 | Find references / rename (TS-backed) | intercepts + conversion | References free via mappings (imba↔ts cross-file). Rename round-trips the encoding: EXACT_FEATURES navigation hooks encode the new name for TS and decode edit texts landing in imba source — ts/js files keep encoded names. Root identity mapping uses hook-free IDENTITY_FEATURES (hooks there double-encoded monarch-plugin renames). Style vars/mixins: monarch token families in imbaTags (refs + prepare + rename) | M3.10 | ✅ |
 | E5 | Document symbols / outline | doc.getOutline (monarch) replacing navtree | `createImbaDocumentSymbolsPlugin` (monarch outline → LSP DocumentSymbols, TS symbols suppressed for imba docs) | M2.8 | ✅ |
 | E6 | Workspace symbols (imba + TS merged, scope config) | getNavigateToItems override | `createImbaWorkspaceSymbolsPlugin` (monarch getNavigateToItems program-wide, old fuzzy matching); TS results keep ts/js only with names converted (typings Φ/α symbols). Scope config (imbaOnly) pending with F3 | M3.3 | ✅ |
 | E7 | Folding | old returned `null` (!) | indentation folding from VS Code language config; optional monarch provider later | M2.9 | ⬜ |
@@ -199,6 +199,14 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — E4 references + rename: encoding round-trip via mapping hooks
+- References already flowed through the mappings (imba↔ts cross-file, probe-verified). Rename nearly did — but a TS file referencing a renamed dashed export would have received the raw imba spelling (`say-hello`), breaking it.
+- Fix: Volar's per-mapping `navigation.resolveRenameNewName/resolveRenameEditText` hooks on EXACT_FEATURES — new name encoded (`say-hello` → `sayΞhello`) before TS sees it, edit texts decoded on the way back into imba source. Plain ts/js edits never travel imba mappings, so they keep the encoded name — exactly right.
+- **Layering bug found by probe:** the root identity mapping shared EXACT_FEATURES, so the encode hook also fired on the ROOT layer where the monarch plugins run — a style-var rename arrived as `ΞΞgutter`. Root mapping now uses hook-free IDENTITY_FEATURES. Lesson: mapping-data hooks are layer-specific; identity (source→root) and generated (root→ts) mappings must not share data objects that carry transforms.
+- Style vars + mixins (which never reach TS): references/prepareRename/rename in imbaTags via symmetric token FAMILIES (`style.property.var`+`style.value.var`, `tag.mixin.name`+`style.selector.mixin.name`), program-wide collection reusing findStyleDeclarations. Token values carry sigils for vars (`--gap`) and are bare for mixins — rename replaces the full token verbatim.
+- TS default alias-rename behavior observed (renaming an import usage produces `greet as say-hello` instead of touching the export) — kept; it's how tsserver behaves everywhere.
+- test/m3-references-rename.test.ts (6 tests). Suite at 91.
 
 ### 2026-06-12 — E9 signature help: the old checker hack is dead weight
 - Probed five caret states (after `(`, empty parens, after comma, dashed callee, modifier parens) — ALL map through to TS signature help, because Volar gates it on the `completion` flag and the exact/placeholder mappings already carry it. The old plugin's `checker.getSignatureHelpForType` interception isn't needed at all.
