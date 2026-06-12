@@ -119,8 +119,13 @@ export function summaryOf(symbol: ts.Symbol, checker: ts.TypeChecker): string | 
 }
 
 export function detailOf(symbol: ts.Symbol, checker: ts.TypeChecker): string | undefined {
+	return tagText(symbol, checker, 'detail');
+}
+
+/** text of an arbitrary jsdoc tag (@proxy, @alias, @detail, …) */
+export function tagText(symbol: ts.Symbol, checker: ts.TypeChecker, tagName: string): string | undefined {
 	for (const tag of symbol.getJsDocTags(checker)) {
-		if (tag.name === 'detail') {
+		if (tag.name === tagName) {
 			return (tag.text ?? []).map(part => part.text).join('');
 		}
 	}

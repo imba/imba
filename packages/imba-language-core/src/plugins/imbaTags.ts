@@ -2,9 +2,10 @@ import type { LanguageServiceContext, LanguageServicePlugin } from '@volar/langu
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { URI } from 'vscode-uri';
+import { toImbaIdentifier, toImbaString, toJSIdentifier } from '../conversion';
 import { getTagIndex, type WorkspaceTag } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
-import { getTypeScriptService } from './checkerUtils';
+import { findGlobalNamespaceExports, getTypeScriptService, tagText } from './checkerUtils';
 
 // style vars and mixins: usage token type → declaration token type
 // (parity: E2 — old checker getStyleVarTokens/getMixinReferences synthesis)
@@ -68,7 +69,7 @@ function findStyleDeclarations(
 // ATTRIBUTES on the same tag flow through TS mappings (exact spans) and need
 // no help here.
 
-export function createImbaTagsPlugin(): LanguageServicePlugin {
+export function createImbaTagsPlugin(typescript: typeof import('typescript')): LanguageServicePlugin {
 	return {
 		name: 'imba-tags',
 		capabilities: {
@@ -101,6 +102,92 @@ export function createImbaTagsPlugin(): LanguageServicePlugin {
 					return undefined;
 				}
 				return { tags, range: [tok.offset, tok.endOffset] };
+			}
+
+			function findImbacssExport(rawName: string) {
+				const program = getTypeScriptService(context)?.getProgram();
+				if (!program) {
+					return undefined;
+				}
+				const checker = program.getTypeChecker();
+				for (const symbol of findGlobalNamespaceExports(typescript, program, checker, 'imbacss')) {
+					if ((symbol.escapedName as string) === rawName) {
+						return { symbol, checker };
+					}
+				}
+				return undefined;
+			}
+
+			// C3: hover for style property names (abbreviations expand via
+			// @proxy — the proxied symbol carries the docs and MDN link) and
+			// style modifiers (@detail carries the css selector equivalent)
+			function styleMetaAt(
+				documentUri: string,
+				offset: number
+			): { value: string; range: [number, number] } | undefined {
+				const decoded = context.decodeEmbeddedDocumentUri(URI.parse(documentUri));
+				if (!decoded) {
+					return undefined;
+				}
+				const root = context.language.scripts.get(decoded[0])?.generated?.root;
+				if (!(root instanceof ImbaVirtualCode) || decoded[1] !== root.id) {
+					return undefined;
+				}
+				const tok = root.monarchDoc.getContextAtOffset(offset)?.token;
+				if (!tok) {
+					return undefined;
+				}
+
+				if (tok.match('style.property.name')) {
+					const found = findImbacssExport(toJSIdentifier(tok.value));
+					if (!found) {
+						return undefined;
+					}
+					let { symbol } = found;
+					let title = tok.value;
+					const proxy = tagText(symbol, found.checker, 'proxy');
+					if (proxy) {
+						title = `${tok.value} (${toImbaIdentifier(proxy)})`;
+						const target = findImbacssExport(proxy);
+						if (target) {
+							symbol = target.symbol;
+						}
+					}
+					const docs = symbol
+						.getDocumentationComment(found.checker)
+						.map(part => part.text)
+						.join('');
+					return {
+						value: `\`\`\`imba\n${title}\n\`\`\`${docs ? '\n\n' + toImbaString(docs) : ''}`,
+						range: [tok.offset, tok.endOffset],
+					};
+				}
+
+				if (tok.match('style.property.modifier')) {
+					const name = tok.value.replace(/^@/, '');
+					const found = findImbacssExport('α' + toJSIdentifier(name));
+					if (!found) {
+						return undefined;
+					}
+					const detail = tagText(found.symbol, found.checker, 'detail');
+					const docs = found.symbol
+						.getDocumentationComment(found.checker)
+						.map(part => part.text)
+						.join('');
+					const lines = [`\`\`\`imba\n@${name}\n\`\`\``];
+					if (detail) {
+						lines.push(`*${toImbaString(detail.trim())}*`);
+					}
+					if (docs) {
+						lines.push(toImbaString(docs));
+					}
+					return {
+						value: lines.join('\n\n'),
+						range: [tok.offset, tok.endOffset],
+					};
+				}
+
+				return undefined;
 			}
 
 			function styleAt(documentUri: string, offset: number): StyleDeclHit | undefined {
@@ -240,6 +327,16 @@ export function createImbaTagsPlugin(): LanguageServicePlugin {
 				provideHover(document, position) {
 					if (document.languageId !== 'imba') {
 						return;
+					}
+					const meta = styleMetaAt(document.uri, document.offsetAt(position));
+					if (meta) {
+						return {
+							contents: { kind: 'markdown' as const, value: meta.value },
+							range: {
+								start: document.positionAt(meta.range[0]),
+								end: document.positionAt(meta.range[1]),
+							},
+						};
 					}
 					const styleHit = styleAt(document.uri, document.offsetAt(position));
 					if (styleHit) {

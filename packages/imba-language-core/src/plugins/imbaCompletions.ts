@@ -14,6 +14,7 @@ import {
 	findModuleExportsByFileSuffix,
 	getTypeScriptService,
 	summaryOf,
+	tagText,
 } from './checkerUtils';
 
 // parity: completions.imba tagnames() — but the listing comes from the
@@ -591,14 +592,6 @@ function styleModifierItems(context: LanguageServiceContext, typescript: typeof 
 	return { isIncomplete: false, items: items as never[] };
 }
 
-function tagText(symbol: ts.Symbol, checker: ts.TypeChecker, tagName: string): string | undefined {
-	for (const tag of symbol.getJsDocTags(checker)) {
-		if (tag.name === tagName) {
-			return (tag.text ?? []).map(part => part.text).join('');
-		}
-	}
-	return undefined;
-}
 
 // parity: completions.imba tagattrs() + patches.imba isTagAttr — settable,
 // non-readonly properties of the element type; HTMLElementTagNameMap covers

@@ -74,7 +74,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | C1 | TS hover at mapped positions | intercept.getQuickInfoAtPosition | volar-service-typescript via mappings; explicit e2e via `test/harness.ts` (full LanguageService over fixtures — reuse for all feature tests) | M1.7 | ✅ |
 | C2 | Identifier conversion in hover display | toImbaDisplayParts | `provideHover` wrap in typescriptServices.ts (all MarkupContent/MarkedString shapes); Ω-prefixed internal names revisited with A9 | M2.4 | ✅ |
-| C3 | Imba-context hover: style props/values, units, mixins, style vars/colorvars, events, event modifiers, tag names/attrs, meta symbols, MDN links | script.getInfoAt + checker.getSymbolInfo (700+ lines) | monarch-driven plugins; type queries via injected TS LS. **Events + modifiers done** (`imbaEvents.ts`: hover w/ docs+tags, go-to-def into typings — the @intersect.silent case). Styles/tags/units/mixins remain | M2.3 | 🚧 |
+| C3 | Imba-context hover: style props/values, units, mixins, style vars/colorvars, events, event modifiers, tag names/attrs, meta symbols, MDN links | script.getInfoAt + checker.getSymbolInfo (700+ lines) | monarch-driven plugins; type queries via injected TS LS. Events + modifiers (`imbaEvents.ts`), tag names + style vars/mixins (`imbaTags.ts` E2), **style props + style modifiers** (imbaTags styleMetaAt: @proxy-expanded titles, proxied docs incl. MDN links, @detail selectors). Units/value hover remain (D6 territory, low value) | M2.3 | ✅ |
 
 *C1 is exercised indirectly (mapping round-trips + diagnostics); add an explicit hover e2e test in M1.7.
 
@@ -199,6 +199,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — C3 style hover: the typings already carry everything
+- Hover on `style.property.name` tokens: abbreviation entries (`bd`) follow their @proxy to the full property (`border`), whose generated docs already EMBED the MDN link — title renders as `bd (border)`, docs come from the proxied symbol. Full names render directly. `style.property.modifier` tokens (`@hover`) render @detail (css selector equivalent) + docs.
+- All through the same per-program-cached imbacss lookup the D5 completions use; `tagText` moved to checkerUtils (was a local helper in imbaCompletions). createImbaTagsPlugin now takes ts.
+- C3 marked ✅ — remaining sub-context (unit/value hover) is D6 territory and low-value.
+- test/m3-style-hover.test.ts (3 tests). Suite at 128.
 
 ### 2026-06-12 — A7: inferred projects get imba options forced, not defaulted
 - Volar already creates a per-workspace-folder inferred project for files outside any tsconfig, and our setup hook runs for those too. The catch: the server SYNTHESIZES CommonJS-ish compiler options for inferred projects, and the wrapper's "defaults only when the project hasn't chosen" rule treated them as choices — breaking extensionless ESM imports. Now: no configFileName → target/module/moduleResolution are forced (there is no user choice to respect).

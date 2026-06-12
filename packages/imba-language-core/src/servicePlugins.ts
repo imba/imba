@@ -33,7 +33,7 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		createImbaKeywordsPlugin(),
 		// tag-name usage definition/hover via the workspace tag index
 		// (attributes flow through TS mappings and need no bridge)
-		createImbaTagsPlugin(),
+		createImbaTagsPlugin(ts),
 		// project-wide symbol search (cmd-T) from monarch symbols
 		createImbaWorkspaceSymbolsPlugin(),
 		// indentation folding (TS folding is suppressed for imba docs)
