@@ -579,6 +579,92 @@ declare namespace imba {
          * */
         αif(condition: unknown): boolean;
 
+        /**
+         * Only trigger when shift key is pressed
+         * @summary Only when shift key is pressed
+        */
+        αshift(): boolean;
+
+        /**
+         * Only trigger when alt key is pressed
+         * @summary Only when alt key is pressed
+        */
+        αalt(): boolean;
+
+        /**
+         * Only trigger when ctrl key is pressed
+         * @summary Only when ctrl key is pressed
+        */
+        αctrl(): boolean;
+
+        /**
+         * Only trigger when meta key is pressed
+         * @summary Only when meta key is pressed
+        */
+        αmeta(): boolean;
+
+        /**
+         * Only trigger for mouse pointers
+         * @summary Only for mouse pointers
+        */
+        αmouse(): boolean;
+
+        /**
+         * Only trigger for pen pointers
+         * @summary Only for pen pointers
+        */
+        αpen(): boolean;
+
+        /**
+         * Only trigger for touch pointers
+         * @summary Only for touch pointers
+        */
+        αtouch(): boolean;
+
+        /**
+         * Only trigger when pressure is above the given threshold
+         * @summary Only when pressure exceeds threshold
+         * @detail (threshold = 0.5)
+        */
+        αpressure(threshold?: number): boolean;
+
+        /**
+         * Only trigger for the primary (left) button
+         * @summary Only for the left button
+        */
+        αleft(): boolean;
+
+        /**
+         * Only trigger for the middle button
+         * @summary Only for the middle button
+        */
+        αmiddle(): boolean;
+
+        /**
+         * Only trigger for the secondary (right) button
+         * @summary Only for the right button
+        */
+        αright(): boolean;
+
+        /**
+         * Only trigger when the touch has ended
+         * @summary Only when the touch has ended
+        */
+        αend(): boolean;
+
+        /**
+         * Sync the x/y of the touch to css variables on the element
+         * @summary Sync touch position to css variables
+         * @detail (xName = 'x', yName = 'y')
+        */
+        αcss(xName?: string, yName?: string): boolean;
+
+        /**
+         * Log values to the console as the touch updates
+         * @summary Log to console
+        */
+        αlog(...params: unknown[]): boolean;
+
     }
 
     type IntersectRoot = Element | Document;
