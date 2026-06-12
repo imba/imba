@@ -5,7 +5,7 @@
   "version": "2.0.0-alpha.251",
   "scripts": {
     "test": "node bin/imba scripts/test-runner.imba",
-    "test-cli": "cd test/cli && node ../../bin/imba index.imba",
+    "test-cli": "node test/cli/index.mjs",
     "test:std": "imba test run -- --dir ./test/std",
     "clean": "find test/apps -name '*.js' -type f -delete && rm -r dist/",
     "watch": "node scripts/build.js -w",

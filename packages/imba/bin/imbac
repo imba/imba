@@ -224,6 +224,11 @@ CLI.prototype.log = function (message){
 	return this;
 };
 
+CLI.prototype.logError = function (message){
+	console.error(message);
+	return this;
+};
+
 CLI.prototype.b = function (text){
 	return this.o().colors ? ansi.bold(text) : text;
 };
@@ -279,7 +284,7 @@ CLI.prototype.tokenize = function (){
 		try {
 			out = compiler.tokenize(src.sourceBody,o2);	
 		} catch(e){
-			console.log('error in tokenizer:',e.message);
+			console.error('error in tokenizer:',e.message);
 			throw e;
 			out = e._options.tokens;
 		}
@@ -336,7 +341,7 @@ CLI.prototype.compileFile = function (src){
 	var dstp = src.targetPath && path.relative(process.cwd(),src.targetPath);
 
 	var srcpAbs = path.resolve(srcp);
-	var dstpAbs = path.resolve(dstp);
+	var dstpAbs = dstp && path.resolve(dstp);
 
 	if (srcp.indexOf("../") >= 0) {
 		srcp = srcpAbs;
@@ -357,7 +362,6 @@ CLI.prototype.compileFile = function (src){
 			}
 		}
 	} catch (e) {
-		console.log('error',e);
 		out = {errors: [e]};
 	};
 
@@ -381,10 +385,10 @@ CLI.prototype.compileFile = function (src){
 
 	src.output = out;
 
-	let status = ("" + self.gray(("" + at + " compile")) + " " + srcp + " " + self.gray("to") + " " + dstp + " " + self.green(out.compileTime + "ms"));
+	let status = ("" + self.gray(("" + at + " compile")) + " " + srcp + (dstp ? (" " + self.gray("to") + " " + dstp) : "") + " " + self.green(out.compileTime + "ms"));
 
 	if (out.error) {
-
+		process.exitCode = 1;
 		status += self.red(" [1 error]");
 	};
 
@@ -396,25 +400,23 @@ CLI.prototype.compileFile = function (src){
 	if (out.errors && out.errors.length) {
 		let count = out.errors.length;
 		status += self.red((" [" + count + " error" + ((count > 1) ? 's' : '') + "]"));
-		if (!self.o().print) {
-			self.log(status);
+		process.exitCode = 1;
+		self.logError(status);
 
-			out.errors.forEach(function(err,i){
-				if(err.toError instanceof Function){
-					err = err.toError();
-				}
-				// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
-				if (err.excerpt) {
-					self.log("   " + err.excerpt({colors: self.o().colors}));
-				} else if(err instanceof SyntaxError && err.stack){
-					self.log(err.stack);
-				} else {
-					self.log("   " + err.message);
-					self.log("   " + ("in file " + srcp));
-					if (err.stack) { self.log(err.stack) };
-				};
-			})
-		};
+		out.errors.forEach(function(err,i){
+			if(err.toError instanceof Function){
+				err = err.toError();
+			}
+			if (err.excerpt) {
+				self.logError("   " + err.excerpt({colors: self.o().colors}));
+			} else if(err instanceof SyntaxError && err.stack){
+				self.logError(err.stack);
+			} else {
+				self.logError("   " + err.message);
+				self.logError("   " + ("in file " + srcp));
+				if (err.stack) { self.logError(err.stack) };
+			};
+		})
 	}
 	else if (src.targetPath && out.js !== undefined && !self.o().print) {
 		self.ensureDir(src.targetPath);
@@ -434,24 +436,21 @@ CLI.prototype.compileFile = function (src){
 		// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {green(out:compileTime + "ms")}"
 	};
 
-	if (out.warnings && !self.o().silent && !self.o().print) {
-		// log "   {out:warnings:length} warnings"
+	if (out.warnings && !self.o().silent) {
 		out.warnings.forEach(function(err,i){
 			if(err.toError instanceof Function){
 				err = err.toError();
 			}
-			// log "{gray("{at} compile")} {srcp} {gray("to")} {dstp} {red(out:compileTime + "ms")}"
 			if (err.excerpt) {
-				self.log("   " + err.excerpt({colors: self.o().colors}));
+				self.logError("   " + err.excerpt({colors: self.o().colors}));
 			} else if(err instanceof SyntaxError && err.stack){
-				self.log(err.stack);
+				self.logError(err.stack);
 			} else {
-				self.log("   " + err.message);
-				self.log("   " + ("in file " + srcp));
-				if (err.stack) { self.log(err.stack) };
+				self.logError("   " + err.message);
+				self.logError("   " + ("in file " + srcp));
+				if (err.stack) { self.logError(err.stack) };
 			};
 		})
-		// helpers
 	};
 
 	if (self.o().watch && !src.watcher) {
@@ -488,11 +487,12 @@ CLI.prototype.finish = function (){
 			this.compile(this.sources(),this.o());
 		};
 	} catch (e) {
+		process.exitCode = 1;
 		if (this._current) {
-			this.log(("ERROR in " + this.b(this.rel(this._current))));
+			this.logError(("ERROR in " + this.b(this.rel(this._current))));
 		};
 		if (e.excerpt) {
-			this.log(e.excerpt({colors: true}));
+			this.logError(e.excerpt({colors: true}));
 		} else {
 			throw e;
 		};

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix `imbac` swallowing compile errors — it printed nothing and exited 0 when compilation failed with `-p`/`--print`. Errors and warnings now go to stderr (keeping stdout clean for compiled output), and the process exits with a non-zero code on compile errors. Also fix `imbac -s` (stdio mode) crashing on any input.
+
 * Remove Vite support from the main `imba` package. Imba's own esbuild-based toolchain (`imba run`, `imba build`, `imba serve`) is now the only supported bundling path.
 
     This removes the `imba/plugin` export (the Vite plugin), the Vite-powered `imba preview` command, the Vitest-based `imba test` and `imba bench` commands, the `vite` and `vitest` templates from `imba create`, the `$vite$` compile-time constant, and the optional `vite`/`vite-node`/`vitest`/`@testing-library/*` peer dependencies.
