@@ -7,7 +7,7 @@ export { createImbaSemanticTokensPlugin, IMBA_SEMANTIC_LEGEND } from './plugins/
 export { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
 export { createImbaServicePlugins } from './servicePlugins';
 export { createImbaEventsPlugin } from './plugins/imbaEvents';
-export { createImbaCompletionsPlugin } from './plugins/imbaCompletions';
+export { createImbaCompletionsPlugin, createImbaKeywordsPlugin } from './plugins/imbaCompletions';
 export { createImbaTagsPlugin } from './plugins/imbaTags';
 export { ImbaTagIndex, getTagIndex, type WorkspaceTag } from './tagIndex';
 export { setupImbaProject } from './projectSetup';

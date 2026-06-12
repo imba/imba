@@ -92,7 +92,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D8 | Decorators | local vars + imba builtins + exported αdecorators | service plugin | M2.2 | ⬜ |
 | D9 | Types after `\` | getSymbols('Type') + snippets | service plugin | M2.5 | ⬜ |
 | D10 | Path completions in imports | paths() via directoryStructureHost | ❌ dropped — Sindre: not needed (2026-06-12) | — | ❌ |
-| D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | service plugin | M2.2 | ⬜ |
+| D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | `createImbaKeywordsPlugin` (ADDITIONAL completion source; imba-only keywords — TS provides the JS set; monarch's contextual list, weight-800 parity). Snippets pending | M2.2 | 🚧 |
 | D12 | Auto-imports: values/types (TS-backed) | importer.imba getExportInfoMap machinery | mostly free via D1 forwarding (TS auto-imports map edits back); verify import path gets `.imba`-stripped/extensionless form | M3.1 | ⬜ |
 | D13 | Auto-imports: exported tags, decorators, export-star namespace groups (EXPORT_NS) | importer.imba custom grouping | custom contributions on top of D12 | M3.2 | ⬜ |
 | D14 | Completion resolve: docs markdown, import edits via `doc.createImportEdit` | SymbolCompletion.resolve | resolve handler in service plugin (monarch createImportEdit reused) | M2.2 | ⬜ |
@@ -119,7 +119,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | `createImbaSemanticTokensPlugin` — standard LSP token types from monarch tokens on the root document (works in any LSP client, no tsserver) | M2.10 | ✅ |
-| F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | LSP custom notifications (typed) in preview extension. Health check: at project init verify `imba.Component` resolves; if not, ONE clear "imba types not loaded" signal instead of a 2339 cascade on every tag (dev-host finding: broken env reads as thousands of cryptic `typeof import("imba")` errors) | M2.12 | ⬜ |
+| F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | **Health check ✅:** one warning at 0:0 ("imba types are not loaded…") when ImbaEvents is unresolvable, cached per program (imbaDiagnostics plugin; bare-project fixture test). Status-bar UX via LSP notifications still pending | M2.12 | 🚧 |
 | F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | LSP configuration; port schema to preview extension | M3.9 | ⬜ |
 | F4 | Preview VS Code extension (`imba-next` style) | n/a | `packages/vscode-imba-next`: LSP client → imba-language-server, grammar copied from vscode-imba, tsserver plugin contribution. Dev-host only (`code --extensionDevelopmentPath=… --disable-extensions`); vsce packaging needs bundling, M3 | M2.11 | ✅ |
 | F8 | Zed extension (architecture dividend: server is plain LSP) | github.com/imba/zed-imba already existed: tree-sitter grammar (imba/tree-sitter-imba) + queries + a monarch mini-LSP (imba-tags) | `packages/zed-imba` now mirrors the official repo's structure with the mini-LSP replaced by imba-language-server (workspace/monorepo resolution + settings override; cargo-check clean on zed_extension_api 0.7). Sync back to imba/zed-imba = plain copy. Highlighting: tree-sitter base + semantic tokens "combined" (their semantic_token_rules.json kept) | M2 | ✅ |
@@ -185,6 +185,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — Plow-through: D3, G3, E3, D5 slice 1, D11, F2 health check
+- Six matrix items landed in one stretch (66 tests green): tag attr completions, incremental snapshots, definition preference, style props/modifiers, imba keywords, env health warning.
+- **Completion pipeline lesson #3 (the big one):** Volar allows ONE "main" completion list per request — the first plugin returning items wins, and everything else is skipped unless the plugin instance sets `isAdditionalCompletion: true`. This retroactively explains the D4 round's "my items missing" symptom (not a list cap). Consequences encoded: imba-special contexts suppress TS and our main plugin owns the slot; merge-style contributions (keywords) live in a separate ADDITIONAL plugin; and additional plugins only run on the FIRST visited mapping layer (usually the embedded TS doc) — they must be layer-agnostic, translating offsets/ranges through the mapper.
+- D5 design resolution: imbacss namespace exports through the per-program-cached checker lookup ARE effectively the static table Sindre wanted — same data, no second source to maintain. Values per property remain (slice 2).
+- TagProp added to the TS-suppression mask (element members leaked — 430-item lists).
 
 ### 2026-06-12 — Post-edit latency baseline over imba.io (G6 seed data)
 - Harness over apps/imba.io (203 files), editing src/api.imba (757 lines) by appending a real def, then immediately requesting features — the exact "old plugin went dead for 3–10s after edits" scenario:

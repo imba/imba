@@ -1,6 +1,8 @@
 import type { LanguageServicePlugin } from '@volar/language-service';
+import type * as ts from 'typescript';
 import { URI } from 'vscode-uri';
 import { ImbaVirtualCode } from '../virtualCode';
+import { findGlobalInterface, getTypeScriptService } from './checkerUtils';
 
 // parity: typescript-imba-plugin script.imba getImbaDiagnostics — but live on
 // every change instead of save-gated, and straight from the stored compilation
@@ -19,7 +21,7 @@ function toSeverity(raw: unknown): 1 | 2 | 3 | 4 {
 	return 1;
 }
 
-export function createImbaDiagnosticsPlugin(): LanguageServicePlugin {
+export function createImbaDiagnosticsPlugin(typescript?: typeof ts): LanguageServicePlugin {
 	return {
 		name: 'imba-diagnostics',
 		capabilities: {
@@ -29,6 +31,25 @@ export function createImbaDiagnosticsPlugin(): LanguageServicePlugin {
 			},
 		},
 		create(context) {
+			// F2 health check: a broken type environment used to read as a
+			// cryptic 2339 cascade on every tag — surface ONE clear signal
+			const healthByProgram = new WeakMap<ts.Program, boolean>();
+			function environmentHealthy(): boolean {
+				if (!typescript) {
+					return true;
+				}
+				const program = getTypeScriptService(context)?.getProgram();
+				if (!program) {
+					return true;
+				}
+				let healthy = healthByProgram.get(program);
+				if (healthy === undefined) {
+					healthy = !!findGlobalInterface(typescript, program, program.getTypeChecker(), 'ImbaEvents');
+					healthByProgram.set(program, healthy);
+				}
+				return healthy;
+			}
+
 			return {
 				provideDiagnostics(document) {
 					if (document.languageId !== 'imba') {
@@ -45,7 +66,7 @@ export function createImbaDiagnosticsPlugin(): LanguageServicePlugin {
 					if (!(root instanceof ImbaVirtualCode) || decoded[1] !== root.id) {
 						return;
 					}
-					return root.compilation.diagnostics.map(d => ({
+					const diagnostics = root.compilation.diagnostics.map(d => ({
 						// offsets are authoritative; line/character from the
 						// compiler can be stale relative to the live document
 						range: {
@@ -56,6 +77,17 @@ export function createImbaDiagnosticsPlugin(): LanguageServicePlugin {
 						message: d.message,
 						source: d.source ?? 'imba',
 					}));
+					if (!environmentHealthy()) {
+						diagnostics.unshift({
+							range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+							severity: 2,
+							source: 'imba',
+							message:
+								'imba types are not loaded for this project — checking and completions are degraded. ' +
+								'Ensure the imba package (with typings/) is installed and resolvable.',
+						});
+					}
+					return diagnostics;
 				},
 			};
 		},

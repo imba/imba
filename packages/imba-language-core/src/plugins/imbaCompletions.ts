@@ -20,6 +20,13 @@ const CompletionTypes: typeof import('imba-monarch').CompletionTypes =
 
 const TAG_COMMIT_CHARACTERS = ['>', ' ', '.', '[', '#'];
 
+// keywords TS itself completes at mapped positions — ours add the imba set
+const JS_KEYWORDS = new Set(
+	'await async break case catch class const continue debugger default delete do else export extends false finally for function if implements import in instanceof interface let new null of return static super switch this throw true try typeof undefined var void while yield'.split(
+		' '
+	)
+);
+
 export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServicePlugin {
 	return {
 		name: 'imba-completions',
@@ -167,6 +174,92 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 }
 
 type LspRange = { start: { line: number; character: number }; end: { line: number; character: number } };
+
+// parity: completions.imba Keywords list (weight 800) — imba-specific
+// keywords only; TS provides the JS set as the main completion source, so
+// this plugin contributes as ADDITIONAL (Volar allows one main list + any
+// number of additional ones)
+export function createImbaKeywordsPlugin(): LanguageServicePlugin {
+	return {
+		name: 'imba-keywords',
+		capabilities: {
+			completionProvider: {},
+		},
+		create(context) {
+			return {
+				isAdditionalCompletion: true,
+				provideCompletionItems(document, position) {
+					// additional plugins only run on the FIRST visited mapping
+					// (usually the embedded TS doc) — be layer-agnostic and
+					// translate offsets/ranges for whichever layer this is
+					const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
+					if (!decoded) {
+						return;
+					}
+					const sourceScript = context.language.scripts.get(decoded[0]);
+					const root = sourceScript?.generated?.root;
+					if (!sourceScript || !(root instanceof ImbaVirtualCode)) {
+						return;
+					}
+					const isRootLayer = decoded[1] === root.id;
+					const virtualCode = sourceScript.generated?.embeddedCodes.get(decoded[1]);
+					if (!virtualCode) {
+						return;
+					}
+					const mapper = context.language.maps.get(virtualCode, sourceScript);
+
+					let sourceOffset: number | undefined;
+					if (isRootLayer) {
+						sourceOffset = document.offsetAt(position);
+					} else {
+						for (const [mapped] of mapper.toSourceLocation(document.offsetAt(position))) {
+							sourceOffset = mapped;
+							break;
+						}
+					}
+					if (sourceOffset === undefined) {
+						return;
+					}
+
+					const mctx = root.monarchDoc.getContextAtOffset(sourceOffset);
+					const flags = mctx.suggest?.flags ?? 0;
+					if (!CompletionTypes || flags & (CompletionTypes.TagName | CompletionTypes.StyleProp | CompletionTypes.StyleValue)) {
+						return;
+					}
+					const keywords = mctx.suggest?.keywords?.filter(k => !JS_KEYWORDS.has(k));
+					if (!keywords?.length) {
+						return;
+					}
+
+					// word range in THIS document's coordinates
+					let wordRange = { start: position, end: position };
+					const tok = mctx.token;
+					if (tok && /^[a-z]+$/.test(tok.value) && tok.offset <= sourceOffset) {
+						if (isRootLayer) {
+							wordRange = { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) };
+						} else {
+							for (const [genStart, genEnd] of mapper.toGeneratedRange(tok.offset, tok.endOffset, false)) {
+								wordRange = { start: document.positionAt(genStart), end: document.positionAt(genEnd) };
+								break;
+							}
+						}
+					}
+
+					return {
+						isIncomplete: false,
+						items: keywords.map(keyword => ({
+							label: keyword,
+							kind: 14, // Keyword
+							sortText: '9' + keyword, // parity: old weight 800, below symbols
+							commitCharacters: [' '],
+							textEdit: { range: wordRange, newText: keyword },
+						})) as never[],
+					};
+				},
+			};
+		},
+	};
+}
 
 // parity: completions.imba `if flags & CT.TagEvent → add checker.props("ImbaEvents")`
 function eventNameItems(context: LanguageServiceContext, typescript: typeof ts, range: LspRange) {

@@ -33,6 +33,7 @@ declare module 'imba-monarch' {
 		suggest?: {
 			flags?: number;
 			prefix?: string;
+			keywords?: string[];
 		};
 	}
 

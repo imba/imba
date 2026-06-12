@@ -1,5 +1,5 @@
 import type { LanguageServicePlugin } from '@volar/language-service';
-import { createImbaCompletionsPlugin } from './plugins/imbaCompletions';
+import { createImbaCompletionsPlugin, createImbaKeywordsPlugin } from './plugins/imbaCompletions';
 import { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 import { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
 import { createImbaEventsPlugin } from './plugins/imbaEvents';
@@ -17,16 +17,18 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		// TS-backed features over the virtual code, with imba presentation
 		// (suppression rules, identifier conversion) applied
 		...createTypeScriptServices(ts),
-		// imba compiler parse diagnostics on the source document
-		createImbaDiagnosticsPlugin(),
+		// imba compiler parse diagnostics + environment health check
+		createImbaDiagnosticsPlugin(ts),
 		// monarch-driven semantic highlighting on the root imba document
 		createImbaSemanticTokensPlugin(),
 		// monarch-driven outline / breadcrumbs
 		createImbaDocumentSymbolsPlugin(),
 		// event names + modifiers: monarch token → ImbaEvents lookup
 		createImbaEventsPlugin(ts),
-		// tag-name completions: workspace tag index + HTML tag map
+		// tag/event/attr/style completions: workspace index + cached lookups
 		createImbaCompletionsPlugin(ts),
+		// imba-specific keywords, additional to the TS main list
+		createImbaKeywordsPlugin(),
 		// tag-name usage definition/hover via the workspace tag index
 		// (attributes flow through TS mappings and need no bridge)
 		createImbaTagsPlugin(),
