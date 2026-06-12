@@ -66,7 +66,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | `tsDiagnosticRules.ts` table + `createTypeScriptServices` wrapper (filters only imba-backed docs; plain .ts untouched). NOTE: rules match RAW messages (Ξ/Ψ/α encoded) | M1.5 | ✅ |
 | B6 | Unmappable/mismapped diagnostic suppression ("hide if it doesnt map perfectly") | patches.imba filterDiagnostics range+text checks | `mapsCleanly` in the wrapper: no-fallback range mapping required; unused-declaration diags additionally require mapped source text == reported name | M1.9 | ✅ |
 | B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | `conversion.ts` applied per diagnostic message + relatedInformation in the wrapper | M1.6 | ✅ |
-| B5 | debugLevel≥2 "show suppressed as warnings" | filterDiagnostics | config flag on the wrapper | M3.9 | ⬜ |
+| B5 | debugLevel≥2 "show suppressed as warnings" | filterDiagnostics | `imba.debugLevel ≥ 2` keeps rule-suppressed diagnostics (Rules table + 2305 tag-import) as warnings with source `imba-suppressed`; mapsCleanly drops stay dropped (their ranges don't map) | M3.9 | ✅ |
 
 ### C. Hover / quick info
 
@@ -120,7 +120,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | `createImbaSemanticTokensPlugin` — standard LSP token types from monarch tokens on the root document (works in any LSP client, no tsserver) | M2.10 | ✅ |
 | F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | **Health check ✅:** one warning at 0:0 ("imba types are not loaded…") when ImbaEvents is unresolvable, cached per program (imbaDiagnostics plugin; bare-project fixture test). Status-bar UX via LSP notifications still pending | M2.12 | 🚧 |
-| F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | LSP configuration; port schema to preview extension | M3.9 | ⬜ |
+| F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | `config.ts` (applyImbaConfig/getImbaConfig, full-section semantics, side-effects to A10 flag); server applies initializationOptions.imba + didChangeConfiguration (then project.reload()); vscode-imba-next contributes imba.useImbaFromProject / imba.debugLevel / imba.workspaceSymbolsScope and forwards changes. suggest.* knobs deferred until a real need shows up in dev-hosting | M3.9 | ✅ |
 | F4 | Preview VS Code extension (`imba-next` style) | n/a | `packages/vscode-imba-next`: LSP client → imba-language-server, grammar copied from vscode-imba, tsserver plugin contribution. Dev-host only (`code --extensionDevelopmentPath=… --disable-extensions`); vsce packaging needs bundling, M3 | M2.11 | ✅ |
 | F8 | Zed extension (architecture dividend: server is plain LSP) | github.com/imba/zed-imba already existed: tree-sitter grammar (imba/tree-sitter-imba) + queries + a monarch mini-LSP (imba-tags) | `packages/zed-imba` now mirrors the official repo's structure with the mini-LSP replaced by imba-language-server (workspace/monorepo resolution + settings override; cargo-check clean on zed_extension_api 0.7). Sync back to imba/zed-imba = plain copy. Highlighting: tree-sitter base + semantic tokens "combined" (their semantic_token_rules.json kept) | M2 | ✅ |
 | F5 | Selection tracking / save notifications | ipc onDidChangeTextEditorSelection/didSave | not needed (LSP didSave; live parse diagnostics replace save-gating) | — | ❌ |
@@ -199,6 +199,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — F3 + B5: configuration spine, show-suppressed debugging
+- `config.ts`: three settings for now (useImbaFromProject, debugLevel, workspaceSymbolsScope), full-section semantics (a partial update resets unspecified keys — the client always sends the whole imba.* section), side effect wiring to the A10 flag. suggest.* knobs from the old schema deferred until dev-hosting shows a need.
+- Server: initializationOptions.imba at startup; didChangeConfiguration → applyImbaConfig + project.reload() so open documents re-check under the new rules. Extension: contributes the three settings, sends them at init, `synchronize.configurationSection` forwards changes.
+- B5: at debugLevel ≥ 2, rule-suppressed TS diagnostics (Rules table + known-tag 2305) stay visible as warnings with source `imba-suppressed` — the dev-host triage loop ("is the checker wrong or did we suppress it?") needs exactly this. mapsCleanly drops remain dropped; their generated-position ranges can't render meaningfully.
+- E6 follow-up closed: workspaceSymbolsScope 'imba' returns monarch results only.
+- test/m3-config.test.ts (4 tests). Suite at 112. Server + extension typecheck clean.
 
 ### 2026-06-12 — A10 project-local compiler: opt-in, version-keyed, crash-safe
 - `getProjectCompilerForFile`: walk-up node_modules/imba lookup (per-dir memoized along the visited path), CJS require of the package's exports['./compiler'] (require → node → default conditions; ESM-only builds fall back to bundled since Volar's createVirtualCode is sync), per-package error-once cache.

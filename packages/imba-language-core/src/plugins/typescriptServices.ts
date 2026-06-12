@@ -3,6 +3,7 @@ import * as monarchModule from 'imba-monarch';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 import { URI } from 'vscode-uri';
 import { create as createBaseTypeScriptServices } from 'volar-service-typescript';
+import { getImbaConfig } from '../config';
 import { toImbaIdentifier, toImbaString } from '../conversion';
 import { getTagIndex } from '../tagIndex';
 import { ImbaVirtualCode } from '../virtualCode';
@@ -364,6 +365,10 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 			return {
 				...instance,
 				async provideWorkspaceSymbols(query, token) {
+					// F3: scope 'imba' = monarch results only
+					if (getImbaConfig().workspaceSymbolsScope === 'imba') {
+						return undefined;
+					}
 					const result = await instance.provideWorkspaceSymbols?.call(instance, query, token);
 					// imba files are served by the imba workspace-symbols
 					// plugin (parity: old getNavigateToItems dropped TS's
@@ -501,6 +506,10 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 						return result;
 					}
 					const filter = isImbaBacked(context, document.uri);
+					// B5: at debugLevel ≥ 2, rule-suppressed diagnostics stay
+					// visible as tagged warnings (mapping-artifact drops from
+					// mapsCleanly stay dropped — their ranges don't map)
+					const showSuppressed = getImbaConfig().debugLevel >= 2;
 					const kept = [];
 					for (const diag of result) {
 						const messageText = typeof diag.message === 'string' ? diag.message : diag.message.value;
@@ -508,19 +517,24 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 							if (!mapsCleanly(context, document.uri, document, diag.range, messageText)) {
 								continue;
 							}
-							if (Number(diag.code) === 2305 && isKnownTagImport(context, messageText)) {
-								continue;
+							let suppressed = Number(diag.code) === 2305 && isKnownTagImport(context, messageText);
+							if (!suppressed) {
+								const verdict = filterTsDiagnostic({
+									code: diag.code as number,
+									message: messageText,
+									text: document.getText(diag.range),
+								});
+								suppressed = verdict === 'suppress';
+								if (verdict === 'downgrade' && (diag.severity ?? 1) === 1) {
+									diag.severity = 2;
+								}
 							}
-							const verdict = filterTsDiagnostic({
-								code: diag.code as number,
-								message: messageText,
-								text: document.getText(diag.range),
-							});
-							if (verdict === 'suppress') {
-								continue;
-							}
-							if (verdict === 'downgrade' && (diag.severity ?? 1) === 1) {
+							if (suppressed) {
+								if (!showSuppressed) {
+									continue;
+								}
 								diag.severity = 2;
+								diag.source = 'imba-suppressed';
 							}
 						}
 						if (typeof diag.message === 'string') {

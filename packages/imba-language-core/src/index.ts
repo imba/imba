@@ -18,6 +18,7 @@ export {
 	isProjectCompilerEnabled,
 	type ProjectCompiler,
 } from './projectCompiler';
+export { applyImbaConfig, getImbaConfig, DEFAULT_CONFIG, type ImbaToolingConfig } from './config';
 export { ImbaTagIndex, getTagIndex, type WorkspaceTag } from './tagIndex';
 export { setupImbaProject } from './projectSetup';
 export { resolveImbaTypings, resolveImbaPackageDir } from './typings';

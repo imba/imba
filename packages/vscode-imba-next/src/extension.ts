@@ -26,7 +26,10 @@ export async function activate(_context: vscode.ExtensionContext) {
 		documentSelector: [{ language: 'imba' }],
 		initializationOptions: {
 			typescript: { tsdk: resolveTsdk() },
+			imba: imbaSettings(),
 		},
+		// forwards imba.* changes as didChangeConfiguration {settings: {imba}}
+		synchronize: { configurationSection: 'imba' },
 	};
 
 	client = new LanguageClient('imba-next', 'Imba Next', serverOptions, clientOptions);
@@ -35,6 +38,16 @@ export async function activate(_context: vscode.ExtensionContext) {
 
 export function deactivate(): Thenable<void> | undefined {
 	return client?.stop();
+}
+
+/** the imba.* section as a plain object for initializationOptions */
+function imbaSettings(): Record<string, unknown> {
+	const section = vscode.workspace.getConfiguration('imba');
+	return {
+		useImbaFromProject: section.get('useImbaFromProject'),
+		debugLevel: section.get('debugLevel'),
+		workspaceSymbolsScope: section.get('workspaceSymbolsScope'),
+	};
 }
 
 /** honor typescript.tsdk when set; fall back to the bundled TypeScript */

@@ -45,7 +45,38 @@
                 "enableForWorkspaceTypeScriptVersions": true,
                 "languages": []
             }
-        ]
+        ],
+        "configuration": {
+            "title": "Imba Next",
+            "properties": {
+                "imba.useImbaFromProject": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Compile with the imba version installed in the project instead of the bundled one."
+                },
+                "imba.debugLevel": {
+                    "type": "number",
+                    "default": 0,
+                    "enum": [0, 1, 2],
+                    "enumDescriptions": [
+                        "Normal operation",
+                        "Verbose server logging (reserved)",
+                        "Also show suppressed TypeScript diagnostics as warnings (source: imba-suppressed)"
+                    ],
+                    "description": "Tooling debug level."
+                },
+                "imba.workspaceSymbolsScope": {
+                    "type": "string",
+                    "default": "project",
+                    "enum": ["imba", "project"],
+                    "enumDescriptions": [
+                        "Only symbols from imba files",
+                        "Symbols from imba plus ts/js files in the project"
+                    ],
+                    "description": "Which files contribute to workspace symbol search (cmd-T)."
+                }
+            }
+        }
     },
     "dependencies": {
         "imba-language-server": "file:../imba-language-server",
