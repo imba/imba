@@ -109,7 +109,7 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 						return eventModifierItems(context, typescript, mctx.eventName, tokenRange('tag.event-modifier.name'));
 					}
 					if (flags & CompletionTypes.Decorator) {
-						return decoratorItems(context, root, document.offsetAt(position), tokenRange('decorator.name'));
+						return decoratorItems(context, root, document.offsetAt(position), tokenRange('decorator.name'), document);
 					}
 					// mixins have no monarch completion flag — token-driven
 					// (parity: old `tok.match('.mixin')` special case)
@@ -448,11 +448,14 @@ function mixinItems(context: LanguageServiceContext, currentFile: string, range:
 // parity: completions.imba decorators() — local @-vars in scope plus the
 // imba builtins (α-prefixed exports of the stdlib module, e.g. @lazy/@bound).
 // Workspace-exported decorators arrive with D13 auto-import work.
+const STDLIB_FILE = /node_modules\/imba\/src\/imba\/|\/packages\/imba\/src\/imba\//;
+
 function decoratorItems(
 	context: LanguageServiceContext,
 	root: ImbaVirtualCode,
 	offset: number,
-	range: LspRange
+	range: LspRange,
+	document: TextDocument
 ) {
 	const items: Record<string, unknown>[] = [];
 	const seen = new Set<string>();
@@ -495,6 +498,44 @@ function decoratorItems(
 				commitCharacters: [' ', '('],
 				textEdit: { range, newText: name },
 			});
+		}
+
+		// D13: decorators exported from workspace files (`export def @memo` →
+		// αmemo module export), with auto-import edits through the same
+		// monarch createImportEdit path tag names use
+		for (const sourceFile of program.getSourceFiles()) {
+			const fileName = sourceFile.fileName;
+			if (!fileName.endsWith('.imba') || fileName === root.fileName || STDLIB_FILE.test(fileName)) {
+				continue;
+			}
+			const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+			if (!moduleSymbol) {
+				continue;
+			}
+			for (const symbol of checker.getExportsOfModule(moduleSymbol)) {
+				const raw = symbol.escapedName as string;
+				if (!raw.startsWith('α')) {
+					continue;
+				}
+				const name = '@' + toImbaIdentifier(raw.slice(1));
+				if (seen.has(name)) {
+					continue;
+				}
+				seen.add(name);
+				const item: Record<string, unknown> = {
+					label: name,
+					kind: 3, // Function
+					sortText: '2' + name,
+					detail: path.relative(path.dirname(root.fileName), fileName),
+					commitCharacters: [' ', '('],
+					textEdit: { range, newText: name },
+				};
+				const edits = importEditsFor(document, root, root.fileName, fileName, name);
+				if (edits.length) {
+					item.additionalTextEdits = edits;
+				}
+				items.push(item);
+			}
 		}
 	}
 

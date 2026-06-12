@@ -35,4 +35,17 @@ describe('M2/D8: decorator completions', () => {
 		expect(applied).toContain('@lazy prop count');
 		expect(applied).not.toContain('@@');
 	});
+
+	it('offers workspace-exported decorators with an import edit (D13)', async () => {
+		const file = path.join(fixtureDir, 'deco.imba');
+		const loc = locate(file, '@laz', '@laz'.length);
+		const list = await ls.getCompletionItems(loc.uri, loc.position, { triggerKind: 1 });
+		const memo = list.items.find(i => i.label === '@memo');
+		expect(memo, '@memo from deco-lib.imba').toBeTruthy();
+		expect(memo!.detail).toContain('deco-lib');
+		const edits = (memo as { additionalTextEdits?: { newText: string }[] }).additionalTextEdits ?? [];
+		expect(edits.length).toBeGreaterThan(0);
+		expect(edits[0].newText).toContain("import { @memo } from './deco-lib'");
+		expect(edits[0].newText).not.toContain('.imba');
+	});
 });

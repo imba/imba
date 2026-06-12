@@ -94,7 +94,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D10 | Path completions in imports | paths() via directoryStructureHost | ❌ dropped — Sindre: not needed (2026-06-12) | — | ❌ |
 | D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | `createImbaKeywordsPlugin` (ADDITIONAL completion source; imba-only keywords — TS provides the JS set; monarch's contextual list, weight-800 parity). Snippets pending | M2.2 | 🚧 |
 | D12 | Auto-imports: values/types (TS-backed) | importer.imba getExportInfoMap machinery | **NOT free** — TS's import edits target the generated preamble (unmappable → silently dropped by the default resolve transform; accepting inserted the name without its import). `transformCompletionItem` hook on the TS wrapper runs the default transform and attaches monarch `createImportEdit` edits in source coordinates: imba-style statements, extensionless specifiers, merge into existing imports | M3.1 | ✅ |
-| D13 | Auto-imports: exported tags, decorators, export-star namespace groups (EXPORT_NS) | importer.imba custom grouping | tags covered by D2's workspace-index path; remaining slice: workspace-exported decorators in decoratorItems (+ import edit), EXPORT_NS grouping if dev-hosting shows demand | M3.2 | 🚧 |
+| D13 | Auto-imports: exported tags, decorators, export-star namespace groups (EXPORT_NS) | importer.imba custom grouping | tags via D2's workspace-index path; **workspace-exported decorators** in decoratorItems (program α-exports, stdlib/current-file excluded, relative-path detail, import edit via createImportEdit — `import { @memo } from './deco-lib'`). EXPORT_NS grouping deferred until dev-hosting shows demand | M3.2 | ✅ |
 | D14 | Completion resolve: docs markdown, import edits via `doc.createImportEdit` | SymbolCompletion.resolve | resolve handler in service plugin (monarch createImportEdit reused) | M2.2 | ⬜ |
 | D15 | Commit characters / weights / filterText shaping | per-category logic in completions.imba | port per-category table | M2.2 | ⬜ |
 
@@ -199,6 +199,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — D13: workspace decorators complete the auto-import story
+- `export def @memo` compiles to an `αmemo` module export, and `import {@memo} from './x'` is valid imba — so decoratorItems now sweeps program .imba files (stdlib + current file excluded) for α-exports, offering them with a relative-path detail and a ready-made import edit through the same createImportEdit path tag names use. Sorted below locals (0) and stdlib (1).
+- Main completions plugin runs exclusively on the root layer (languageId + root.id guards), so document.positionAt over monarch source offsets is safe there — worth remembering when adding list-time additionalTextEdits.
+- Per-request program sweep is uncached (decorator contexts are rare; ~200-file project ≈ fine). Revisit with a per-program WeakMap if dev-hosting disagrees.
+- EXPORT_NS grouping deferred until someone misses it. Suite at 131.
 
 ### 2026-06-12 — D12 auto-imports were silently broken; transformCompletionItem is the right seam
 - Probe: auto-import candidates and resolve labels worked ("Add import from ./util.imba") but `additionalTextEdits` arrived EMPTY at the service level — TS inserts the import into the generated preamble, which has no source mapping, so Volar's resolve transform dropped the edit. Accepting a completion inserted the bare name and never the import.
