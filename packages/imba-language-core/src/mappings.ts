@@ -13,16 +13,15 @@ export const EXACT_FEATURES: CodeInformation = {
 
 /**
  * Container spans (whole expressions/statements, where generated and source
- * lengths differ) act as fallbacks for diagnostics ranges and navigation, but
- * must not offer completions at clamped interior positions.
- *
- * `verification.shouldReport` is the future home of the diagnostic suppression
- * rules currently living in typescript-imba-plugin/src/diagnostics.imba.
+ * lengths differ) exist ONLY for range mapping where boundaries align
+ * (diagnostics, structure). Position-level features (navigation, hover,
+ * completion) must not travel through them: translateOffset clamps interior
+ * positions to `min(relativePos, toLength)`, which lands on unrelated tokens
+ * — e.g. a tag-body position clamping onto a class field, producing phantom
+ * definitions. The old plugin's o2iRange had the same boundary-only rule.
  */
 export const CONTAINER_FEATURES: CodeInformation = {
 	verification: true,
-	semantic: true,
-	navigation: true,
 	structure: true,
 };
 

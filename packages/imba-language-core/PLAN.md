@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M1
-- **Next action:** M1.7 — hover/go-to-def e2e harness; then G1/G2 (worker compile + cache); then the M1.9 dogfood checkpoint over an imba.io app dir (with A5 strategy writeup)
+- **Next action:** G2 compile cache; then the M1.9 dogfood checkpoint over an imba.io app dir (with A5 strategy writeup)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -21,7 +21,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 |---|---|
 | Root `VirtualCode` is the imba source (identity mapping, `languageId: 'imba'`); generated TS is `embeddedCodes[0]` ('ts') | Volar feature workers only visit *embedded* documents — imba-side plugins need an always-visitable identity-mapped root (works even when compilation fails). Same shape Vue uses. Decided during M1.4; was originally root-as-TS |
 | One `CodeMapping` per span, exact-length spans first in the array | Volar's SourceMap memo iterates candidates in array order → precise leaf mappings beat container fallbacks |
-| Container (unequal-length) spans: `verification/semantic/navigation/structure` but **no completion** | Completions at clamped interior positions produce wrong-scope results |
+| Container (unequal-length) spans: `verification` + `structure` ONLY — no navigation/semantic/completion | Position-level features through containers clamp interior offsets onto unrelated tokens (phantom definitions found in M1.7); containers are for boundary-aligned range mapping only, same rule as old o2iRange |
 | Imba-specific service plugins live in `imba-language-core/src/plugins/` for now | Both kit tests and the server consume them; split out an `imba-language-service` package only if it grows past ~1500 lines |
 | New code is TypeScript strict, CJS output (`module: node16`), built with `tsc -b` | tsserver requires `require()`; Volar libs are CJS; types pay rent against TS/Volar APIs |
 | Compile with the *bundled* imba compiler for now (`imba/compiler` via `file:../imba`) | Project-local compiler selection (old `useImbaFromProject`) is M3.7 |
@@ -71,7 +71,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
-| C1 | TS hover at mapped positions | intercept.getQuickInfoAtPosition | volar-service-typescript via mappings | M0* | ✅ |
+| C1 | TS hover at mapped positions | intercept.getQuickInfoAtPosition | volar-service-typescript via mappings; explicit e2e via `test/harness.ts` (full LanguageService over fixtures — reuse for all feature tests) | M1.7 | ✅ |
 | C2 | Identifier conversion in hover display | toImbaDisplayParts | post-process hover contents in wrapper | M2.4 | ⬜ |
 | C3 | Imba-context hover: style props/values, units, mixins, style vars/colorvars, events, event modifiers, tag names/attrs, meta symbols, MDN links | script.getInfoAt + checker.getSymbolInfo (700+ lines) | monarch-driven hover service plugin; type queries via injected TS languageService | M2.3 | ⬜ |
 
@@ -85,12 +85,12 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | D2 | Tag names (html, local components, snippets) | tagnames() + checker.getLocalTags | monarch context → service plugin | M2.2 | ⬜ |
 | D3 | Tag attrs/props per tag | tagattrs() + isTagAttr filtering | service plugin + injected checker | M2.2 | ⬜ |
 | D4 | Tag events + event modifiers | ImbaEvents props + getEventModifiers | service plugin | M2.2 | ⬜ |
-| D5 | Style properties (abbr config), values per property, modifiers, selectors | styleprops/stylevalues/stylemods via imbacss symbols | service plugin (same symbol queries through injected LS) | M2.2 | ⬜ |
+| D5 | Style properties (abbr config), values per property, modifiers, selectors | styleprops/stylevalues/stylemods via imbacss symbols | service plugin — **Sindre leans toward serving these OUTSIDE the TS system** (static tables per imba version instead of imbacss symbol queries; old plugin only used TS because it had no other channel). Decide shape at M2.2 spike; static-first unless type-dependent values prove necessary | M2.2 | ⬜ |
 | D6 | Style vars / colorvars, custom units, number units | cross-file token scans (findImbaTokensOfType) | workspace token index over open imba docs | M2.2 / M3.3 | ⬜ |
 | D7 | Mixins | getMixinReferences | same as D6 | M2.2 | ⬜ |
 | D8 | Decorators | local vars + imba builtins + exported αdecorators | service plugin | M2.2 | ⬜ |
 | D9 | Types after `\` | getSymbols('Type') + snippets | service plugin | M2.5 | ⬜ |
-| D10 | Path completions in imports | paths() via directoryStructureHost | service plugin via env.fs | M3.4 | ⬜ |
+| D10 | Path completions in imports | paths() via directoryStructureHost | ❌ dropped — Sindre: not needed (2026-06-12) | — | ❌ |
 | D11 | Keywords + root snippets | KeywordCompletion + snippets('root') | service plugin | M2.2 | ⬜ |
 | D12 | Auto-imports: values/types (TS-backed) | importer.imba getExportInfoMap machinery | mostly free via D1 forwarding (TS auto-imports map edits back); verify import path gets `.imba`-stripped/extensionless form | M3.1 | ⬜ |
 | D13 | Auto-imports: exported tags, decorators, export-star namespace groups (EXPORT_NS) | importer.imba custom grouping | custom contributions on top of D12 | M3.2 | ⬜ |
@@ -182,6 +182,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — M1.7: e2e harness + container-mapping fix; scope updates from Sindre
+- `test/harness.ts`: full Volar LanguageService over fixture tsconfigs (kit only exposes diagnostics) — this is the reusable surface for all feature e2e tests (hover/defs/completions). `locate(file, needle)` helper for position targeting.
+- **Mapping bug found & fixed:** Volar queries position-features at every candidate generated position; container mappings clamp interior offsets (`min(relativePos, toLength)`) onto unrelated tokens — produced a phantom same-file definition (landed on `count` from a tag-body position). Containers now carry `verification` + `structure` only. Rule of thumb: position-level features travel exclusively through exact spans.
+- Hover + go-to-def proven e2e in both directions (imba→imba incl. into-stdlib-typed code, ts→imba with exact selection ranges).
+- Scope (Sindre): D10 path completions dropped; D5 style/unit completions should likely be served from static tables outside the TS pipeline — decide at M2.2 spike.
 
 ### 2026-06-12 — M1.3/M1.5/M1.6: real typings, suppression rules, identifier presentation
 - **The full real-world chain works:** fixture tsconfig with `customConditions: ['imba']` + `allowArbitraryExtensions` resolves `import 'imba'` through the exports map to `src/imba/imba.imba` — the actual stdlib source — which our language plugin compiles like any user file (with `nocheck`, parity with old compiler.imba). A tag component using `@click`, `imba.commit!`, `imba.mount` and the global typings checks **clean**; a deliberate misuse through the same chain still errors (proves checking is live, not silently absent).
