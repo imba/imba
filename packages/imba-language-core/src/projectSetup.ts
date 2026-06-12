@@ -19,6 +19,11 @@ export function setupImbaProject({ project }: { language: Language; project: Pro
 
 	const projectDir = tsHost.getCurrentDirectory();
 	const typings = resolveImbaTypings(projectDir);
+	// A7: an inferred project (file outside any tsconfig) has no user-chosen
+	// options — the server synthesizes CommonJS-ish defaults that break imba
+	// (extensionless ESM imports, bundler resolution). Without a config file
+	// the imba-required options are FORCED, not defaulted.
+	const inferred = !project.typescript?.configFileName;
 
 	type CompilerOptions = ReturnType<typeof getCompilationSettings>;
 	const getCompilationSettings = tsHost.getCompilationSettings.bind(tsHost);
@@ -38,10 +43,10 @@ export function setupImbaProject({ project }: { language: Language; project: Pro
 				allowArbitraryExtensions: true,
 				maxNodeModuleJsDepth: base.maxNodeModuleJsDepth ?? 2,
 				customConditions: [...new Set([...(base.customConditions ?? []), 'imba'])],
-				// defaults only when the project hasn't chosen
-				target: base.target ?? 99, // ESNext
-				module: base.module ?? 99, // ESNext
-				moduleResolution: base.moduleResolution ?? 100, // Bundler
+				// defaults only when the PROJECT hasn't chosen
+				target: inferred ? 99 : base.target ?? 99, // ESNext
+				module: inferred ? 99 : base.module ?? 99, // ESNext
+				moduleResolution: inferred ? 100 : base.moduleResolution ?? 100, // Bundler
 			};
 		}
 		return cached!;
