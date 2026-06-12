@@ -10,6 +10,7 @@ tag App
 	<self>
 		<button @click.silent=bump> "count is {count}"
 		<button @boom.silent=bump> "boom"
+		<div @touch.meta=bump> "touchable"
 		<div> greet("imba")
 
 setTimeout(&,100) do

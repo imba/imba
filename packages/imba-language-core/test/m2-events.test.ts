@@ -63,6 +63,17 @@ describe('M2.3: event name + modifier intelligence', () => {
 		expect(defs[0].targetUri.toString()).toContain('imba.events.d.ts');
 	});
 
+	it('touch modifiers include the key modifiers (@touch.meta)', async () => {
+		// dev-host report: runtime Touch implements @meta/@alt/@shift/@ctrl
+		// (proxying originalEvent) but the typings mirror had drifted —
+		// the fixture usage also keeps the m1-typings clean-check honest
+		const loc = locate(appImba, 'touch.meta', 'touch.'.length);
+		const hover = await ls.getHover(loc.uri, loc.position);
+		const text = hoverText(hover);
+		expect(text).toContain('@meta');
+		expect(text.toLowerCase()).toContain('meta key');
+	});
+
 	it('go-to-def on a modifier lands in the events typings', async () => {
 		const loc = locate(appImba, 'silent', 1);
 		const defs = (await ls.getDefinition(loc.uri, loc.position)) ?? [];

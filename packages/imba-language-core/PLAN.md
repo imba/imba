@@ -185,6 +185,10 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Touch modifier typings drift (@touch.meta false 2339)
+- Dev-host report: `@touch.meta` flagged 2339 on type Touch. Ground truth from runtime source (events/touch.imba): Touch implements `@shift/@alt/@ctrl/@meta` (proxying originalEvent key state) plus `@mouse/@pen/@touch/@pressure/@left/@middle/@right/@end/@css/@log` — the handwritten imba.Touch interface in imba.events.d.ts was missing the entire family. Added them with docs (packages/imba typings commit).
+- **A9 evidence item #3**: every typings bug so far (module hijack, missing dataForTagName, doc escaping, this drift) is the manual-mirror problem Sindre called out — the real definitions sit in stdlib imba source. When triaging a "false" diagnostic, ALWAYS check runtime source first; the diagnostic may be correctly reporting a stale mirror.
+
 ### 2026-06-12 — Custom events: ImbaEvents index-signature fallback
 - Dev-host report: hover dead on `@intercept` while `.silent` misspellings still errored. Cause: `@intercept` is not a declared ImbaEvents member — it's a **custom event**, typed by the interface's `[event: string]: CustomEvent` index signature, and `type.getProperty(name)` doesn't return index members. The modifier diagnostics kept working through the generated-code path (silent lives on base Event), which is why typing "knew" while hover didn't.
 - Fix (parity: old checker.member() → getStringIndexType fallback): event-name hover/def fall back to the string index info — display `(property) ImbaEvents.name: CustomEvent` + *custom event* note, def lands on the index signature declaration; modifier resolution under unknown event names uses the index value type, so `.silent` etc. hover/def work on custom events too.
