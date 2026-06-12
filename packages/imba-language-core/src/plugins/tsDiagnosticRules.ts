@@ -28,6 +28,13 @@ const RULES: Rule[] = [
 	{ code: 6133, message: /^'(\$\$|self|slf|\$\d+)'/ },
 	{ code: 7043 },
 	{ code: 7044 },
+	{ code: 7045 }, // member implicitly any (dogfood: 62×)
+	{ code: 7046 },
+	// CSS custom properties set as element properties (dogfood: bulk of 700×).
+	// Rules run on RAW messages: '-' is still encoded as Ξ at this stage.
+	{ code: 2339, message: /^Property '(--|ΞΞ)/ },
+	// compiler-generated tag temporaries leaking into odd code shapes
+	{ code: 2304, message: /^Cannot find name 'τ/ },
 	{ code: 2322, text: /^\$\d+/ },
 	{ code: 2610 }, // accessor overridden by property
 	{ code: 2611 },

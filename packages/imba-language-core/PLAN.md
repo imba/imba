@@ -8,8 +8,8 @@ This is a *living working document*. Any session (human or agent) picking up thi
 
 ## Status & resume pointer
 
-- **Current milestone:** M1
-- **Next action:** M1.9 dogfood checkpoint over an imba.io app dir + A5 strategy writeup — last M1 items
+- **Current milestone:** M1 ✅ complete (A5 auto-injection folded into M2/M3 server work) → starting M2
+- **Next action:** M2.11 preview extension + F1 semantic tokens — first daily-drive features; then M2.6 (A9 — confirmed the #1 real gap by dogfood data)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -63,7 +63,8 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | B1 | TS diagnostics in imba coordinates | Session.sendDiagnosticsEvent + o2iRange mapping | Volar mapping | M0 | ✅ |
 | B2 | Imba compiler parse diagnostics | script.getImbaDiagnostics (save-gated) | `createImbaDiagnosticsPlugin` over the identity-mapped root doc (live, not save-gated) | M1.4 | ✅ |
-| B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | `tsDiagnosticRules.ts` table + `createTypeScriptServices` wrapper (filters only imba-backed docs; plain .ts untouched) | M1.5 | ✅ |
+| B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | `tsDiagnosticRules.ts` table + `createTypeScriptServices` wrapper (filters only imba-backed docs; plain .ts untouched). NOTE: rules match RAW messages (Ξ/Ψ/α encoded) | M1.5 | ✅ |
+| B6 | Unmappable/mismapped diagnostic suppression ("hide if it doesnt map perfectly") | patches.imba filterDiagnostics range+text checks | `mapsCleanly` in the wrapper: no-fallback range mapping required; unused-declaration diags additionally require mapped source text == reported name | M1.9 | ✅ |
 | B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | `conversion.ts` applied per diagnostic message in the wrapper | M1.6 | ✅ |
 | B5 | debugLevel≥2 "show suppressed as warnings" | filterDiagnostics | config flag on the wrapper | M3.9 | ⬜ |
 
@@ -182,6 +183,17 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — M1.9 dogfood over imba.io (203 files): M1 complete
+- `test/dogfood.cjs [projectDir] [--errors-only] [--samples=N]` — kit inferred checker over a real project, read-only; the compilerOptions in that script ARE the de-facto A5 injection list (target/module esnext, moduleResolution bundler, allowJs, skipLibCheck, strict off, allowArbitraryExtensions, customConditions ['imba'], lib esnext+dom+dom.iterable, typings d.ts as extra root).
+- Cold run 6.0s for 203 files incl. full type-check — already faster than the old plugin's startup, before G1 warming.
+- Fixes from triage: `mapsCleanly` (B6) kills compiler-generated-symbol diagnostics that Volar fallback-mapped to degenerate positions; rules added for 7045/7046, CSS-var property 2339 (**raw form `ΞΞ` — rules see pre-conversion messages!**), generated `τ` 2304s. 1298 → 1111 total diagnostics.
+- **Error-severity result: 212 errors in 51/203 files**, fully triaged:
+  - 112 × 2551 ('@sel', 'route' on tags) → **A9** (`extend tag`/custom modifiers across files) — confirmed as the single biggest real gap; drives M2.6 priority.
+  - 28 × 2300+2307 → corpus artifacts (docs examples share one inferred program / import fake modules) — not plugin bugs; per-example projects would eliminate.
+  - 19 × 1005/2304/2695 in `src/repl/languages/javascript.imba` + 4 × 1184 in `src/decorators.imba` → **compiler tsc-target output bugs** (malformed TS for specific constructs — monaco-grammar-style nested object literals w/ regexes; decorator shapes). File compiler issues; affects old plugin equally. Investigate at M2.
+  - 12 × 2554 (got<expected) + 7 × 2305 (imba/compiler typings surface incomplete) → unclassified/typings gaps, revisit with A9.
+- Remaining warning/hint-level noise matches old plugin behavior (2339 `$prop` downgrades, real unused params as faded hints).
 
 ### 2026-06-12 — M1.7: e2e harness + container-mapping fix; scope updates from Sindre
 - `test/harness.ts`: full Volar LanguageService over fixture tsconfigs (kit only exposes diagnostics) — this is the reusable surface for all feature e2e tests (hover/defs/completions). `locate(file, needle)` helper for position targeting.
