@@ -184,10 +184,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
-### 2026-06-12 — Completion double-dot report (FLAGS..RELUNIT): not reproducible; defenses added
-- Sindre reported accepting `RELUNIT` after `FLAGS.RE` yielding `FLAGS..RELUNIT`. Probed via harness with both plain and nullable `FLAGS`: the item's textEdit is clean in the current stack (replaces exactly `RE`). Likely the stale pre-fix dev host again (tsserver double-serving could deliver unmapped edits) — needs re-test on the rebuilt stack.
-- Defenses landed regardless: completion items for imba-backed docs translate leading `?.` inserts to imba's `..` (TS optional-chain completions would otherwise inject invalid syntax — the old plugin disabled them outright via includeAutomaticOptionalChainCompletions: false; translation preserves the feature). Regression test applies the accepted textEdit to the source and asserts single-dot result (m2-completions.test.ts, fixtures completion-probe.imba/flags*.{imba,ts}).
-- If reproduced on the fresh stack: capture the item via the probe pattern in m2-completions.test.ts (dump textEdit/insertText) — the answer is in the item, not the apply.
+### 2026-06-12 — Completion double-dot SOLVED: $CARET$ placeholder mapping
+- Root cause (found via Sindre's exact interactive repro — type `FLAGS`, press `.`, then type and accept): the completion request fires at the **parse-recovered state** `FLAGS.`, which the compiler emits as `FLAGS.$CARET$`. TS's dot-accessor replacement span covers `.$CARET$`; the placeholder span (generated-only, zero source width) carried no completion flag, so the span's END couldn't map back → Volar dropped the textEdit → VS Code word-inserted the dotted `insertText` → `FLAGS..RELUNIT`.
+- **Fix:** `PLACEHOLDER_FEATURES` in mappings.ts — zero-source-width containers (generated-only placeholders) get the completion flag. They are SAFE for position mapping (every interior offset clamps to the single source point — cannot produce the phantom-position bug that justified stripping container flags in M1.7).
+- **Lesson recorded:** static-state probes miss parse-recovered states. Interactive flows hit `$CARET$`/recovery compilations constantly — feature tests should include a broken-state variant (the new dot-state test in m2-completions.test.ts is the template).
+- Earlier same-day entry below ("not reproducible") was wrong about the cause (suspected stale dev host); the `?.`→`..` translation from that round stays as a valid defense.
 
 ### 2026-06-12 — Second dev-host round: double-serving, typings bugs, doc rendering
 - **Double-serving fixed:** `typescriptServerPlugins.languages` was `['imba']` (copied from Vue's hybrid mode, where tsserver owns TS features). Our LSP owns them — so tsserver was ALSO serving .imba docs unfiltered/unconverted (`ts-plugin(2339)` with raw `ΓdocΞanchor`, duplicate hovers, false 2882s). Now `languages: []`: the plugin still loads for ts/js→imba interop, but tsserver never sees imba documents.

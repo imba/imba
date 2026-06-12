@@ -26,6 +26,22 @@ export const CONTAINER_FEATURES: CodeInformation = {
 };
 
 /**
+ * Generated-only placeholders (e.g. the `$CARET$` identifier the compiler
+ * emits for incomplete member accesses like `FLAGS.`) map a generated range
+ * onto a single source point. Unlike real containers they are SAFE for
+ * position-level features — every interior offset clamps to that one point —
+ * and completion edits MUST map through them: TS's replacement span for a
+ * dot-triggered completion covers `.$CARET$`, and if its end can't map back
+ * Volar drops the textEdit, leaving a dotted insertText that clients splice
+ * as `FLAGS..RELUNIT` (dev-host finding 2026-06-12).
+ */
+export const PLACEHOLDER_FEATURES: CodeInformation = {
+	verification: true,
+	structure: true,
+	completion: true,
+};
+
+/**
  * Convert the imba compiler's locs.spans ([genStart, genEnd, srcStart, srcEnd]
  * quadruples, hierarchical and overlapping) into Volar CodeMappings.
  *
@@ -68,7 +84,7 @@ export function spansToMappings(spans: readonly (readonly number[])[]): CodeMapp
 				generatedOffsets: [g0],
 				lengths: [sourceLength],
 				generatedLengths: [generatedLength],
-				data: CONTAINER_FEATURES,
+				data: sourceLength === 0 && generatedLength > 0 ? PLACEHOLDER_FEATURES : CONTAINER_FEATURES,
 			});
 		}
 	}

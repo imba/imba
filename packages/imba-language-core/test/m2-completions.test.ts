@@ -37,6 +37,24 @@ describe('M2: member completion edits (D1)', () => {
 		expect(applied).not.toContain('?.');
 	});
 
+	it('dot-triggered completion on the parse-recovered caret state maps its edit', async () => {
+		// Sindre's exact repro: type `FLAGS`, press `.` (doc is now `FLAGS.` —
+		// compiled with a $CARET$ placeholder), accept a suggestion. The item
+		// must carry a mapped textEdit; without one VS Code word-inserts the
+		// dotted insertText producing FLAGS..RELUNIT.
+		const dotProbe = path.join(fixtureDir, 'completion-dot.imba');
+		const loc = locate(dotProbe, 'FLAGS.', 'FLAGS.'.length);
+		const list = await ls.getCompletionItems(loc.uri, loc.position, { triggerKind: 2, triggerCharacter: '.' });
+		const item = list.items.find(i => String(i.label) === 'RELUNIT');
+		expect(item, 'RELUNIT should be offered on the caret state').toBeTruthy();
+		expect(item!.textEdit, 'textEdit must survive mapping through $CARET$').toBeTruthy();
+
+		const source = fs.readFileSync(dotProbe, 'utf8');
+		const applied = applyEdit(source, item!.textEdit as never);
+		expect(applied).toContain('FLAGS.RELUNIT');
+		expect(applied).not.toContain('..');
+	});
+
 	it('no completion item carries raw ?. inserts (imba spells it ..)', async () => {
 		const loc = locate(probePath, 'FLAGS.RE', 'FLAGS.RE'.length);
 		const list = await ls.getCompletionItems(loc.uri, loc.position, { triggerKind: 1 });
