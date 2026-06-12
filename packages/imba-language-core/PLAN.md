@@ -8,8 +8,8 @@ This is a *living working document*. Any session (human or agent) picking up thi
 
 ## Status & resume pointer
 
-- **Current milestone:** M1 ✅ complete (A5 auto-injection folded into M2/M3 server work) → starting M2
-- **Next action:** M2.11 preview extension + F1 semantic tokens — first daily-drive features; then M2.6 (A9 — confirmed the #1 real gap by dogfood data)
+- **Current milestone:** M2
+- **Next action:** E5 document symbols (monarch getOutline) + F4/M2.11 preview extension scaffold; then M2.6 (A9 — confirmed the #1 real gap by dogfood data)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -117,7 +117,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
-| F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | service plugin `provideDocumentSemanticTokens` from monarch tokens | M2.10 | ⬜ |
+| F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | `createImbaSemanticTokensPlugin` — standard LSP token types from monarch tokens on the root document (works in any LSP client, no tsserver) | M2.10 | ✅ |
 | F2 | Status bar (compile spinner etc.) | node-ipc bridge | LSP custom notifications (typed) in preview extension | M2.12 | ⬜ |
 | F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | LSP configuration; port schema to preview extension | M3.9 | ⬜ |
 | F4 | Preview VS Code extension (`imba-next` style) | n/a | LSP client + `typescriptServerPlugins` entry for imba-typescript-plugin; zero changes to vscode-imba | M2.11 | ⬜ |
@@ -183,6 +183,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — M2 begun: monarch integration + F1 semantic tokens
+- imba-monarch wired in: `ImbaVirtualCode.monarchDoc` (lazy) — `ImbaScriptInfo` happily takes `({fileName}, sourceString)`, no tsserver SVC needed. Typed via a minimal ambient shim ([src/imba-monarch.d.ts](src/imba-monarch.d.ts)) since the package ships no declarations and is actively evolving (consolidation with imba/program).
+- Runtime contract worth remembering: imba `?`-getters compile to `Φ`-suffixed properties (`sym.globalΦ` etc.).
+- F1 semantic tokens: monarch tokens → standard LSP token types on the identity-mapped root doc; e2e test decodes the LSP data and asserts every token covers identifier text. This is the monarch beachhead — E5 outline and M2.2 completion contexts reuse `monarchDoc`.
 
 ### 2026-06-12 — C2 pulled forward: hover + relatedInformation conversion
 - Audit prompted by Sindre's question "does greek-encoded stuff reach the user?": diagnostics messages were covered; `relatedInformation` messages and hover contents were NOT. Both now converted in the typescriptServices wrapper. Hover proven via `fancy-name` fixture (compiles to `fancyΞname`, hover must show the imba form).

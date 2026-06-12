@@ -1,7 +1,12 @@
 import * as path from 'node:path';
 import { createConnection, createServer, loadTsdkByPath } from '@volar/language-server/node';
 import { createTypeScriptProject } from '@volar/language-server/lib/project/typescriptProject';
-import { createImbaDiagnosticsPlugin, createImbaLanguagePlugin, createTypeScriptServices } from 'imba-language-core';
+import {
+	createImbaDiagnosticsPlugin,
+	createImbaLanguagePlugin,
+	createImbaSemanticTokensPlugin,
+	createTypeScriptServices,
+} from 'imba-language-core';
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -27,6 +32,8 @@ connection.onInitialize(params => {
 			...createTypeScriptServices(tsdk.typescript),
 			// imba compiler parse diagnostics on the source document
 			createImbaDiagnosticsPlugin(),
+			// monarch-driven semantic highlighting on the root imba document
+			createImbaSemanticTokensPlugin(),
 		]
 	);
 });

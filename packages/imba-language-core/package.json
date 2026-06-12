@@ -22,6 +22,7 @@
         "@volar/language-service": "~2.4.28",
         "@volar/typescript": "~2.4.28",
         "imba": "file:../imba",
+        "imba-monarch": "file:../imba-monarch",
         "volar-service-typescript": "~0.0.71",
         "vscode-uri": "^3.0.8"
     },

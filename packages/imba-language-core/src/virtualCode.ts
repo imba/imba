@@ -1,4 +1,5 @@
 import type { CodeMapping, IScriptSnapshot, VirtualCode } from '@volar/language-core';
+import ImbaScriptInfo from 'imba-monarch';
 import { compileImba, type ImbaCompilation } from './compiler';
 import { spansToMappings, EXACT_FEATURES } from './mappings';
 
@@ -54,5 +55,19 @@ export class ImbaVirtualCode implements VirtualCode {
 
 	get tsCode(): VirtualCode {
 		return this.embeddedCodes[0];
+	}
+
+	#monarchDoc?: ImbaScriptInfo;
+
+	/**
+	 * Fault-tolerant token/scope model from imba-monarch — drives the
+	 * imba-side features (semantic tokens, document symbols, completion
+	 * contexts). Lazy: only files an editor actually touches pay for it.
+	 */
+	get monarchDoc(): ImbaScriptInfo {
+		return (this.#monarchDoc ??= new ImbaScriptInfo(
+			{ fileName: this.fileName },
+			this.snapshot.getText(0, this.snapshot.getLength())
+		));
 	}
 }
