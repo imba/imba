@@ -133,7 +133,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|
 | G1 | Worker-thread compilation | **redefined:** `createVirtualCode` is sync in Volar, so workers can't remove compile from the critical path — instead an async pool that *pre-warms the G2 cache* at project load (sync path then hits warm cache). Build when server dogfooding shows cold-open pain that G2 alone doesn't fix | M2.13 | ⬜ |
 | G2 | Content-hash compile cache | `src/cache.ts`: bounded memory layer + fire-and-forget disk layer (tmpdir, `IMBA_CACHE_DIR` override), keyed schema+compiler-version+flags+fileName+content — deterministic, so no revalidation. Parse failures cached; thrown errors not | M1.8 | ✅ |
-| G3 | Incremental snapshot updates (`getChangeRange` via fast-diff between generated outputs) | preserves TS incremental parsing; old plugin's diff.imba trick, done right | M2.13 | ⬜ |
+| G3 | Incremental snapshot updates (`getChangeRange` between generated outputs) | `computeChangeRange` (dependency-free prefix/suffix span) on generated snapshots — TS reuses the AST around the edit. Round-trip property tests incl. the prefix/suffix-overlap trap | M2.13 | ✅ |
 | G4 | Compile-failure handling: keep-last-good vs empty module | currently empty module + stored error; needs UX decision once dogfooding | M2.14 | 🤔 |
 | G5 | Mapping perf on big files | spans → thousands of singleton mappings; measure, consider batching sorted runs into one Mapping | M3.14 | ⬜ |
 | G6 | Benchmarks vs old plugin (cold open, keystroke→diagnostics latency, completion latency) | imba.io app + scrimba repo as corpora | M4.1 | ⬜ |

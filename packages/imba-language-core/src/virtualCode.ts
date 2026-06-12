@@ -1,4 +1,4 @@
-import type { CodeMapping, IScriptSnapshot, VirtualCode } from '@volar/language-core';
+import type { CodeMapping, IScriptSnapshot, TextChangeRange, VirtualCode } from '@volar/language-core';
 import * as monarchModule from 'imba-monarch';
 import { compileImba, type ImbaCompilation } from './compiler';
 import { spansToMappings, EXACT_FEATURES } from './mappings';
@@ -46,16 +46,11 @@ export class ImbaVirtualCode implements VirtualCode {
 			},
 		];
 
-		const js = this.compilation.js;
 		this.embeddedCodes = [
 			{
 				id: 'ts',
 				languageId: 'typescript',
-				snapshot: {
-					getText: (start, end) => js.substring(start, end),
-					getLength: () => js.length,
-					getChangeRange: () => undefined,
-				},
+				snapshot: createGeneratedSnapshot(this.compilation.js),
 				mappings: spansToMappings(this.compilation.spans),
 			},
 		];
@@ -78,4 +73,49 @@ export class ImbaVirtualCode implements VirtualCode {
 			this.snapshot.getText(0, this.snapshot.getLength())
 		));
 	}
+}
+
+interface GeneratedSnapshot extends IScriptSnapshot {
+	__imbaGenerated?: string;
+}
+
+/**
+ * Generated-TS snapshot with real change ranges (G3): TS reuses the
+ * unchanged AST around the edit instead of re-parsing the whole virtual
+ * file on every keystroke. parity: the old plugin's fast-diff trick, done
+ * with a dependency-free common prefix/suffix span.
+ */
+function createGeneratedSnapshot(js: string): IScriptSnapshot {
+	const snapshot: GeneratedSnapshot = {
+		__imbaGenerated: js,
+		getText: (start, end) => js.substring(start, end),
+		getLength: () => js.length,
+		getChangeRange(old) {
+			const oldJs = (old as GeneratedSnapshot).__imbaGenerated;
+			return typeof oldJs === 'string' ? computeChangeRange(oldJs, js) : undefined;
+		},
+	};
+	return snapshot;
+}
+
+export function computeChangeRange(oldText: string, newText: string): TextChangeRange {
+	if (oldText === newText) {
+		return { span: { start: 0, length: 0 }, newLength: 0 };
+	}
+	const minLength = Math.min(oldText.length, newText.length);
+	let prefix = 0;
+	while (prefix < minLength && oldText.charCodeAt(prefix) === newText.charCodeAt(prefix)) {
+		prefix++;
+	}
+	let suffix = 0;
+	while (
+		suffix < minLength - prefix &&
+		oldText.charCodeAt(oldText.length - 1 - suffix) === newText.charCodeAt(newText.length - 1 - suffix)
+	) {
+		suffix++;
+	}
+	return {
+		span: { start: prefix, length: oldText.length - prefix - suffix },
+		newLength: newText.length - prefix - suffix,
+	};
 }
