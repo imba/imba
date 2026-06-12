@@ -134,7 +134,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | G1 | Worker-thread compilation | **redefined:** `createVirtualCode` is sync in Volar, so workers can't remove compile from the critical path — instead an async pool that *pre-warms the G2 cache* at project load (sync path then hits warm cache). Build when server dogfooding shows cold-open pain that G2 alone doesn't fix | M2.13 | ⬜ |
 | G2 | Content-hash compile cache | `src/cache.ts`: bounded memory layer + fire-and-forget disk layer (tmpdir, `IMBA_CACHE_DIR` override), keyed schema+compiler-version+flags+fileName+content — deterministic, so no revalidation. Parse failures cached; thrown errors not | M1.8 | ✅ |
 | G3 | Incremental snapshot updates (`getChangeRange` between generated outputs) | `computeChangeRange` (dependency-free prefix/suffix span) on generated snapshots — TS reuses the AST around the edit. Round-trip property tests incl. the prefix/suffix-overlap trap | M2.13 | ✅ |
-| G4 | Compile-failure handling: keep-last-good vs empty module | currently empty module + stored error; needs UX decision once dogfooding | M2.14 | 🤔 |
+| G4 | Compile-failure handling: keep-last-good vs empty module | currently empty module + stored error; needs UX decision once dogfooding | **keep-last-good** (probing showed every unrecoverable parse state already emptied the module — not just crashes): per-file last good js+spans substituted when a compile fails, CURRENT diagnostics kept, deliberately emptied files never substituted, works through cache hits; compiler crashes surface as a 0:0 diagnostic | M2.14 | ✅ |
 | G5 | Mapping perf on big files | spans → thousands of singleton mappings; measure, consider batching sorted runs into one Mapping | M3.14 | ⬜ |
 | G6 | Benchmarks vs old plugin (cold open, keystroke→diagnostics latency, completion latency) | imba.io app + scrimba repo as corpora | M4.1 | ⬜ |
 
@@ -199,6 +199,15 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — G4 keep-last-good: parse failures empty the module far more often than crashes
+- Probed six hard-broken inputs: NONE made the compiler throw — but ALL yielded the empty-module fallback (js `export {};`) with one parse diagnostic. So the empty-module cascade (every importer suddenly missing exports, in-file TS surface dead) was the EVERY-KEYSTROKE failure mode for unrecoverable states, not a rare crash path.
+- compileImba now keeps a per-file last-good (js + spans, 256-entry session map) and substitutes it whenever a compile fails (throw, or EMPTY_JS sentinel + error diagnostic). Diagnostics always come from the CURRENT attempt, so the parse error shows while the stale-but-working module keeps the project coherent. `recovered: true` marks substituted results (F2 status-bar hook later).
+- The content-hash cache stores RAW results only; substitution happens at return time — a stale module can never leak into another session through the disk cache. Substitution verified through cache hits.
+- Deliberately emptied files are safe: empty source compiles cleanly to a real preamble module (not the EMPTY_JS sentinel), so it becomes the new last-good instead of resurrecting old exports.
+- Compiler crashes (error field) were silent before — imbaDiagnostics now surfaces them as a 0:0 error diagnostic.
+- Stale-spans caveat: while recovered, mappings lag the live source by the unparsable edit. Acceptable mid-brokenness; monarch-token features keep using the live source.
+- test/m3-keep-last-good.test.ts (5 tests). Suite at 100.
 
 ### 2026-06-12 — E8 + E10: span-merge dedupe, extensionless file-rename edits
 - E8 probe: highlights quality is good (read/write kinds, dashed full-token ranges) but every entry for an IMPORTED name appeared twice. Root cause is structural, not TS: Volar's `getGeneratedPositions` yields one generated position PER MATCHING MAPPING with no dedupe, and the compiler's hierarchical spans contain multiple same-delta exact spans covering the same offset — the feature worker then calls the plugin once per yield and flat-merges identical sets.

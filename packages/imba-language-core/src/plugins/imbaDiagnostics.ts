@@ -77,6 +77,19 @@ export function createImbaDiagnosticsPlugin(typescript?: typeof ts): LanguageSer
 						message: d.message,
 						source: d.source ?? 'imba',
 					}));
+					if (root.compilation.error !== undefined) {
+						// a compiler CRASH (not a parse diagnostic) was silent
+						// before — surface it so the dead file explains itself
+						const message = root.compilation.error instanceof Error
+							? root.compilation.error.message
+							: String(root.compilation.error);
+						diagnostics.unshift({
+							range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+							severity: 1,
+							source: 'imba',
+							message: `imba compiler crashed on this file: ${message}`,
+						});
+					}
 					if (!environmentHealthy()) {
 						diagnostics.unshift({
 							range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
