@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M2 — **daily-drivable preview**: `./packages/vscode-imba-next/dev.sh [project]`
-- **Next action:** continue dev-host feedback triage; remaining C3 contexts (tag names/attrs, styles), M2.2 completions, M2.6/A9
+- **Next action:** **A9 design spike** (typings-from-source — see expanded A9 row; inputs: old dtsutil.imba mechanics, compiler `declare global` emit option, stdlib extend-class declarations in events/core.imba). Then M2.2 completions, remaining C3 contexts
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -53,7 +53,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | `resolveImbaTypings` (prefers the **project's own** imba install, falls back to tooling copy) appended to `getScriptFileNames` in setupImbaProject | M2.3 | ✅ |
 | A7 | Virtual jsconfig for config-less projects | createVirtualProjectConfig + virtual file System patch | language server: default project for inferred workspaces | M3.6 | ⬜ |
 | A8 | Asset imports (`./icon.svg` etc., ImbaAsset types) | EXTRA_EXTENSIONS in resolveImportPath, `allowArbitraryExtensions` | `allowArbitraryExtensions` + asset `.d.ts`; verify per asset kind | M3.5 | ⬜ |
-| A9 | Global `extend class` / global tags across files (Ω dts sidecar) | dts.imba/dtsutil.imba: rewrite compiled dts → `.imba._.d.ts` virtual roots | 🤔 design: `getExtraServiceScripts` per file, or compiler emits `declare global` inline in tsc target (preferred — ask compiler) | M2.6 | 🤔 |
+| A9 | Global `extend class` / global tags across files (Ω dts sidecar) | dts.imba/dtsutil.imba: rewrite compiled dts → `.imba._.d.ts` virtual roots | **Scope expanded (Sindre 2026-06-12): A9 is the typings-from-source mechanism.** Stdlib declares modifiers/extensions in actual source (`extend class Event` in events/core.imba, `class IntersectionEvent` with `def @in/@out` in events/intersect.imba) — A9 turns those into global types, making the handwritten imba.events.d.ts *transitional*. Serves user `extend tag` (112 dogfood errors), stdlib modifiers, and source-located hover/def with real docs. Design: prefer compiler emitting `declare global` inline in the tsc target; fallback `getExtraServiceScripts`. Next major work item | M2.6 | 🤔 |
 | A10 | Project-local imba compiler (`useImbaFromProject`) | getImbaCompilerForPath + require | resolve `imba/compiler` from project root in compile layer | M3.7 | ⬜ |
 | A11 | Multi-root / multiple tsconfig projects | **broken** in old plugin (last-project-wins) | Volar handles per-project natively — add regression test | M3.8 | ⬜ |
 
@@ -118,7 +118,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | `createImbaSemanticTokensPlugin` — standard LSP token types from monarch tokens on the root document (works in any LSP client, no tsserver) | M2.10 | ✅ |
-| F2 | Status bar (compile spinner etc.) | node-ipc bridge | LSP custom notifications (typed) in preview extension | M2.12 | ⬜ |
+| F2 | Status bar (compile spinner etc.) + **environment health check** | node-ipc bridge | LSP custom notifications (typed) in preview extension. Health check: at project init verify `imba.Component` resolves; if not, ONE clear "imba types not loaded" signal instead of a 2339 cascade on every tag (dev-host finding: broken env reads as thousands of cryptic `typeof import("imba")` errors) | M2.12 | ⬜ |
 | F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | LSP configuration; port schema to preview extension | M3.9 | ⬜ |
 | F4 | Preview VS Code extension (`imba-next` style) | n/a | `packages/vscode-imba-next`: LSP client → imba-language-server, grammar copied from vscode-imba, tsserver plugin contribution. Dev-host only (`code --extensionDevelopmentPath=… --disable-extensions`); vsce packaging needs bundling, M3 | M2.11 | ✅ |
 | F5 | Selection tracking / save notifications | ipc onDidChangeTextEditorSelection/didSave | not needed (LSP didSave; live parse diagnostics replace save-gating) | — | ❌ |
