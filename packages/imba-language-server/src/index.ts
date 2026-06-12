@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import { createConnection, createServer, loadTsdkByPath } from '@volar/language-server/node';
 import { createTypeScriptProject } from '@volar/language-server/lib/project/typescriptProject';
-import { createImbaLanguagePlugin } from 'imba-language-core';
+import { createImbaDiagnosticsPlugin, createImbaLanguagePlugin } from 'imba-language-core';
 import { create as createTypeScriptServices } from 'volar-service-typescript';
 
 const connection = createConnection();
@@ -25,6 +25,8 @@ connection.onInitialize(params => {
 			// Imba-specific service plugins (styles, tags, monarch-driven
 			// completions) get added alongside these in M2.
 			...createTypeScriptServices(tsdk.typescript),
+			// imba compiler parse diagnostics on the source document
+			createImbaDiagnosticsPlugin(),
 		]
 	);
 });

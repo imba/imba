@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M1
-- **Next action:** M1.4 (B2) — imba parse diagnostics service plugin; then M1.3 (A6) real typings
+- **Next action:** M1.3 (A6) — real imba typings replacing the fixture shim; then B3/B4 (suppression rules + identifier presentation)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -19,7 +19,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 
 | Decision | Rationale |
 |---|---|
-| Root `VirtualCode` IS the generated TS (`languageId: 'typescript'`), no embedded codes yet | Simplest shape that works; restructure to root-imba + embedded-ts only when we add embedded CSS or per-language service routing |
+| Root `VirtualCode` is the imba source (identity mapping, `languageId: 'imba'`); generated TS is `embeddedCodes[0]` ('ts') | Volar feature workers only visit *embedded* documents — imba-side plugins need an always-visitable identity-mapped root (works even when compilation fails). Same shape Vue uses. Decided during M1.4; was originally root-as-TS |
 | One `CodeMapping` per span, exact-length spans first in the array | Volar's SourceMap memo iterates candidates in array order → precise leaf mappings beat container fallbacks |
 | Container (unequal-length) spans: `verification/semantic/navigation/structure` but **no completion** | Completions at clamped interior positions produce wrong-scope results |
 | Imba-specific service plugins live in `imba-language-core/src/plugins/` for now | Both kit tests and the server consume them; split out an `imba-language-service` package only if it grows past ~1500 lines |
@@ -62,7 +62,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | B1 | TS diagnostics in imba coordinates | Session.sendDiagnosticsEvent + o2iRange mapping | Volar mapping | M0 | ✅ |
-| B2 | Imba compiler parse diagnostics | script.getImbaDiagnostics (save-gated) | service plugin reading `compilation.diagnostics` (live, not save-gated) | M1.4 | ⬜ |
+| B2 | Imba compiler parse diagnostics | script.getImbaDiagnostics (save-gated) | `createImbaDiagnosticsPlugin` over the identity-mapped root doc (live, not save-gated) | M1.4 | ✅ |
 | B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | port table → `shouldReport` on container mappings + post-filter in TS plugin wrapper (needs message regex access → wrapper, not shouldReport alone) | M1.5 | ⬜ |
 | B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | wrap `provideDiagnostics` result messages only | M1.6 | ⬜ |
 | B5 | debugLevel≥2 "show suppressed as warnings" | filterDiagnostics | config flag on the wrapper | M3.9 | ⬜ |
@@ -182,6 +182,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — M1.4 done: parse diagnostics (B2) + root/child restructure
+- **Architecture change (important):** root virtual code is now the imba source with an identity mapping; generated TS moved to `embeddedCodes[0]`. Forced by Volar's `documentFeatureWorker`: plugins only ever see *embedded* documents, and only those with feature-enabled mappings — a failed compile (empty mappings) made files invisible to every feature. The identity-mapped root fixes that and is the document imba-side plugins (M2 hover/completions/semantic tokens) will run against. `getServiceScript` now returns `root.tsCode`.
+- `createImbaDiagnosticsPlugin` surfaces compiler parse diagnostics live (old plugin was save-gated). Ranges computed from offsets via `document.positionAt` — compiler line/character ignored as potentially stale.
+- Gotcha for future plugins: a plugin receiving a document must `decodeEmbeddedDocumentUri` and look up the embedded code by id; checking `languageId === 'imba'` alone also matches nothing (source docs are never visited).
 
 ### 2026-06-12 — M1.1 done: extensionless + .web.imba resolution (A3/A4)
 - `@volar/typescript`'s `createResolveModuleName` already implements the old plugin's fileExists trick behind `typescript.resolveHiddenExtensions` — TS probes `foo.d.ts` for extensionless `./foo`, Volar answers yes when `foo.imba` exists and rewrites the resolution. One flag + one extra extension entry replaced three patched classes.

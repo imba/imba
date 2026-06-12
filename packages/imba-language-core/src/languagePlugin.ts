@@ -54,8 +54,10 @@ export function createImbaLanguagePlugin<T extends ScriptIdLike | string>(): Lan
 			// rewrites the resolution to the .imba source.
 			resolveHiddenExtensions: true,
 			getServiceScript(root) {
+				// the augmentation types root as plain VirtualCode; ours is
+				// always the ImbaVirtualCode created above
 				return {
-					code: root,
+					code: (root as ImbaVirtualCode).tsCode,
 					extension: '.ts',
 					scriptKind: 3, // ts.ScriptKind.TS
 				};

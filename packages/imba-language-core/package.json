@@ -19,8 +19,10 @@
     },
     "dependencies": {
         "@volar/language-core": "~2.4.28",
+        "@volar/language-service": "~2.4.28",
         "@volar/typescript": "~2.4.28",
-        "imba": "file:../imba"
+        "imba": "file:../imba",
+        "vscode-uri": "^3.0.8"
     },
     "devDependencies": {
         "@volar/kit": "~2.4.28",
