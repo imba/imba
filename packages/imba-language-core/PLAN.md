@@ -52,10 +52,10 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | A5 | Compiler options injection (lib, customConditions `['tsimba','imba']`, RequiredCompilerOptions) | Project.setCompilerOptions patch | `setupImbaProject` (projectSetup.ts) wraps the LS host in the server's project `setup` hook — required options forced, defaults only when project hasn't chosen. tsserver-plugin mode still needs an equivalent (M3) | M2.3 | ✅ |
 | A6 | imba.d.ts global typings into every project | pushed into `compilerOptions.lib` | `resolveImbaTypings` (prefers the **project's own** imba install, falls back to tooling copy) appended to `getScriptFileNames` in setupImbaProject | M2.3 | ✅ |
 | A7 | Virtual jsconfig for config-less projects | createVirtualProjectConfig + virtual file System patch | language server: default project for inferred workspaces | M3.6 | ⬜ |
-| A8 | Asset imports (`./icon.svg` etc., ImbaAsset types) | EXTRA_EXTENSIONS in resolveImportPath, `allowArbitraryExtensions` | `allowArbitraryExtensions` + asset `.d.ts`; verify per asset kind | M3.5 | ⬜ |
+| A8 | Asset imports (`./icon.svg` etc., ImbaAsset types) | EXTRA_EXTENSIONS in resolveImportPath, `allowArbitraryExtensions` | **works out of the box**: the tsc target emits `data:text/asset;` specifiers and the typings' wildcard module types them as ImbaAsset — clean diagnostics, hover, member completions. Pinned with tests | M3.5 | ✅ |
 | A9 | Global `extend class` / global tags across files (Ω dts sidecar) | dts.imba/dtsutil.imba: rewrite compiled dts → `.imba._.d.ts` virtual roots | **Scope expanded (Sindre 2026-06-12): A9 is the typings-from-source mechanism.** Stdlib declares modifiers/extensions in actual source (`extend class Event` in events/core.imba, `class IntersectionEvent` with `def @in/@out` in events/intersect.imba) — A9 turns those into global types, making the handwritten imba.events.d.ts *transitional*. Serves user `extend tag` (112 dogfood errors), stdlib modifiers, and source-located hover/def with real docs. Design: prefer compiler emitting `declare global` inline in the tsc target; fallback `getExtraServiceScripts`. Next major work item | M2.6 | 🤔 |
 | A10 | Project-local imba compiler (`useImbaFromProject`) | getImbaCompilerForPath + require | `getProjectCompilerForFile` (walk-up node_modules/imba, CJS require of exports['./compiler'], error-once) wired into compileImba with the project version in the cache key; crashing compilers retire for the session and fall back to bundled with clean keys. Opt-in like the old default (setProjectCompilerEnabled / IMBA_USE_PROJECT_COMPILER=1); F3 wires the config | M3.7 | ✅ |
-| A11 | Multi-root / multiple tsconfig projects | **broken** in old plugin (last-project-wins) | Volar handles per-project natively — add regression test | M3.8 | ⬜ |
+| A11 | Multi-root / multiple tsconfig projects | **broken** in old plugin (last-project-wins) | Volar handles per-project natively — regression test pins two projects with same-named conflicting exports (hover types stay per-project, interleaved queries, workspace symbols scoped to each root) | M3.8 | ✅ |
 
 ### B. Diagnostics
 
@@ -199,6 +199,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — A8 verified free; A11 pinned with a two-project regression test
+- A8: nothing to build — the tsc target already rewrites asset imports to `data:text/asset;` specifiers and the typings' wildcard module (`declare module "data:text/asset;*"`) types them as ImbaAsset. Fixture probe: clean diagnostics, hover `const icon: ImbaAsset`, member completions (body/url/absPath/path). Pinned with tests (fixture icon.svg + assets.imba).
+- A11: the old plugin's multi-project story was last-project-wins (one global `self.project`). Volar scopes per-project natively; the regression test creates fixture-b with a same-named conflicting export (`greet(count\number)` vs fixture's `greet(name\string)`) and asserts interleaved hovers stay per-project and workspace symbols stay per-root (tag index keyed by workspace roots).
+- A7 (config-less projects) remains — needs a server-level/inferred-project harness, next candidate.
+- test/m3-assets-multiroot.test.ts (4 tests). Suite at 120.
 
 ### 2026-06-12 — D9 was a mapping bug: type annotations were invisible to every feature
 - Probe: completions after `a\str` returned ONLY the 21 imba keywords. Root cause far better than expected: the compiler's annotation spans cover `\str` (4 source chars) against `str` (3 generated chars) — the systematic off-by-one made them CONTAINERS, so type positions had no completion/hover/navigation at all. Not just D9: hover and go-to-def on every type annotation were dead.
