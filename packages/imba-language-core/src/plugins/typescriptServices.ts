@@ -84,6 +84,43 @@ function convertHoverContents(contents: HoverContents): HoverContents {
 	return { ...contents, value: toImbaString(contents.value) };
 }
 
+type CompletionItemLike = {
+	insertText?: string;
+	filterText?: string;
+	textEdit?:
+		| { newText: string; range: RangeLike }
+		| { newText: string; insert: RangeLike; replace: RangeLike };
+};
+type RangeLike = { start: { line: number; character: number }; end: { line: number; character: number } };
+
+function stripDotAccessor(document: TextDocument, item: CompletionItemLike): void {
+	const edit = item.textEdit;
+	if (!edit || !edit.newText.startsWith('.') || edit.newText.startsWith('..')) {
+		return;
+	}
+	const first = 'range' in edit ? edit.range : edit.insert;
+	const startOffset = document.offsetAt(first.start);
+	if (document.getText().slice(startOffset, startOffset + 1) !== '.') {
+		return;
+	}
+	// vol-service-ts SHARES range objects across all items of a list —
+	// never mutate them; build fresh ranges/edits per item
+	const advance = (range: RangeLike): RangeLike => ({
+		start: document.positionAt(document.offsetAt(range.start) + 1),
+		end: { ...range.end },
+	});
+	item.textEdit =
+		'range' in edit
+			? { ...edit, newText: edit.newText.slice(1), range: advance(edit.range) }
+			: { ...edit, newText: edit.newText.slice(1), insert: advance(edit.insert), replace: advance(edit.replace) };
+	if (item.insertText?.startsWith('.')) {
+		item.insertText = item.insertText.slice(1);
+	}
+	if (item.filterText?.startsWith('.')) {
+		item.filterText = item.filterText.slice(1);
+	}
+}
+
 function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 	return {
 		...base,
@@ -101,11 +138,13 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 				async provideCompletionItems(document, position, completionContext, token) {
 					const result = await provideCompletionItems?.(document, position, completionContext, token);
 					if (result && isImbaBacked(context, document.uri)) {
-						// TS optional-chain completions insert `?.name` (over a
-						// range that includes the dot); imba spells it `..name`
 						for (const item of result.items) {
+							// TS optional-chain completions insert `?.name`
+							// (over a range including the dot); imba spells
+							// it `..name`. Rebuild rather than mutate — edit
+							// internals are shared across items.
 							if (item.textEdit?.newText.startsWith('?.')) {
-								item.textEdit.newText = '..' + item.textEdit.newText.slice(2);
+								item.textEdit = { ...item.textEdit, newText: '..' + item.textEdit.newText.slice(2) };
 							}
 							if (item.insertText?.startsWith('?.')) {
 								item.insertText = '..' + item.insertText.slice(2);
@@ -113,6 +152,15 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 							if (typeof item.filterText === 'string' && item.filterText.startsWith('?.')) {
 								item.filterText = '..' + item.filterText.slice(2);
 							}
+							// TS dot-accessor member completions ship `.name`
+							// over a range that starts at the dot. VS Code's
+							// native TS extension special-cases these; LSP
+							// clients don't — once the user types more, the
+							// range no longer contains the cursor and the
+							// client's word-based fallback double-applies or
+							// eats the dot. Normalize: dotless text, range
+							// starting after the dot.
+							stripDotAccessor(document, item);
 						}
 					}
 					return result;

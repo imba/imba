@@ -49,6 +49,14 @@ describe('M2: member completion edits (D1)', () => {
 		expect(item, 'RELUNIT should be offered on the caret state').toBeTruthy();
 		expect(item!.textEdit, 'textEdit must survive mapping through $CARET$').toBeTruthy();
 
+		// dot-accessor edits must be normalized: dotless text, range starting
+		// AFTER the dot — LSP clients mishandle dotted member edits once the
+		// user keeps typing (seen as both FLAGS..RELUNIT and FLAGSRELUNIT)
+		const edit = item!.textEdit as { newText: string };
+		expect(edit.newText).toBe('RELUNIT');
+		expect(item!.insertText ?? 'RELUNIT').toBe('RELUNIT');
+		expect(item!.filterText ?? 'RELUNIT').toBe('RELUNIT');
+
 		const source = fs.readFileSync(dotProbe, 'utf8');
 		const applied = applyEdit(source, item!.textEdit as never);
 		expect(applied).toContain('FLAGS.RELUNIT');

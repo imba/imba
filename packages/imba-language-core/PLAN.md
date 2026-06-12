@@ -184,6 +184,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Completion dot bug, round 2: dot-accessor normalization (the actual user-facing fix)
+- The $CARET$ placeholder mapping (below) made the textEdit survive but the served shape — `newText: ".RELUNIT"` over a range starting AT the dot — is mishandled by LSP clients once the user keeps typing (VS Code's native TS extension special-cases dotted member edits; LSP clients don't). Sindre saw both failure modes: `FLAGS..RELUNIT` (edit dropped → word-insert) and `FLAGSRELUNIT` (dot-covering range + later-normalized text).
+- **Fix: `stripDotAccessor` in typescriptServices.ts** — member-completion edits are normalized to what plain clients expect: dotless newText/insertText/filterText, range starting AFTER the dot. Every client path (range extension, word fallback, insert/replace mode) now converges on a single dot.
+- **Gotcha for all completion post-processing: vol-service-ts SHARES range objects across all items in a list.** Mutating one item's range corrupts the rest (first item normalized fine, every later item saw pre-moved ranges and failed the dot check). Always rebuild edit objects, never mutate. Same applies to the `?.`→`..` translation.
+- Verified: serve + resolve-after-document-change both return the normalized shape; regression test asserts dotless newText and applies the edit.
+
 ### 2026-06-12 — Completion double-dot SOLVED: $CARET$ placeholder mapping
 - Root cause (found via Sindre's exact interactive repro — type `FLAGS`, press `.`, then type and accept): the completion request fires at the **parse-recovered state** `FLAGS.`, which the compiler emits as `FLAGS.$CARET$`. TS's dot-accessor replacement span covers `.$CARET$`; the placeholder span (generated-only, zero source width) carried no completion flag, so the span's END couldn't map back → Volar dropped the textEdit → VS Code word-inserted the dotted `insertText` → `FLAGS..RELUNIT`.
 - **Fix:** `PLACEHOLDER_FEATURES` in mappings.ts — zero-source-width containers (generated-only placeholders) get the completion flag. They are SAFE for position mapping (every interior offset clamps to the single source point — cannot produce the phantom-position bug that justified stripping container flags in M1.7).
