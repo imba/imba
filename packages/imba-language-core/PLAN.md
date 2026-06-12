@@ -110,9 +110,9 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | E5 | Document symbols / outline | doc.getOutline (monarch) replacing navtree | `createImbaDocumentSymbolsPlugin` (monarch outline → LSP DocumentSymbols, TS symbols suppressed for imba docs) | M2.8 | ✅ |
 | E6 | Workspace symbols (imba + TS merged, scope config) | getNavigateToItems override | `createImbaWorkspaceSymbolsPlugin` (monarch getNavigateToItems program-wide, old fuzzy matching); TS results keep ts/js only with names converted (typings Φ/α symbols). Scope config (imbaOnly) pending with F3 | M3.3 | ✅ |
 | E7 | Folding | old returned `null` (!) | indentation folding from VS Code language config; optional monarch provider later | M2.9 | ⬜ |
-| E8 | Document highlights | disabled for imba | leave to TS via mappings; verify quality, disable if noisy | M3.11 | ⬜ |
+| E8 | Document highlights | disabled for imba | TS via mappings — quality verified (read/write kinds, dashed tokens). Same-delta exact spans merged in spansToMappings so Volar's per-mapping fan-out can't duplicate result sets; first-generated-position gate kept for distinct-offset multiplexing | M3.11 | ✅ |
 | E9 | Signature help (incl. event-modifier signatures) | intercept + checker.getSignatureHelpForType hack | TS-backed through the mappings (all caret states map, incl. empty parens); event-modifier parens need NO checker hack — modifiers compile to plain method calls. Wrapper converts encoded callee names in labels (imba docs only) | M3.12 | ✅ |
-| E10 | File-rename import edits | getEditsForFileRename + conversion | expect free via Volar; add test | M3.13 | ⬜ |
+| E10 | File-rename import edits | getEditsForFileRename + conversion | TS-backed via Volar (imba + ts importers both updated). Wrapper strips `(.web).imba` endings from rewritten specifiers — extensionless is idiomatic and resolves project-wide via resolveHiddenExtensions | M3.13 | ✅ |
 
 ### F. Editor surface (vscode + protocol)
 
@@ -199,6 +199,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — E8 + E10: span-merge dedupe, extensionless file-rename edits
+- E8 probe: highlights quality is good (read/write kinds, dashed full-token ranges) but every entry for an IMPORTED name appeared twice. Root cause is structural, not TS: Volar's `getGeneratedPositions` yields one generated position PER MATCHING MAPPING with no dedupe, and the compiler's hierarchical spans contain multiple same-delta exact spans covering the same offset — the feature worker then calls the plugin once per yield and flat-merges identical sets.
+- Fix at the mapping layer: `spansToMappings` now merges exact spans per translation delta into disjoint intervals (overlapping/adjacent same-delta spans are identical translations — multiple copies add zero information and only cause duplicate feature calls). Benefits all position features, not just highlights. Kept a `firstGeneratedPosition` gate in the wrapper for the distinct-offset multiplexing case. Dogfood over imba.io unchanged (212/51 files) — no mapping regression.
+- E10 probe: file-rename edits work cross-file out of the box, but TS rewrites specifiers with the full file name (`'./util'` → `'./helpers.imba'`). Wrapper strips `(.web).imba` endings — extensionless resolves everywhere in the project (resolveHiddenExtensions) and matches imba idiom.
+- test/m3-highlights-filerename.test.ts (4 tests). Suite at 95.
 
 ### 2026-06-12 — E4 references + rename: encoding round-trip via mapping hooks
 - References already flowed through the mappings (imba↔ts cross-file, probe-verified). Rename nearly did — but a TS file referencing a renamed dashed export would have received the raw imba spelling (`say-hello`), breaking it.

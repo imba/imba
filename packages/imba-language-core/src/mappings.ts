@@ -75,7 +75,15 @@ export const PLACEHOLDER_FEATURES: CodeInformation = {
  * fallbacks when both match an offset.
  */
 export function spansToMappings(spans: readonly (readonly number[])[]): CodeMapping[] {
-	const exact: CodeMapping[] = [];
+	// exact spans grouped by translation delta (generated - source): the
+	// hierarchical compiler spans nest same-delta exact spans (identifier
+	// inside expression inside statement), and Volar yields one generated
+	// position PER matching mapping with no dedupe — duplicate (source →
+	// generated) yields run position features twice (E8: every document
+	// highlight appeared twice). Same-delta overlapping/adjacent spans are
+	// identical translations, so each delta group is merged into disjoint
+	// intervals.
+	const exactByDelta = new Map<number, [number, number][]>();
 	const containers: CodeMapping[] = [];
 	const seen = new Set<string>();
 
@@ -97,12 +105,12 @@ export function spansToMappings(spans: readonly (readonly number[])[]): CodeMapp
 		const generatedLength = g1 - g0;
 
 		if (sourceLength === generatedLength) {
-			exact.push({
-				sourceOffsets: [s0],
-				generatedOffsets: [g0],
-				lengths: [sourceLength],
-				data: EXACT_FEATURES,
-			});
+			const delta = g0 - s0;
+			let group = exactByDelta.get(delta);
+			if (!group) {
+				exactByDelta.set(delta, (group = []));
+			}
+			group.push([s0, s1]);
 		} else {
 			containers.push({
 				sourceOffsets: [s0],
@@ -110,6 +118,37 @@ export function spansToMappings(spans: readonly (readonly number[])[]): CodeMapp
 				lengths: [sourceLength],
 				generatedLengths: [generatedLength],
 				data: sourceLength === 0 && generatedLength > 0 ? PLACEHOLDER_FEATURES : CONTAINER_FEATURES,
+			});
+		}
+	}
+
+	const exact: CodeMapping[] = [];
+	for (const [delta, group] of exactByDelta) {
+		group.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+		let start = -1;
+		let end = -1;
+		for (const [s0, s1] of group) {
+			if (s0 > end) {
+				if (start >= 0) {
+					exact.push({
+						sourceOffsets: [start],
+						generatedOffsets: [start + delta],
+						lengths: [end - start],
+						data: EXACT_FEATURES,
+					});
+				}
+				start = s0;
+				end = s1;
+			} else if (s1 > end) {
+				end = s1;
+			}
+		}
+		if (start >= 0) {
+			exact.push({
+				sourceOffsets: [start],
+				generatedOffsets: [start + delta],
+				lengths: [end - start],
+				data: EXACT_FEATURES,
 			});
 		}
 	}

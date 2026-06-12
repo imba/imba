@@ -280,6 +280,74 @@ function stripDotAccessor(document: TextDocument, item: CompletionItemLike): voi
 	}
 }
 
+/**
+ * True when `position` in the embedded document is the FIRST generated
+ * position its source position maps to (in mapping order, highlight-enabled
+ * mappings only) — i.e. the invocation that should own position-multiplexed
+ * feature results. Non-imba documents trivially own their results.
+ */
+function firstGeneratedPosition(
+	context: LanguageServiceContext,
+	document: TextDocument,
+	position: { line: number; character: number }
+): boolean {
+	const decoded = context.decodeEmbeddedDocumentUri(URI.parse(document.uri));
+	if (!decoded) {
+		return true;
+	}
+	const sourceScript = context.language.scripts.get(decoded[0]);
+	const root = sourceScript?.generated?.root;
+	if (!sourceScript || !(root instanceof ImbaVirtualCode)) {
+		return true;
+	}
+	const virtualCode = sourceScript.generated?.embeddedCodes.get(decoded[1]);
+	if (!virtualCode) {
+		return true;
+	}
+	const mapper = context.language.maps.get(virtualCode, sourceScript);
+	const generatedOffset = document.offsetAt(position);
+	let sourceOffset: number | undefined;
+	for (const [mapped] of mapper.toSourceLocation(generatedOffset)) {
+		sourceOffset = mapped;
+		break;
+	}
+	if (sourceOffset === undefined) {
+		return true;
+	}
+	for (const [mapped, mapping] of mapper.toGeneratedLocation(sourceOffset)) {
+		if (typeof mapping.data.navigation === 'object'
+			? mapping.data.navigation.shouldHighlight?.() === false
+			: !mapping.data.navigation) {
+			continue;
+		}
+		return mapped === generatedOffset;
+	}
+	return true;
+}
+
+const IMBA_SPECIFIER_ENDING = /(\.web)?\.imba(?=["']?$)/;
+
+function stripImbaSpecifierEndings(edit: {
+	changes?: Record<string, { newText: string }[]>;
+	documentChanges?: unknown[];
+}): void {
+	const groups: { newText: string }[][] = [];
+	if (edit.changes) {
+		groups.push(...Object.values(edit.changes));
+	}
+	for (const change of edit.documentChanges ?? []) {
+		const edits = (change as { edits?: { newText: string }[] }).edits;
+		if (edits) {
+			groups.push(edits);
+		}
+	}
+	for (const group of groups) {
+		for (const textEdit of group) {
+			textEdit.newText = textEdit.newText.replace(IMBA_SPECIFIER_ENDING, '');
+		}
+	}
+}
+
 function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 	return {
 		...base,
@@ -311,6 +379,29 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 						return preferImbaDefinitions(result) as never;
 					}
 					return result;
+				},
+				async provideDocumentHighlights(document, position, token) {
+					// Volar runs this for EVERY generated position of the source
+					// position and flat-merges the sets (E8) — an imported name
+					// maps to several generated spots, duplicating every
+					// highlight. Gate on the first highlight-enabled generated
+					// position; the other invocations return nothing.
+					if (!firstGeneratedPosition(context, document, position)) {
+						return undefined;
+					}
+					return instance.provideDocumentHighlights?.call(instance, document, position, token);
+				},
+				async provideFileRenameEdits(oldUri, newUri, token) {
+					const edit = await instance.provideFileRenameEdits?.call(instance, oldUri, newUri, token);
+					// TS rewrites import specifiers with the full file name, but
+					// idiomatic imba imports are extensionless (and resolve that
+					// way everywhere in the project via resolveHiddenExtensions)
+					// — keep the user's style instead of introducing `.imba`
+					// endings on rename (E10)
+					if (edit) {
+						stripImbaSpecifierEndings(edit);
+					}
+					return edit;
 				},
 				async provideCompletionItems(document, position, completionContext, token) {
 					// parity: the imba-specific completion contexts (tag names,
