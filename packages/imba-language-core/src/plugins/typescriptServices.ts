@@ -243,6 +243,16 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 			}
 			return {
 				...instance,
+				async provideWorkspaceSymbols(query, token) {
+					const result = await instance.provideWorkspaceSymbols?.call(instance, query, token);
+					// imba files are served by the imba workspace-symbols
+					// plugin (parity: old getNavigateToItems dropped TS's
+					// imba entries) — keep only ts/js results, with encoded
+					// identifiers (typings symbols like activeΦ) converted
+					return result
+						?.filter(symbol => !String(symbol.location?.uri ?? '').includes('.imba'))
+						.map(symbol => ({ ...symbol, name: toImbaIdentifier(symbol.name) }));
+				},
 				async provideDefinition(document, position, token) {
 					const result = await provideDefinition?.(document, position, token);
 					if (Array.isArray(result) && isImbaBacked(context, document.uri)) {

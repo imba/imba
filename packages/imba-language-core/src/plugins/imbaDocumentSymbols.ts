@@ -8,7 +8,7 @@ import { ImbaVirtualCode } from '../virtualCode';
 // — now standard LSP DocumentSymbols from monarch on the root document.
 
 /** monarch nav-kind strings (lowercased, space-separated) → LSP SymbolKind */
-const KIND_MAP: Record<string, number> = {
+export const LSP_SYMBOL_KIND: Record<string, number> = {
 	file: 1,
 	module: 2,
 	namespace: 3,
@@ -69,7 +69,7 @@ function convertItem(item: MonarchOutlineItem, document: TextDocument): Document
 
 	return {
 		name,
-		kind: KIND_MAP[String(item.kind ?? '').toLowerCase()] ?? 13,
+		kind: LSP_SYMBOL_KIND[String(item.kind ?? '').toLowerCase()] ?? 13,
 		range: { start: document.positionAt(start), end: document.positionAt(end) },
 		selectionRange: {
 			start: document.positionAt(selectionSpan.start),

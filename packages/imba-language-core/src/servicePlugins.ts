@@ -4,6 +4,7 @@ import { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 import { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
 import { createImbaEventsPlugin } from './plugins/imbaEvents';
 import { createImbaTagsPlugin } from './plugins/imbaTags';
+import { createImbaWorkspaceSymbolsPlugin } from './plugins/imbaWorkspaceSymbols';
 import { createImbaSemanticTokensPlugin } from './plugins/imbaSemanticTokens';
 import { createTypeScriptServices } from './plugins/typescriptServices';
 
@@ -32,5 +33,7 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		// tag-name usage definition/hover via the workspace tag index
 		// (attributes flow through TS mappings and need no bridge)
 		createImbaTagsPlugin(),
+		// project-wide symbol search (cmd-T) from monarch symbols
+		createImbaWorkspaceSymbolsPlugin(),
 	];
 }
