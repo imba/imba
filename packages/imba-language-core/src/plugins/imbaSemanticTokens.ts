@@ -54,7 +54,10 @@ export function createImbaSemanticTokensPlugin(): LanguageServicePlugin {
 					const result: SemanticToken[] = [];
 					for (const tok of root.monarchDoc.tokens) {
 						const sym = tok.symbol;
-						if (!sym || tok.offset < startOffset || tok.endOffset > endOffset) {
+						if (!sym || tok.endOffset <= tok.offset) {
+							continue;
+						}
+						if (tok.offset < startOffset || tok.endOffset > endOffset) {
 							continue;
 						}
 						let type = TYPE_MAP[sym.semanticKind] ?? 'variable';

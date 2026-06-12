@@ -12,11 +12,7 @@ import {
 import { createLanguageServiceHost, resolveFileLanguageId } from '@volar/typescript';
 import { createServiceEnvironment } from '@volar/kit/lib/createServiceEnvironment';
 import { asFileName, asPosix, asUri } from '@volar/kit/lib/utils';
-import {
-	createImbaDiagnosticsPlugin,
-	createImbaLanguagePlugin,
-	createTypeScriptServices,
-} from '../src/index';
+import { createImbaLanguagePlugin, createImbaServicePlugins } from '../src/index';
 
 /**
  * Full Volar LanguageService over a fixture tsconfig — the e2e surface for
@@ -82,12 +78,9 @@ export function createFixtureLanguageService(tsconfigPath: string): LanguageServ
 		},
 	};
 
-	return createLanguageService(
-		language,
-		[...createTypeScriptServices(ts), createImbaDiagnosticsPlugin()],
-		env,
-		project
-	);
+	// the SAME plugin list the language server uses — never hand-assemble
+	// plugin lists in tests (drift caused silent false positives in M2)
+	return createLanguageService(language, createImbaServicePlugins(ts), env, project);
 }
 
 export interface FixtureLocation {

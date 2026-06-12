@@ -1,7 +1,15 @@
 import type { CodeMapping, IScriptSnapshot, VirtualCode } from '@volar/language-core';
-import ImbaScriptInfo from 'imba-monarch';
+import * as monarchModule from 'imba-monarch';
 import { compileImba, type ImbaCompilation } from './compiler';
 import { spansToMappings, EXACT_FEATURES } from './mappings';
+
+type ImbaScriptInfo = import('imba-monarch').default;
+
+// imba-monarch is a CJS bundle; default-import interop differs between plain
+// node (tsc CJS emit) and ESM transforms (vitest/vite-node) — resolve the
+// constructor defensively so both work.
+const ImbaScriptInfo: new (owner: { fileName: string }, code: string) => ImbaScriptInfo =
+	(monarchModule as any).default?.default ?? (monarchModule as any).default ?? (monarchModule as any);
 
 /**
  * Root virtual code: mirrors the .imba source 1:1 (identity mapping), so

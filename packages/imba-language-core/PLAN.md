@@ -9,7 +9,7 @@ This is a *living working document*. Any session (human or agent) picking up thi
 ## Status & resume pointer
 
 - **Current milestone:** M2
-- **Next action:** E5 document symbols (monarch getOutline) + F4/M2.11 preview extension scaffold; then M2.6 (A9 — confirmed the #1 real gap by dogfood data)
+- **Next action:** F4/M2.11 preview extension scaffold (`imba-next`); then M2.6 (A9 — confirmed the #1 real gap by dogfood data)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -106,7 +106,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | service plugin over workspace token index | M3.3 | ⬜ |
 | E3 | Definition filtering (`__new` removal, prefer .imba over .d.ts, meta suppression) | intercept.getDefinitionAndBoundSpan | wrapper around TS definitions | M2.7 | ⬜ |
 | E4 | Find references / rename (TS-backed) | intercepts + conversion | Volar mapping; rename name conversion via `navigation.resolveRenameNewName/EditText` mapping hooks | M3.10 | ⬜ |
-| E5 | Document symbols / outline | doc.getOutline (monarch) replacing navtree | service plugin `provideDocumentSymbols` from monarch | M2.8 | ⬜ |
+| E5 | Document symbols / outline | doc.getOutline (monarch) replacing navtree | `createImbaDocumentSymbolsPlugin` (monarch outline → LSP DocumentSymbols, TS symbols suppressed for imba docs) | M2.8 | ✅ |
 | E6 | Workspace symbols (imba + TS merged, scope config) | getNavigateToItems override | service plugin + forwarded TS results | M3.3 | ⬜ |
 | E7 | Folding | old returned `null` (!) | indentation folding from VS Code language config; optional monarch provider later | M2.9 | ⬜ |
 | E8 | Document highlights | disabled for imba | leave to TS via mappings; verify quality, disable if noisy | M3.11 | ⬜ |
@@ -183,6 +183,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — E5 document symbols + a hard-earned testing convention
+- **Correction to the F1 entry below:** the first semantic-tokens "pass" was a false positive — the harness hand-assembled its plugin list and was missing the imba plugins, so TS-provided tokens (mapped through spans) were being decoded against the wrong legend. Caught while E5 returned zero symbols.
+- **Convention (enforced by code):** `createImbaServicePlugins(ts)` in src/servicePlugins.ts is the ONLY way to assemble the plugin list — server and test harness both consume it. Never hand-assemble plugin lists.
+- E5: monarch `getOutline` (tsserver NavigationTree shape) → LSP DocumentSymbols, with the LSP range⊇selectionRange invariant enforced. TS document symbols and TS semantic tokens are now suppressed for imba-backed docs in the wrapper (parity: getNavigationTree / getEncodedSemanticClassifications intercepts replaced rather than merged).
+- Interop gotcha: imba-monarch's CJS default export resolves differently under node-CJS vs vite-node ESM transforms — constructor resolved defensively in virtualCode.ts. Zero-length monarch tokens filtered from semantic tokens.
 
 ### 2026-06-12 — M2 begun: monarch integration + F1 semantic tokens
 - imba-monarch wired in: `ImbaVirtualCode.monarchDoc` (lazy) — `ImbaScriptInfo` happily takes `({fileName}, sourceString)`, no tsserver SVC needed. Typed via a minimal ambient shim ([src/imba-monarch.d.ts](src/imba-monarch.d.ts)) since the package ships no declarations and is actively evolving (consolidation with imba/program).

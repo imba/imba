@@ -1,12 +1,7 @@
 import * as path from 'node:path';
 import { createConnection, createServer, loadTsdkByPath } from '@volar/language-server/node';
 import { createTypeScriptProject } from '@volar/language-server/lib/project/typescriptProject';
-import {
-	createImbaDiagnosticsPlugin,
-	createImbaLanguagePlugin,
-	createImbaSemanticTokensPlugin,
-	createTypeScriptServices,
-} from 'imba-language-core';
+import { createImbaLanguagePlugin, createImbaServicePlugins } from 'imba-language-core';
 
 const connection = createConnection();
 const server = createServer(connection);
@@ -23,18 +18,7 @@ connection.onInitialize(params => {
 		createTypeScriptProject(tsdk.typescript, tsdk.diagnosticMessages, () => ({
 			languagePlugins: [createImbaLanguagePlugin()],
 		})),
-		[
-			// TS-backed features over the virtual code (diagnostics with the
-			// imba suppression rules + identifier presentation applied, hover,
-			// definitions, references, rename, completions, semantic tokens).
-			// Imba-specific service plugins (styles, tags, monarch-driven
-			// completions) get added alongside these in M2.
-			...createTypeScriptServices(tsdk.typescript),
-			// imba compiler parse diagnostics on the source document
-			createImbaDiagnosticsPlugin(),
-			// monarch-driven semantic highlighting on the root imba document
-			createImbaSemanticTokensPlugin(),
-		]
+		createImbaServicePlugins(tsdk.typescript)
 	);
 });
 

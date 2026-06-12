@@ -91,11 +91,30 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 			const instance = base.create(context);
 			const provideDiagnostics = instance.provideDiagnostics?.bind(instance);
 			const provideHover = instance.provideHover?.bind(instance);
-			if (!provideDiagnostics && !provideHover) {
+			const provideDocumentSymbols = instance.provideDocumentSymbols?.bind(instance);
+			if (!provideDiagnostics && !provideHover && !provideDocumentSymbols) {
 				return instance;
 			}
 			return {
 				...instance,
+				async provideDocumentSymbols(document, token) {
+					// parity: getNavigationTree intercept — the monarch outline
+					// REPLACES TS symbols for imba files (avoids duplicates and
+					// container-mapped ranges violating the LSP containment
+					// invariant); plain ts/js files keep TS symbols
+					if (isImbaBacked(context, document.uri)) {
+						return undefined;
+					}
+					return provideDocumentSymbols?.(document, token);
+				},
+				async provideDocumentSemanticTokens(document, range, legend, token) {
+					// parity: getEncodedSemanticClassifications intercept —
+					// monarch tokens replace TS classifications for imba files
+					if (isImbaBacked(context, document.uri)) {
+						return undefined;
+					}
+					return instance.provideDocumentSemanticTokens?.call(instance, document, range, legend, token);
+				},
 				async provideHover(document, position, token) {
 					const hover = await provideHover?.(document, position, token);
 					// parity: util.imba toImbaDisplayParts — convert encoded

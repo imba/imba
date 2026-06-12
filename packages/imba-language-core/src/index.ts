@@ -4,6 +4,8 @@ export { ImbaVirtualCode } from './virtualCode';
 export { createImbaLanguagePlugin, isImbaScriptId, type ScriptIdLike } from './languagePlugin';
 export { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 export { createImbaSemanticTokensPlugin, IMBA_SEMANTIC_LEGEND } from './plugins/imbaSemanticTokens';
+export { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
+export { createImbaServicePlugins } from './servicePlugins';
 export { createTypeScriptServices } from './plugins/typescriptServices';
 export { filterTsDiagnostic } from './plugins/tsDiagnosticRules';
 export { toImbaIdentifier, toImbaString } from './conversion';
