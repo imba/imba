@@ -30,6 +30,30 @@ declare module 'imba-monarch' {
 		eventModifierName?: string;
 		tagName?: string;
 		tagAttrName?: string;
+		suggest?: {
+			flags?: number;
+			prefix?: string;
+		};
+	}
+
+	/** bitmask flags for MonarchContext.suggest.flags */
+	export const CompletionTypes: {
+		TagName: number;
+		TagEvent: number;
+		TagEventModifier: number;
+		TagProp: number;
+		StyleProp: number;
+		StyleValue: number;
+		Value: number;
+		Type: number;
+		Path: number;
+		Decorator: number;
+		Access: number;
+	};
+
+	export interface MonarchImportEdit {
+		changes: { newText: string; start: number; length: number }[];
+		alias?: string;
 	}
 
 	export interface MonarchOutlineSpan {
@@ -54,5 +78,6 @@ declare module 'imba-monarch' {
 		getOutline(walker?: unknown): MonarchOutlineItem;
 		getContextAtOffset(offset: number, forwardLooking?: boolean): MonarchContext;
 		varsAtOffset(offset: number, globals?: boolean): unknown[];
+		createImportEdit(path: string, name: string, alias?: string, asType?: boolean): MonarchImportEdit;
 	}
 }

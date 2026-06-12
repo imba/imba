@@ -83,7 +83,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | D1 | Plain-code completions (vars, props, implicit self, globals, classes) | 100% hand-assembled (values/access in completions.imba) | **forward to TS** over virtual code at mapped positions; hand-roll only what TS can't see | M2.1 | ⬜ |
-| D2 | Tag names (html, local components, snippets) | tagnames() + checker.getLocalTags | monarch context → service plugin | M2.2 | ⬜ |
+| D2 | Tag names (html, local components, snippets) | tagnames() + checker.getLocalTags + getExportedTags via export-info crawl | `createImbaCompletionsPlugin` + **`ImbaTagIndex`** (regex scan over workspace .imba files, mtime-cached — the "ultrafast path", replaces the export-info crawl which was the old plugin's slowest completion) + HTMLElementTagNameMap via cached checker lookup + auto-import via monarch createImportEdit. Snippets pending | M2.2 | ✅ |
 | D3 | Tag attrs/props per tag | tagattrs() + isTagAttr filtering | service plugin + injected checker | M2.2 | ⬜ |
 | D4 | Tag events + event modifiers | ImbaEvents props + getEventModifiers | service plugin | M2.2 | ⬜ |
 | D5 | Style properties (abbr config), values per property, modifiers, selectors | styleprops/stylevalues/stylemods via imbacss symbols | service plugin — **Sindre leans toward serving these OUTSIDE the TS system** (static tables per imba version instead of imbacss symbol queries; old plugin only used TS because it had no other channel). Decide shape at M2.2 spike; static-first unless type-dependent values prove necessary | M2.2 | ⬜ |
@@ -183,6 +183,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — D2 tag-name completions: the ultrafast-index design
+- Design decision (Sindre's question answered): tag listings do NOT go through TS. `ImbaTagIndex` regex-scans workspace .imba files for `(export|global)? tag name` (mtime-cached, throttled walk) — TS can't see tags in never-imported files anyway, and the old getExportedTags/getExportInfoMap crawl was the slowest completion path. HTML tags come from `HTMLElementTagNameMap` via the cached-per-program checker lookup (so global custom-element augmentations appear too). Auto-import edits via monarch `createImportEdit` (dedupes existing imports; offsets→positions conversion).
+- Context detection: monarch `suggest.flags & CompletionTypes.TagName` on the root doc. Gotcha: a bare `<` with no closing `>` tokenizes as `operator.logic` (less-than) — completions fire in the `<|>` state, which is what editors produce via auto-closing pairs. The old plugin's `cleanAngleBrackets` hack relates; revisit if dev-host shows missed triggers.
+- Ranking: imba tags sortText '1…', html '2…'. Commit characters from old plugin ('> .[#' + space).
+- Tests cover: all four sources, ranking, partial `<co>` replacement range, auto-import edit content/position, and that local/global tags don't import.
 
 ### 2026-06-12 — Completion dot bug, round 2: dot-accessor normalization (the actual user-facing fix)
 - The $CARET$ placeholder mapping (below) made the textEdit survive but the served shape — `newText: ".RELUNIT"` over a range starting AT the dot — is mishandled by LSP clients once the user keeps typing (VS Code's native TS extension special-cases dotted member edits; LSP clients don't). Sindre saw both failure modes: `FLAGS..RELUNIT` (edit dropped → word-insert) and `FLAGSRELUNIT` (dot-covering range + later-normalized text).

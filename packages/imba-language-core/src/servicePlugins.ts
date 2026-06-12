@@ -1,4 +1,5 @@
 import type { LanguageServicePlugin } from '@volar/language-service';
+import { createImbaCompletionsPlugin } from './plugins/imbaCompletions';
 import { createImbaDiagnosticsPlugin } from './plugins/imbaDiagnostics';
 import { createImbaDocumentSymbolsPlugin } from './plugins/imbaDocumentSymbols';
 import { createImbaEventsPlugin } from './plugins/imbaEvents';
@@ -23,5 +24,7 @@ export function createImbaServicePlugins(ts: typeof import('typescript')): Langu
 		createImbaDocumentSymbolsPlugin(),
 		// event names + modifiers: monarch token → ImbaEvents lookup
 		createImbaEventsPlugin(ts),
+		// tag-name completions: workspace tag index + HTML tag map
+		createImbaCompletionsPlugin(ts),
 	];
 }
