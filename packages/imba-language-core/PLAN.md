@@ -54,7 +54,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | A7 | Virtual jsconfig for config-less projects | createVirtualProjectConfig + virtual file System patch | language server: default project for inferred workspaces | M3.6 | ⬜ |
 | A8 | Asset imports (`./icon.svg` etc., ImbaAsset types) | EXTRA_EXTENSIONS in resolveImportPath, `allowArbitraryExtensions` | `allowArbitraryExtensions` + asset `.d.ts`; verify per asset kind | M3.5 | ⬜ |
 | A9 | Global `extend class` / global tags across files (Ω dts sidecar) | dts.imba/dtsutil.imba: rewrite compiled dts → `.imba._.d.ts` virtual roots | **Scope expanded (Sindre 2026-06-12): A9 is the typings-from-source mechanism.** Stdlib declares modifiers/extensions in actual source (`extend class Event` in events/core.imba, `class IntersectionEvent` with `def @in/@out` in events/intersect.imba) — A9 turns those into global types, making the handwritten imba.events.d.ts *transitional*. Serves user `extend tag` (112 dogfood errors), stdlib modifiers, and source-located hover/def with real docs. Design: prefer compiler emitting `declare global` inline in the tsc target; fallback `getExtraServiceScripts`. Next major work item | M2.6 | 🤔 |
-| A10 | Project-local imba compiler (`useImbaFromProject`) | getImbaCompilerForPath + require | resolve `imba/compiler` from project root in compile layer | M3.7 | ⬜ |
+| A10 | Project-local imba compiler (`useImbaFromProject`) | getImbaCompilerForPath + require | `getProjectCompilerForFile` (walk-up node_modules/imba, CJS require of exports['./compiler'], error-once) wired into compileImba with the project version in the cache key; crashing compilers retire for the session and fall back to bundled with clean keys. Opt-in like the old default (setProjectCompilerEnabled / IMBA_USE_PROJECT_COMPILER=1); F3 wires the config | M3.7 | ✅ |
 | A11 | Multi-root / multiple tsconfig projects | **broken** in old plugin (last-project-wins) | Volar handles per-project natively — add regression test | M3.8 | ⬜ |
 
 ### B. Diagnostics
@@ -199,6 +199,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — A10 project-local compiler: opt-in, version-keyed, crash-safe
+- `getProjectCompilerForFile`: walk-up node_modules/imba lookup (per-dir memoized along the visited path), CJS require of the package's exports['./compiler'] (require → node → default conditions; ESM-only builds fall back to bundled since Volar's createVirtualCode is sync), per-package error-once cache.
+- compileImba uses it when enabled, with `imba@<version>` in the content-hash cache key so entries from different compilers never mix. A compiler that crashes at compile time is retired for the session and the call retries — recursion lands on the bundled compiler with its own clean cache key (the fallback result must never be stored under the project key).
+- Opt-in matching the old plugin's default (`useImbaFromProject: false`): `setProjectCompilerEnabled(true)` or env `IMBA_USE_PROJECT_COMPILER=1`. F3 config plumbing will expose it per-workspace.
+- test/m3-project-compiler.test.ts (4 tests; the monorepo's node_modules/imba symlink doubles as the "project" package). Suite at 108.
 
 ### 2026-06-12 — E7 + G1: server-side indentation folding, compile-cache warmer
 - E7 probe: TS folding mapped onto imba docs is degenerate noise (single-line ranges, dozens of duplicates) — and unlike the old tsserver-plugin world, an LSP server that advertises foldingRangeProvider can't count on client indentation fallbacks. So: TS folding suppressed for imba docs (same intercept family as symbols/semantic tokens) and `createImbaFoldingPlugin` computes indentation folding directly (stack-based, blank-line tolerant, tabs/spaces via column widths). widgets.imba folds exactly [tag → body, <self> → body, global tag → body].

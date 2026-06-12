@@ -12,6 +12,12 @@ export { createImbaTagsPlugin } from './plugins/imbaTags';
 export { createImbaWorkspaceSymbolsPlugin } from './plugins/imbaWorkspaceSymbols';
 export { createImbaFoldingPlugin, computeIndentFoldingRanges } from './plugins/imbaFolding';
 export { warmImbaCompileCache } from './warmer';
+export {
+	getProjectCompilerForFile,
+	setProjectCompilerEnabled,
+	isProjectCompilerEnabled,
+	type ProjectCompiler,
+} from './projectCompiler';
 export { ImbaTagIndex, getTagIndex, type WorkspaceTag } from './tagIndex';
 export { setupImbaProject } from './projectSetup';
 export { resolveImbaTypings, resolveImbaPackageDir } from './typings';

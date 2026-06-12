@@ -1,5 +1,6 @@
 import { compile, type ImbaRawDiagnostic } from 'imba/compiler';
 import { compileCacheKey, getCachedCompilation, setCachedCompilation } from './cache';
+import { getProjectCompilerForFile, markProjectCompilerFailed } from './projectCompiler';
 
 export interface ImbaCompilation {
 	js: string;
@@ -88,20 +89,45 @@ function withLastGood(fileName: string, raw: ImbaCompilation): ImbaCompilation {
 
 export function compileImba(fileName: string, source: string): ImbaCompilation {
 	const nocheck = STDLIB_PATH.test(fileName.split('\\').join('/'));
-	const key = compileCacheKey(fileName, source, nocheck ? 'nocheck' : '');
+	// A10 (opt-in): compile with the project's own imba version. The cache
+	// key carries that version — entries from different compilers never mix.
+	const projectCompiler = getProjectCompilerForFile(fileName);
+	const flags = `${nocheck ? 'nocheck' : ''}${projectCompiler ? `|imba@${projectCompiler.version}` : ''}`;
+	const key = compileCacheKey(fileName, source, flags);
 
 	const cached = getCachedCompilation(key);
 	if (cached) {
 		return withLastGood(fileName, cached);
 	}
 
+	const options = {
+		...BASE_OPTIONS,
+		fileName,
+		sourcePath: fileName,
+		nocheck: nocheck || undefined,
+	};
+
+	if (projectCompiler) {
+		try {
+			const res = projectCompiler.compile(source, options);
+			const result: ImbaCompilation = {
+				js: res.js || EMPTY_JS,
+				spans: res.locs?.spans ?? [],
+				diagnostics: res.diagnostics ?? [],
+			};
+			setCachedCompilation(key, result);
+			return withLastGood(fileName, result);
+		} catch {
+			// a crashing project compiler is retired for the session — retry
+			// resolves to the bundled compiler with its own cache key (the
+			// fallback result must not be stored under the project key)
+			markProjectCompilerFailed(projectCompiler.packageDir);
+			return compileImba(fileName, source);
+		}
+	}
+
 	try {
-		const res = compile(source, {
-			...BASE_OPTIONS,
-			fileName,
-			sourcePath: fileName,
-			nocheck: nocheck || undefined,
-		});
+		const res = compile(source, options);
 		const result: ImbaCompilation = {
 			js: res.js || EMPTY_JS,
 			spans: res.locs?.spans ?? [],
