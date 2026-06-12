@@ -110,12 +110,21 @@ export function createImbaCompletionsPlugin(typescript: typeof ts): LanguageServ
 					if (flags & CompletionTypes.Decorator) {
 						return decoratorItems(context, root, document.offsetAt(position), tokenRange('decorator.name'));
 					}
+					const styleTokenRange = () =>
+						tok && /^style\.value/.test(tok.type) && /^[-$\w]*$/.test(tok.value) && tok.offset <= offset
+							? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
+							: { start: position, end: position };
+					if (flags & (CompletionTypes.StyleVar | CompletionTypes.StyleColor)) {
+						return { isIncomplete: false, items: styleVarItems(context, decoded[0].fsPath, styleTokenRange()) as never[] };
+					}
 					if (flags & CompletionTypes.StyleValue && mctx.suggest?.styleProperty) {
-						const valueRange =
-							tok && tok.match('style.value') && /^[\w-]*$/.test(tok.value) && tok.offset <= offset
-								? { start: document.positionAt(tok.offset), end: document.positionAt(tok.endOffset) }
-								: { start: position, end: position };
-						return styleValueItems(context, typescript, mctx.suggest.styleProperty, valueRange);
+						const valueRange = styleTokenRange();
+						const result = styleValueItems(context, typescript, mctx.suggest.styleProperty, valueRange);
+						if (result) {
+							// declared style vars are valid values anywhere
+							result.items.push(...(styleVarItems(context, decoded[0].fsPath, valueRange) as never[]));
+						}
+						return result;
 					}
 					if (flags & (CompletionTypes.StyleProp | CompletionTypes.StyleModifier)) {
 						// the partial token's TYPE is ambiguous in style
@@ -346,6 +355,44 @@ function stylePropertyItems(context: LanguageServiceContext, typescript: typeof 
 		});
 	}
 	return { isIncomplete: false, items: items as never[] };
+}
+
+// parity: completions.imba stylevar()/stylecolorvar() via
+// ils.findImbaTokensOfType — but across ALL program imba files (the old
+// plugin only saw open scripts). Forcing monarchDoc tokenizes each file
+// once; instances are recreated (and re-lexed) only when a file changes.
+function styleVarItems(context: LanguageServiceContext, currentFile: string, range: LspRange) {
+	const program = getTypeScriptService(context)?.getProgram();
+	if (!program) {
+		return [];
+	}
+	const seen = new Set<string>();
+	const items = [];
+	for (const sourceFile of program.getSourceFiles()) {
+		if (!sourceFile.fileName.endsWith('.imba')) {
+			continue;
+		}
+		const root = context.language.scripts.get(URI.file(sourceFile.fileName))?.generated?.root;
+		if (!(root instanceof ImbaVirtualCode)) {
+			continue;
+		}
+		for (const token of root.monarchDoc.getMatchingTokens('style.property.var')) {
+			if (seen.has(token.value)) {
+				continue;
+			}
+			seen.add(token.value);
+			const local = root.fileName === currentFile;
+			items.push({
+				label: token.value,
+				kind: 6, // Variable
+				sortText: '0' + token.value,
+				detail: local ? undefined : path.basename(root.fileName),
+				commitCharacters: [' '],
+				textEdit: { range, newText: token.value },
+			});
+		}
+	}
+	return items;
 }
 
 // parity: completions.imba decorators() — local @-vars in scope plus the

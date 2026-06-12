@@ -82,6 +82,7 @@ declare module 'imba-monarch' {
 		constructor(owner: { fileName: string }, code: string | unknown);
 		tokens: MonarchToken[];
 		getOutline(walker?: unknown): MonarchOutlineItem;
+		getMatchingTokens(match: string | RegExp): MonarchToken[];
 		getContextAtOffset(offset: number, forwardLooking?: boolean): MonarchContext;
 		varsAtOffset(offset: number, globals?: boolean): { name: string }[];
 		createImportEdit(path: string, name: string, alias?: string, asType?: boolean): MonarchImportEdit;

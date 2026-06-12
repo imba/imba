@@ -103,6 +103,8 @@ function inImbaCompletionContext(
 			CompletionTypes.StyleProp |
 			CompletionTypes.StyleModifier |
 			CompletionTypes.StyleValue |
+			CompletionTypes.StyleVar |
+			CompletionTypes.StyleColor |
 			CompletionTypes.Decorator)
 	);
 }
