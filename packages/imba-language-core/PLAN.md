@@ -8,8 +8,8 @@ This is a *living working document*. Any session (human or agent) picking up thi
 
 ## Status & resume pointer
 
-- **Current milestone:** M2
-- **Next action:** F4/M2.11 preview extension scaffold (`imba-next`); then M2.6 (A9 — confirmed the #1 real gap by dogfood data)
+- **Current milestone:** M2 — **daily-drivable preview exists**: `code --extensionDevelopmentPath="$PWD/packages/vscode-imba-next" --disable-extensions <project>`
+- **Next action:** triage Sindre's first dev-host feedback; then M2.2 (monarch completion contexts) and M2.6 (A9 — confirmed the #1 real gap by dogfood data)
 - **Verify everything still works:** `cd packages/imba-language-core && npx tsc -b && npx vitest run`
 - **Build all three packages:** `npx tsc -b packages/imba-language-core packages/imba-typescript-plugin packages/imba-language-server` (repo root)
 
@@ -120,7 +120,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | F1 | Semantic tokens from monarch | getSemanticTokens via encodedSemanticClassifications intercept | `createImbaSemanticTokensPlugin` — standard LSP token types from monarch tokens on the root document (works in any LSP client, no tsserver) | M2.10 | ✅ |
 | F2 | Status bar (compile spinner etc.) | node-ipc bridge | LSP custom notifications (typed) in preview extension | M2.12 | ⬜ |
 | F3 | Config (suggest.*, workspaceSymbols.scope, debugLevel, useImbaFromProject) | configurePlugin + ipc | LSP configuration; port schema to preview extension | M3.9 | ⬜ |
-| F4 | Preview VS Code extension (`imba-next` style) | n/a | LSP client + `typescriptServerPlugins` entry for imba-typescript-plugin; zero changes to vscode-imba | M2.11 | ⬜ |
+| F4 | Preview VS Code extension (`imba-next` style) | n/a | `packages/vscode-imba-next`: LSP client → imba-language-server, grammar copied from vscode-imba, tsserver plugin contribution. Dev-host only (`code --extensionDevelopmentPath=… --disable-extensions`); vsce packaging needs bundling, M3 | M2.11 | ✅ |
 | F5 | Selection tracking / save notifications | ipc onDidChangeTextEditorSelection/didSave | not needed (LSP didSave; live parse diagnostics replace save-gating) | — | ❌ |
 | F6 | Standalone tsserver wrapper (typescript-imba-service) | separate package | superseded by imba-language-server (any LSP editor) | — | ❌ |
 | F7 | Protocol-wide greek-letter rewrite of every message | Session.send JSON round-trip | ❌ dropped by design — conversion happens at feature boundaries only (B4, C2, D-resolve) | — | ❌ |
@@ -183,6 +183,12 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — F4: vscode-imba-next preview extension (dev-host)
+- `packages/vscode-imba-next` (added to workspaces glob): language + grammar (copied from vscode-imba, which stays untouched), LanguageClient over node-IPC to imba-language-server, `typescriptServerPlugins` entry for imba-typescript-plugin (`languages: ['imba']`, Vue-style) so ts/js files resolve imba imports inside the built-in TS extension.
+- Runtime resolution chain verified from the extension dir (server module, plugin, vscode-languageclient, tsdk fallback). `--disable-extensions` in the run command keeps old `scrimba.vsimba` from double-serving .imba; built-in TS extension unaffected.
+- Dev-host only: module resolution rides the repo's workspace symlinks; packaging (`vsce`) requires bundling — deferred to M3/M4.
+- tsdk: honors `typescript.tsdk` (absolute or workspace-relative), else the workspace-hoisted TypeScript.
 
 ### 2026-06-12 — E5 document symbols + a hard-earned testing convention
 - **Correction to the F1 entry below:** the first semantic-tokens "pass" was a false positive — the harness hand-assembled its plugin list and was missing the imba plugins, so TS-provided tokens (mapped through spans) were being decoded against the wrong legend. Caught while E5 returned zero symbols.

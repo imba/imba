@@ -4,7 +4,8 @@
     "workspaces": [
         "packages/imba-language-core",
         "packages/imba-language-server",
-        "packages/imba-typescript-plugin"
+        "packages/imba-typescript-plugin",
+        "packages/vscode-imba-next"
     ],
     "devDependencies": {
         "lerna": "^9.0.7",

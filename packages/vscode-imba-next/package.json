@@ -1,0 +1,59 @@
+{
+    "name": "vscode-imba-next",
+    "displayName": "Imba Next (Preview)",
+    "description": "Preview of the next-generation Imba tooling (Volar-based language server). Run alongside development; do not install together with the regular Imba extension.",
+    "version": "0.0.1",
+    "private": true,
+    "publisher": "scrimba",
+    "author": "Sindre Aarsaether <sindre@identu.no>",
+    "engines": {
+        "vscode": "^1.91.0"
+    },
+    "categories": ["Programming Languages"],
+    "main": "./dist/extension.js",
+    "activationEvents": [
+        "onLanguage:imba"
+    ],
+    "scripts": {
+        "build": "tsc -b",
+        "watch": "tsc -b -w"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/imba/imba.git",
+        "directory": "packages/vscode-imba-next"
+    },
+    "contributes": {
+        "languages": [
+            {
+                "id": "imba",
+                "aliases": ["Imba", "imba"],
+                "extensions": [".imba"],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "imba",
+                "scopeName": "source.imba",
+                "path": "./syntaxes/imba.tmLanguage"
+            }
+        ],
+        "typescriptServerPlugins": [
+            {
+                "name": "imba-typescript-plugin",
+                "enableForWorkspaceTypeScriptVersions": true,
+                "languages": ["imba"]
+            }
+        ]
+    },
+    "dependencies": {
+        "imba-language-server": "file:../imba-language-server",
+        "imba-typescript-plugin": "file:../imba-typescript-plugin",
+        "typescript": "^5.8.0",
+        "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.91.0"
+    }
+}
