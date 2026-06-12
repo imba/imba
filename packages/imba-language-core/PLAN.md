@@ -65,7 +65,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | B2 | Imba compiler parse diagnostics | script.getImbaDiagnostics (save-gated) | `createImbaDiagnosticsPlugin` over the identity-mapped root doc (live, not save-gated) | M1.4 | ✅ |
 | B3 | Suppression rules (~25 codes: 2322/2339/2554/6133-patterns…) | diagnostics.imba Rules table + filterDiagnostics | `tsDiagnosticRules.ts` table + `createTypeScriptServices` wrapper (filters only imba-backed docs; plain .ts untouched). NOTE: rules match RAW messages (Ξ/Ψ/α encoded) | M1.5 | ✅ |
 | B6 | Unmappable/mismapped diagnostic suppression ("hide if it doesnt map perfectly") | patches.imba filterDiagnostics range+text checks | `mapsCleanly` in the wrapper: no-fallback range mapping required; unused-declaration diags additionally require mapped source text == reported name | M1.9 | ✅ |
-| B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | `conversion.ts` applied per diagnostic message in the wrapper | M1.6 | ✅ |
+| B4 | Greek-letter cleanup in messages (Ξ Φ Ψ Γ α Ω → imba names) | toImbaString over whole JSON protocol | `conversion.ts` applied per diagnostic message + relatedInformation in the wrapper | M1.6 | ✅ |
 | B5 | debugLevel≥2 "show suppressed as warnings" | filterDiagnostics | config flag on the wrapper | M3.9 | ⬜ |
 
 ### C. Hover / quick info
@@ -73,7 +73,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | # | Feature | Old implementation | New approach | Milestone | Status |
 |---|---|---|---|---|---|
 | C1 | TS hover at mapped positions | intercept.getQuickInfoAtPosition | volar-service-typescript via mappings; explicit e2e via `test/harness.ts` (full LanguageService over fixtures — reuse for all feature tests) | M1.7 | ✅ |
-| C2 | Identifier conversion in hover display | toImbaDisplayParts | post-process hover contents in wrapper | M2.4 | ⬜ |
+| C2 | Identifier conversion in hover display | toImbaDisplayParts | `provideHover` wrap in typescriptServices.ts (all MarkupContent/MarkedString shapes); Ω-prefixed internal names revisited with A9 | M2.4 | ✅ |
 | C3 | Imba-context hover: style props/values, units, mixins, style vars/colorvars, events, event modifiers, tag names/attrs, meta symbols, MDN links | script.getInfoAt + checker.getSymbolInfo (700+ lines) | monarch-driven hover service plugin; type queries via injected TS languageService | M2.3 | ⬜ |
 
 *C1 is exercised indirectly (mapping round-trips + diagnostics); add an explicit hover e2e test in M1.7.
@@ -183,6 +183,10 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — C2 pulled forward: hover + relatedInformation conversion
+- Audit prompted by Sindre's question "does greek-encoded stuff reach the user?": diagnostics messages were covered; `relatedInformation` messages and hover contents were NOT. Both now converted in the typescriptServices wrapper. Hover proven via `fancy-name` fixture (compiles to `fancyΞname`, hover must show the imba form).
+- Remaining conversion surfaces, deliberately deferred: completion labels/details (arrive with D1 forwarding, M2.1), signature help (M3.12), Ω-prefixed internal names in hover (meaningless until A9 introduces them; revisit at M2.6).
 
 ### 2026-06-12 — M1.9 dogfood over imba.io (203 files): M1 complete
 - `test/dogfood.cjs [projectDir] [--errors-only] [--samples=N]` — kit inferred checker over a real project, read-only; the compilerOptions in that script ARE the de-facto A5 injection list (target/module esnext, moduleResolution bundler, allowJs, skipLibCheck, strict off, allowArbitraryExtensions, customConditions ['imba'], lib esnext+dom+dom.iterable, typings d.ts as extra root).

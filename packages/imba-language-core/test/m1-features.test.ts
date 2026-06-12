@@ -55,4 +55,14 @@ describe('M1.7: hover and go-to-def e2e (C1)', () => {
 		const hover = await ls.getHover(loc.uri, loc.position);
 		expect(hoverText(hover)).toContain('greet');
 	});
+
+	it('hover shows imba identifiers, never greek-encoded ones (C2)', async () => {
+		// fancy-name compiles to fancyΞname; hover must show the imba form
+		const fancyImba = path.join(fixtureDir, 'fancy.imba');
+		const loc = locate(fancyImba, 'fancy-name!', 1);
+		const hover = await ls.getHover(loc.uri, loc.position);
+		const text = hoverText(hover);
+		expect(text).toContain('fancy-name');
+		expect(text).not.toContain('Ξ');
+	});
 });

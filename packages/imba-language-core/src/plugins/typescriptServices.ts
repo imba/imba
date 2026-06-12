@@ -68,19 +68,46 @@ function mapsCleanly(
 	return false;
 }
 
+type HoverContents = NonNullable<
+	Awaited<ReturnType<NonNullable<ReturnType<LanguageServicePlugin['create']>['provideHover']>>>
+>['contents'];
+
+function convertHoverContents(contents: HoverContents): HoverContents {
+	if (typeof contents === 'string') {
+		return toImbaString(contents);
+	}
+	if (Array.isArray(contents)) {
+		return contents.map(item =>
+			typeof item === 'string' ? toImbaString(item) : { ...item, value: toImbaString(item.value) }
+		);
+	}
+	return { ...contents, value: toImbaString(contents.value) };
+}
+
 function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 	return {
 		...base,
 		create(context) {
 			const instance = base.create(context);
 			const provideDiagnostics = instance.provideDiagnostics?.bind(instance);
-			if (!provideDiagnostics) {
+			const provideHover = instance.provideHover?.bind(instance);
+			if (!provideDiagnostics && !provideHover) {
 				return instance;
 			}
 			return {
 				...instance,
+				async provideHover(document, position, token) {
+					const hover = await provideHover?.(document, position, token);
+					// parity: util.imba toImbaDisplayParts — convert encoded
+					// identifiers in hover text (C2). Ω-prefixed internal
+					// names are A9 territory and revisited there.
+					if (hover?.contents) {
+						hover.contents = convertHoverContents(hover.contents);
+					}
+					return hover;
+				},
 				async provideDiagnostics(document, token) {
-					const result = await provideDiagnostics(document, token);
+					const result = await provideDiagnostics?.(document, token);
 					if (!result) {
 						return result;
 					}
@@ -108,6 +135,9 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 							diag.message = toImbaString(diag.message);
 						} else {
 							diag.message.value = toImbaString(diag.message.value);
+						}
+						for (const info of diag.relatedInformation ?? []) {
+							info.message = toImbaString(info.message);
 						}
 						kept.push(diag);
 					}
