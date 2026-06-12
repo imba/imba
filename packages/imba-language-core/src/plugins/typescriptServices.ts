@@ -100,6 +100,25 @@ function inImbaCompletionContext(
 	);
 }
 
+// parity: service.imba getDefinitionAndBoundSpan — "for convenience, hide
+// certain definitions": when imba-source definitions exist, drop the parallel
+// entries pointing into the shipped typings (imba.d.ts family). The old
+// __new filtering is obsolete (current compiler emits real constructors).
+const IMBA_TYPINGS_DTS = /\/typings\/(imba|styles)[^/]*\.d\.ts$/;
+
+export function preferImbaDefinitions<T extends { targetUri?: unknown; uri?: unknown }>(links: T[]): T[] {
+	const uriOf = (link: T) => String(link.targetUri ?? link.uri ?? '');
+	const hasImbaSource = links.some(link => uriOf(link).endsWith('.imba'));
+	if (!hasImbaSource) {
+		return links;
+	}
+	const filtered = links.filter(link => {
+		const uri = uriOf(link);
+		return uri.endsWith('.imba') || !IMBA_TYPINGS_DTS.test(uri);
+	});
+	return filtered.length ? filtered : links;
+}
+
 const UNUSED_NAME = /^'([^']+)' is declared but/;
 
 /**
@@ -204,11 +223,19 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 			const provideHover = instance.provideHover?.bind(instance);
 			const provideDocumentSymbols = instance.provideDocumentSymbols?.bind(instance);
 			const provideCompletionItems = instance.provideCompletionItems?.bind(instance);
-			if (!provideDiagnostics && !provideHover && !provideDocumentSymbols && !provideCompletionItems) {
+			const provideDefinition = instance.provideDefinition?.bind(instance);
+			if (!provideDiagnostics && !provideHover && !provideDocumentSymbols && !provideCompletionItems && !provideDefinition) {
 				return instance;
 			}
 			return {
 				...instance,
+				async provideDefinition(document, position, token) {
+					const result = await provideDefinition?.(document, position, token);
+					if (Array.isArray(result) && isImbaBacked(context, document.uri)) {
+						return preferImbaDefinitions(result) as never;
+					}
+					return result;
+				},
 				async provideCompletionItems(document, position, completionContext, token) {
 					// parity: the imba-specific completion contexts (tag names,
 					// events, modifiers) are served EXCLUSIVELY by the imba

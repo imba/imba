@@ -104,7 +104,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 |---|---|---|---|---|---|
 | E1 | Go to definition (TS-backed) | intercept + convertLocationsToImba | Volar mapping | M0* | ✅ |
 | E2 | Def/refs for style vars, colorvars, units, mixins | checker token-def synthesis | service plugin over workspace token index | M3.3 | ⬜ |
-| E3 | Definition filtering (`__new` removal, prefer .imba over .d.ts, meta suppression) | intercept.getDefinitionAndBoundSpan | wrapper around TS definitions | M2.7 | ⬜ |
+| E3 | Definition filtering (`__new` removal, prefer .imba over .d.ts, meta suppression) | intercept.getDefinitionAndBoundSpan | `preferImbaDefinitions` in the TS wrapper (imba source beats typings d.ts entries; never empties the list). `__new` rule obsolete — current compiler emits real constructors | M2.7 | ✅ |
 | E11 | Def/hover on tag usage (`<cool-widget>`) + attributes | checker.getTagSymbol/getTagAttrSymbol | **two-tier (key architecture validation):** attributes flow through TS mappings for free (exact spans, once Γ globals resolve — compiler already emits `declare global` registrations per tag declaration!); the tag NAME token (unequal span vs Γ-name) bridges via `createImbaTagsPlugin` + workspace index | M2.2 | ✅ |
 | E4 | Find references / rename (TS-backed) | intercepts + conversion | Volar mapping; rename name conversion via `navigation.resolveRenameNewName/EditText` mapping hooks | M3.10 | ⬜ |
 | E5 | Document symbols / outline | doc.getOutline (monarch) replacing navtree | `createImbaDocumentSymbolsPlugin` (monarch outline → LSP DocumentSymbols, TS symbols suppressed for imba docs) | M2.8 | ✅ |

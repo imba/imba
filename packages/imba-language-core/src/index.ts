@@ -12,7 +12,7 @@ export { createImbaTagsPlugin } from './plugins/imbaTags';
 export { ImbaTagIndex, getTagIndex, type WorkspaceTag } from './tagIndex';
 export { setupImbaProject } from './projectSetup';
 export { resolveImbaTypings, resolveImbaPackageDir } from './typings';
-export { createTypeScriptServices } from './plugins/typescriptServices';
+export { createTypeScriptServices, preferImbaDefinitions } from './plugins/typescriptServices';
 export { filterTsDiagnostic } from './plugins/tsDiagnosticRules';
 export { toImbaIdentifier, toImbaString } from './conversion';
 export { clearCompileMemoryCache, compileCacheKey, getCacheDir } from './cache';
