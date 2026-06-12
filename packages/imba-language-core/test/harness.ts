@@ -20,7 +20,10 @@ import { createImbaLanguagePlugin, createImbaServicePlugins, setupImbaProject } 
  * Mirrors @volar/kit's internal createTypeScriptCheckerLanguageService,
  * minus file watching and project references (fixtures are static).
  */
-export function createFixtureLanguageService(tsconfigPath: string): LanguageService {
+export function createFixtureLanguageService(
+	tsconfigPath: string,
+	options?: { setup?: boolean }
+): LanguageService {
 	const configPath = asPosix(tsconfigPath);
 	const imbaPlugin = createImbaLanguagePlugin<URI>();
 	const env = createServiceEnvironment(() => ({}));
@@ -77,6 +80,15 @@ export function createFixtureLanguageService(tsconfigPath: string): LanguageServ
 			...createLanguageServiceHost(ts, ts.sys, language, asUri, projectHost),
 		},
 	};
+
+	// the SAME project setup the language server runs (typings injection,
+	// compiler options) — skipping it made imba.io-scale probes silently
+	// lose the imbacss namespace. setup: false simulates a project where no
+	// imba install is resolvable (fixture-bare sits inside the monorepo, so
+	// the real walk-up lookup WOULD find one).
+	if (options?.setup !== false) {
+		setupImbaProject({ language, project });
+	}
 
 	// the SAME plugin list the language server uses — never hand-assemble
 	// plugin lists in tests (drift caused silent false positives in M2)

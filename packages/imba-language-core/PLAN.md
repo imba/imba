@@ -200,6 +200,11 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Style-completion speed report → found a harness/server drift bug instead
+- Sindre: old plugin's css completions avoid compilation and are "super snappy" — are ours? Measured over imba.io (263-file program), simulated keystrokes: **11–14ms post-edit, 167 value items at `d:`** (cold first request 526ms = initial program build). The checker-based imbacss path is imperceptible; NO static-table second source needed. (His screenshots remain consistent with a stale dev-host server process — current build behaves correctly on the exact snippets.)
+- The real find: the first measurement returned **0 items** — `createFixtureLanguageService` never called `setupImbaProject`, so app-scale programs had no injected typings and no imbacss namespace at all. Fixtures masked it via their tsconfig's customConditions. Same drift class as the M2 plugin-list lesson, now closed the same way: **the harness runs the server's setup hook** (opt-out flag exists for simulating no-imba-resolvable projects; fixture-bare's test uses kit directly and is unaffected).
+- perf-styles.test.ts doubles as an app-scale regression guard (asserts >50 items + 'block' present; latency logged, baseline 11–14ms).
+
 ### 2026-06-12 — F2 status bar: pull model over the G4 recovered flag
 - Server: custom `imba/fileStatus` request returns `{imba, recovered, crashed}` straight off the script's ImbaVirtualCode compilation — the G4 keep-last-good flag finally has its UI. Pull model (client asks for the active editor on editor/diagnostics/state changes) instead of per-keystroke pushes.
 - Extension: status bar item for imba editors — `$(check) Imba` normally, `$(warning)` while a file is being served from its last good compilation (tooltip explains), `$(error)` on compiler crash or server-down. Click → new `imba-next.restartServer` command (client.restart()).
