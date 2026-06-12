@@ -186,6 +186,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 
 ## Working log (newest first)
 
+### 2026-06-12 — Post-edit latency baseline over imba.io (G6 seed data)
+- Harness over apps/imba.io (203 files), editing src/api.imba (757 lines) by appending a real def, then immediately requesting features — the exact "old plugin went dead for 3–10s after edits" scenario:
+  - cold first hover (program build, warm disk cache): **64ms**; warm hover: 1ms
+  - first-ever diagnostics on the big file: **2242ms** (one-time deep check of the file + lazily-compiled dependency graph)
+  - **after each edit: hover 20–35ms, diagnostics 14–15ms, hover in a different file 1–19ms**
+- Reading: the old plugin's stalls came from (a) geterr fanout re-checking every open file ahead of interactive requests on tsserver's single queue, (b) sync compile on that same queue, (c) per-completion export-map crawls. None of those paths exist now. Remaining honest costs: first-touch deep check of a big file (~2s, once) — candidate for background warming alongside G1; sync compile of the edited file on the hot path (~20–35ms for 757 lines — fine); G3 getChangeRange still undefined (whole-file reparse of the edited file's virtual TS).
+
 ### 2026-06-12 — F8 v2: rebased onto the official imba/zed-imba extension
 - **Correction to the entry below:** imba/zed-imba AND imba/tree-sitter-imba already exist (Sindre). The official extension ships the tree-sitter grammar (pinned rev), highlight/outline/indent/locals queries, semantic_token_rules.json, and an embedded monarch mini-LSP (`imba-tags`: workspace symbols, doc symbols, basic tag goto-def, semantic tokens).
 - `packages/zed-imba` rebuilt as a 1:1 mirror of the official repo with ONE change: the mini-LSP replaced by `imba-language-server` (workspace node_modules → monorepo path → settings override). All mini-LSP features are superseded by the full server; running both would double-serve (the VS Code lesson). cargo check clean (zed_extension_api 0.7).
