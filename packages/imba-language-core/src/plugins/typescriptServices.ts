@@ -191,6 +191,58 @@ function convertHoverContents(contents: HoverContents): HoverContents {
 	return { ...contents, value: toImbaString(contents.value) };
 }
 
+type SignatureHelpLike = {
+	signatures: Array<{
+		label: string;
+		documentation?: string | { kind: string; value: string };
+		parameters?: Array<{
+			label: string | [number, number];
+			documentation?: string | { kind: string; value: string };
+		}>;
+	}>;
+};
+
+type DocumentationLike = string | { kind: string; value: string } | undefined;
+
+function convertDocumentation(doc: DocumentationLike): DocumentationLike {
+	if (typeof doc === 'string') {
+		return toImbaString(doc);
+	}
+	if (doc) {
+		return { ...doc, value: toImbaString(doc.value) };
+	}
+	return doc;
+}
+
+/**
+ * Signature labels carry encoded callee names (`fancyΞpad(…)`, `αthrottle(…)`
+ * for event modifiers, which compile to plain method calls). Parameter labels
+ * must stay substrings of the signature label for client highlighting, so both
+ * are converted with the same uniform replacement. Tuple parameter labels are
+ * [start, end] offsets into the label — only safe to keep when the conversion
+ * is length-preserving (Γ deletes a character), so bail out of converting
+ * that signature entirely in the mixed case.
+ */
+function convertSignatureHelp(help: SignatureHelpLike): void {
+	for (let i = 0; i < help.signatures.length; i++) {
+		const signature = help.signatures[i];
+		const hasTupleLabels = signature.parameters?.some(param => typeof param.label !== 'string');
+		if (hasTupleLabels && /[ΓΩ]/.test(signature.label)) {
+			continue;
+		}
+		help.signatures[i] = {
+			...signature,
+			label: toImbaString(signature.label),
+			documentation: convertDocumentation(signature.documentation),
+			parameters: signature.parameters?.map(param => ({
+				...param,
+				label: typeof param.label === 'string' ? toImbaString(param.label) : param.label,
+				documentation: convertDocumentation(param.documentation),
+			})),
+		};
+	}
+}
+
 type CompletionItemLike = {
 	insertText?: string;
 	filterText?: string;
@@ -324,6 +376,24 @@ function wrapPlugin(base: LanguageServicePlugin): LanguageServicePlugin {
 						hover.contents = convertHoverContents(hover.contents);
 					}
 					return hover;
+				},
+				async provideSignatureHelp(document, position, signatureHelpContext, token) {
+					const help = await instance.provideSignatureHelp?.call(
+						instance,
+						document,
+						position,
+						signatureHelpContext,
+						token
+					);
+					// parity: getSignatureHelpItems (E9). Call sites — including
+					// event-modifier parens, which compile to plain method calls
+					// (`e.αthrottle(500)`) — map through to TS; only the encoded
+					// callee names need converting. imba docs only: a ts/js file
+					// calling an imba export typed the encoded name itself.
+					if (help && isImbaBacked(context, document.uri)) {
+						convertSignatureHelp(help);
+					}
+					return help;
 				},
 				async provideDiagnostics(document, token) {
 					const result = await provideDiagnostics?.(document, token);

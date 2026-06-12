@@ -111,7 +111,7 @@ Status: ✅ done · 🚧 in progress · ⬜ pending · 🤔 needs design · ❌ 
 | E6 | Workspace symbols (imba + TS merged, scope config) | getNavigateToItems override | `createImbaWorkspaceSymbolsPlugin` (monarch getNavigateToItems program-wide, old fuzzy matching); TS results keep ts/js only with names converted (typings Φ/α symbols). Scope config (imbaOnly) pending with F3 | M3.3 | ✅ |
 | E7 | Folding | old returned `null` (!) | indentation folding from VS Code language config; optional monarch provider later | M2.9 | ⬜ |
 | E8 | Document highlights | disabled for imba | leave to TS via mappings; verify quality, disable if noisy | M3.11 | ⬜ |
-| E9 | Signature help (incl. event-modifier signatures) | intercept + checker.getSignatureHelpForType hack | TS-backed free via mapping; event-modifier case in service plugin | M3.12 | ⬜ |
+| E9 | Signature help (incl. event-modifier signatures) | intercept + checker.getSignatureHelpForType hack | TS-backed through the mappings (all caret states map, incl. empty parens); event-modifier parens need NO checker hack — modifiers compile to plain method calls. Wrapper converts encoded callee names in labels (imba docs only) | M3.12 | ✅ |
 | E10 | File-rename import edits | getEditsForFileRename + conversion | expect free via Volar; add test | M3.13 | ⬜ |
 
 ### F. Editor surface (vscode + protocol)
@@ -199,6 +199,13 @@ Auto-import completeness, workspace features, rename conversion, signature help,
 ---
 
 ## Working log (newest first)
+
+### 2026-06-12 — E9 signature help: the old checker hack is dead weight
+- Probed five caret states (after `(`, empty parens, after comma, dashed callee, modifier parens) — ALL map through to TS signature help, because Volar gates it on the `completion` flag and the exact/placeholder mappings already carry it. The old plugin's `checker.getSignatureHelpForType` interception isn't needed at all.
+- Event modifiers compile to plain method calls (`e.αthrottle(500)`), so `@click.throttle(|)` gets real TS signature help with active-parameter tracking and jsdoc param docs from the typings, for free.
+- Only gap was presentation: `provideSignatureHelp` wrapper in typescriptServices.ts converts encoded callee names (`fancyΞpad` → `fancy-pad`, `αthrottle` → `@throttle`) in signature/parameter labels + docs. Conversion is applied to imba-backed docs ONLY — a ts/js file calling an imba export typed the encoded name itself and must see it. Parameter labels stay substrings of the signature label (uniform conversion); tuple-offset labels guarded against the length-changing Γ/Ω case.
+- `char$` in a probed label is the compiler's reserved-word escape (`char` is reserved), not a default-param marker; the old plugin showed it too — left as-is.
+- New fixtures sig.imba / sig-ev.imba; test/m3-signature-help.test.ts (6 tests). Suite at 85.
 
 ### 2026-06-12 — Plow-through: D3, G3, E3, D5 slice 1, D11, F2 health check
 - Six matrix items landed in one stretch (66 tests green): tag attr completions, incremental snapshots, definition preference, style props/modifiers, imba keywords, env health warning.
