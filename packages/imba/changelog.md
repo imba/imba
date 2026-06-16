@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.252
 
 * Fix `@thenable` leaking memory by retaining its settled promise (and the `async_hooks`/`AsyncLocalStorage` context captured by it). The cached promise is now released once the method resolves or rejects, and subsequent calls/awaits settle immediately instead of re-caching a promise that would re-pin a fresh async context.
 

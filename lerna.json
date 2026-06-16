@@ -1,10 +1,7 @@
 {
   "packages": [
-    "packages/imba",
-    "packages/typescript-imba-plugin",
-    "packages/vscode-imba",
-    "packages/imba-monarch"
+    "packages/imba"
   ],
-  "allowBranch": ["master"],
+  "allowBranch": ["main"],
   "version": "independent"
 }
