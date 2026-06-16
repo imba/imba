@@ -64,12 +64,20 @@ export def @thenable target, key, desc
 				clearTimeout(timeout) if timeout
 				obj.met = yes
 				obj.error = error
+				# drop the promises once settled so they (and the async context
+				# they captured via async_hooks/AsyncLocalStorage) can be collected
+				obj.promise = null
+				obj.wrapped = null
 				console.trace `@thenable {readable} threw error`,error
 				reject(error)
 
 			that[key]().then(&,err) do
 				clearTimeout(timeout) if timeout
 				obj.met = yes
+				# drop the promises once settled so they (and the async context
+				# they captured via async_hooks/AsyncLocalStorage) can be collected
+				obj.promise = null
+				obj.wrapped = null
 				resolve(that)
 
 		return promise.then(ok,err)
@@ -82,6 +90,11 @@ export def @thenable target, key, desc
 
 	desc.value = do(value)
 		let m = lookup(this)
+		# once settled, return immediately — don't re-run the body or re-cache a promise
+		# (the cached one is released on settle; re-caching would re-pin a fresh async context)
+		if m.met
+			return Promise.reject(m.error) if m.error
+			return Promise.resolve(this)
 		m.wrapped ??= Promise.resolve(val.call(this,m))
 		return m.wrapped
 	
