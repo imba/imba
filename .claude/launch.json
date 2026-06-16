@@ -4,8 +4,11 @@
     {
       "name": "imba.io",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd apps/imba.io && PORT=3011 node dist/index.js"],
-      "port": 3011
+      "runtimeArgs": [
+        "-c",
+        "cd apps/imba.io && PORT=3018 node dist/index.js"
+      ],
+      "port": 3018
     }
   ]
 }
