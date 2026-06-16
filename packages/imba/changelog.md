@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix `@thenable` leaking memory by retaining its settled promise (and the `async_hooks`/`AsyncLocalStorage` context captured by it). The cached promise is now released once the method resolves or rejects, and subsequent calls/awaits settle immediately instead of re-caching a promise that would re-pin a fresh async context.
+
 * Fix `imbac` swallowing compile errors — it printed nothing and exited 0 when compilation failed with `-p`/`--print`. Errors and warnings now go to stderr (keeping stdout clean for compiled output), and the process exits with a non-zero code on compile errors. Also fix `imbac -s` (stdio mode) crashing on any input.
 
 * Remove Vite support from the main `imba` package. Imba's own esbuild-based toolchain (`imba run`, `imba build`, `imba serve`) is now the only supported bundling path.
