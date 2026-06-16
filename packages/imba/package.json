@@ -15,6 +15,7 @@
     "build-parser": "node scripts/build-parser.js",
     "build": "npm run build-parser && node scripts/build.js",
     "prepack": "npm run build",
+    "version": "node scripts/normalize-lockfile.js",
     "sync": "npm i && npm run build && npm link"
   },
   "engines": {
