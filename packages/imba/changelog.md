@@ -8,6 +8,8 @@
 
 * Ignore watcher changes to files that aren't part of the bundle. Logs, the bundle's own outputs, and other scratch files no longer trigger a rebuild — previously any file add or removal forced a full resolve. Two cases still rebuild: adding or removing a resolution sibling of a watched input (e.g. `test.node.imba` next to a tracked `test.imba`, which changes what an import resolves to), and any change while the last build is failing (so creating a missing imported file recovers it).
 
+* Scale the compile worker pool to the machine instead of a hard-coded count. It now uses `cores - 1` workers (minimum 2, capped at 8), based on `os.availableParallelism()` so it respects container/CI CPU limits — parallelizing builds on bigger machines while leaving a core for the main thread (esbuild, the dev server). Workers are still created on demand, so this is only a ceiling. Override with `IMBA_MAX_WORKERS`.
+
 ## 2.0.0-alpha.252
 
 * Fix `@thenable` leaking memory by retaining its settled promise (and the `async_hooks`/`AsyncLocalStorage` context captured by it). The cached promise is now released once the method resolves or rejects, and subsequent calls/awaits settle immediately instead of re-caching a promise that would re-pin a fresh async context.
