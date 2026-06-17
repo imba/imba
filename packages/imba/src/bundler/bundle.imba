@@ -1020,28 +1020,62 @@ export default class Bundle < Component
 			#buildcache = {}
 			return resolve(result)
 
+	# True when `path` is a resolution sibling of a watched input - same base
+	# with a different extension or platform suffix (e.g. test.node.imba next
+	# to a watched test.imba). Adding/removing such a file can change what an
+	# import resolves to, so it must trigger a rebuild even though `path` is
+	# not (yet) a tracked input. Uses this bundle's own resolveExtensions, so
+	# a .node.imba only counts for the node build, .web.imba for the web one.
+	def isResolutionSibling path
+		let exts = esoptions.resolveExtensions
+		return no unless exts
+		for ext in exts when path.endsWith(ext)
+			let base = path.slice(0,path.length - ext.length)
+			for alt in exts
+				let cand = base + alt
+				if cand != path and #watchedPaths[cand]
+					return yes
+		return no
+
 	def rebuild {force = no} = {}
 
 		unless built and context and context.rebuild isa Function
 			return build(yes)
 
 		buildcache[self] ||= new Promise do(resolve)
-			if main?
-				log.debug "starting rebuild!",!!watcher,force
-
 			if watcher and !force
 				let changes = watcher.sync(self)
 				let dirty = no
 				for [path,flags] in changes
-					if #watchedPaths[path] or flags != 1
+					# only rebuild when an actual bundle input changed or was
+					# removed. Files that aren't part of the graph - logs, the
+					# bundle's own outputs, scratch files - are ignored, even on
+					# add/unlink (which previously always forced a resolve).
+					if #watchedPaths[path]
+						dirty = yes
+					# ...but an added/removed resolution sibling of a watched
+					# input (test.node.imba next to a watched test.imba) can
+					# change what an import resolves to - rebuild for those too.
+					elif flags != 1 and isResolutionSibling(path)
 						dirty = yes
 
-				if main? and dirty
-					log.debug "changes demanding a resolve?",changes
+				# if the last build failed, the graph is incomplete - a missing
+				# import isn't in #watchedPaths yet. Retry on any change so that
+				# creating the missing file (resolvable many ways) recovers.
+				if result isa Error
+					dirty = yes
 
+				# nothing in the graph changed - bail silently (no rebuild,
+				# no reload) rather than starting a resolve we'd throw away.
 				unless dirty
 					#buildcache = {}
 					return resolve(result)
+
+				if main?
+					log.debug "changes demanding a resolve?",changes
+
+			if main?
+				log.debug "starting rebuild!",!!watcher,force
 
 			let prev = lastResult
 			let failed = no

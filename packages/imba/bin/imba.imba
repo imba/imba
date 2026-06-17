@@ -9,7 +9,7 @@ import FileSystem from '../src/bundler/fs'
 import Runner from '../src/bundler/runner'
 import Bundler from '../src/bundler/bundle'
 import Cache from '../src/bundler/cache'
-import {resolveConfig,resolveFile,resolvePackage,getCacheDir, resolvePath} from '../src/bundler/utils'
+import {resolveConfig,resolveFile,resolvePackage,getCacheDir, getAliasDir, resolvePath} from '../src/bundler/utils'
 import {resolvePresets,merge as extendConfig} from '../src/bundler/config'
 import * as dotenv from 'dotenv'
 
@@ -173,6 +173,7 @@ def parseOptions options, extras = []
 	options.loglevel ||= 'warning'
 
 	options.cachedir = getCacheDir(options)
+	options.aliasdir = getAliasDir!
 	global.#IMBA_OPTIONS = options
 	options.#parsed = yes
 	return options

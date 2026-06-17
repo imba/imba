@@ -82,11 +82,27 @@ export const builtInModules = {
 }
 
 export def getCacheDir options
-	# or just the directory of this binary?
-	let dir = process.env.IMBA_CACHEDIR or np.resolve(__dirname,'..','.imba-cache')  # np.resolve(os.homedir!,'.imba')
+	# Default to a project-local cache inside node_modules/.cache so it never
+	# leaks across projects and resets when imba is reinstalled. IMBA_CACHEDIR
+	# always wins; fall back to a project-local .imba-cache when there is no
+	# node_modules (e.g. a standalone script).
+	let cwd = options..cwd or process.cwd!
+	let dir = process.env.IMBA_CACHEDIR
+	unless dir
+		let nm = options..nodeModulesPath or np.resolve(cwd,'node_modules')
+		dir = nfs.existsSync(nm) ? np.resolve(nm,'.cache','imba') : np.resolve(cwd,'.imba-cache')
 	unless nfs.existsSync(dir)
-		console.log 'cache dir does not exist - create',dir
-		nfs.mkdirSync(dir)
+		nfs.mkdirSync(dir,{recursive: true})
+	return dir
+
+export def getAliasDir
+	# The path-alias map is global on purpose: its ids seed CSS class/scope
+	# names and field-registry keys, so separately-built projects that get
+	# mixed together must not collide. Unlike the per-project compiled-output
+	# cache it lives in a shared, user-level dir. IMBA_ALIASDIR overrides.
+	let dir = process.env.IMBA_ALIASDIR or np.resolve(os.homedir!,'.imba')
+	unless nfs.existsSync(dir)
+		nfs.mkdirSync(dir,{recursive: true})
 	return dir
 
 export def diagnosticToESB item, add = {}

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+* Cache compiled output in the project's `node_modules/.cache/imba` instead of a global, install-relative `.imba-cache`. The previous default lived next to the imba install, so every project built with a shared system/linked imba wrote into one ever-growing cache that was never pruned — progressively slowing builds and inflating memory as it accumulated. Compiled output is now per-project and resets when imba is reinstalled. `IMBA_CACHEDIR` still overrides it, and it falls back to a project-local `.imba-cache` when there is no `node_modules`.
+
+* Keep the path-alias map — whose ids seed CSS class/scope names and field-registry keys — in a shared user-level location (`~/.imba`, overridable with `IMBA_ALIASDIR`) rather than the per-project cache, so separately-built projects still get non-colliding ids when their output is mixed together. Its lookup is now O(1) (a key→index `Map`) instead of an `Array.indexOf` plus a full re-read of the alias file on every newly-seen path (which was O(n²) across a build).
+
+* Ignore watcher changes to files that aren't part of the bundle. Logs, the bundle's own outputs, and other scratch files no longer trigger a rebuild — previously any file add or removal forced a full resolve. Two cases still rebuild: adding or removing a resolution sibling of a watched input (e.g. `test.node.imba` next to a tracked `test.imba`, which changes what an import resolves to), and any change while the last build is failing (so creating a missing imported file recovers it).
+
 ## 2.0.0-alpha.252
 
 * Fix `@thenable` leaking memory by retaining its settled promise (and the `async_hooks`/`AsyncLocalStorage` context captured by it). The cached promise is now released once the method resolves or rejects, and subsequent calls/awaits settle immediately instead of re-caching a promise that would re-pin a fresh async context.

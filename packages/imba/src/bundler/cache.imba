@@ -19,8 +19,12 @@ export default class Cache
 		o = options
 		dir = o.cachedir # or np.resolve(program.cwd,'.cache') # file.absdir # np.dirname()
 		nodefs = o.volume or nfs
-		aliaspath = dir and np.resolve(dir,'.imba-aliases')
+		# aliases live in a shared (user-level) dir so their ids stay unique
+		# across separately-built projects; fall back to the cache dir if unset.
+		let aliasroot = o.aliasdir or dir
+		aliaspath = aliasroot and np.resolve(aliasroot,'.imba-aliases')
 		aliasmap = []
+		aliasindex = new Map
 		aliascache = {}
 
 		data = {
@@ -43,6 +47,8 @@ export default class Cache
 			cache[entry] = {exists: 1}
 
 		unless nodefs.existsSync(aliaspath)
+			let aliasdir = np.dirname(aliaspath)
+			nodefs.mkdirSync(aliasdir,{recursive: yes}) unless nodefs.existsSync(aliasdir)
 			nodefs.appendFileSync(aliaspath,"")
 
 		refreshAliasMap!
@@ -99,7 +105,12 @@ export default class Cache
 			0
 
 	def refreshAliasMap
-		aliasmap = nodefs.readFileSync(aliaspath,'utf8').split(/\r?\n/)
+		# one path per line - the index is its line number (and the id we hand
+		# out). Build a key->index Map so lookups are O(1) instead of indexOf.
+		aliasmap = nodefs.readFileSync(aliaspath,'utf8').split(/\r?\n/).filter(do $1)
+		aliasindex = new Map
+		for key,i in aliasmap
+			aliasindex.set(key,i) unless aliasindex.has(key)
 
 	def getPathAlias path
 		getKeyAlias(path)
@@ -107,31 +118,20 @@ export default class Cache
 	def getKeyAlias key
 		if aliascache[key]
 			return aliascache[key]
-		# should be a standard length
-		# let exists = nfs.existsSync(aliaspath)
-		# let stat = nfs.statSync(aliaspath)
-		let index = aliasmap.indexOf(key)
 
-		if index == -1
-			# append to the aliasmap now
-			# we need to read to get the new index since
-			# another process might have written to the
-			# same path at the same time
-			# if we read stats before and stats after - we can know for sure
+		let index = aliasindex.get(key)
+
+		# new path - give it the next index and append to the shared alias
+		# file. We keep the in-memory map in sync instead of re-reading the
+		# whole file on every new key (which made this O(n) per key).
+		if index == undefined
+			index = aliasmap.length
+			aliasmap.push(key)
+			aliasindex.set(key,index)
 			if persistToDisk
 				nodefs.appendFileSync(aliaspath,key + '\n','utf8')
-				refreshAliasMap!
-			else
-				aliasmap.push(key)
-			index = aliasmap.indexOf(key)
 
-		if index >= 0
-			# unless index % 40 == 0
-			#	throw "error"
-			return aliascache[key] = idFaucet(index) # idFaucet(index / 40)
-		else
-			console.log "key not added?",key,aliasmap
-			throw "could not add key to aliasmap"
+		return aliascache[key] = idFaucet(index)
 
 	def getKeyValue key
 		let path = fullKeyPath(key)
