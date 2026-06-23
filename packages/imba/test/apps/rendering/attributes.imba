@@ -25,3 +25,21 @@ test 'dataset' do
 test 'dataset 2' do
 	let el = <div data-one-more='a'>
 	eq el.dataset.oneMore, 'a'
+
+let optionalSetterCalls = []
+
+extend tag element
+	set optional-tip val,prev
+		optionalSetterCalls.push(val)
+
+test 'dynamic custom setters ignore initial undefined' do
+	optionalSetterCalls = []
+	let item = {}
+	let el = <div optional-tip=item.tip>
+	eq optionalSetterCalls.length, 0
+
+	optionalSetterCalls = []
+	let tipped = {tip: 'hello'}
+	let el2 = <div optional-tip=tipped.tip>
+	eq optionalSetterCalls.length, 1
+	eq optionalSetterCalls[0], 'hello'
