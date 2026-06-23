@@ -17636,8 +17636,6 @@ class Tag extends TagLike {
             ((item._value = LIT("" + iref + "=" + vc)), item);
             add(
               "(" +
-                this.bvar() +
-                "&&" +
                 vc +
                 "===" +
                 iref +
@@ -17653,8 +17651,6 @@ class Tag extends TagLike {
                 "=" +
                 val.c(o) +
                 "," +
-                this.bvar() +
-                "&&" +
                 this.vvar() +
                 "===" +
                 iref +
@@ -17762,8 +17758,6 @@ class Tag extends TagLike {
             ((item._value = LIT("" + iref + "=" + vc)), item);
             add(
               "(" +
-                this.bvar() +
-                "&&" +
                 vc +
                 "===" +
                 iref +
@@ -17779,8 +17773,6 @@ class Tag extends TagLike {
                 "=" +
                 val.c(o) +
                 "," +
-                this.bvar() +
-                "&&" +
                 this.vvar() +
                 "===" +
                 iref +
