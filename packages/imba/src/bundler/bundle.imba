@@ -155,7 +155,8 @@ export default class Bundle < Component
 		imbaconfig.#theme ||= new StyleTheme(imbaconfig)
 
 	get githash
-		root.#githash ||= try JSON.stringify(cp.execSync('git rev-parse --short HEAD').toString!.trim!)
+		# silence stderr and tolerate missing repo / repo without commits
+		root.#githash ||= try JSON.stringify(cp.execSync('git rev-parse --short HEAD', stdio: ['ignore','pipe','ignore']).toString!.trim!)
 
 	get root
 		parent ? parent.root : self
@@ -373,7 +374,9 @@ export default class Bundle < Component
 		let defines = esoptions.define ||= {}
 		defines["globalThis.DEBUG_IMBA"] ||= String(!production?)
 		
-		try defines["process.env.IMBA_GIT_HASH"] = githash
+		# githash is undefined outside a git repo (or before the first commit) -
+		# esbuild rejects undefined define values, so fall back to the literal undefined
+		defines["process.env.IMBA_GIT_HASH"] = githash or 'undefined'
 
 		if !nodeish?
 			let env = o.env or (production? ? 'production' : 'development')
