@@ -101,3 +101,56 @@ You can refer to positional arguments from within functions with `$n` if you don
 ```imba
 [1,2,3,4,5].filter do $1 > 3
 ```
+
+## Amperfuncs
+
+Tiny functions that just look something up or check a condition on their argument are incredibly common. Inspired by Ruby, Imba has an even shorter syntax for these — we call them _amperfuncs_. Inside an expression, `&` generates an inline function, where `&` refers to the first argument of that function:
+
+```imba
+const people = [{name: 'Joe', age: 28}, {name: 'Jane', age: 32}, {name: 'Pete', age: 15}]
+
+people.map(&.name) # ['Joe','Jane','Pete']
+people.filter(&.age > 18) # [{name: 'Joe'...}, {name: 'Jane'...}]
+```
+
+So `&.name` compiles to `do(v) v.name`. The three callbacks below are equivalent — each style a bit shorter than the previous:
+
+```imba
+people.map do(person) person.name
+people.map do $1.name
+people.map(&.name)
+```
+
+The generated function is not limited to a single property lookup. The body extends to the whole surrounding expression — property chains, method calls, comparisons and logical operators are all included, and every `&` in the expression refers to the same argument:
+
+```imba
+people.map(&.name.toUpperCase!) # ['JOE','JANE','PETE']
+people.find(&.age == 32) # {name: 'Jane', age: 32}
+people.filter(&.age > 18 and &.age < 30) # [{name: 'Joe'...}]
+
+const nums = [1,2,3,4,5]
+nums.filter(& > 2) # [3,4,5]
+nums.filter(& % 2 == 0) # [2,4]
+nums.filter(& in [2,3]) # [2,3]
+[1,'a',2].filter(& isa 'number') # [1,2]
+```
+
+Amperfuncs are plain functions, so you can also assign them to variables and pass them around:
+
+```imba
+const getName = &.name
+getName(people[1]) # 'Jane'
+```
+
+They may also reference variables from the surrounding scope:
+
+```imba
+def adults people, limit = 18
+    people.filter(&.age >= limit)
+```
+
+> When an amperfunc only references its own argument, Imba hoists the generated function and reuses a single instance — `people.map(&.name)` does not allocate a new closure on every call. This also gives the function a stable identity, which plays nicely with Imba's memoized rendering.
+
+Amperfuncs are meant for concise lookups and predicates, not general computation. Arithmetic like `& + 1` or `& * 2` is not supported — use `do $1 + 1` for those. And since `&` always refers to the first argument, reach for `do` with named or positional parameters when you need more than one.
+
+Also note that a lone `&` in an argument list — like `setTimeout(&,1500) do ...` — is the [callback placeholder](#calling-functions-callbacks) described earlier, not an amperfunc. The `&` only generates a function when it is followed by `.` or an operator.
