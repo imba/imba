@@ -327,3 +327,249 @@ class Dog < Animal
 let dog = new Dog 'Mitzie'
 dog.move 10 # Mitzie makes a noise. Mitzie ran 10 meters.
 ```
+
+## Mixins
+
+Classes can only inherit from a single superclass, but you will often want to share behaviour between classes that don't belong in the same hierarchy. Mixins solve this. A mixin is declared with the `mixin` keyword and looks just like a class — it can contain methods, getters, setters, and fields:
+
+```imba
+mixin Walks
+	def walk
+		"walking"
+
+mixin Swims
+	def swim
+		"swimming"
+```
+
+To include a mixin, add an `isa` declaration in the class body. A class can include any number of mixins:
+
+```imba
+class Duck
+	isa Walks
+	isa Swims
+
+let duck = new Duck
+duck.walk! # 'walking'
+duck.swim! # 'swimming'
+```
+
+The `isa` operator recognises mixins as well, so you can check whether an object includes a mixin the same way you would check for a class:
+
+```imba
+duck isa Walks # true
+duck isa Duck # true
+```
+
+Mixins work for tags as well:
+
+```imba
+mixin Draggable
+	def startDrag e
+		# ...
+
+tag draggable-box
+	isa Draggable
+```
+
+### How mixins are applied
+
+When a class includes mixins, Imba inserts a hidden intermediate class between the class and its superclass, and copies the mixin members onto it. Understanding this makes the behaviour easy to predict:
+
+- Members defined in the class itself always override mixin members.
+- If several mixins define the same member, the last `isa` declaration wins.
+- `super` behaves as if the mixin members were defined on a superclass.
+
+```imba
+mixin Greeter
+	def greet
+		"hello"
+
+class Base
+	def greet
+		"base"
+
+class Person < Base
+	isa Greeter
+
+	def greet
+		"{super} world" # resolves to Greeter#greet, not Base#greet
+
+let person = new Person
+person.greet! # 'hello world'
+```
+
+Since `Person` includes the `Greeter` mixin, `super` inside `greet` finds the mixin's implementation first — the real superclass `Base` sits behind the mixins in the chain.
+
+### Fields in mixins
+
+Fields declared in a mixin are initialized on every instance of the including class, just as if they had been declared in the class itself:
+
+```imba
+mixin Identifiable
+	uuid = Math.random!
+
+class Order
+	isa Identifiable
+
+(new Order).uuid # 0.1017...
+```
+
+A mixin cannot contribute a custom `constructor` — it is ignored when the mixin is applied. Use field declarations for per-instance setup instead.
+
+### Mixins inheriting from mixins
+
+A mixin can inherit from another mixin. Including it automatically brings in the whole chain:
+
+```imba
+mixin Walks
+	def walk
+		"walking"
+
+mixin Runs < Walks
+	def run
+		"running"
+
+class Athlete
+	isa Runs # includes Walks as well
+
+let athlete = new Athlete
+athlete.walk! # 'walking'
+athlete isa Walks # true
+```
+
+Mixins can also include other mixins with `isa` declarations in their body, just like classes.
+
+### Mixins with a class superclass
+
+A mixin may declare a regular class as its superclass. This constrains where it can be used — only classes that already inherit from that superclass may include it. In return, the mixin can safely use methods and properties from that superclass:
+
+```imba
+class Vehicle
+	def start
+		"vroom"
+
+mixin Turbo < Vehicle
+	def boost
+		"{start!}!!!"
+
+class Car < Vehicle
+	isa Turbo # ok - Car inherits from Vehicle
+
+(new Car).boost! # 'vroom!!!'
+```
+
+Trying to include such a mixin in a class that does not inherit from `Vehicle` will throw an error.
+
+## Reopening Classes
+
+Any class can be reopened later using `extend class` — adding new methods, getters, and setters to a class that has already been defined. This works for your own classes, classes imported from libraries, and even native classes:
+
+```imba
+class Model
+	def save
+		console.log 'saving'
+
+# somewhere else - possibly in a different file
+extend class Model
+	def fetch
+		console.log 'fetching'
+
+let model = new Model
+model.fetch! # 'fetching'
+```
+
+Reopening patches the class itself, so all instances — including ones created before the extension — get the new members immediately. This is how Imba adds functionality to native `Element` and `Node` classes in the browser. When extending native or third-party classes, it is a good idea to use [meta properties](#meta-properties) to avoid colliding with other code.
+
+Tags can be reopened the same way with `extend tag`. Extending the lowercase `element` tag makes members available on _all_ elements:
+
+```imba
+extend tag element
+	get appState
+		globalAppState
+```
+
+### Overriding with super
+
+When you redefine an existing method, getter, or setter in a class extension, `super` refers to the implementation you are replacing — whether it came from the class itself or from its superclass chain:
+
+```imba
+class Logger
+	def log msg
+		console.log msg
+
+extend class Logger
+	def log msg
+		super "[log] {msg}" # calls the original implementation
+
+let logger = new Logger
+logger.log 'hello' # '[log] hello'
+```
+
+This makes class extensions a powerful way to wrap or instrument existing behaviour without touching the original definition.
+
+### Dynamic extensions
+
+`extend class` also accepts a class stored in a variable, and members can have computed names. This makes it possible to write utilities that patch classes at runtime:
+
+```imba
+class Item
+	def one
+		1
+
+def patch cls, key, value
+	extend class cls
+		def [key]
+			super + value
+
+let item = new Item
+patch(Item,'one',10)
+item.one! # 11
+```
+
+### Limitations
+
+Class extensions can only add instance-level members — methods, getters, and setters. `static` members are not supported, and fields with initial values are not allowed, since no constructor runs for instances that already exist. If you need per-instance state in an extension, use a lazy getter with a meta property instead:
+
+```imba
+extend class Model
+	get items
+		#items ||= []
+```
+
+### Reopening mixins
+
+Mixins can be reopened too, using `extend mixin`. New members propagate to every class that already includes the mixin — even to existing instances:
+
+```imba
+mixin Logger
+	def log msg
+		console.log msg
+
+class Model
+	isa Logger
+
+let model = new Model
+
+extend mixin Logger
+	def warn msg
+		console.warn msg
+
+model.warn 'watch out!' # works - Model picked up the new method
+```
+
+You can also add mixins to an already defined class by reopening it:
+
+```imba
+mixin Serializer
+	def serialize
+		JSON.stringify(self)
+
+class Model
+	name = 'model'
+
+extend class Model
+	isa Serializer
+
+(new Model).serialize! # '{"name":"model"}'
+```

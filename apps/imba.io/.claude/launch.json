@@ -1,0 +1,11 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "imba.io",
+			"runtimeExecutable": "npx",
+			"runtimeArgs": ["imba", "-SMf", "index.imba"],
+			"port": 3187
+		}
+	]
+}
