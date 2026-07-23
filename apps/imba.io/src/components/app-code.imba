@@ -8,7 +8,7 @@ import './app-popover'
 import '../repl/browser'
 
 def getVisibleLineCount code
-	let parts = code.replace(/# [\[\~].+(\n|$)/g,'').replace(/\n+$/,'').split('# ---\n')
+	let parts = code.replace(/^# [\[\~].+(\n|$)/gm,'').replace(/\n+$/,'').split('# ---\n')
 	(parts[1] or parts[0]).split('\n').length
 
 tag app-code

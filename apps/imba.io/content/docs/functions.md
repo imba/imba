@@ -107,10 +107,14 @@ You can refer to positional arguments from within functions with `$n` if you don
 Tiny functions that just look something up or check a condition on their argument are incredibly common. Inspired by Ruby, Imba has an even shorter syntax for these — we call them _amperfuncs_. Inside an expression, `&` generates an inline function, where `&` refers to the first argument of that function:
 
 ```imba
-const people = [{name: 'Joe', age: 28}, {name: 'Jane', age: 32}, {name: 'Pete', age: 15}]
+const people = [
+	{name: 'Joe', age: 28}
+	{name: 'Jane', age: 32}
+	{name: 'Pete', age: 15}
+]
 
 people.map(&.name) # ['Joe','Jane','Pete']
-people.filter(&.age > 18) # [{name: 'Joe'...}, {name: 'Jane'...}]
+people.filter(&.age > 18) # [{name: 'Joe'...}, ...]
 ```
 
 So `&.name` compiles to `do(v) v.name`. The three callbacks below are equivalent — each style a bit shorter than the previous:
