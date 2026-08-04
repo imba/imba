@@ -404,6 +404,8 @@ Lexer.prototype.reset = function (){
 	
 	this._tokens = []; // Stream of parsed tokens in the form `['TYPE', value, line]`.
 	this._seenFor = false;
+	this._seenLoop = false;
+	this._loopEnds = 0;
 	this._loc = 0;
 	this._locOffset = 0;
 	
@@ -1140,9 +1142,14 @@ Lexer.prototype.isKeyword = function (id,next){
 		return false;
 	};
 	
-	// hack to allow imba.when to be exported with tree-shaking
-	if (id == 'when' && this._lastTyp == 'CONST') {
-		return false;
+	// `when`/`by` are only keywords as guard/step after for/while/until on
+	// the same line, or - for `when` - as a case-marker at the start of a
+	// line directly inside a switch block. Elsewhere they are plain identifiers
+	if (id == 'when' || id == 'by') {
+		if (!this._lastTyp || LINE_BREAK_MAP[this._lastTyp] == 1) {
+			return id == 'when' && this.getScope() == 'SWITCH';
+		};
+		return this._seenLoop;
 	};
 	
 	if (id == 'get' || id == 'set') {
@@ -1366,6 +1373,11 @@ Lexer.prototype.identifierToken = function (){
 			typ = 'LEADING_WHEN';
 		} else if (typ === 'FOR') {
 			this._seenFor = true;
+			this._seenLoop = true;
+			this._loopEnds = this._ends.length;
+		} else if (typ === 'WHILE' || typ === 'UNTIL') {
+			this._seenLoop = true;
+			this._loopEnds = this._ends.length;
 		} else if (typ === 'UNLESS') {
 			typ = 'IF'; // WARN
 		} else if (UNARY_MAP[typ] == 1) {
@@ -1434,7 +1446,7 @@ Lexer.prototype.identifierToken = function (){
 	
 	
 	// should be strict about the order, check this manually instead
-	if (typ == 'CLASS' || typ == 'DEF' || typ == 'TAG' || typ == "PROP" || typ == 'CSS') {
+	if (typ == 'CLASS' || typ == 'DEF' || typ == 'TAG' || typ == "PROP" || typ == 'CSS' || typ == 'SWITCH') {
 		this.queueScope(typ);
 	};
 	
@@ -1816,12 +1828,16 @@ Lexer.prototype.lineToken = function (){
 	
 	var indent = match[0];
 	var brCount = this.moveHead(indent);
-	
+
 	this._seenFor = false;
 	// reset column as well?
 	var prev = last(this._tokens,1);
 	let whitespace = indent.substr(indent.lastIndexOf('\n') + 1);
 	var noNewlines = this.unfinished();
+
+	// a loop header can span physical lines - via unfinished expressions or
+	// inside pairs (parens/brackets) opened after the loop keyword
+	if (!noNewlines && this._ends.length <= this._loopEnds) { this._seenLoop = false };
 	
 	if ((/^\n#\s/).test(this._chunk)) {
 		this.addLinebreaks(1);
@@ -2215,6 +2231,7 @@ Lexer.prototype.literalToken = function (){
 	
 	if (value === ';') {
 		this._seenFor = false;
+		this._seenLoop = false;
 		tokid = 'TERMINATOR';
 	};
 	
