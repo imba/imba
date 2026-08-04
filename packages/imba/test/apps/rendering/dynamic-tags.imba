@@ -105,3 +105,27 @@ describe "With component" do
 		imba.mount(let app = <App>)
 		eq counters.render,1
 		eq counters.setup,1
+
+# local (non-exported) tag with tag-scoped css and a dynamic-type child
+# used to crash codegen with `this._styleName.c is not a function`
+describe "dynamic type in css-scoped local tag" do
+	tag Wrapped
+		def part
+			<div.inner> "part"
+
+		def render
+			<self>
+				<(part!) .large>
+
+		css .inner
+			color: red
+		css .large
+			font-weight: 600
+
+	test do
+		imba.mount(let app = <Wrapped>)
+		let el = app.children[0]
+		ok el.classList.contains('inner')
+		ok el.classList.contains('large')
+		eq window.getComputedStyle(el).color, 'rgb(255, 0, 0)'
+		eq window.getComputedStyle(el).fontWeight, '600'

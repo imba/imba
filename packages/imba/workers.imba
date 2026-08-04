@@ -15,8 +15,14 @@ def compile_imba code, options
 	try
 		res = compile(code,options)
 	catch e
-		console.log "ERROR COMPILING IMBA",e,options.sourcePath,code
-		res = {}
+		console.error "ERROR COMPILING IMBA {options.sourcePath}\n{e..stack or e}"
+		let zero = {line: 0, character: 0, offset: 0}
+		res = {errors: [{
+			severity: 1
+			source: 'imba-compiler'
+			message: "Internal compiler error: {e..message or e}"
+			range: {start: zero, end: zero}
+		}]}
 
 	if res.diagnostics
 		for item in res.diagnostics

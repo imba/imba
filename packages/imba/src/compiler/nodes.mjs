@@ -1692,9 +1692,17 @@ class Stack {
   }
 
   currentRegion() {
+    // walk up from the deepest node until we find one with a real location
     let l = this._nodes.length;
-    let node = this._nodes[--l];
-    return node && [node.startLoc(), node.endLoc()];
+    while (l > 0) {
+      let node = this._nodes[--l];
+      let start = node && node.startLoc && node.startLoc();
+      let end = node && node.endLoc && node.endLoc();
+      if (start >= 0 && end >= start) {
+        return [start, end];
+      }
+    }
+    return null;
   }
 }
 
@@ -5427,7 +5435,17 @@ class Root extends Code {
       this.runtime().styles;
     }
 
-    var out = this.c(o);
+    var out;
+    try {
+      out = this.c(o);
+    } catch (e) {
+      let err = ImbaTraverseError.wrap(
+        e instanceof Error ? e : new Error(String(e)),
+      );
+      err._sourcePath = OPTS.sourcePath;
+      err._loc = STACK.currentRegion();
+      throw err;
+    }
 
     if (STACK.tsc()) {
       if ((registry = STACK.fieldRegistryDeclaration())) {
@@ -16524,7 +16542,8 @@ class Tag extends TagLike {
         }
 
         if (isDynamicType && true) {
-          this._styleName = cname;
+          // cssref returns the raw css namespace string for local never-extended tags
+          this._styleName = typeof cname == "string" ? STR(cname) : cname;
         } else {
           this._classNames.push(cname);
         }

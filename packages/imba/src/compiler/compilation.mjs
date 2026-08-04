@@ -110,7 +110,26 @@ export class Compilation {
     if (this.step(STEPS.COMPILE)) {
       if (!this.errored) {
         Compilation.current = this;
-        this.result = this.ast.compile(this.options, this);
+        try {
+          this.result = this.ast.compile(this.options, this);
+        } catch (e) {
+          // internal compiler error - report it as a located diagnostic so it
+          // flows through the same channel as parse errors instead of crashing
+          let loc = e._loc;
+          if (!(loc && loc[0] >= 0 && loc[1] >= loc[0])) {
+            loc = [0, 0];
+          }
+          let orig = e.error || e;
+          this.addDiagnostic("error", {
+            message: "Internal compiler error: " + (orig.message || orig),
+            source: "imba-compiler",
+            range: this.rangeAt(loc[0], loc[1]),
+          });
+          console.error(
+            "[imba] internal compiler error in " + (this.sourcePath || "<unknown>") + "\n" +
+              (orig.stack || orig),
+          );
+        }
       }
       if (this.options.raiseErrors) {
         this.raiseErrors();

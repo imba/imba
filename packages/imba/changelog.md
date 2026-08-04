@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* Fix compiler crash (`this._styleName.c is not a function`) when a local, non-exported tag declares tag-scoped `css` and its render tree contains a dynamic-type child (`<(expr)>` / `<{type}>`). For such never-extended tags the scoped css class is a compile-time string, and the dynamic-tag codegen only handled the runtime-expression form used by exported tags.
+
+* Report internal compiler errors as located diagnostics instead of crashing the build. A codegen exception is now caught and reported against the source location of the node being compiled (like parse errors are), flowing through the normal error channel — so `imba build` fails with a `file:line:col` message and a code excerpt rather than dumping the raw exception. The JS stack still goes to stderr for bug reports, and the compile-worker fallback no longer prints the entire source file.
+
 * Cache compiled output in the project's `node_modules/.cache/imba` instead of a global, install-relative `.imba-cache`. The previous default lived next to the imba install, so every project built with a shared system/linked imba wrote into one ever-growing cache that was never pruned — progressively slowing builds and inflating memory as it accumulated. Compiled output is now per-project and resets when imba is reinstalled. `IMBA_CACHEDIR` still overrides it, and it falls back to a project-local `.imba-cache` when there is no `node_modules`.
 
 * Keep the path-alias map — whose ids seed CSS class/scope names and field-registry keys — in a shared user-level location (`~/.imba`, overridable with `IMBA_ALIASDIR`) rather than the per-project cache, so separately-built projects still get non-colliding ids when their output is mixed together. Its lookup is now O(1) (a key→index `Map`) instead of an `Array.indexOf` plus a full re-read of the alias file on every newly-seen path (which was O(n²) across a build).
