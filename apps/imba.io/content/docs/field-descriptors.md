@@ -194,6 +194,87 @@ class @tracked < Accessor
 - `static` fields support descriptors too — the descriptor is cached on the class itself rather than the prototype.
 - An arbitrary expression can be used as a descriptor with `@(expression)` — the expression is evaluated (once, lazily) and its result is used directly as the descriptor object.
 
+## Use cases
+
+Field descriptors move behavior that would otherwise be scattered across getters, setters, and constructors into small reusable objects with a name. Some patterns they are particularly good at:
+
+### Validation and normalization
+
+Since every write goes through `$set`, rules like clamping, trimming, and coercion live in one place and apply everywhere the field is assigned — the examples earlier on this page ([clamped numbers](#defining-a-descriptor), [normalized strings](#default-values)) are variations of this pattern. The assigning code never needs to know the rules exist.
+
+### Self-describing models
+
+This is the pattern frameworks build ORMs and schemas on. Define the field vocabulary once in a base class, and every model declares its shape in a few readable lines:
+
+```imba
+class Issue < Model
+	title @string.required
+	status @enum('open', 'closed') = 'open'
+	owner @ref(User).index
+	comments @children(Comment)
+	created @timestamp
+```
+
+None of these are built into Imba — they are methods on `Model`. Each declaration can carry everything the framework needs to know about the field: how to validate it, how to persist it (down to the database column type), whether to index it, how relations resolve, even which form control to render for it. All of that metadata lives on the descriptor object where the framework can read it back — the model describes itself.
+
+### Computed fields
+
+With [block callbacks](#block-callbacks), a descriptor receives a function and full control over when to call it — enabling memoized or computed fields where the descriptor decides how results are cached and invalidated.
+
+### Custom storage
+
+Nothing forces a descriptor to store values on the instance. `$get` and `$set` can read and write anywhere — `localStorage`, a `WeakMap`, a server. Here is a settings object whose fields transparently persist across page loads:
+
+```imba
+# [preview=console]
+class Settings
+	def @setting
+		{
+			$set: do(value, target, key, name)
+				window.localStorage.setItem("settings:{name}", JSON.stringify(value))
+			$get: do(target, key, name)
+				let raw = window.localStorage.getItem("settings:{name}")
+				raw !== null ? JSON.parse(raw) : (this.default and this.default!)
+		}
+
+	theme @setting = 'light'
+	volume @setting = 8
+
+let settings = new Settings
+console.log settings.theme # light - or dark if you ran this before!
+settings.theme = 'dark'
+console.log settings.theme # dark
+```
+
+### Change tracking
+
+A descriptor sees every write, making it a natural hook for dirty-tracking, undo journals, syncing to a server, or notifying interested parties:
+
+```imba
+# [preview=console]
+class Model
+	def @tracked
+		{
+			$set: do(value, target, key, name)
+				let prev = target[key]
+				target[key] = value
+				target.fieldDidChange(name, value, prev) if value != prev and target.fieldDidChange
+			$get: do(target, key)
+				target[key]
+		}
+
+class Todo < Model
+	title @tracked
+	done @tracked
+
+	def fieldDidChange name, value, prev
+		console.log "{name}: {prev} -> {value}"
+
+let todo = new Todo
+todo.title = "Write docs"
+todo.done = yes
+```
+
 ## Relation to decorators
 
 Both features share the `@name` syntax but do different jobs: [decorators](/docs/decorators) wrap or replace an already-defined *method* by transforming its property descriptor at class-definition time, while field descriptors define how a *field* behaves by routing every read and write through an object you construct. A decorator runs once when the class is set up; a field descriptor participates in every access.
