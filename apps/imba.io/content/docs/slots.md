@@ -24,8 +24,8 @@ Anything inside the `<slot>` will be shown if no content is supplied from outsid
 ```imba
 import 'util/styles'
 css body d:flex
-css app-option d:hflex a:center
-css app-example d:vflex
+css app-option d:hcl
+css app-example d:vts
 
 # ---
 tag app-option
@@ -50,7 +50,7 @@ You can also add named slots using `<slot name=...>` and render into them using 
 import 'util/styles'
 css body d:flex
 
-css app-panel d:hflex
+css app-panel d:hsl
     aside p:1 bg:gray3
     main p:1 fs:md fl:1
 

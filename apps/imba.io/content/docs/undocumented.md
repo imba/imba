@@ -334,22 +334,6 @@ let obj =
 		a+ b
 ```
 
-## Flex Layouts
-
-Imba supports flex layouts that follow a 3-character pattern: `vh` `tbcs` `lrcs`.
-
-`v` and `h` stand for `vertical` and `horizontal` respectively.
-
-`t` and `b` stand for `top` and `bottom` respectively.
-
-`l` and `r` stand for `left` and `right` respectively.
-
-`c` and `s` stand for `center` and `stretch`/`space-between` (depending on the flex-direction) respectively.
-
-It sounds a bit complicated but it's much more intuitive once you get a feel for it.
-For example, to create a container whose content is centered, you can use `d:vcc` or `d:hcc`.
-If you want the content to be to the top left, you can do `d:vtl` or `d:htl`.
-
 ## Accessors
 
 Imba allows you to delegate an object as the accessor for a field. Accessors
@@ -700,7 +684,7 @@ tag about-page < base-page
 # can be used as a modifier globally in your styles
 global css
 	body hue:blue @home-page:indigo
-	header d:hflex @home-page:none
+	header d:hsl @home-page:none
 
 ```
 

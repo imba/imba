@@ -166,7 +166,7 @@ If you declare style rules inside `tag` definitions, all the styles will magical
 # these are global -- applies to everything in project
 # ---
 tag app-card
-    css fs:sm rd:md d:vflex bg:teal1 c:teal7
+    css fs:sm rd:md d:vts bg:teal1 c:teal7
     css .header bg:teal2/50 p:3
     css .body p:3
 
@@ -332,6 +332,37 @@ imba.mount do
 ##### Tip! Set properties directly [tip]
 
 You can definitely use interpolated values with css variables as well, but it is best to interpolate them directly at the value where you want to use it. This way Imba can include the correct default unit if none is provided and more.
+
+## Layout Shorthands
+
+Imba adds non-standard values for the `display` (`d`) property that set up a complete flex layout with a single value. The values follow a 3-character pattern: `d:{v|h}{t|c|b|s}{l|c|r|s}`.
+
+- The first character sets the direction — `v` for a vertical (column) layout, `h` for a horizontal (row) layout.
+- The second character sets the vertical alignment — `t`op, `c`enter, `b`ottom or `s`tretch.
+- The third character sets the horizontal alignment — `l`eft, `c`enter, `r`ight or `s`tretch.
+
+It sounds a bit complicated, but it is intuitive once you get a feel for it. To center content on both axes you can use `d:vcc` or `d:hcc`. To pin content to the top left, `d:vtl` or `d:htl`. The `s` value stretches content on the cross axis, and distributes it with `space-between` along the main axis.
+
+```imba
+# [preview=lg]
+css .demo bg:teal2 c:teal8 m:1 p:1 rd:sm
+css section d:block h:auto p:1
+	div h:80px bd:1px dashed gray4 rd:md mb:2
+# ---
+imba.mount do
+	<section>
+		<div[d:hcc]> # horizontal, centered both ways
+			<span.demo> "one"
+			<span.demo> "two"
+		<div[d:htl]> # horizontal, top left
+			<span.demo> "one"
+			<span.demo> "two"
+		<div[d:hcs]> # horizontal, space-between
+			<span.demo> "one"
+			<span.demo> "two"
+```
+
+There are also two grid shorthands — `d:vgrid` (grid with auto-flow row) and `d:hgrid` (grid with auto-flow column and `1fr` auto-columns).
 
 ## CSS Variables
 

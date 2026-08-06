@@ -10,11 +10,11 @@ properties on elements.
 tag app
 	<self>
 
-		<nav[d:box g:4 c:blue6]>
+		<nav[d:hcc g:4 c:blue6]>
 			<a route-to='/home'> 'Home'
 			<a route-to='/about'> 'About'
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<div route='/home'>
 				'Home page.'
@@ -43,11 +43,11 @@ Any route that ends with `/` will be treated as an exact route.
 tag app
 	<self>
 
-		<nav[d:box g:4 c:blue6]>
+		<nav[d:hcc g:4 c:blue6]>
 			<a route-to='/home'> 'Home'
 			<a route-to='/home/test'> 'Test'
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<div route='/home/'>
 				'Home page.'
@@ -68,11 +68,11 @@ path. Let's fix the previous example:
 tag app
 	<self>
 
-		<nav[d:box g:4 c:blue6]>
+		<nav[d:hcc g:4 c:blue6]>
 			<a route-to='/home'> 'Home'
 			<a route-to='/home/test'> 'Test'
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<div route='/home/*'>
 				'Home page.'
@@ -99,10 +99,10 @@ and resolve relative to the closest parent route. This works for both
 tag app
 	<self>
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<div route='/home'>
-				css d:vbox
+				css d:vcc
 
 				<a route-to='nested'> 'Nested'
 					css c:blue6
@@ -130,11 +130,11 @@ tag User
 tag app
 	<self>
 
-		<nav[d:box g:4 c:blue6]>
+		<nav[d:hcc g:4 c:blue6]>
 			<a route-to="/user/1"> "User 1"
 			<a route-to="/user/2"> "User 2"
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<User route="/user/:id">
 
@@ -157,11 +157,11 @@ will be shown is the fallback page, no matter the route.
 tag app
 	<self>
 
-		<nav[d:box g:4 c:blue6]>
+		<nav[d:hcc g:4 c:blue6]>
 			<a route-to='/home'> 'Home'
 			<a route-to='/about'> 'About'
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<div route='/*'>
 				'Fallback route.'
@@ -182,12 +182,12 @@ Route precedence also applies to dynamic routes:
 tag app
 	<self>
 
-		<nav[d:box g:4 c:blue6]>
+		<nav[d:hcc g:4 c:blue6]>
 			<a route-to='/items'> 'Items'
 			<a route-to='/items/new'> 'New'
 			<a route-to='/items/some-id'> 'ID'
 
-		<[d:box h:100%]>
+		<[d:hcc h:100%]>
 
 			<div route='/items/'>
 				'Home page.'
@@ -235,7 +235,7 @@ tag Genre
         console.log 'routed',params
         data = state.genre ||= await genres.fetch(params.id)
 
-    <self[d:vflex o@suspended:0.4]>
+    <self[d:vts o@suspended:0.4]>
         <div> "{data.title} has {data.movies.length} movies in top 250"
 
 tag app

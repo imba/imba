@@ -17,7 +17,7 @@ tag Box
 	<self[x:{x}px y:{y}px] @touch.moved.sync(self)> <slot> "box"
 
 tag app
-	<self[inset:0 d:hflex ja:center]>
+	<self[inset:0 d:hcc]>
 		<Box[hue:blue]> 'One'
 		<Box[hue:sky]> 'Two'
 		<Box[hue:indigo]> 'Three'

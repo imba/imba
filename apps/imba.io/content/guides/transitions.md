@@ -15,7 +15,7 @@ easily create your own transitions.
 # ~preview=md
 import 'util/styles'
 
-css label d:hflex ja:center us:none
+css label d:hcc us:none
 css input mx:1
 
 # ---
