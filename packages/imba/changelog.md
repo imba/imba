@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix `?css` entries resolving to a js file instead of the extracted stylesheet. `<style src="./app.imba">` in an html entrypoint produced a `<link rel="stylesheet">` pointing at a `.js` asset (which browsers silently ignore, so no styles applied), and server-side `import './app.imba?css'` returned the same js url. esbuild marks only the js output of a css-format bundle as the entrypoint, referencing the extracted stylesheet via `cssBundle` — the manifest now registers that css sibling as the entry, and the js twin (a ~megabyte css-extraction byproduct that nothing references) is no longer written to disk.
+
 * Fix compiler crash (`this._styleName.c is not a function`) when a local, non-exported tag declares tag-scoped `css` and its render tree contains a dynamic-type child (`<(expr)>` / `<{type}>`). For such never-extended tags the scoped css class is a compile-time string, and the dynamic-tag codegen only handled the runtime-expression form used by exported tags.
 
 * Report internal compiler errors as located diagnostics instead of crashing the build. A codegen exception is now caught and reported against the source location of the node being compiled (like parse errors are), flowing through the normal error channel — so `imba build` fails with a `file:line:col` message and a code excerpt rather than dumping the raw exception. The JS stack still goes to stderr for bug reports, and the compile-worker fallback no longer prints the entire source file.

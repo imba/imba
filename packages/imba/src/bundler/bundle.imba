@@ -1258,10 +1258,21 @@ export default class Bundle < Component
 					if kind == 'css'
 						input.css = output
 
+					# esbuild only marks the js output as the entrypoint - the
+					# extracted stylesheet sibling is referenced via cssBundle
+					if output.cssBundle and outs[output.cssBundle]
+						input.css ||= outs[output.cssBundle]
+						input.css.source ||= input
+
 					if o.ref
+						# a ?css entry must resolve to the extracted stylesheet,
+						# not the js twin esbuild emits alongside it
+						let entry = o.format == 'css' and input.css or output
 						let id = "entry:{output.entryPoint}?{o.ref}"
-						output.entryId = id
-						root.builder.entries[id] = builder.entries[id] = meta.entries[id] = output
+						entry.entryId = id
+						root.builder.entries[id] = builder.entries[id] = meta.entries[id] = entry
+						if entry != output
+							output.virtual ??= yes
 
 				if main? and serve?
 					output.main = yes
