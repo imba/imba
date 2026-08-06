@@ -4,7 +4,9 @@
 
 Decorators are special functions which can alter the functionality of a method call by replacing or wrapping it with some other code. Decorators do this by modifying a property (usually a method) with a new [descriptor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty#description) at runtime.
 
-Imba includes some built-in decorators such as [@observable](/docs/observable). This page teaches you how to build your own.
+Imba includes some built-in decorators such as [@observable](/docs/observable), `@lazy` and `@bound`. These are available without any imports. This page teaches you how to build your own.
+
+Decorators apply to *methods* (and getters/setters). For the related `@`-syntax on fields — like `age @number(min: 0)` — see [Field Descriptors](/docs/field-descriptors).
 
 The following example defines a decorators which replaces decorated function, to display a message.
 
@@ -29,7 +31,7 @@ Skip to [Technical Details](#technical-details).
 
 ## Guide to Understanding
 
-Let's walk through why and how decoractors work with an example.
+Let's walk through why and how decorators work with an example.
 
 Imagine you have a method which returns the result of a calculation like this:
 
@@ -158,8 +160,6 @@ class Foo
 		return 'baz!'
 ```
 
-`descriptor.value` would just be the `calc` function itself.
-
 #### Return value
 
 The return value is a new descriptor.
@@ -230,7 +230,7 @@ class Test
 
 #### Multiple decorators
 
-Multiple decorators can be used on a single method.
+Multiple decorators can be used on a single method. They are applied starting with the decorator closest to the method — in the example below, `@three` runs first and `@one` last, each receiving the descriptor returned by the previous one.
 
 ```imba
 class Test
@@ -301,8 +301,11 @@ It loses its execution context. More on `this` can be found on [mdn](https://dev
 
 #### Implementation
 
-For those interested, this is slightly simplified
-version of how decorators work behind the scenes:
+For those interested, this is a slightly simplified
+version of how decorators work behind the scenes.
+In the real compiled output the `decorate` call happens
+inside a static initializer block on the class,
+but the effect is the same:
 
 ```imba
 # [preview=console]

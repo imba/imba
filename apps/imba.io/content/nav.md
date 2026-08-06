@@ -110,6 +110,8 @@ Defining and using custom style units.
 
 ## Decorators [doc=docs/decorators] [href=/docs/decorators]
 
+## Field Descriptors [doc=docs/field-descriptors] [href=/docs/field-descriptors]
+
 ## Observable [doc=docs/observable] [href=/docs/observable]
 
 ## Ease Transitions [doc=guides/transitions] [href=/guides/transitions]

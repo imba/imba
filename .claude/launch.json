@@ -6,9 +6,10 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
-        "cd apps/imba.io && PORT=3018 node dist/index.js"
+        "cd apps/imba.io && node dist/index.js"
       ],
-      "port": 3018
+      "port": 3018,
+      "autoPort": true
     }
   ]
 }
