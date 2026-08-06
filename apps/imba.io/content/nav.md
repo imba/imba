@@ -20,6 +20,8 @@
 
 ### Classes [doc=docs/classes] [href=/docs/basic-syntax/classes]
 
+### Fields [doc=docs/field-descriptors] [href=/docs/field-descriptors]
+
 ### Modules [doc=docs/modules] [href=/docs/basic-syntax/modules]
 
 ## Types [doc=docs/types] [href=/docs/basic-syntax/types] [skip]
@@ -76,6 +78,8 @@ Defining and using custom style units.
 
 ## Colors [doc=docs/colors] [href=/docs/css/colors]
 
+## Ease Transitions [doc=guides/transitions] [href=/guides/transitions]
+
 # Guides [href=/guides] [doc=guides/index]
 
 ## Using Imba Router [doc=docs/routing] [href=/guides/routing] [skip]
@@ -110,8 +114,4 @@ Defining and using custom style units.
 
 ## Decorators [doc=docs/decorators] [href=/docs/decorators]
 
-## Field Descriptors [doc=docs/field-descriptors] [href=/docs/field-descriptors]
-
 ## Observable [doc=docs/observable] [href=/docs/observable]
-
-## Ease Transitions [doc=guides/transitions] [href=/guides/transitions]

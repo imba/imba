@@ -6,7 +6,7 @@ Decorators are special functions which can alter the functionality of a method c
 
 Imba includes some built-in decorators such as [@observable](/docs/observable), `@lazy` and `@bound`. These are available without any imports. This page teaches you how to build your own.
 
-Decorators apply to *methods* (and getters/setters). For the related `@`-syntax on fields — like `age @number(min: 0)` — see [Field Descriptors](/docs/field-descriptors).
+Decorators apply to *methods* (and getters/setters). For the related `@`-syntax on fields — like `age @number(min: 0)` — see [Fields](/docs/field-descriptors).
 
 The following example defines a decorators which replaces decorated function, to display a message.
 

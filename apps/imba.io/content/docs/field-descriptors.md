@@ -1,6 +1,4 @@
-# Field Descriptors
-
-> [tip box yellow] This is considered an [experimental](/experimental) feature.
+# Fields
 
 Besides [decorators](/docs/decorators) for methods, Imba has a related syntax for fields. A field declared with a *descriptor* hands complete control over how that property is stored, read, and written to an object that you define:
 

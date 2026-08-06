@@ -14,6 +14,7 @@
         "vitest": "^3.0.0"
     },
     "scripts": {
+        "deploy-site": "ssh imba@imba.io \"bash ~/deploy-imba.io.sh\"",
         "release": "lerna publish",
         "prereleasez": "lerna publish --force-publish --canary --preid next-$(git log -1 --format=%at) --dist-tag next --pre-dist-tag next"
     }
