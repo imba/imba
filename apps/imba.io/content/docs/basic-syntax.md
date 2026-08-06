@@ -1,6 +1,18 @@
-# Syntax Overview
+# Introduction
 
-_The first few lessons of the [Learn Imba Course](https://scrimba.com/learn/imba) cover Imba’s basic syntax._
+> [tip box green] Try Imba instantly in your browser with our [playground](/try/examples/apps/playground/app.imba).
+
+## Getting Started
+
+You can create a new Imba project with:
+
+```sh
+npx imba create
+```
+
+Imba's [VSCode extension](https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba) is highly recommended. It gives you full-featured tooling when using Imba, including autocomplete for css shortcuts.
+
+If you have any questions or run into any issues, don't hesitate to reach out on [Discord](https://discord.gg/mkcbkRw) or [Github](https://github.com/imba/imba). There is also a free, interactive [Imba course](https://scrimba.com/learn/imba) on Scrimba, and additional content on the official Imba [YouTube channel](https://www.youtube.com/@imbajs/videos).
 
 #### It’s just Javascript
 

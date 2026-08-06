@@ -185,6 +185,20 @@ honda isa Car #
 
 The `isa` operator tests whether the prototype property of a constructor appears anywhere in the prototype chain of an object. Alias for the javascript [instanceof](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof) operator.
 
+If the right hand side is a string, `isa` will check `typeof` instead:
+
+```imba
+let s = 'hello'
+typeof s is 'string' # true
+s isa 'string' # true
+```
+
+It can also check against multiple types at once:
+
+```imba
+7 isa ('string' or 'number') # true
+```
+
 ### !isa [op=compare+keyword+isa]
 
 ```imba

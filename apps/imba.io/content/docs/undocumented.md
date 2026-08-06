@@ -21,29 +21,6 @@ personal notes. Contributions are highly appreciated, especially:
 If you have questions about any of these, don't hesitate to reach
 out on [Discord](https://discord.gg/mkcbkRw).
 
-## isa
-
-`instanceof` is shortened to `isa` in imba:
-
-```imba
-[] isa Array
-```
-
-But we've added more functionality. If the right hand side is a string,
-it will check `typeof`:
-
-```imba
-let s = 'hello'
-typeof s is 'string' # true
-s isa 'string' # true
-```
-
-It also works similarly to `is`:
-
-```
-7 isa ('string' or 'number') # true
-```
-
 ## Awaits
 
 You can await desired changes to observable properties with `imba.awaits`,

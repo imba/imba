@@ -1,3 +1,3 @@
-# Other
+# Reference
 
 <doc-pages></doc-pages>

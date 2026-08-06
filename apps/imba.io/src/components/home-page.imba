@@ -371,7 +371,7 @@ tag home-page
 							css a rd:xl m:2 p:2 bg:hue3 bd:hue3 bcb:hue5 px:4 c:hue8 fw:bold d:block ta:center
 								transition:background 300ms
 								@hover bg:hue4/85
-							<a[hue:green] href="/start"> "Get started"
+							<a[hue:green] href="/docs/introduction"> "Get started"
 							<a[hue:blue] href="/try/examples/apps/playground/app.imba"> "Demo"
 							css div rd:xl bd:gray2 bg:gray1 m:2 p:2 pr:4 c:gray6 ff:mono bs:solid fw:bold
 								fs:sm @580:17px ls:-0.3px d:hflex ja:center

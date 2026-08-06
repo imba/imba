@@ -277,10 +277,9 @@ tag doc-section
 				<div.head[scroll-margin-top:80px] .{data.flagstr} .l{level} .h{data.data.hlevel} id=data.hash>
 					css svg d:inline size:5
 					css .legend ml:1 c:gray5 fs:md
-					css x:-10px
-						.anchor-container w:1em pos:absolute l:0px x:-100% 
-						a.anchor o:0 transition:opacity 75ms ease c:gray4 fw:300
-						&@hover a.anchor o:1
+					css .anchor-container w:1em pos:absolute l:0px x:-100%
+					css a.anchor o:0 transition:opacity 75ms ease c:gray4 fw:300
+					css &@hover a.anchor o:1
 
 					if level > 0
 						# only show the little anchor link symbols next to headers > level 0
@@ -416,7 +415,7 @@ tag app-document
 		<self.markdown[d:block d:hflex] @refocus.silent=refocus>
 			<.main[max-width:768px w:768px px:6 fl:1 1 auto pb:24 pt:8]>
 				<.breadcrumb>
-					<span[d@800:none]> <a href='/'> "Imba"
+					<span> <a[d:inline-block va:middle] href='/' title='Home'> <svg[h:14px w:auto d:block] src=CODICONS.HOME>
 					for item in breadcrumbs
 						<span> <a href=item.href .self=(item == data)> item.navName or item.name
 					<app-search-field>

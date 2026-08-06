@@ -100,6 +100,9 @@ tag app-root
 		self.path = path
 		doc ||= ls('/docs/intro')
 
+		# legacy url for the retired get-started page
+		path = '/docs/introduction' if path == '/start'
+
 		let parts = path.replace(/(^\/|\/$)/,'').split('/')
 
 		let state = pathForUrl(path)

@@ -586,16 +586,20 @@ export def ls path
 	return paths[path.replace(/\/$/,'')]
 
 export def pathForUrl url
-	let hits = []
-	let parts = url.split('/')
-	while parts.length
-		let hit = ls(parts.join('/'))
-		hits.unshift(hit) if hit
-		parts.pop!
+	let page = ls(url)
+	# prefer the nav ancestry so the trail matches the sidebar grouping
+	let hits = page..breadcrumb ? page.breadcrumb.filter(do $1.options..href) : []
+
+	unless hits.length
+		let parts = url.split('/')
+		while parts.length
+			let hit = ls(parts.join('/'))
+			hits.unshift(hit) if hit
+			parts.pop!
 
 	return {
 		path: hits
-		page: hits[-1]
+		page: page or hits[-1]
 	}
 
 export def find query, options = {}

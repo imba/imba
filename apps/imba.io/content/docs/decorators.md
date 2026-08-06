@@ -1,7 +1,5 @@
 # Decorators
 
-> [tip box yellow] This is considered an [experimental](/experimental) feature.
-
 Decorators are special functions which can alter the functionality of a method call by replacing or wrapping it with some other code. Decorators do this by modifying a property (usually a method) with a new [descriptor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty#description) at runtime.
 
 Imba includes some built-in decorators such as [@observable](/docs/observable), `@lazy` and `@bound`. These are available without any imports. This page teaches you how to build your own.

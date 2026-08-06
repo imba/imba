@@ -1,8 +1,4 @@
-# Imba Home [href=/]
-
-## Get Started [doc=docs/start] [href=/start]
-
-# Scripting [doc=docs/scripting] [href=/docs]
+# Language [doc=docs/scripting] [href=/docs]
 
 ### Introduction [doc=docs/basic-syntax] [href=/docs/introduction]
 
@@ -21,6 +17,8 @@
 ### Classes [doc=docs/classes] [href=/docs/basic-syntax/classes]
 
 ### Fields [doc=docs/field-descriptors] [href=/docs/field-descriptors]
+
+### Decorators [doc=docs/decorators] [href=/docs/decorators]
 
 ### Modules [doc=docs/modules] [href=/docs/basic-syntax/modules]
 
@@ -58,6 +56,10 @@ Reference for all event modifiers.
 
 Reference for all events and their interfaces.
 
+## Rendering [doc=docs/declarative-rendering] [href=/guides/rendering]
+
+How Imba's declarative rendering works.
+
 # Styling [doc=docs/styles] [href=/docs/css]
 
 ## Syntax [doc=docs/style-syntax] [href=/docs/css/syntax]
@@ -72,17 +74,21 @@ Reference for all shorthands and regular css properties.
 
 Reference for all style modifiers.
 
-## Custom Units [doc=docs/style-units] [href=/docs/css/units]
+## Units [doc=docs/style-units] [href=/docs/css/units]
 
 Defining and using custom style units.
 
 ## Colors [doc=docs/colors] [href=/docs/css/colors]
 
-## Ease Transitions [doc=guides/transitions] [href=/guides/transitions]
+## Transitions [doc=guides/transitions] [href=/guides/transitions]
 
-# Guides [href=/guides] [doc=guides/index]
+# Apps & Tooling [href=/guides] [doc=guides/index]
 
-## Using Imba Router [doc=docs/routing] [href=/guides/routing] [skip]
+## Router [doc=docs/router] [href=/docs/router]
+
+## Assets [doc=docs/assets] [href=/docs/assets]
+
+## CLI [doc=docs/cli] [href=/cli]
 
 ## Deployment [doc=guides/deployment] [href=/guides/deployment]
 
@@ -90,28 +96,18 @@ Defining and using custom style units.
 
 ### Full Stack Deployment [doc=guides/full_stack_deployment] [href=/guides/deployment/full_stack]
 
-## Declarative Rendering [doc=docs/declarative-rendering] [href=/guides/rendering]
+## Using Imba Router [doc=docs/routing] [href=/guides/routing] [skip]
 
-## Incremental Adoption [doc=guides/incremental] [href=/guides/incremental]
-
-# Other [href=/other] [doc=docs/other]
-
-## Assets [doc=docs/assets] [href=/docs/assets]
-
-## Router [doc=docs/router] [href=/docs/router]
+# Reference [href=/other] [doc=docs/other]
 
 ## API Reference [href=/api]
 
 ## Changelog [doc=changelog] [href=/changelog]
 
-## Command Line Tool [doc=docs/cli] [href=/cli]
-
 ## Playground [href=/try] [target=_blank]
 
 # Experimental [href=/experimental] [doc=docs/experimental]
 
-## Undocumented [doc=docs/undocumented] [href=/undocumented]
-
-## Decorators [doc=docs/decorators] [href=/docs/decorators]
-
 ## Observable [doc=docs/observable] [href=/docs/observable]
+
+## Undocumented [doc=docs/undocumented] [href=/undocumented]

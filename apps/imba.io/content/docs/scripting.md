@@ -1,4 +1,4 @@
-# Scripting
+# Language
 
 Imba isn't a framework, it's a full language with zero friction
 JavaScript interoperability that also ships with built in UI support.
