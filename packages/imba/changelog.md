@@ -4,6 +4,10 @@
 
 This is expected to be the last alpha release — the next release will likely be `2.0.0-beta.1`.
 
+* Memoize amperfunctions that close over local variables. Previously only capture-free amperfuncs (hoisted to shared module-level functions) and self-referencing ones (memoized per instance) kept a stable identity — an amperfunc capturing a local like `items.find(&.id == x)` compiled to a plain closure recreated on every call. Such functions are now memoized per combination of `self` and the captured values, so the same values yield the same function identity across calls and renders. Object captures are held weakly, so memoization does not retain them.
+
+    This only applies when every captured variable is effectively final. If a captured variable is reassigned anywhere in its scope (including `++`, compound assignment, and destructuring assignment), the amperfunc stays a plain closure and the compiler emits a warning pointing at the capture. Capture analysis is also more thorough — captures hiding in index access (`&.list[idx]`), string interpolation, and ternaries are now found and handled correctly.
+
 * Fix `?css` entries resolving to a js file instead of the extracted stylesheet. `<style src="./app.imba">` in an html entrypoint produced a `<link rel="stylesheet">` pointing at a `.js` asset (which browsers silently ignore, so no styles applied), and server-side `import './app.imba?css'` returned the same js url. esbuild marks only the js output of a css-format bundle as the entrypoint, referencing the extracted stylesheet via `cssBundle` — the manifest now registers that css sibling as the entry, and the js twin (a ~megabyte css-extraction byproduct that nothing references) is no longer written to disk.
 
 * Fix compiler crash (`this._styleName.c is not a function`) when a local, non-exported tag declares tag-scoped `css` and its render tree contains a dynamic-type child (`<(expr)>` / `<{type}>`). For such never-extended tags the scoped css class is a compile-time string, and the dynamic-tag codegen only handled the runtime-expression form used by exported tags.
