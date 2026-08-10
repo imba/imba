@@ -7052,11 +7052,13 @@ class AmperWalker extends Walker {
 
     if (node instanceof VarOrAccess && node._isSelf) {
       this._deopt = true;
+      (this._implicits || (this._implicits = [])).push(node);
     }
 
     let variable = node._variable;
     if (variable && !variable.isGlobal()) {
       this._deopt = true;
+      (this._captured || (this._captured = [])).push(node);
     }
 
     if (node instanceof This || node instanceof Self) {
@@ -7071,20 +7073,196 @@ class AmperFunc extends Lambda {
   }
 
   js(s, o) {
-    // traverse into the function to see if it is dynamic
-    let walker = new AmperWalker(this);
-    this.body().consume(walker);
-
-    // hash the output? Or the source? Maybe the source is enough?
     var out = this.body().c({ braces: false });
 
-    if (!walker._deopt && !STACK.tsc()) {
-      let raw = this.body().sourcecode();
-      let sym = raw.replace(/[\"]/g, "'");
-      let that = walker._self;
+    if (STACK.tsc()) {
+      return "((v$)=>" + out + ")";
+    }
+
+    // The body's source region is the basis for both the memo hash and the
+    // capture analysis. Analysis is region-based rather than AST-walking:
+    // every reference resolved inside the region - regardless of AST shape -
+    // was recorded on its variable / the compilation root during traversal.
+    let body = this.body();
+    let r0 = body.startLoc();
+    let r1 = body.endLoc();
+
+    if (
+      !(typeof r0 == "number" && typeof r1 == "number") ||
+      !(r1 > r0) ||
+      r1 - r0 > 1024
+    ) {
+      if (!this._warned) {
+        this._warned = true;
+        this.warn("unable to analyze amperfunction - it will not be memoized");
+      }
+      return "((v$)=>" + out + ")";
+    }
+
+    const regionOf = function (node) {
+      if (!node) return null;
+      if (node.region) {
+        let reg = node.region();
+        if (reg && (reg[0] || reg[1])) return reg;
+      }
+      let a = node.startLoc ? node.startLoc() : null;
+      let b = node.endLoc ? node.endLoc() : null;
+      if (typeof a == "number" && typeof b == "number" && b >= a) {
+        return [a, b];
+      }
+      return null;
+    };
+    const inside = function (reg) {
+      return reg && reg[0] >= r0 && reg[1] <= r1;
+    };
+
+    // the scopes the body's identifiers resolved in (amper bodies traverse
+    // in their enclosing scope - the amper's own scope holds nothing)
+    let scopes = [];
+    {
+      let nodes = STACK._nodes;
+      let i = nodes.length - 1;
+      while (i >= 0) {
+        let sc = nodes[i]._scope;
+        if (sc && sc != this._scope && scopes.indexOf(sc) < 0) {
+          scopes.push(sc);
+        }
+        i--;
+      }
+    }
+
+    // an unresolved forward reference (TDZ window) inside the body means
+    // we cannot reason about it - never memoize across one
+    let unresolved = STACK.ROOT._amperUnresolved;
+    if (unresolved) {
+      for (let i = 0; i < unresolved.length; i++) {
+        if (inside(regionOf(unresolved[i]))) {
+          if (!this._warned) {
+            this._warned = true;
+            unresolved[i].warn(
+              "amperfunction references '" +
+                String(unresolved[i]._identifier) +
+                "' before its declaration - it cannot be memoized",
+            );
+          }
+          return "((v$)=>" + out + ")";
+        }
+      }
+    }
+
+    // does the body reference self - explicitly or through implicit access?
+    let selfnode = null;
+    let selfrefs = STACK.ROOT._amperSelfRefs;
+    if (selfrefs) {
+      for (let i = 0; i < selfrefs.length; i++) {
+        if (inside(regionOf(selfrefs[i]))) {
+          selfnode = selfrefs[i];
+          break;
+        }
+      }
+    }
+
+    // outer variables referenced inside the body become capture slots -
+    // but only when provably single-assignment and declared before the body
+    let captured = [];
+    let deopt = null;
+
+    outer: for (let si = 0; si < scopes.length; si++) {
+      let vmap = scopes[si]._varmap;
+      for (let name in vmap) {
+        let variable = vmap[name];
+        if (
+          !variable ||
+          variable instanceof SystemVariable ||
+          variable.isGlobal()
+        ) {
+          continue;
+        }
+        if (captured.indexOf(variable) >= 0) {
+          continue;
+        }
+
+        let refs = variable._references || [];
+        let used = null;
+        for (let ri = 0; ri < refs.length; ri++) {
+          if (inside(regionOf(refs[ri]))) {
+            used = refs[ri];
+            break;
+          }
+        }
+        if (!used) {
+          continue;
+        }
+
+        let dreg = regionOf(variable._declarator);
+
+        if (dreg && inside(dreg)) {
+          continue; // declared inside the body itself - not a capture
+        }
+
+        if (String(variable._name) == "arguments") {
+          deopt = [used, "captures 'arguments'"];
+          break outer;
+        }
+
+        if (!dreg || dreg[0] >= r0) {
+          deopt = [
+            used,
+            "captures '" + variable._name + "' which is declared later",
+          ];
+          break outer;
+        }
+
+        let mutated = null;
+        for (let ri = 0; ri < refs.length; ri++) {
+          let rf = refs[ri];
+          if (rf._assigns && !(rf instanceof VarReference)) {
+            mutated = rf;
+            break;
+          }
+        }
+        if (mutated) {
+          deopt = [
+            used,
+            "captures '" + variable._name + "' which is reassigned",
+          ];
+          break outer;
+        }
+
+        captured.push(variable);
+      }
+    }
+
+    if (deopt) {
+      if (!this._warned) {
+        this._warned = true;
+        deopt[0].warn(
+          "amperfunction " +
+            deopt[1] +
+            " - it cannot be memoized. Use a do-block instead",
+        );
+      }
+      return "((v$)=>" + out + ")";
+    }
+
+    // hash the output? Or the source? Maybe the source is enough?
+    let raw = body.sourcecode();
+    let sym = raw.replace(/[\"]/g, "'");
+
+    let that = null;
+    if (selfnode) {
+      if (selfnode instanceof VarOrAccess) {
+        let v = selfnode._value;
+        that = v instanceof ImplicitAccess ? v._left : v;
+      } else {
+        that = selfnode;
+      }
+    }
+
+    if (!captured.length) {
       let pars = [
-        LIT('"' + sym + '"'),
-        walker._self || LIT("globalThis"),
+        LIT(JSON.stringify(sym)),
+        that || LIT("globalThis"),
         LIT("(v$)=>" + out),
       ];
 
@@ -7125,7 +7303,37 @@ class AmperFunc extends Lambda {
       );
     }
 
-    return "((v$)=>" + out + ")";
+    // capture-slot form - keyed on (source + capture names, self, ...values).
+    // The capture names disambiguate identical source text that resolves
+    // differently across modules; the u0001 separator keeps them disjoint from
+    // plain memofunc hashes.
+    let key = JSON.stringify(
+      sym +
+        "\u0001" +
+        captured
+          .map(function (_0) {
+            return String(_0._name);
+          })
+          .join(","),
+    );
+
+    return (
+      "" +
+      this.runtime().memofuncv +
+      "(" +
+      key +
+      "," +
+      (that ? that.c() : "globalThis") +
+      ",(v$)=>" +
+      out +
+      ",[" +
+      captured
+        .map(function (_0) {
+          return _0.c();
+        })
+        .join(",") +
+      "])"
+    );
   }
 }
 
@@ -8685,6 +8893,12 @@ class Self extends Literal {
   visit() {
     this._scope__ = this.scope__();
     this._scope__.context();
+    // amperfunctions discover self-dependence by source region - register
+    // locatable self references on the compilation root
+    if (this._value) {
+      let root = STACK.ROOT;
+      (root._amperSelfRefs || (root._amperSelfRefs = [])).push(this);
+    }
     return this;
   }
 
@@ -8720,6 +8934,10 @@ class This extends Self {
   }
 
   visit() {
+    if (this._value) {
+      let root = STACK.ROOT;
+      (root._amperSelfRefs || (root._amperSelfRefs = [])).push(this);
+    }
     return this;
   }
 
@@ -9050,6 +9268,16 @@ class ComparisonOp extends Op {
 }
 
 class UnaryOp extends Op {
+  visit(...args) {
+    // ++/-- mutate their target - mark it so capture analysis
+    // (amperfunctions) can detect reassigned variables
+    if (this.op() == "++" || this.op() == "--") {
+      let target = this._left || this._right;
+      if (target) target._assigns = this;
+    }
+    return super.visit(...args);
+  }
+
   invert() {
     if (this.op() == "!") {
       return this._left;
@@ -9692,11 +9920,19 @@ class VarOrAccess extends ValueNode {
         // 	warn "calling method from root scope {value} is deprecated - see issue #112"
         return this;
       }
+      // unresolved forward reference (TDZ window) - flag it so
+      // amperfunction analysis can refuse to memoize across it
+      (
+        STACK.ROOT._amperUnresolved || (STACK.ROOT._amperUnresolved = [])
+      ).push(this);
       // FIX
       // @value.safechain = safechain
     } else if (this.value().symbol() == "self") {
       this._value = scope.context();
       this._isSelf = true;
+      (STACK.ROOT._amperSelfRefs || (STACK.ROOT._amperSelfRefs = [])).push(
+        this,
+      );
     } else if (!this._identifier.isCapitalized()) {
       let selfvar = scope.lookup("self");
       let ctx = scope.context();
@@ -9704,6 +9940,9 @@ class VarOrAccess extends ValueNode {
         this._includeType = true;
       } else {
         this._isSelf = true;
+        (STACK.ROOT._amperSelfRefs || (STACK.ROOT._amperSelfRefs = [])).push(
+          this,
+        );
 
         if (this.value().symbol() == "constructor" && true) {
           let cls = STACK.up(ClassDeclaration);
@@ -10062,6 +10301,31 @@ class Assign extends Op {
     }
 
     l._assigns = r;
+
+    // destructuring reassignment - mark every target inside the pattern
+    // so capture analysis (amperfunctions) can detect the writes
+    if (l instanceof Arr || l instanceof Obj) {
+      let mark = function (node) {
+        if (!node) return;
+        if (node instanceof Arr || node instanceof Obj) {
+          let items = node.nodes
+            ? node.nodes()
+            : node.value && node.value().nodes
+              ? node.value().nodes()
+              : [];
+          for (let item of items) mark(item);
+        } else if (node instanceof ObjAttr) {
+          mark(node._value);
+        } else if (node instanceof Splat) {
+          mark(node.value ? node.value() : node._value);
+        } else if (node instanceof Assign) {
+          mark(node._left);
+        } else {
+          node._assigns = r;
+        }
+      };
+      mark(l);
+    }
     // console.log "Assign {l} {r}"
     // Regularly, the var is declared after the right side, so `let item = item` resolves to
     // `let item = self.item`. In the case of `let item = do ...` however, the variable
@@ -12773,6 +13037,12 @@ If.ternary = function (cond, body, alt) {
   // prefer to compile it this way as well
   var obj = new If(cond, new Block([body]), { type: "?" });
   obj.addElse(new Block([alt]));
+  // ternaries have no if-token to derive a location from - adopt the
+  // span of their children so sourcecode() and diagnostics work
+  let s = cond && cond.startLoc ? cond.startLoc() : null;
+  let e = alt && alt.endLoc ? alt.endLoc() : null;
+  if (typeof s == "number") obj._startLoc = s;
+  if (typeof e == "number") obj._endLoc = e;
   return obj;
 };
 
