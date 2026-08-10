@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 2.0.0-alpha.253
+
+This is expected to be the last alpha release — the next release will likely be `2.0.0-beta.1`.
 
 * Fix `?css` entries resolving to a js file instead of the extracted stylesheet. `<style src="./app.imba">` in an html entrypoint produced a `<link rel="stylesheet">` pointing at a `.js` asset (which browsers silently ignore, so no styles applied), and server-side `import './app.imba?css'` returned the same js url. esbuild marks only the js output of a css-format bundle as the entrypoint, referencing the extracted stylesheet via `cssBundle` — the manifest now registers that css sibling as the entry, and the js twin (a ~megabyte css-extraction byproduct that nothing references) is no longer written to disk.
 
