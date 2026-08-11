@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Remove support for overriding and adding custom color styles through imba config (`theme.colors` in `imbaconfig.json` / `package.json#imba`), along with the deferred color-resolution step in the bundler. Named colors were previously compiled to placeholder comments (`/*#*/blue4`) and substituted with config-aware values on every build; colors are now always resolved directly at compile time from the built-in palette. Custom project colors are better expressed with color variables (`#brand:lch(60 30 250)`), which also support mixing and channel modification (`#brand(1.2l c h)`).
+
 ## 2.0.0-alpha.253
 
 This is expected to be the last alpha release — the next release will likely be `2.0.0-beta.1`.

@@ -22,7 +22,7 @@ def write name, data
 
 # https://github.com/gauthier-scano/CSSFormalSyntaxParser/blob/main/src/reference.js
 
-const styles = new StyleTheme({})
+const styles = StyleTheme.instance!
 const colorDescs = {
 	current: 'The current color'
 	transparent: 'Clear'

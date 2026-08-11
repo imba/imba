@@ -196,6 +196,13 @@ export class Easer < Emitter
 			return no
 		anims.own = anims.fresh.filter do anims.deep.indexOf($1) == -1
 
+		# never await animations that cannot finish - a paused or infinite
+		# animation (e.g. a decorative pulse that idles paused) would keep
+		# anims.finished pending forever and leave the element stuck mid-ease
+		anims.own = anims.own.filter do
+			let timing = $1.effect..getTiming!
+			$1.playState != 'paused' and timing..iterations != Infinity
+
 		if anims.own.length
 			anims.finished = new Promise do(resolve)
 				let all = new Set(anims.own)

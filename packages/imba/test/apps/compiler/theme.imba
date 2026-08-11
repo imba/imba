@@ -2,10 +2,6 @@ import * as imbac from 'imba/compiler'
 
 let fs = {}
 
-fs.code1 = """
-global css div color:mint1 stroke:mint2 bgc:mint3
-"""
-
 fs.unitModifiers = """
 global css .odoc
 	1codefs:11px @800:13px
@@ -57,20 +53,6 @@ def findNode root, fn
 		found ||= node if !found and fn(node)
 	found
 
-test 'custom color' do
-	let res = compile('code1', config: {theme: {
-		colors: {
-			mint: {
-				"1": "hsl(140, 27%, 96%)",
-				"3": "hsl(138, 24%, 89%)"
-			}
-		}
-	}})
-
-	ok res.css.match(/color:\s*hsla\(140/)
-	ok res.css.match(/stroke:\s*hsla\(139/)
-	ok res.css.match(/background-color:\s*hsla\(138/)
-
 test 'unit variable modifier declarations inherit normalized property names' do
 	let res = compile('unitModifiers', styles: 'extern')
 
@@ -80,7 +62,7 @@ test 'unit variable modifier declarations inherit normalized property names' do
 	ok !res.css.match(/\b1(?:codefs|gap|titlebarh)\s*:/)
 
 test 'color variable aliases preserve lch channel references' do
-	let res = compile('colorAliases', styles: 'extern', platform: 'browser', resolveColors: true)
+	let res = compile('colorAliases', styles: 'extern', platform: 'browser')
 
 	ok res.css.match(/--u_tilebgL:\s*var\(--u_cardbgL\)/)
 	ok res.css.match(/--u_tilebdL:\s*calc\(var\(--u_cardbgL\) \* 1\.2\)/)

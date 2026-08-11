@@ -14,8 +14,6 @@ import {
 
 import print-info from '../utils/print-info'
 
-import {StyleTheme} from '../compiler/styler'
-
 import os from 'os'
 import np from 'path'
 import nfs from 'fs'
@@ -150,9 +148,6 @@ export default class Bundle < Component
 
 	get imbaconfig
 		program.config # or parent..imbaconfig
-
-	get theme
-		imbaconfig.#theme ||= new StyleTheme(imbaconfig)
 
 	get githash
 		# silence stderr and tolerate missing repo / repo without commits
@@ -955,7 +950,7 @@ export default class Bundle < Component
 			let res = await src.compile(imbaoptions,self)
 
 			if res.css
-				let style = theme.transformColors(SourceMapper.strip(res.css or ""),prefix: no)
+				let style = SourceMapper.strip(res.css or "")
 				style += "/*! @path {fs.relative(path)}?styles */"
 
 				builder.styles[src.rel] = {

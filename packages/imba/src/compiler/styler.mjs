@@ -6,7 +6,7 @@ function is$(a,b){ return a === b || b?.[$matcher$]?.(a) || false};
 function negIndex$__(value,index){ return value[value.length + index] };
 import {register$} from 'imba/runtime';
 var $1;
-const $lcha$ = Symbol.for('#lcha'), $matcher$ = Symbol.for('#matcher'), $stack$ = Symbol.for('#stack'), $parts$ = Symbol.for('#parts'), $apply$ = Symbol.for('#apply'), $register$ = Symbol.for('#register'), $string$ = Symbol.for('#string'), $media$ = Symbol.for('#media'), $rules$ = Symbol.for('#rules');
+const $lcha$ = Symbol.for('#lcha'), $matcher$ = Symbol.for('#matcher'), $parts$ = Symbol.for('#parts'), $apply$ = Symbol.for('#apply'), $register$ = Symbol.for('#register'), $string$ = Symbol.for('#string'), $media$ = Symbol.for('#media'), $rules$ = Symbol.for('#rules');
 
 /*body*/
 // imba$stdlib=1
@@ -18,7 +18,6 @@ import * as theme from './theme.mjs';
 
 const extensions = {};
 let ThemeInstance = null;
-const ThemeCache = new WeakMap;
 
 // {string: "hsla(0,0,0,var(--alpha,1))",h:0,s:0,l:0}
 // {string: "hsla(0,100%,100%,var(--alpha,1))",h:0,s:0,l:100}
@@ -703,24 +702,10 @@ export class StyleTheme {
 	static propAbbr(name){
 		return abbreviations[name] || name;
 	}
-	
-	static wrap(config){
-		if (!config) { return this.instance() };
-		
-		let theme = ThemeCache.get(config);
-		if (!theme) { ThemeCache.set(config,theme = new this(config)) };
-		return theme;
-	}
-	
-	constructor(ext = {}){
+
+	constructor(){
 		this.options = theme;
 		this.palette = Object.assign({},defaultPalette);
-		
-		if (ext.theme) { ext = ext.theme };
-		
-		if (ext && ext.colors) {
-			parseColors(this.palette,ext.colors);
-		};
 	}
 	
 	expandProperty(name){
@@ -1056,7 +1041,8 @@ export class StyleTheme {
 				};
 				
 				if (pi == 1 && tpl) {
-					o[("--bxs-" + tpl + "-color")] = ("/*##*/" + par);
+					let color = this.$color(String(par));
+					o[("--bxs-" + tpl + "-color")] = color ? color.toVar() : String(par);
 					
 					if (par.param) {
 						o[("--bxs-" + tpl + "-alpha")] = par.param.toAlpha();
@@ -1332,20 +1318,15 @@ export class StyleTheme {
 	}
 	
 	tint([v]){
-		let o = {'--hue': v};
-		for (let i = 0; i < 10; i++) {
-			o[("--hue" + i)] = ("/*##*/" + v + i);
-			// new Tint("v{i}")
-		};
-		return o;
+		return this.hue([v]);
 	}
-	
+
 	hue([v]){
 		let o = {'--hue': v};
-		
+
 		for (let i = 0; i < 10; i++) {
-			o[("--hue" + i)] = ("/*##*/" + v + i);
-			// new Tint("v{i}")
+			let color = this.$color("" + v + i);
+			o[("--hue" + i)] = color ? color.toVar() : ("" + v + i);
 		};
 		return o;
 	}
@@ -1587,21 +1568,6 @@ export class StyleTheme {
 		return value;
 	}
 	
-	transformColors(text){
-		var self = this;
-		text = text.replace(/\/\*(#+)\*\/(\#?\w+)(?:\/(\d+%?|\$[\w\-]+))?/g,function(m,typ,c,a) {
-			let color;
-			if (color = self.$color(c)) {
-				if (typ == '#') {
-					return color.toString(a,typ);
-				} else if (typ == '##') {
-					return color.toVar(a);
-				};
-			};
-			return m;
-		});
-		return text;
-	}
 	static { register$(this,c$6,'StyleTheme',16) }
 };
 
@@ -1632,8 +1598,7 @@ export const AutoPrefixes = {
 
 let c$7 = Symbol();
 export class StyleSheet {
-	constructor(stack){
-		this[$stack$] = stack;
+	constructor(){
 		this[$parts$] = [];
 		this[$apply$] = {transform_complex: [],transform: []};
 		this[$register$] = {};
@@ -1764,11 +1729,7 @@ export class StyleSheet {
 		};
 		
 		this[$string$] = parts.join('\n\n');
-		
-		if (this[$stack$].resolveColors()) {
-			this[$string$] = this[$stack$].theme().transformColors(this[$string$],{prefix: false});
-		};
-		
+
 		return this[$string$];
 	}
 	

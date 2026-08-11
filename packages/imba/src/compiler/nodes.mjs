@@ -1068,7 +1068,7 @@ class Stack {
     this._sourceId = null;
     this._symbols = {};
     this._fieldRegistryEntries = [];
-    this._css = new StyleSheet(this);
+    this._css = new StyleSheet();
     this._theme = null;
     this._meta = {};
     // @css = ''
@@ -1304,7 +1304,7 @@ class Stack {
   }
 
   theme() {
-    return this._theme || (this._theme = StyleTheme.wrap(this._options.config));
+    return this._theme || (this._theme = StyleTheme.instance());
   }
 
   set(obj) {
@@ -1349,10 +1349,6 @@ class Stack {
 
   imbaPath() {
     return this._options.imbaPath;
-  }
-
-  resolveColors() {
-    return this._options.styles !== "extern" || this._options.resolveColors;
   }
 
   config() {

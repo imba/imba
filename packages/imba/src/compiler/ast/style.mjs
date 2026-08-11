@@ -1070,9 +1070,6 @@ export function defineStyleNodes(deps) {
       } else {
         if (raw.match(/^([a-zA-Z]+\d+|black|white)$/)) {
           this.setColor("" + raw);
-          if (this.param) {
-            this.setColor(this.color() + "/" + this.param.toAlpha());
-          }
         }
         return super.visit(...arguments);
       }
@@ -1086,12 +1083,17 @@ export function defineStyleNodes(deps) {
       }
 
       if (this.color()) {
-        let val = this.color().toString();
-        let asvar =
-          this.option("parameterize") ||
-          (this._property && this._property.isColor());
-        let pre = asvar ? "/*##*/" : "/*#*/";
-        return pre + val;
+        let color = STACK.theme().$color(this.color());
+        if (color) {
+          let asvar =
+            this.option("parameterize") ||
+            (this._property && this._property.isColor());
+          if (asvar) {
+            return color.toVar();
+          }
+          let alpha = this.param && this.param.toAlpha();
+          return alpha == null ? color.toString() : color.toString(alpha);
+        }
       }
 
       let val = this.toString();
