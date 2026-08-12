@@ -40,7 +40,7 @@ global css @root
 Now `1space` defaults to `14px`. Inside any element with a `.dense` class it becomes `8px`. On viewports wider than 1024px (the `@lg` modifier) both values scale up. Every single style written in terms of `space` — paddings, margins, gaps, sizes, multiples and fractions alike — follows along automatically.
 
 ```imba
-# ~preview=lg
+# [preview=lg]
 # ---
 global css @root
     1gu:10px
@@ -96,15 +96,15 @@ All your animations now share a common rhythm, and slowing the whole interface d
 Custom units also work with interpolated values in inline styles. The multiplication happens efficiently at runtime via css variables:
 
 ```imba
-# ~preview
+# [preview=lg]
 # ---
 let rows = 3
 tag app-root
     css self 1fh:24px
     css .box bg:teal2 c:teal8 rd:md mt:2 d:grid ja:center
 
-    <self[d:block p:3]>
-        <input type='range' min=1 max=8 bind=rows>
+    <self[d:block p:2]>
+        <input type='range' min=1 max=5 bind=rows>
         <.box[h:{rows}fh]> "{rows}fh tall"
 # ---
 imba.mount do <app-root>
