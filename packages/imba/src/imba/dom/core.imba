@@ -416,7 +416,8 @@ export class Node
 
 			if prev
 				if prev isa Text # check perf
-					prev.textContent = txt
+					# writing identical text would still reset caret/selection inside the node
+					prev.textContent = txt unless prev.textContent === String(txt)
 					return prev
 				else
 					res = document.createTextNode(txt)
