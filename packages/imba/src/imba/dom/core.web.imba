@@ -406,6 +406,10 @@ extend class Element
 		if !desc or !desc.set
 			setAttribute(key,value)
 		else
+			if (value === 'true' or value === 'false') and desc.get and typeof desc.get.call(this) == 'boolean'
+				# boolean idl properties like spellcheck coerce any non-empty
+				# string (including 'false') to true - convert to real booleans
+				value = value === 'true'
 			self[key] = value
 		return
 

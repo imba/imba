@@ -109,6 +109,7 @@ var TAG_GLOBAL_ATTRIBUTES = {
 	accesskey: 1,
 	inputmode: 1,
 	spellcheck: 1,
+	contenteditable: 1,
 	translate: 1,
 	is: 1
 };

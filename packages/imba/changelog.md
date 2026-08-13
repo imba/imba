@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix `contenteditable` and `spellcheck` template attributes. `<div contenteditable="true">` compiled to a bare property assignment `el.contenteditable = value` — an inert expando, since the DOM property is camelCase `contentEditable` — so the attribute silently never landed. It is now routed through the attribute path (like other global attributes), so lowercase `contenteditable` works with every value (`"true"`, `false`, `"plaintext-only"`, ...). `spellcheck="false"` as a string arrived as `spellcheck=true`, because boolean DOM properties coerce any non-empty string (including `'false'`) to `true` — `set$` now converts `'true'`/`'false'` strings to real booleans when the target property is boolean-typed (this also fixes `translate="false"` and `autofocus="false"`, the only other affected attributes). The camelCase spellings `contentEditable` and `spellCheck` are aliased to the correct forms as well, mirroring the existing `tabindex` → `tabIndex` alias.
+
 * Remove support for overriding and adding custom color styles through imba config (`theme.colors` in `imbaconfig.json` / `package.json#imba`), along with the deferred color-resolution step in the bundler. Named colors were previously compiled to placeholder comments (`/*#*/blue4`) and substituted with config-aware values on every build; colors are now always resolved directly at compile time from the built-in palette. Custom project colors are better expressed with color variables (`#brand:lch(60 30 250)`), which also support mixing and channel modification (`#brand(1.2l c h)`).
 
 ## 2.0.0-alpha.253

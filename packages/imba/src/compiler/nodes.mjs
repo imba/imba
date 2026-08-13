@@ -14403,6 +14403,12 @@ class TagAttr extends TagPart {
 
     if (key == "tabindex") {
       key = "tabIndex";
+    } else if (key == "spellCheck") {
+      // the idl property is lowercase - el.spellCheck would be an expando
+      key = "spellcheck";
+    } else if (key == "contentEditable") {
+      // route through set$ / setAttribute like the lowercase form
+      key = "contenteditable";
     }
 
     // why delegate differently on node and web?
