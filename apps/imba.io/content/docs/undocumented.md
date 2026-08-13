@@ -552,55 +552,6 @@ css @.blue bg:blue
 @error.trap
 ```
 
-## Custom Event Modifiers
-
-```imba
-const p = console.log
-
-import * as fui from '@floating-ui/dom'
-
-extend class Event
-
-	def @confirm msg
-		let view = <app-confirm anchor=target template=msg>
-		p target
-		imba.mount view
-		view.promise
-
-tag app-confirm
-
-	anchor
-	template
-	promise = new Promise do #resolve = $1
-
-	def confirm
-		#resolve yes
-		hide!
-
-	def mount
-		{ x, y } = await fui.computePosition(anchor, self)
-
-	def reject
-		#resolve no
-		hide!
-
-	def hide
-		imba.unmount self
-		self
-
-	<self>
-		css pos:absolute w:max-content top:{y}px left:{x}px
-		<button @click=reject> 'Cancel'
-		<button @click=confirm> 'OK'
-
-tag app
-
-	<self>
-		<button@click.confirm.log('Confirmed!')> 'Click to confirm'
-
-imba.mount <app>
-```
-
 ## Style flags
 
 ```imba
