@@ -11,6 +11,6 @@ tag app
 		<img[s:20px] src="https://imba.io/logo.svg">
 		"count is {state.count}"
 
-if typeof document != 'undefined'
+if $web$
 	global css body bg:warm8 inset:0 d:vcc
 	imba.mount <app>

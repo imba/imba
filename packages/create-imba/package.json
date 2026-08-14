@@ -1,0 +1,39 @@
+{
+  "name": "create-imba",
+  "version": "0.1.0",
+  "description": "Scaffold a new Imba project",
+  "author": "Sindre Aarsaether",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imba/imba.git",
+    "directory": "packages/create-imba"
+  },
+  "keywords": [
+    "imba",
+    "create",
+    "scaffold",
+    "template",
+    "starter"
+  ],
+  "bin": {
+    "create-imba": "./bin/create-imba.js"
+  },
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "cross-spawn": "^7.0.6",
+    "esbuild": "^0.24.2",
+    "haikunator": "^2.1.2",
+    "prompts": "^2.4.2"
+  }
+}

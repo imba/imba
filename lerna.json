@@ -1,6 +1,7 @@
 {
   "packages": [
-    "packages/imba"
+    "packages/imba",
+    "packages/create-imba"
   ],
   "allowBranch": ["main"],
   "version": "independent"
