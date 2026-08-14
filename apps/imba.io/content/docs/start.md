@@ -7,7 +7,7 @@
 You can create a new project with:
 
 ```sh
-npx imba create
+npm create imba@latest
 ```
 
 ### Learning Imba

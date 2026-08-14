@@ -33,7 +33,7 @@ Imba comes with a built-in bundler based on the blazing fast [esbuild](https://e
 
 # Getting Started
 
-Getting started with Imba is as simple as running `npx imba create` in
+Getting started with Imba is as simple as running `npm create imba@latest` in
 your terminal. See our
 [introduction](/docs/introduction)
 page for more information about learning Imba, getting help, and

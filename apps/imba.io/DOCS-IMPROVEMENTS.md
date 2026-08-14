@@ -12,18 +12,20 @@ Notes for anyone picking up items:
 
 ### Broken/wrong text
 
-- [ ] `docs/cli.md` — rewrite against the real flag table: `-v, --verbose` repeats the `--force` description, `-k, --keep` repeats the intro sentence, `-p, --production` repeats `--web`'s text. Typos: `--no-minifiy`, "Convenieve", "false for `--development`,Defaults". Remove dead advice "`--esm` … Only supported on Node v14.13+".
-- [ ] `docs/cli.md` — document `imba test` (missing entirely).
-- [ ] `docs/operators.md` (~line 438–459) — the `~=?` section reuses the `|=?` example verbatim (copy-paste bug); write a real toggle-assign example.
-- [ ] `docs/operators.md` (~line 461) — `^=?` has a heading but no prose.
-- [ ] `docs/control-flow.md` (~line 346) — `Math.rEndom!` typo-as-example reads as a mistake; rewrite or annotate.
+- [x] `docs/cli.md` — rewrite against the real flag table: `-v, --verbose` repeats the `--force` description, `-k, --keep` repeats the intro sentence, `-p, --production` repeats `--web`'s text. Typos: `--no-minifiy`, "Convenieve", "false for `--development`,Defaults". Remove dead advice "`--esm` … Only supported on Node v14.13+". *(Done 2026-08-13: rewritten against `bin/imba.imba` + `imba --help`. Also removed `--target` (flag no longer exists), added the real missing flags (`--loglevel`, `--assets-dir`, `--bundle`, `--br`, `--fork`, `--inspect`, `--skipReloadingFor`, `--port`, `--host`, `--platform`), documented `imba fmt`/`imba info`, and REMOVED the `imba create` section — see new finding below.)*
+- [x] ~~`docs/cli.md` — document `imba test` (missing entirely).~~ *(Resolved 2026-08-13 with correction: `imba test` does NOT exist in the public CLI (`bin/imba.imba` has no test command; no vitest integration in the package). Original finding was wrong — nothing to document.)*
+- [x] **New finding (2026-08-13):** `imba create` does not exist either — not in `bin/imba.imba`, not in the published `imba@2.0.0-alpha.253` tarball, and no `create-imba` package on npm (`imba create` errors with "Could not resolve create"). But `docs/start.md` and `home/examples.md` still tell users to run `npx imba create`. Decide: restore a `create` command, or update start.md/home to point at the [imba-base-template](https://github.com/imba/imba-base-template) repo. *(Done 2026-08-13: built the standalone `packages/create-imba` package (npm name `create-imba`, templates moved into it from `packages/imba/templates/`), added an `## npm create imba` section to `docs/cli.md`, and switched start.md/basic-syntax.md/home/examples.md to the canonical `npm create imba@latest`. Deliberately did NOT restore an `imba create` command in the main CLI — `npm create imba` is the only supported form. Works locally end-to-end; awaiting npm publish of `create-imba`.)*
+- [x] `docs/operators.md` (~line 438–459) — the `~=?` section reuses the `|=?` example verbatim (copy-paste bug); write a real toggle-assign example. *(Done 2026-08-13: fixed the initial-state bug too — example started with the bit already unset so the branch never fired; equivalent-code block now actually unsets bits.)*
+- [x] `docs/operators.md` (~line 461) — `^=?` has a heading but no prose. *(Done 2026-08-13: documented verified semantics — toggles the bits, returns true if they ended up set (`!!((a ^= b) & b)`) — with example + expanded equivalent.)*
+- [x] `docs/control-flow.md` (~line 346) — `Math.rEndom!` typo-as-example reads as a mistake; rewrite or annotate. *(Done 2026-08-13: replaced with an obviously-intentional `JSON.parse('{not valid json}')` failure. Also removed the stale "targeting IE11 users … babelify" note above it.)*
 
 ### Broken links
 
-- [ ] `docs/styles.md` (line 15) — `/docs/styles/modifiers` → should be `/docs/css/modifiers`.
-- [ ] `guides/static_deployment.md` (line 17) — `/docs/cli` → route is `/cli`.
-- [ ] `docs/style-properties.md` — dead `[display](css)`-style links; also typo "inpsired".
-- [ ] `content/nav.md` (line 99) — `[skip]` entry points at `doc=docs/routing`, which doesn't exist. Remove the entry.
+- [x] `docs/styles.md` (line 15) — `/docs/styles/modifiers` → should be `/docs/css/modifiers`. *(Done 2026-08-13.)*
+- [x] `guides/static_deployment.md` (line 17) — `/docs/cli` → route is `/cli`. *(Done 2026-08-13.)*
+- [x] `docs/style-properties.md` — dead `[display](css)`-style links; also typo "inpsired". *(Done 2026-08-13: dead links → inline code, fixed "inpsired"/"There are also"/trailing "..".)*
+- [x] `content/nav.md` (line 99) — `[skip]` entry points at `doc=docs/routing`, which doesn't exist. Remove the entry. *(Done 2026-08-13.)*
+- [x] `docs/style-syntax.md` (line 128) — same dead-link pattern found in sweep: `[@focin](css)` → inline code + link to `/docs/css/modifiers`. *(Done 2026-08-13.)*
 
 ### Empty/unfinished sections shipped live
 
@@ -63,7 +65,7 @@ Notes for anyone picking up items:
 
 ## 4. Structure / navigation
 
-- [ ] Add a **Getting Started** section at the top of `content/nav.md` (install, `npx imba create`, editor setup, first app) using `docs/start.md` as the base. Currently the first nav item is the 723-line language tour.
+- [ ] Add a **Getting Started** section at the top of `content/nav.md` (install, `npm create imba@latest`, editor setup, first app) using `docs/start.md` as the base. Currently the first nav item is the 723-line language tour.
 - [ ] Decide placement for `community.md` (footer vs nav Reference section).
 - [ ] Plan the drain of `docs/undocumented.md` (697 lines, publicly navigated as "Experimental → Undocumented") — see §6 for the per-topic breakdown.
 - [ ] Consider an "Apps & Tooling" expansion to host the new guides in §5 (server, testing, config, editor tooling).

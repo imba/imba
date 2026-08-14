@@ -7,7 +7,7 @@
 You can create a new Imba project with:
 
 ```sh
-npx imba create
+npm create imba@latest
 ```
 
 Imba's [VSCode extension](https://marketplace.visualstudio.com/items?itemName=scrimba.vsimba) is highly recommended. It gives you full-featured tooling when using Imba, including autocomplete for css shortcuts.
