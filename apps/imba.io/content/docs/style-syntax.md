@@ -125,7 +125,7 @@ If you add a `@pseudoclass:value` on the same line as a regular property, it wil
 ```imba
 css div opacity:0.8 @hover:0.9 @focus:1
 ```
-In addition to the default pseudo-classes from css, Imba supports several convenient additions like [@focin](css).
+In addition to the default pseudo-classes from css, Imba supports several convenient additions like `@focin` — see the [modifiers reference](/docs/css/modifiers).
 
 ### Pseudo-elements
 

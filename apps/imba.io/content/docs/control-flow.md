@@ -334,8 +334,6 @@ load("/some/url").then do(data)
     # do something with data
 ```
 
-> async/await is already supported in every major browser. If you are targeting IE11 users you need to babelify the compiled code.
-
 ## Error Handling
 
 For error handling you can throw exceptions using the `throw` statement and handle them using the `try` and `catch` statements. Adding a `try` without a `catch` block will silently swallow the error.
@@ -343,8 +341,8 @@ For error handling you can throw exceptions using the `throw` statement and hand
 ```imba app.imba
 def run
     # adding a try without a catch block will silently swallow an error
-    let test = try Math.rEndom!
-    return test # returns undefined as Math.rEndom! is not a function
+    let test = try JSON.parse('{not valid json}')
+    return test # undefined - the parse error was swallowed
 console.log run! # undefined
 ```
 

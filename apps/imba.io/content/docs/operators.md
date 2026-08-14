@@ -439,29 +439,50 @@ if (data.state & STATES.LOADED) == 0
 
 ```imba
 const STATES = {LOADED: 2}
-let data = {state: 0}
+let data = {state: 2}
 
 # ---
 if data.state ~=? STATES.LOADED
-    # went from loaded to not loaded
+    # the loaded bit was set - now cleared
 ```
 
-Bitwise unassignment that unsets the right-hand bits from left-hand value and returns true / false depending on whether this actually changed the left-side or not.
+Bitwise unassignment that unsets the right-hand bits from left-hand value and returns true / false depending on whether this actually changed the left-side or not. Essentially a concise way to do
 
 ```imba
 const STATES = {LOADED: 2}
-let data = {state: 0}
+let data = {state: 2}
 
 # ---
-if (data.state & STATES.LOADED) == 0
-    data.state |= STATES.LOADED
+if (data.state & STATES.LOADED) != 0
+    data.state = data.state & ~STATES.LOADED
     # do something here...
 ```
 
 ### ^=? [op=bitwise+assign+change+advanced]
 
 ```imba
-a ^=? 1 # Bitwise XOR assignment
+const STATES = {MUTED: 4}
+let data = {state: 0}
+
+# ---
+if data.state ^=? STATES.MUTED
+    # the muted bit was toggled on
+else
+    # the muted bit was toggled off
+```
+
+Bitwise XOR (toggle) assignment that flips the right-hand bits on the left-hand value, and returns true if the bits ended up set, false if they ended up cleared. A concise way to express toggling:
+
+```imba
+const STATES = {MUTED: 4}
+let data = {state: 0}
+
+# ---
+data.state = data.state ^ STATES.MUTED
+if (data.state & STATES.MUTED) != 0
+    # the muted bit was toggled on
+else
+    # the muted bit was toggled off
 ```
 
 ## Optional chaining [toc-pills]

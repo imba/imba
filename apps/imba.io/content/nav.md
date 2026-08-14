@@ -96,8 +96,6 @@ Defining and using custom style units.
 
 ### Full Stack Deployment [doc=guides/full_stack_deployment] [href=/guides/deployment/full_stack]
 
-## Using Imba Router [doc=docs/routing] [href=/guides/routing] [skip]
-
 # Reference [href=/other] [doc=docs/other]
 
 ## API Reference [href=/api]

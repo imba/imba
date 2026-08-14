@@ -12,7 +12,7 @@ css .btn
 css .btn@hover
 	background: #81e6d9
 ```
-As you can see from the snippet above, the syntax of styles in imba are very similar to css, just without braces and semi-colon. At the same time, Imba includes powerful shorthands and [style modifiers](/docs/styles/modifiers) to allow the css above to be written like:
+As you can see from the snippet above, the syntax of styles in imba are very similar to css, just without braces and semi-colon. At the same time, Imba includes powerful shorthands and [style modifiers](/docs/css/modifiers) to allow the css above to be written like:
 
 ```imba
 css .btn d:block px:1 bg:teal2 bg@hover:teal3

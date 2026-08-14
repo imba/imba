@@ -14,7 +14,7 @@ of us aren't deploying our applications 16.67 times a day.
 ## Building
 
 Build your project for production with `imba build` (see the
-[CLI documentation](/docs/cli)). The bundled output is written to
+[CLI documentation](/cli)). The bundled output is written to
 the `dist` directory by default - this is the directory you point
 your static host at.
 
