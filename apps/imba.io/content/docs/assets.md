@@ -183,61 +183,36 @@ The `import.worker` syntax shown in the previous section is not a special syntax
 
 ```imba presets.imba
 export const presets = 
+	base:
+		target: ['chrome88','edge79','safari15']
+
 	node:
+		extends: 'base'
 		platform: 'node'
 		format: 'cjs'
-		sourcemap: true
-		target: ['node12.19.0']
+		target: ['node14.13.0']
 		external: ['dependencies','!imba']
-		
-	web:
-		platform: 'browser'
-		target: ['es2020','chrome58','firefox57','safari11','edge16']
-		sourcemap: true
+
+	esm:
+		extends: 'node'
 		format: 'esm'
-		
+		splitting: false
+
+	web:
+		extends: 'base'
+		platform: 'browser'
+		format: 'esm'
+		splitting: true
+
 	iife:
 		extends: 'web'
 		format: 'iife'
-		
+		splitting: false
+
 	client:
 		extends: 'web'
 		splitting: true
-		
-	worker:
-		format: 'esm'
-		platform: 'worker'
-		splitting: false
-
 ```
 
-Most of the properties map directly to [esbuild options](https://esbuild.github.io/api/#simple-options), with some additions for imba specific things. Configuration options will be explained in more detail before final 2.0 release. In most projects you will not need to think about or tweak these configs.
-
-## Future plans
-
-### Glob imports
-
-We are working on smart glob imports for a future release.
-
-```imba app.imba
-import icons from './feather/*.svg'
-
-# contains all matching assets:
-icons.check
-icons.circle
-...
-```
-
-This will also work directly in src paths, like:
-
-```imba app.imba
-<div> for issue in issues
-	<div>
-		<svg src="./icons/{issue.state}.svg">
-		<div.title> issue.title
-```
-
-### Importing wasm
-
-Will be part of a future release.
+Most of the properties map directly to [esbuild options](https://esbuild.github.io/api/#simple-options), with some additions for imba specific things. In most projects you will not need to think about or tweak these configs.
 

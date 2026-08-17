@@ -2,7 +2,7 @@
 
 ## Form Input Bindings
 
-## Examples
+Form elements can be bound directly to your data using `bind=someproperty`. This gives you two-way binding: when the user changes the input, the bound variable or property is updated — and when the data changes for any other reason, the input follows along. The binding target can be any variable, object property, or getter/setter pair, and Imba converts values sensibly for each input type (numbers for `range` and `number` inputs, arrays for multi-selects and checkbox groups, and so on). The examples below show `bind` in action for each kind of form element.
 
 ##### text [preview=md]
 

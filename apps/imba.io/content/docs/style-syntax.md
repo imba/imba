@@ -97,7 +97,7 @@ global css button
 # rest of file ...
 ```
 
-## Modifier Syntax [wip]
+## Modifier Syntax
 
 ```imba
 # in selectors
@@ -311,6 +311,22 @@ Since inline styles are essentially anonymous classes, they can also be applied 
 
 #### Interpolation
 
+It is possible to interpolate dynamic values into styles using `{expr}`. This happens efficiently at runtime using css variables behind the scenes, so you can write dynamic styles in a declarative manner. **Interpolation is only supported in inline styles, and style blocks nested inside tags.**
+
+```imba
+# ~preview
+css div pos:absolute p:3 t:2 l:2
+css section d:block pos:absolute inset:0 user-select:none
+
+# ---
+let ptr = {x:0, y:0}
+let num = 0
+imba.mount do
+    <section @pointermove=(ptr = e) @click=(num++)>
+        <div[bg:teal2 x:{ptr.x} y:{ptr.y} rotate:{ptr.x / 360}]> "Full"
+        <div[bg:purple2 x:{ptr.x / 2} y:{ptr.y / 2} rotate:{num / 45}]> "Half"
+
+```
 
 ##### Specifying units
 
@@ -375,26 +391,6 @@ For convenience, variables can also be accessed and set with a `$` prefix
 css div $varname:100px width:$varname
 ```
 
-
-## Interpolation
-
-
-It is possible to interpolate dynamic values into styles. This happens efficiently at runtime using css variables behind the scenes. This allows you to even write dynamic styles in a declarative manner. **Interpolation is only supported in inline styles, and style blocks nested inside tags.**
-
-```imba
-# ~preview
-css div pos:absolute p:3 t:2 l:2
-css section d:block pos:absolute inset:0 user-select:none
-
-# ---
-let ptr = {x:0, y:0}
-let num = 0
-imba.mount do
-    <section @pointermove=(ptr = e) @click=(num++)>
-        <div[bg:teal2 x:{ptr.x} y:{ptr.y} rotate:{ptr.x / 360}]> "Full"
-        <div[bg:purple2 x:{ptr.x / 2} y:{ptr.y / 2} rotate:{num / 45}]> "Half"
-
-```
 
 ## Custom Units
 

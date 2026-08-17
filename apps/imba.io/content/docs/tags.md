@@ -53,7 +53,25 @@ These interpolated classes can also be toggled by a condition:
 Classes are set and updated in an optimised way which means that updating the raw `el.className` or `el.classList` directly will yield unexpected results. When you want to add and remove classes directly from the elements outside of rendering trees you need to use `el.flags` which works just like [Element.classList](https://developer.mozilla.org/en-US/docs/Web/API/Element/classList).
 
 ```imba
-# add example for el.flags here
+const el = document.getElementById('app')
+# ---
+el.flags.add('loading') # add a class
+el.flags.remove('loading') # remove a class
+el.flags.toggle('expanded') # toggle a class
+el.flags.has('expanded') # check if a class is set
+```
+
+In addition to the `classList`-like methods, flags can be incremented and decremented. The flag stays on the element as long as the counter is positive, which is handy when several overlapping operations (like concurrent requests) should keep a flag alive until the last one finishes. `incr` also accepts a duration after which it automatically decrements:
+
+```imba
+const el = document.getElementById('app')
+# ---
+el.flags.incr('busy') # add flag - counter at 1
+el.flags.incr('busy') # still set - counter at 2
+el.flags.decr('busy') # still set - counter at 1
+el.flags.decr('busy') # counter at 0 - flag removed
+
+el.flags.incr('flash', 250) # set flag, auto-remove after 250ms
 ```
 
 ## Setting Properties

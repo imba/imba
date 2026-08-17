@@ -100,17 +100,6 @@ class Rect
 
 You can define setters which are to be called whenever there is an attempt to set that property.
 
-## Lazy Getters [wip]
-
-Any getter is bound only when first accessed. A lazy getter will in addition only determine its value the first time it is accessed and from then on return the initial value which can be memoized. This is done with a falsy assignment `||=`.
-
-```imba
-class Component
-    # The symbol #ref is only set the first time Component.ref is accessed
-    get ref
-        #ref ||= utils.uuid! 
-```
-
 ## Computed Names
 
 You can define methods, getters and setters with computed names using `[]`.
@@ -133,7 +122,7 @@ todo.title
 
 ## Meta Properties
 
-Upcoming versions of JavaScript has support for "private fields" using the `#` prefix for properties. Imba has a similar syntax that serves a similar purpose. See [Meta Properties]. Meta properties can be used in classes for method, fields, and other properties.
+JavaScript supports "private fields" using the `#` prefix for properties. Imba has a similar syntax that serves a similar purpose. Meta properties can be used in classes for methods, fields, and other properties.
 
 Meta properties are implemented as symbols, They do not show up on an Object using `for in`, `for of`, `Object.getOwnPropertyNames` or `Object.keys`, and they will never conflict with string-based / plain properties on your classes & instances. These are useful for a wide variety of things and are used extensively in the imba runtime itself.
 

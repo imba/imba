@@ -59,3 +59,20 @@ These modifiers can be chained:
 ```
 
 ## Listening to global events
+
+Sometimes a component needs to react to events that happen outside of its own elements — keyboard shortcuts, mouse movement, scrolling, or resizing at the window level. Instead of manually calling `window.addEventListener` and remembering to clean up, render a [`<global>`](/docs/components/teleports) element inside your component. Its event listeners are attached to `window`, and they are automatically added and removed when the component is mounted and unmounted:
+
+```imba
+# [preview=lg]
+# ---
+tag app-root
+    pos = {x: 0, y: 0}
+
+    <self[d:block p:3]>
+        <global @pointermove=(pos = e)>
+        <div> "Pointer is at {pos.x}, {pos.y}"
+# ---
+imba.mount do <app-root>
+```
+
+All the regular modifiers work here too, so things like `<global @keydown.esc=close>` or `<global @click.outside=dismiss>` are common patterns for dialogs and dropdowns.

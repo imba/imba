@@ -2,6 +2,28 @@
 
 The `<teleport>` is a special kind of element that allows you to add event handlers and content to a different element.
 
+## The Teleport Tag
+
+Render a `<teleport to=...>` element anywhere in your component, and its children will be mounted into the target element instead — while still being rendered and updated as part of your component, with access to its state. The `to` property accepts a css selector or an actual element reference. Event handlers on the teleport are attached to the target element. When your component unmounts, both the content and the listeners are removed again.
+
+```imba
+# [preview=lg]
+# ---
+tag app-root
+    count = 0
+
+    <self[d:block p:3]>
+        <div#header[p:2 bg:gray2 rd:md]> "Header - "
+        <p> "The counter below is rendered by <main>, but lives in #header:"
+        <button @click=(count++)> "Increment"
+        <teleport to='#header' @click=(count++)>
+            <span[fw:bold]> "clicked {count} times"
+# ---
+imba.mount do <app-root>
+```
+
+Since the target can be any element on the page, teleports are useful for rendering into containers your component does not own — toolbars, sidebars, or overlay layers managed elsewhere.
+
 ## The Global Tag
 
 You can use the special `<global>` tag within your elements for two main purposes:

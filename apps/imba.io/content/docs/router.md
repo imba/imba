@@ -84,9 +84,9 @@ We can use this to create a fallback route with `route='/*'` that will
 match all routes.
 
 
-> [tip box blue] For the time being, routes that don't end in a slash will also be
-considered wildcard routes. That means that `/home/*` and `/home` are
-the same.
+> [tip box blue] Routes that don't end in a slash match as prefixes — `/home` matches
+`/home/anything`, just like `/home/*`. If you want a route to match exactly,
+end it with `$`: `route='/home$'` matches `/home` but not `/home/other`.
 
 ## Nested Routes
 

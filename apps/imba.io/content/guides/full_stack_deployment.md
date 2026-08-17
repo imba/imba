@@ -47,11 +47,13 @@ And an `ecosystem.config.js` file that looks like this:
 ```js
 module.exports = {
   apps : [{
-    name   : "imba-base-template",
-    script: "./dist/src/server.loader.js",
+    name   : "my-app",
+    script: "./dist/server.js",
   }]
 }
 ```
+
+The `script` path is the built output of your server entry. The build writes it to the output directory using the entry's file name — both `imba build --production server.imba` and `imba build --production src/server.imba` emit `./dist/server.js`.
 
 With this set up, you're ready to start your application: 
 

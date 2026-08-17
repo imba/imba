@@ -83,4 +83,4 @@ tag App
 let app = imba.mount <App.clickable>
 ```
 
-Click to see the inner div scale during the transition. Also note that we did set the duration of the transition using the `ease` style property. You can specify the ease duration and timing function for each element, and also specify them individually for transforms, opacity and colors. See properties.
+Click to see the inner div scale during the transition. Also note that we did set the duration of the transition using the `ease` style property. You can specify the ease duration and timing function for each element, and also specify them individually for transforms, opacity and colors. See the ease-related properties in the [style properties reference](/docs/css/properties).
