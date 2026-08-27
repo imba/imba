@@ -1,6 +1,11 @@
 # imba$imbaPath=global
 # imba$stdlib=1
-let rAF = global.requestAnimationFrame || (do(blk) global.setTimeout(blk,1000 / 60))
+# late-bound so stubs and late-defined rAF are respected
+let rAF = do(blk)
+	if global.requestAnimationFrame
+		global.requestAnimationFrame(blk)
+	else
+		global.setTimeout(blk,1000 / 60)
 let FPS = 60
 let SPF = 1 / 60
 
@@ -73,6 +78,8 @@ export class Scheduler
 		#frames = 0
 		#scheduled = no
 		#version = 0
+		#flushing = no
+		flushHidden = $dev$ ? yes : no
 
 		self.listeners = {}
 		self.intervals = {}
@@ -85,6 +92,9 @@ export class Scheduler
 		$promise = null
 		$resolve = null
 		#ticker = do(e)
+			# guards stale callbacks - a parked rAF can fire after a hidden
+			# flush already ran its tick
+			return unless #scheduled
 			#scheduled = no
 			self.tick(e)
 		self
@@ -100,6 +110,7 @@ export class Scheduler
 			self.queue.push(item)
 
 		#schedule! unless #scheduled
+		#hiddenFlush! if flushHidden
 		return self
 
 	get committing?
@@ -176,6 +187,29 @@ export class Scheduler
 			rAF(#ticker)
 		self
 
+	# rAF never fires while the document is hidden, freezing queued commits
+	# until the tab is fronted. When flushHidden is on (dev default) pending
+	# commits flush through a MessageChannel instead, which unlike timers is
+	# not throttled in background tabs. Ticks with no queued commit (raf-only
+	# listeners, animations) stay frozen like production.
+	def #hiddenFlush
+		return unless #scheduled and !#flushing and committing? and global.document..hidden
+		#flushing = yes
+		unless #channel
+			#channel = new global.MessageChannel
+			#channel.port1.onmessage = do
+				#flushing = no
+				#ticker(global.performance.now!)
+		if global.performance.now! - (ts or 0) < 16
+			# committed within a frame of the last tick - retry on a throttled
+			# timer so a self-committing render loop cannot spin unbounded
+			global.setTimeout(&,16) do
+				#flushing = no
+				#hiddenFlush!
+		else
+			#channel.port2.postMessage(null)
+		self
+
 	def schedule item, o
 		o ||= (item[id] ||= {value: yes})
 		let state = o[id] ||= new Scheduled(owner: self, target: item)
@@ -209,8 +243,15 @@ export const clearInterval = global.clearInterval
 export const clearTimeout = global.clearTimeout
 
 let instance = global.imba ||= {}
+instance.scheduler = scheduler
 instance.commit = commit
 instance.setTimeout = setTimeout
 instance.setInterval = setInterval
 instance.clearInterval = clearInterval
 instance.clearTimeout = clearTimeout
+
+if $web$
+	# a commit scheduled while visible parks its rAF callback when the tab
+	# hides before the frame - flush it on the way out
+	global.document..addEventListener('visibilitychange') do
+		scheduler.#hiddenFlush() if scheduler.flushHidden
