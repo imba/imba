@@ -17956,7 +17956,8 @@ class Tag extends TagLike {
 
     if (
       flagsToConcat.length ||
-      ((isSelf || isDynamicType) && this._className)
+      ((isSelf || isDynamicType) && this._className) ||
+      (isDynamicType && this._styleName)
     ) {
       if (this._className) {
         flagsToConcat.unshift(this._className);
@@ -17981,7 +17982,7 @@ class Tag extends TagLike {
             ".flags.reconcile(" +
             this.osym() +
             "," +
-            flagsToConcat.join("+' '+") +
+            (flagsToConcat.length ? flagsToConcat.join("+' '+") : "null") +
             "," +
             extra +
             "))",
