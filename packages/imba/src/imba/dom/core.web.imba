@@ -438,15 +438,20 @@ export def createElement name, parent, flags, text
 
 	return el
 
+# svg elements expose className as an SVGAnimatedString. Let it answer
+# the string reads flag syncing does on className, against baseVal.
+extend class SVGAnimatedString
+
+	def indexOf ...params
+		baseVal.indexOf(...params)
+
 extend class SVGElement
 
 	get flags
 		unless $flags
 			$flags = new Flags(self)
-			# className is an SVGAnimatedString here, so the classes the element
-			# was created with are read from the attribute instead
 			if flag$ == SVGElement.prototype.flag$
-				flags$ext = getAttribute('class')
+				flags$ext = className.baseVal
 			flagDeopt$()
 		return $flags
 
