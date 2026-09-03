@@ -66,7 +66,7 @@ export class Flags
 			syms = #symbols = [sym]
 			vals = #batches = [str or '']
 
-			if statics and (dom.className or '').indexOf(statics) == -1
+			if statics and #classes.indexOf(statics) == -1
 				syms.push(sym)
 				vals.push(statics)
 
@@ -78,7 +78,7 @@ export class Flags
 				syms.push(sym)
 				vals.push(val)
 
-				if statics and (dom.className or '').indexOf(statics) == -1
+				if statics and #classes.indexOf(statics) == -1
 					syms.push(sym)
 					vals.push(statics)
 
@@ -92,6 +92,12 @@ export class Flags
 			#extras = ' ' + vals.join(' ')
 			sync!
 		return
+
+	# svg elements expose className as an SVGAnimatedString, so fall back
+	# to the class attribute when className is not a string
+	get #classes
+		let cls = dom.className
+		cls isa 'string' ? cls : (dom.getAttribute('class') or '')
 
 	def valueOf
 		string

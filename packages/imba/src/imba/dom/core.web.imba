@@ -440,6 +440,16 @@ export def createElement name, parent, flags, text
 
 extend class SVGElement
 
+	get flags
+		unless $flags
+			$flags = new Flags(self)
+			# className is an SVGAnimatedString here, so the classes the element
+			# was created with are read from the attribute instead
+			if flag$ == SVGElement.prototype.flag$
+				flags$ext = getAttribute('class')
+			flagDeopt$()
+		return $flags
+
 	def set$ key,value
 		let cache = descriptorCache[nodeName] ||= {}
 		let desc = getDescriptor(this,key,cache)
