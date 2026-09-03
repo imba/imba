@@ -93,11 +93,13 @@ export class Flags
 			sync!
 		return
 
-	# svg elements expose className as an SVGAnimatedString, so fall back
-	# to the class attribute when className is not a string
+	# svg elements expose className as an SVGAnimatedString and fragments
+	# have no class attribute at all, so fall back to the attribute when
+	# className is not a string, and to no classes when there is no attribute
 	get #classes
 		let cls = dom.className
-		cls isa 'string' ? cls : (dom.getAttribute('class') or '')
+		return cls if cls isa 'string'
+		dom.getAttribute ? (dom.getAttribute('class') or '') : ''
 
 	def valueOf
 		string
