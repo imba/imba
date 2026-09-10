@@ -28,6 +28,7 @@ jobs:
         cd packages/imba
         npm install
         npm run build
+        npm run docs:css:check
         npm run test
         npm run test-cli
       env:
