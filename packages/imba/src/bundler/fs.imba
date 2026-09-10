@@ -409,18 +409,35 @@ export class HTMLFile < FileNode
 
 			return {js: code.join('\n'), html: parsed.contents}
 
+const IMAGE_MIMES = {
+	png: 'image/png'
+	apng: 'image/apng'
+	jpg: 'image/jpeg'
+	jpeg: 'image/jpeg'
+	gif: 'image/gif'
+	webp: 'image/webp'
+	avif: 'image/avif'
+	ico: 'image/x-icon'
+	bmp: 'image/bmp'
+	svg: 'image/svg+xml'
+}
+
 export class ImageFile < FileNode
 
 	def compile o
 		memo(o.format) do
 			# memo this file for later?
 			let size = await Promise.resolve(imgsize(abs))
+			# the probed format (magic bytes) beats the file extension
+			let kind = String(size.type or (name.match(/\.(\w+)$/) or [])[1] or '').toLowerCase!
+			let mime = IMAGE_MIMES[kind] or null
 
 			let js = """
 			import url from './{name}';
 			export default /* @__PURE__ */ \{
 				url: url,
 				type: 'image',
+				mime: {JSON.stringify(mime)},
 				width: {size.width or 0},
 				height: {size.height or 0},
 				toString: function()\{ return this.url;\}
