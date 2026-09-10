@@ -7544,7 +7544,7 @@ class MethodDeclaration extends Func {
       !this.isSetter() &&
       !this.isGetter()
     ) {
-      this._name.warn("Only getters/setters should end with ?");
+      this._name.warn(`Only getters/setters should end with ? (method: ${this._name.toRaw()})`);
     }
 
     if (this.target() instanceof Identifier) {

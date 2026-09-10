@@ -24,10 +24,6 @@ def compile_imba code, options
 			range: {start: zero, end: zero}
 		}]}
 
-	if res.diagnostics
-		for item in res.diagnostics
-			item.lineText = item.#lineText
-
 	if res.warnings
 		out.warnings = res.warnings
 

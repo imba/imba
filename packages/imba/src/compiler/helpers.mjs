@@ -569,6 +569,7 @@ class Diagnostic {
 		this.code = data.code;
 		this.source = data.source;
 		this.message = data.message;
+		this.lineText = data.lineText ?? doc?.getLineText(this.range.start.line);
 		DOCMAP.set(this,doc);
 	}
 

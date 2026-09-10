@@ -56,6 +56,16 @@ test 'platform: worker' do
 
 # diagnostics
 
+test 'warning source line survives serialization' do
+	let code = 'class Foo\n\tdef stopped? turn\n\t\tyes\n'
+	let res = imbac.compile(code,sourcePath: 'warning.imba')
+	let warning = JSON.parse(JSON.stringify(res.warnings[0]))
+	eq warning.message, 'Only getters/setters should end with ? (method: stopped?)'
+	eq warning.range.start.line, 1
+	eq warning.range.start.character, 5
+	eq warning.range.end.character, 13
+	eq warning.lineText, '\tdef stopped? turn'
+
 test 'indentation error' do
 	let res = compile('indenterr')
 	eq res.errors.length, 1
