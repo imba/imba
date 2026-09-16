@@ -69,15 +69,20 @@ class WorkerInstance
 			args.env = Object.assign({},process.env,env)
 			fork = cp.fork(np.resolve(path),args.args,args)
 
-			process.on('SIGINT') do
-				#reload = no
-				#exit = yes
-				if fork
+			# The program owns its shutdown: pass the interrupt on and exit
+			# with it (see 'exit' below), however long that takes. A second
+			# interrupt is the way out of a program that never stops.
+			unless #sigint_bound
+				#sigint_bound = yes
+				let sigints = 0
+				process.on('SIGINT') do
+					#reload = no
+					#exit = yes
+					sigints++
+					if sigints > 1 or !fork
+						fork..kill('SIGKILL')
+						process.exit(0)
 					fork.kill('SIGINT')
-				
-				# force exit after 5s?
-				setTimeout(&,5s) do
-					process.exit(0)
 
 			fork.on('exit') do(code)
 				current = null
