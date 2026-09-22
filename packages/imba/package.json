@@ -12,6 +12,8 @@
     "dev": "npm run watch",
     "create-example": "node bin/imba scripts/create-example.imba",
     "generate-typings": "node bin/imba scripts/docs/generate-typings.imba",
+    "docs:css": "node scripts/docs/css-docs.mjs",
+    "docs:css:check": "node scripts/docs/css-docs.mjs --check",
     "build-parser": "node scripts/build-parser.js",
     "build": "npm run build-parser && node scripts/build.js",
     "prepack": "npm run build",
