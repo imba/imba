@@ -104,6 +104,11 @@ export const LOADER_EXTENSIONS = {
 export const defaultConfig = {
 	bundles: []
 
+	# gitignore-style paths the dev watcher never reports (see bundler/watcher.imba)
+	watch: {
+		ignore: []
+	}
+
 	options: {
 		base: {
 			target: ['chrome88','edge79','safari15']
