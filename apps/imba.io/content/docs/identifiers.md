@@ -56,7 +56,21 @@ list.empty? # => true
 list.empty?! # => true
 ```
 
-A predicate `def` that takes parameters (or is async or a generator) cannot become a getter. It stays a regular method and the compiler warns about it – name such methods `isEmpty` or `has-items` instead.
+A predicate `def` that takes parameters (or is a generator) cannot become a getter. It stays a regular method and the compiler warns about it – name such methods `isEmpty` or `has-items` instead.
+
+Predicates may be async. A `def ready?` (or `get ready?`) whose body awaits compiles to a getter that returns a promise, so `await item.ready?` works. A promise is always truthy, so using an async predicate in a condition, operator or assignment without `await` is a bug; inside its own class (`if ready?`, `let x = ready?`) the compiler warns about it, and elsewhere the TypeScript-based tooling reports it.
+
+```imba
+class Session
+    def valid?
+        let user = await fetchUser!
+        user and !user.expired
+
+    def refresh
+        if await valid?
+            return
+        # if valid? without await would warn - a promise is always truthy
+```
 
 Using these types of identifiers is entirely optional, and may feel weird initially.
 

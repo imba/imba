@@ -92,7 +92,9 @@ def ready?
 
 Reading `item.ready?` always yields the value. An explicit call `item.ready?!` also works regardless of whether `ready?` is a getter or a real method (it reads the property once and calls it only if it is a function), so prefer the plain property form.
 
-Predicates that take arguments or a `block` (or are async/generators) cannot be getters, so they stay plain methods and must not end with `?`:
+An async predicate (`def ready?` / `get ready?` with `await` inside) compiles to a getter returning a promise: always `await item.ready?`. Using it in a condition or assignment without `await` inside its own class is a compiler warning, since a promise is always truthy.
+
+Predicates that take arguments or a `block` (or are generators) cannot be getters, so they stay plain methods and must not end with `?`:
 
 ```imba
 def has-media-emphasis block

@@ -131,3 +131,42 @@ test 'explicit call inside an amperfunc' do
 	eq groups.filter(&.empty?!).length, 1
 	eq groups.filter(&.full?).length, 1
 	eq groups.map(&.data.items.length).length, 2
+
+class Loader
+	def ready?
+		await Promise.resolve(1)
+		yes
+
+	get loaded?
+		await Promise.resolve(1)
+		yes
+
+	static def shared?
+		await Promise.resolve(1)
+		yes
+
+	def bigger? n
+		await Promise.resolve(1)
+		n > 1
+
+	def check
+		await ready?
+
+test 'async predicates are promise-returning getters' do
+	let loader = new Loader
+	eq (loader.ready? isa Promise), true
+	eq (loader.loaded? isa Promise), true
+	let a = await loader.ready?
+	eq a, true
+	let b = await loader.ready?!
+	eq b, true
+	let c = await loader.loaded?
+	eq c, true
+	let d = await Loader.shared?
+	eq d, true
+	let e = await loader.bigger?(2)
+	eq e, true
+	let f = await loader.bigger?(0)
+	eq f, false
+	let g = await loader.check!
+	eq g, true

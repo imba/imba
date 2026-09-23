@@ -80,14 +80,49 @@ test 'predicate def in tsc mode is typed as a getter' do
 	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
 	assert res.js.indexOf('get stoppedΦ(') >= 0
 
-test 'async and generator predicate defs stay methods and warn' do
-	let code = 'class Foo\n\tdef loaded?\n\t\tawait 1\n\t\tyes\n\tdef items?\n\t\tyield 1\n'
+test 'async predicates compile to promise-returning getters' do
+	let code = 'class Foo\n\tdef ready?\n\t\tawait 1\n\t\tyes\n\tget loaded?\n\t\tawait 1\n\t\tyes\n\tstatic def shared?\n\t\tawait 1\n\t\tyes\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 0
+	assert res.js.indexOf('get readyΦ(){\n\t\treturn (async () => {') >= 0
+	assert res.js.indexOf('get loadedΦ(){\n\t\treturn (async () => {') >= 0
+	assert res.js.indexOf('static get sharedΦ(){\n\t\treturn (async () => {') >= 0
+	assert res.js.indexOf('async get') == -1
+
+test 'async predicate getter has no async keyword in tsc mode' do
+	let code = 'class Foo\n\tdef ready?\n\t\tawait 1\n\t\tyes\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
+	assert res.js.indexOf('get readyΦ()') >= 0
+	assert res.js.indexOf('return (async () => {') >= 0
+	assert res.js.indexOf('async get') == -1
+
+test 'async predicate def with parameters stays an async method' do
+	let code = 'class Foo\n\tdef bigger? n\n\t\tawait 1\n\t\tn > 1\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 1
+	assert res.warnings[0].message.indexOf('def bigger? takes parameters') == 0
+	assert res.js.indexOf('async biggerΦ(n)') >= 0
+
+test 'generator predicate def stays a method and warns' do
+	let code = 'class Foo\n\tdef items?\n\t\tyield 1\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 1
+	assert res.warnings[0].message.indexOf('def items? is a generator and stays a plain method') == 0
+	assert res.js.indexOf('*itemsΦ(') >= 0
+
+test 'unawaited async predicate use in its own class warns' do
+	let code = 'class Foo\n\tdef ready?\n\t\tawait 1\n\t\tyes\n\tdef check\n\t\tif ready?\n\t\t\t1\n\t\tlet a = self.ready?\n\t\tlet b = await ready?\n\t\tlet c = await ready?!\n\t\tlet d = ready?.then(do 1)\n\t\tlet e = await Promise.all([ready?])\n\t\tlet f = other.ready?\n\t\tready?\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	eq res.warnings.length, 2
-	assert res.warnings[0].message.indexOf('def loaded? is async and stays a plain method') == 0
-	assert res.warnings[1].message.indexOf('def items? is a generator and stays a plain method') == 0
-	assert res.js.indexOf('async loadedΦ(') >= 0
-	assert res.js.indexOf('*itemsΦ(') >= 0
+	assert res.warnings[0].message.indexOf('ready? is an async predicate') == 0
+	eq res.warnings[0].range.start.line, 5
+	eq res.warnings[1].range.start.line, 7
+
+test 'unawaited async predicate in a tag flag warns' do
+	let code = 'tag foo-bar\n\tdef ready?\n\t\tawait 1\n\t\tyes\n\tdef render\n\t\t<self .on=ready? .off=(await ready?)>\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 1
+	eq res.warnings[0].range.start.line, 5
 
 test 'predicate def outside a class stays a function and warns' do
 	let code = 'def ready?\n\tyes\n'

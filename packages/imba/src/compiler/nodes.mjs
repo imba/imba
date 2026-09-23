@@ -5843,6 +5843,25 @@ class ClassDeclaration extends Code {
     );
   }
 
+  // An async predicate is a getter returning a promise, so `if ready?`
+  // inside its own class is always truthy. The uses were recorded while
+  // traversing (recordPredicateUse); the methods are only known now.
+  warnUnawaitedAsyncPredicates() {
+    let uses = this._predicateUses;
+    if (!uses) {
+      return;
+    }
+    for (let i = 0; i < uses.length; i++) {
+      let use = uses[i];
+      let m = this._instanceMethodMap[use.name];
+      if (m && m.isGetter() && m.option("async") && !m.option("yield")) {
+        use.node.warn(
+          `${use.name} is an async predicate and yields a promise here - use await ${use.name}`,
+        );
+      }
+    }
+  }
+
   visit() {
     var owner;
     let upscope = STACK.scope(1);
@@ -6034,6 +6053,7 @@ class ClassDeclaration extends Code {
 
     // See if we called super anywhere
     this.body().traverse();
+    this.warnUnawaitedAsyncPredicates();
     // console.log "Called?",option(:calledSuper)
     var ctor = this.body().option("ctor");
 
@@ -7488,14 +7508,11 @@ class MethodDeclaration extends Func {
     let why = null;
 
     if (this._predicateGetter) {
-      if (this.option("async")) {
-        why = "is async";
-      } else if (this.option("yield")) {
-        why = "is a generator";
-      }
-      if (!why) {
+      // an async body is fine - the getter returns a promise (see js)
+      if (!this.option("yield")) {
         return;
       }
+      why = "is a generator";
       this._type = "def";
       this._predicateGetter = false;
     } else if (this.isGetter()) {
@@ -7745,6 +7762,19 @@ class MethodDeclaration extends Func {
     }
 
     var code = self.scope().c({ indent: true, braces: true });
+
+    // a getter cannot be async. A getter whose body awaits (an async
+    // predicate, typically) returns the promise of an async arrow instead:
+    // `get fooΦ(){ return (async () => { ... })() }`
+    var asyncGetter =
+      self.isGetter() && self.option("async") && !self.option("yield");
+    if (asyncGetter) {
+      code =
+        "{\n" +
+        indentGeneratedString("return (async () => " + code + ")();") +
+        "\n}";
+    }
+
     var name =
       typeof self._name == "string"
         ? self._name
@@ -7759,7 +7789,7 @@ class MethodDeclaration extends Func {
       declare: self.option("declareOnly"),
       default: self.option("default"),
       protected: self.option("protected"),
-      async: self.option("async"),
+      async: asyncGetter ? null : self.option("async"),
       code: code, // with braces
       key: M(name, null, { as: "field" }), // should not be precompiled
       name: self._name,
@@ -7887,7 +7917,7 @@ class MethodDeclaration extends Func {
         prefix = M("set", self.option("keyword")) + " ";
       }
 
-      if (self.option("async")) {
+      if (self.option("async") && !asyncGetter) {
         prefix = "async " + prefix;
       }
       if (self.option("static")) {
@@ -7930,7 +7960,7 @@ class MethodDeclaration extends Func {
           "," +
           fname +
           ",\{get: " +
-          self.funcKeyword() +
+          (asyncGetter ? "function" : self.funcKeyword()) +
           func +
           ", configurable: true\})";
         return out;
@@ -9505,6 +9535,57 @@ class In extends Op {
 
 // ACCESS
 
+// A predicate read (`ready?` / `self.ready?`) is being visited - is it used
+// somewhere a promise would silently be a bug: a condition, an operator or
+// an assignment? Awaiting, chaining (`ready?.then`), returning or passing
+// it along are all fine, so only the plain boolean-ish uses count.
+function isUnawaitedPredicateUse(node) {
+  let nodes = STACK._nodes;
+  let i = nodes.indexOf(node);
+  if (i < 0) {
+    return false;
+  }
+  let child = node;
+  while (i > 0) {
+    let up = nodes[--i];
+    if (up instanceof Await) {
+      return false;
+    }
+    if (up instanceof Call && up._callee === child) {
+      child = up; // `ready?!` yields the same promise
+      continue;
+    }
+    if (up instanceof VarOrAccess || up instanceof Parens) {
+      child = up;
+      continue;
+    }
+    if (up instanceof Access) {
+      return false; // chained onto
+    }
+    if (up instanceof If || up instanceof Loop) {
+      return up._test === child;
+    }
+    return up instanceof Op || up instanceof TagPart;
+  }
+  return false;
+}
+
+// Remember predicate reads on self inside a class body. Once the class has
+// been traversed and its async predicates are known, the unawaited ones
+// are warned about (ClassDeclaration.warnUnawaitedAsyncPredicates).
+function recordPredicateUse(stackNode, name, warnNode) {
+  if (!isUnawaitedPredicateUse(stackNode)) {
+    return;
+  }
+  let cls = STACK.up(ClassDeclaration);
+  if (cls) {
+    (cls._predicateUses || (cls._predicateUses = [])).push({
+      name: name,
+      node: warnNode,
+    });
+  }
+}
+
 class Access extends Op {
   constructor(o, l, r) {
     super(...arguments);
@@ -9722,7 +9803,25 @@ class Access extends Op {
       this._right.traverse();
     }
     this._left || (this._left = this.scope__().context());
+    this.recordSelfPredicateUse();
     return;
+  }
+
+  // `self.ready?` / `this.ready?` - see recordPredicateUse
+  recordSelfPredicateUse() {
+    let lft = this._left;
+    let rgt = this._right;
+    if (!(rgt instanceof Identifier && rgt.isPredicate())) {
+      return;
+    }
+    let isSelf =
+      lft instanceof Self ||
+      (lft instanceof VarOrAccess &&
+        lft._isSelf &&
+        lft._value instanceof ScopeContext);
+    if (isSelf) {
+      recordPredicateUse(this, rgt.toRaw(), rgt);
+    }
   }
 
   isExpressable() {
@@ -9811,6 +9910,7 @@ class PropertyAccess extends Access {
     if (this._left) {
       this._left.traverse();
     }
+    this.recordSelfPredicateUse();
     return this;
   }
 
@@ -10028,6 +10128,10 @@ class VarOrAccess extends ValueNode {
           new Self().traverse(),
           this._value,
         ); // .set(datatype: datatype)
+
+        if (this._identifier.isPredicate()) {
+          recordPredicateUse(this, this._identifier.toRaw(), this);
+        }
       }
     } else {
       this._isGlobal = true;
