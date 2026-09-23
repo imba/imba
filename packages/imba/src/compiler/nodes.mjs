@@ -12228,7 +12228,13 @@ class Call extends Node {
     }
 
     if (callee instanceof Super) {
-      ((callee._args = this instanceof BangCall ? [] : args), callee);
+      // a bang call (super.foo!) means "call with no arguments" - Super
+      // expects an ArgList here since it traverses and compiles it itself
+      let superArgs = this instanceof BangCall ? [] : args;
+      if (superArgs instanceof Array) {
+        superArgs = new ArgList(superArgs);
+      }
+      callee._args = superArgs;
       return callee;
     }
 
@@ -21443,7 +21449,13 @@ class Super extends Node {
     }
 
     if (this._member) {
-      return OP(".", sup, this._member).c();
+      op = OP(".", sup, this._member);
+      // something is chained onto a super call (super.foo().bar) -
+      // the call itself still has to be emitted before the chain
+      if (args) {
+        return M(CALL(op, args).c({ mark: false }), this._keyword);
+      }
+      return op.c();
     }
 
     if (up instanceof Call && m && !m.isConstructor()) {
