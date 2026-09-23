@@ -132,6 +132,8 @@ tag sized-list
     get empty? do !items.length
 ```
 
+A `def` with a predicate name and no parameters compiles to a getter as well, so `list.empty?` always yields the value, and an explicit `list.empty?!` works whether the predicate is a getter or a real method. See [Predicate Identifiers](/docs/identifiers#predicate-identifiers).
+
 ### Identifiers with special meanings
 
 There are a few identifiers that are reserved as keywords in certain contexts. `get`, `set` and `attr` are perfectly valid to use as variables, arguments, and properties, but in class definitions they have a special meaning.

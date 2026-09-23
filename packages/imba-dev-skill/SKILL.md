@@ -56,7 +56,7 @@ These are the mistakes AI assistants make most often with Imba:
 | Shadowing global `assert`/`eq` when testing compiler assertion payloads | Import/install the global test harness, then call unshadowed `assert`/`eq` | The compiler only sets `globalThis.IMBA_ASSERT` / `globalThis.IMBA_EQ` for unshadowed global calls; local/imported definitions are intentionally left alone |
 | Returning `self` from `@thenable def init/start` | Return `yes`, `null`, or another non-thenable value after initialization | Resolving a thenable method with the same thenable object can recurse/hang and triggers the "took more than 20000ms" warning |
 | Letting legitimate slow `@thenable` setup hit the default watchdog | Use `@thenable(timeout: 2minutes)` or another explicit duration | The decorator's default warning fires after 20s; browser/server startup paths may need a longer timeout |
-| `def admin-email?` / `def ready?` | `def is-admin-email` / `def is-ready` (or use `get admin-email?`) | Trailing `?` is reserved for getters/setters; on a `def` it triggers `Only getters/setters should end with ?` warning |
+| `def admin-email? user` (predicate `def` with parameters) | `def is-admin-email user` / `def has-access user` | A parameterless `def ready?` compiles to a getter, but a predicate `def` that takes parameters stays a plain method and triggers a `stays a plain method` warning |
 | `def is query` | `def ['is'] query` | Methods named after reserved keywords need bracket syntax |
 | `def begin` for lifecycle-style methods | Prefer `def start` | A method named `begin` can confuse Imba tooling/tsc compilation; use `start` for Q/run lifecycle methods |
 | `def exec *params` | `def exec ...params` | Imba rest parameters use `...`, not Imba1-style `*` |
@@ -77,7 +77,7 @@ These are the mistakes AI assistants make most often with Imba:
 
 ### Predicate Names and Trailing `?`
 
-Trailing `?` is not a general boolean-method convention in Imba. Only accessor declarations should end with `?`:
+Trailing `?` marks a property-like predicate, not a general boolean-method convention. Accessor declarations may end with `?`, and a parameterless `def` with a `?` name compiles to a getter too:
 
 ```imba
 get media-emphasis?
@@ -85,19 +85,24 @@ get media-emphasis?
 
 set media-emphasis? value
 	# setter for that property
+
+def ready?
+	# also compiles to a getter - `item.ready?` yields the value
 ```
 
-Regular methods, including predicates that take arguments or a `block`, must not end with `?`:
+Reading `item.ready?` always yields the value. An explicit call `item.ready?!` also works regardless of whether `ready?` is a getter or a real method (it reads the property once and calls it only if it is a function), so prefer the plain property form.
+
+Predicates that take arguments or a `block` (or are async/generators) cannot be getters, so they stay plain methods and must not end with `?`:
 
 ```imba
 def has-media-emphasis block
 	# ok
 
 def media-emphasis? block
-	# warns: Only getters/setters should end with ?
+	# warns: stays a plain method - name it is-media-emphasis instead
 ```
 
-For predicate helpers, prefer names like `is-ready`, `has-media-emphasis`, or `should-render-media`; use `get something?` only when the API is property-like and needs no parameters.
+For predicate helpers with parameters, prefer names like `is-ready`, `has-media-emphasis`, or `should-render-media`; use `get something?` (or a parameterless `def something?`) only when the API is property-like and needs no parameters.
 
 ## Implicit Self & Global Identifiers
 

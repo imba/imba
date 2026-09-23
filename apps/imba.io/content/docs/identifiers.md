@@ -42,6 +42,22 @@ tag sized-list
         !items.length
 ```
 
+Predicates are property-like, so a `def` whose name ends with `?` and takes no parameters compiles to a getter, exactly as if it had been declared with `get`. Either way `list.empty?` yields the boolean, never a function. An explicit call like `list.empty?!` works too, whether the predicate turned out to be a getter or a real method – it reads the property once and only calls it if the value is a function.
+
+```imba
+class List
+    items = []
+
+    def empty?
+        !items.length
+
+let list = new List
+list.empty? # => true
+list.empty?! # => true
+```
+
+A predicate `def` that takes parameters (or is async or a generator) cannot become a getter. It stays a regular method and the compiler warns about it – name such methods `isEmpty` or `has-items` instead.
+
 Using these types of identifiers is entirely optional, and may feel weird initially.
 
 > [tip] In JavaScript, optional chaining uses the `?.` operator. For optional chaining in Imba, use `..` like `object..some..key`

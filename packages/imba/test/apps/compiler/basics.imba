@@ -60,11 +60,66 @@ test 'warning source line survives serialization' do
 	let code = 'class Foo\n\tdef stopped? turn\n\t\tyes\n'
 	let res = imbac.compile(code,sourcePath: 'warning.imba')
 	let warning = JSON.parse(JSON.stringify(res.warnings[0]))
-	eq warning.message, 'Only getters/setters should end with ? (method: stopped?)'
+	eq warning.message, 'def stopped? takes parameters and stays a plain method (only parameterless predicates become getters) - name it isStopped instead'
 	eq warning.range.start.line, 1
 	eq warning.range.start.character, 5
 	eq warning.range.end.character, 13
 	eq warning.lineText, '\tdef stopped? turn'
+
+# predicate defs
+
+test 'predicate def without params compiles to a getter' do
+	let code = 'class Foo\n\tdef stopped?\n\t\tyes\n\tstatic def shared-state?\n\t\tno\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 0
+	assert res.js.indexOf('get stoppedΦ(') >= 0
+	assert res.js.indexOf('static get sharedΞstateΦ(') >= 0
+
+test 'predicate def in tsc mode is typed as a getter' do
+	let code = 'class Foo\n\tdef stopped?\n\t\tyes\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
+	assert res.js.indexOf('get stoppedΦ(') >= 0
+
+test 'async and generator predicate defs stay methods and warn' do
+	let code = 'class Foo\n\tdef loaded?\n\t\tawait 1\n\t\tyes\n\tdef items?\n\t\tyield 1\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 2
+	assert res.warnings[0].message.indexOf('def loaded? is async and stays a plain method') == 0
+	assert res.warnings[1].message.indexOf('def items? is a generator and stays a plain method') == 0
+	assert res.js.indexOf('async loadedΦ(') >= 0
+	assert res.js.indexOf('*itemsΦ(') >= 0
+
+test 'predicate def outside a class stays a function and warns' do
+	let code = 'def ready?\n\tyes\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 1
+	assert res.warnings[0].message.indexOf('def ready? is not a class member and stays a plain function') == 0
+	assert res.js.indexOf('function readyΦ(') >= 0
+
+test 'explicit predicate call reads once and calls only functions' do
+	let code = 'let item = {}\nlet a = item.ready?!\nlet b = item.ready?\nlet c = item.ready?(1)\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	assert res.js.indexOf("let a = (typeof ($1 = item.readyΦ) == 'function' ? $1.call(item) : $1);") >= 0
+	assert res.js.indexOf("let b = item.readyΦ;") >= 0
+	assert res.js.indexOf("let c = item.readyΦ(1);") >= 0
+
+test 'explicit predicate call caches a complex receiver' do
+	let code = 'def next\n\t{}\nlet a = next!.ready?!\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	assert res.js.indexOf("(typeof ($2 = ($1 = next()).readyΦ) == 'function' ? $2.call($1) : $2)") >= 0
+
+test 'explicit predicate call after new binds new to the constructor' do
+	let code = 'class Foo\n\tdef ready?\n\t\tyes\nlet a = new Foo().ready?!\nlet b = new Foo().ready?\nlet c = new Foo.ready?!\nlet d = new Foo().bar!\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	assert !!res.js.match(/let a = \(typeof \(\$\d+ = \(\$\d+ = new Foo\(\)\)\.readyΦ\) == 'function' \? \$\d+\.call\(\$\d+\) : \$\d+\);/)
+	assert res.js.indexOf("let b = new Foo().readyΦ;") >= 0
+	assert res.js.indexOf("let c = new Foo.readyΦ();") >= 0
+	assert res.js.indexOf("let d = new Foo().bar();") >= 0
+
+test 'explicit predicate call inside an amperfunc declares its temporary' do
+	let code = 'let items = []\nlet a = items.filter(&.ready?!)\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	assert !!res.js.match(/\(v\$\)=>\{ var \$\d+; return \(typeof \(\$\d+ = v\$\.readyΦ\) == 'function' \? \$\d+\.call\(v\$\) : \$\d+\) \}/)
 
 test 'indentation error' do
 	let res = compile('indenterr')

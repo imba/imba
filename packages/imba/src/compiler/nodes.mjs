@@ -7071,6 +7071,13 @@ class AmperFunc extends Lambda {
   js(s, o) {
     var out = this.body().c({ braces: false });
 
+    // temporaries allocated while rendering the body (a predicate call
+    // wrapper, for one) need a block body to be declared in
+    let vars = this.scope()._vars;
+    if (vars && vars.count() > 0) {
+      out = "{ " + vars.c() + "; return " + out + " }";
+    }
+
     if (STACK.tsc()) {
       return "((v$)=>" + out + ")";
     }
@@ -7449,6 +7456,68 @@ class MethodDeclaration extends Func {
     return this._type == "set";
   }
 
+  hasPredicateName() {
+    let name = this._name;
+    return !!(name && name.isPredicate && name.isPredicate());
+  }
+
+  // declared as a member: class body, object literal, or `def Foo.foo?`
+  isMemberDef() {
+    if (this.option("inObject") || this.target()) {
+      return true;
+    }
+    let closure = this.scope().parent().closure();
+    return closure instanceof ClassScope;
+  }
+
+  // a `def foo?` that can be compiled as a getter: a member without parameters
+  isPredicateDef() {
+    return (
+      this.hasPredicateName() && len$(this._params) == 0 && this.isMemberDef()
+    );
+  }
+
+  // Runs once the body has been traversed, when async/yield are known.
+  // Predicate defs that cannot become getters stay methods and warn,
+  // since `x.foo?` on a method silently yields the function itself.
+  finalizePredicateDef() {
+    if (!this.hasPredicateName() || this.isSetter()) {
+      return;
+    }
+
+    let why = null;
+
+    if (this._predicateGetter) {
+      if (this.option("async")) {
+        why = "is async";
+      } else if (this.option("yield")) {
+        why = "is a generator";
+      }
+      if (!why) {
+        return;
+      }
+      this._type = "def";
+      this._predicateGetter = false;
+    } else if (this.isGetter()) {
+      return;
+    } else if (len$(this._params) > 0) {
+      why = "takes parameters";
+    } else {
+      why = "is not a class member";
+    }
+
+    let raw = this._name.toRaw();
+    let base = raw.slice(0, -1);
+    let alt =
+      base.indexOf("-") >= 0
+        ? "is-" + base
+        : "is" + base[0].toUpperCase() + base.slice(1);
+    let what = this.isMemberDef() ? "method" : "function";
+    this._name.warn(
+      `def ${raw} ${why} and stays a plain ${what} (only parameterless predicates become getters) - name it ${alt} instead`,
+    );
+  }
+
   isConstructor() {
     return String(this.name()) == "constructor";
   }
@@ -7496,6 +7565,15 @@ class MethodDeclaration extends Func {
     this.scope().visit();
     let scop = this.scope();
 
+    // `def foo?` without parameters is a predicate - compile it as a getter
+    // so that `x.foo?` yields the value whether it was declared with def
+    // or get. Async and generator bodies are only discovered while the body
+    // is traversed and revert this in finalizePredicateDef.
+    if (this._type == "def" && this.isPredicateDef()) {
+      this._type = "get";
+      this._predicateGetter = true;
+    }
+
     if (this.isSetter() && len$(this._params) > 1) {
       if (len$(this._params) > 2) {
         console.warn(
@@ -7517,6 +7595,7 @@ class MethodDeclaration extends Func {
     if (this.option("inObject")) {
       this._params.traverse();
       this._body.traverse();
+      this.finalizePredicateDef();
       return this;
     }
 
@@ -7537,15 +7616,6 @@ class MethodDeclaration extends Func {
     }
 
     this._params.traverse();
-
-    if (
-      this._name.isPredicate &&
-      this._name.isPredicate() &&
-      !this.isSetter() &&
-      !this.isGetter()
-    ) {
-      this._name.warn(`Only getters/setters should end with ? (method: ${this._name.toRaw()})`);
-    }
 
     if (this.target() instanceof Identifier) {
       if ((variable = this.scope().lookup(this.target().toString()))) {
@@ -7606,6 +7676,7 @@ class MethodDeclaration extends Func {
     ROOT._entities.add(this.namepath(), this);
 
     this._body.traverse();
+    this.finalizePredicateDef();
 
     // traverse returnType
     if (this.returnType()) {
@@ -7692,7 +7763,11 @@ class MethodDeclaration extends Func {
       code: code, // with braces
       key: M(name, null, { as: "field" }), // should not be precompiled
       name: self._name,
-      get: self.isGetter() ? self.option("keyword") : null,
+      get: self.isGetter()
+        ? self._predicateGetter
+          ? M("get", self.option("keyword"))
+          : self.option("keyword")
+        : null,
       set: self.isSetter() ? self.option("keyword") : null,
       returnType: self.returnType(),
       yield: self.option("yield") && LIT("*"),
@@ -12177,6 +12252,11 @@ class AmperRef extends ValueNode {
     return this;
   }
 
+  // a plain parameter reference - never worth a temporary
+  cache() {
+    return this;
+  }
+
   c() {
     return "v$";
   }
@@ -12351,6 +12431,29 @@ class Call extends Node {
       (this._receiver =
         (this._callee instanceof Access && this._callee._left) || NULL)
     );
+  }
+
+  // `x.foo?!` - an explicit zero-argument call of a predicate member.
+  // Returns the property access (unwrapped from implicit self) or null.
+  predicateAccess() {
+    if (STACK.tsc()) {
+      return null;
+    }
+    let callee = this._callee.node();
+    let acc =
+      callee instanceof VarOrAccess && !callee._variable
+        ? callee._value
+        : callee;
+    if (
+      acc instanceof Access &&
+      acc._right instanceof Identifier &&
+      acc._right.isPredicate() &&
+      this._args.count() == 0 &&
+      !(acc._left instanceof Super)
+    ) {
+      return acc;
+    }
+    return null;
   }
 
   safechain() {
@@ -12585,6 +12688,35 @@ class Call extends Node {
       }
     }
 
+    // A predicate member is usually a getter (which is what `def foo?`
+    // compiles to) but may be a real method. `x.foo?!` reads the property
+    // once and only calls it when it turned out to be a function, so the
+    // caller never needs to know which one it is. Inside a `new` chain the
+    // call parens belong to the constructor, so it stays a plain call.
+    let acc = this._receiver || this._inNewChain ? null : this.predicateAccess();
+
+    if (acc) {
+      // the receiver is referenced twice - cache it unless it is a plain
+      // reference (self, a local variable, a global). IndexAccess only
+      // caches its index by default, so force the whole expression.
+      let recv = acc._left;
+      let cacheRecv = !(recv instanceof ScopeContext || recv instanceof Self);
+      if (cacheRecv) {
+        recv.cache({ pool: "val", force: recv instanceof IndexAccess });
+      }
+      let tmp = this.scope__().temporary(this, { pool: "val" });
+      let val = callee.c({ expression: true });
+      out =
+        "(typeof (" + tmp.c() + " = " + val + ") == 'function' ? " +
+        tmp.c() + ".call(" + recv.c() + ") : " + tmp.c() + ")";
+      // both temporaries are done once this expression is rendered
+      tmp.free();
+      if (cacheRecv) {
+        recv.decache();
+      }
+      return out;
+    }
+
     let safeop = "";
     if (callee instanceof Access && callee.op() == "?.") {
       safeop = "?.";
@@ -12608,6 +12740,10 @@ class Call extends Node {
       let outargs = "(" + args.c({ expression: true, mark: false }) + ")";
       out =
         "" + callee.c({ expression: true }) + safeop + M(outargs, this._args);
+      if (this._newPrefix) {
+        let kw = this._newPrefix === true ? "new" : M("new", this._newPrefix);
+        out = kw + " " + out;
+      }
     }
 
     if (wrap) {
@@ -12628,9 +12764,58 @@ class Call extends Node {
 
 class BangCall extends Call {}
 
+// `new` is prefixed textually and JS binds it to the first call parens in
+// the chain (`new Foo().bar()` is `(new Foo()).bar()`). The predicate call
+// wrapper turns `x.bar?!` into `(typeof (t = x.barΦ) ...)`, which would
+// swallow the prefix, so when such a call sits above the constructor call
+// the `new` is pushed down onto that innermost call instead. With no
+// separate constructor call (`new Foo.bar?!`) the predicate call itself is
+// the constructor call and simply stays a plain call. Returns true when
+// the caller should render the chain without the prefix.
+function pushNewIntoChain(node, keyword, fallback) {
+  let calls = [];
+  let n = node;
+  while (n) {
+    if (n instanceof Call) {
+      calls.push(n);
+      n = n._callee;
+    } else if (n instanceof Access) {
+      n = n._left;
+    } else if (n instanceof VarOrAccess) {
+      n = n._value instanceof Access ? n._value : null;
+    } else {
+      break;
+    }
+  }
+
+  let predicates = calls.filter(function (c) {
+    return c.predicateAccess();
+  });
+  if (!predicates.length) {
+    return false;
+  }
+
+  let inner = calls[calls.length - 1];
+  inner._inNewChain = true;
+
+  if (fallback || inner instanceof New) {
+    for (let i = 0; i < predicates.length; i++) {
+      predicates[i]._inNewChain = true;
+    }
+    return false;
+  }
+
+  inner._newPrefix = keyword || true;
+  return true;
+}
+
 class Instantiation extends ValueNode {
   js(o) {
-    return "" + M("new", this.keyword()) + " " + this.value().c();
+    let keyword = this.keyword();
+    if (pushNewIntoChain(this.value(), keyword)) {
+      return this.value().c();
+    }
+    return "" + M("new", keyword) + " " + this.value().c();
   }
 }
 
@@ -12650,6 +12835,9 @@ class New extends Call {
 
   js(o) {
     var target = this._callee;
+
+    // deprecated form - predicate calls in the chain just stay plain calls
+    pushNewIntoChain(this._callee, this.keyword(), true);
 
     while (target instanceof Access) {
       let left = target._left;
