@@ -18092,7 +18092,7 @@ class Tag extends TagLike {
             this.bvar() +
             " || " +
             this.parentCache() +
-            ".sym || !" +
+            ".sym != null || !" +
             this.tvar() +
             ".setup || " +
             this.tvar() +
@@ -18107,7 +18107,7 @@ class Tag extends TagLike {
         foot.push(
           "" +
             this.parentCache() +
-            ".sym || " +
+            ".sym != null || " +
             this.tvar() +
             this.domCall("end") +
             "(" +
