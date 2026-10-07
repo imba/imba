@@ -130,7 +130,8 @@ export default class Bundle < Component
 		#distInsideRoot ??= (/^(\.\/|\w)/).test(np.relative(fs.cwd,outdir))
 
 	def urlForOutputPath path
-		let url = np.relative(np.resolve(program.cwd,program.outdir),path)
+		# a url path, never the platform separator
+		let url = np.relative(np.resolve(program.cwd,program.outdir),path).split(np.sep).join('/')
 		if baseurl
 			url = baseurl + url
 		return  url
@@ -731,7 +732,8 @@ export default class Bundle < Component
 
 					let base = res.path.split('node_modules')[0]
 					let inpath = np.relative(base,outdir)
-					reachable? = yes if inpath.indexOf('../') != 0
+					# np.relative uses the platform separator and crosses drives as an absolute path on windows
+					reachable? = yes unless np.isAbsolute(inpath) or inpath.split(/[\\\/]/)[0] == '..'
 
 				if external? and reachable?
 					return {external: true, path: pathname}
@@ -739,7 +741,9 @@ export default class Bundle < Component
 				if external?
 					if !run?
 						log.info "Building with absolute external path {pathname} => {res.path}"
-					return {external: true, path: res.path}
+					# a windows drive path is not a valid esm specifier, node wants a file url
+					let abs = (esm? and process.platform == 'win32') ? URL.pathToFileURL(res.path).href : res.path
+					return {external: true, path: abs}
 
 			if external?
 				if program.bundle
