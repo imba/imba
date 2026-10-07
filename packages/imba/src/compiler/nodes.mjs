@@ -9224,14 +9224,15 @@ class Op extends Node {
 
 class ComparisonOp extends Op {
   invert() {
-    // are there other comparison ops?
-    // what about a chain?
-    var op = this._op;
-    var pairs = ["==", "!=", "===", "!==", ">", "<=", "<", ">="];
-    var idx = pairs.indexOf(op);
-    idx += idx % 2 ? -1 : 1;
-    this._op = pairs[idx];
-    this._invert = !this._invert;
+    // Swap a single equality to its opposite operator. Negate other comparisons
+    // with `!`: `a <= b` is not `!(a > b)` when an operand is NaN or undefined,
+    // and a chain like `a == b == c` compiles to `a == b && b == c`.
+    var pairs = ["==", "!=", "===", "!=="];
+    var idx = pairs.indexOf(this._op);
+    if (idx == -1 || this._left instanceof ComparisonOp) {
+      return super.invert(...arguments);
+    }
+    this._op = pairs[idx + (idx % 2 ? -1 : 1)];
     return this;
   }
 
