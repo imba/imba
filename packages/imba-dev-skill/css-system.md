@@ -2,6 +2,8 @@
 
 Imba has a built-in CSS engine with property shorthands, scoping, a color palette, modifiers, responsive breakpoints, transitions, and dynamic bindings.
 
+> **Exhaustive, verified reference:** this file is the *conceptual* layer. For the complete, machine-verified mapping of every shorthand — property aliases, compound layouts, tokens, modifiers, and rule examples captured by actually compiling snippets — see the generated `packages/imba/scripts/docs/css-reference.md` (and `css-reference.json` / `css-corpus.json` for tooling). Regenerate with `npm run docs:css`; CI enforces freshness via `npm run docs:css:check`. Trust the generated `css_actual` output over any hand-written CSS in this file.
+
 ## CSS Contexts
 
 CSS behaves differently depending on where it's written:

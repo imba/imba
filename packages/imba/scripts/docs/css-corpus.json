@@ -1,0 +1,204 @@
+{
+	"$meta": {
+		"generator": "scripts/docs/gen-css-corpus.mjs",
+		"compiledWith": "dist/compiler.mjs",
+		"note": "CSS captured from the real compiler; scope hash normalized to .scope",
+		"counts": {
+			"total": 32,
+			"byCategory": {
+				"rule": 16,
+				"keyword": 4,
+				"alias": 5,
+				"modifier": 4,
+				"gotcha": 3
+			},
+			"errors": 1
+		}
+	},
+	"entries": [
+		{
+			"cat": "rule",
+			"rule": "spacing-scale",
+			"imba": "p:4",
+			"css": ".scope-af { padding: 1rem;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "spacing-scale",
+			"imba": "gap:2 mt:1",
+			"css": ".scope-af { gap: 0.5rem;\n --u_rg: 0.5rem;\n --u_cg: 0.5rem;\n margin-top: 0.25rem;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "px-props",
+			"imba": "x:10 y:20",
+			"css": ".scope-af {\n--t_x:0;--t_y:0;--t_rotate:0;\n--t_scale:1;--t_scale-x:1;--t_scale-y:1;\ntransform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))\n scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));\n}\n.scope-af { --t_x: 10 !important;\n --t_y: 20 !important;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "rotate-unit",
+			"imba": "rotate:0.25",
+			"css": ".scope-af {\n--t_x:0;--t_y:0;--t_rotate:0;\n--t_scale:1;--t_scale-x:1;--t_scale-y:1;\ntransform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))\n scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));\n}\n.scope-af { --t_rotate: 0.25 !important;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "radius-scale",
+			"imba": "rd:2",
+			"css": ".scope-af { border-radius: 4px;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "radius-scale",
+			"imba": "rd:md",
+			"css": ".scope-af { border-radius: 4px;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "letter-spacing-scale",
+			"imba": "ls:2",
+			"css": ".scope-af { letter-spacing: 0.1em;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "custom-units",
+			"imba": "1fh:24px\nh:2fh",
+			"note": "declare + use a custom unit",
+			"css": ".scope-af { --u_fh: 24px;\n height: calc(var(--u_fh,1fh) * 2);}"
+		},
+		{
+			"cat": "rule",
+			"rule": "palette-color",
+			"imba": "bg:blue5",
+			"css": ".scope-af { background: hsla(217.22,91.22%,59.80%,100%);}"
+		},
+		{
+			"cat": "rule",
+			"rule": "palette-color",
+			"imba": "bg:blue5/50",
+			"css": ".scope-af { background: hsla(217.22,91.22%,59.80%,50%);}"
+		},
+		{
+			"cat": "rule",
+			"rule": "palette-color",
+			"imba": "bg:blue55",
+			"css": ".scope-af { background: hsla(219.22,87.21%,56.57%,1);}"
+		},
+		{
+			"cat": "rule",
+			"rule": "smart-border",
+			"imba": "bd:1px blue5",
+			"css": ".scope-af { border: 1px solid hsla(217.22,91.22%,59.80%,100%);}"
+		},
+		{
+			"cat": "rule",
+			"rule": "smart-border",
+			"imba": "bd:blue5",
+			"css": ".scope-af { border: 1px solid hsla(217.22,91.22%,59.80%,100%);}"
+		},
+		{
+			"cat": "rule",
+			"rule": "compound-display",
+			"imba": "d:hcc",
+			"css": ".scope-af { display: flex;\n flex-direction: row;\n justify-content: center;\n align-items: center;\n align-content: center;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "font-size-with-line-height",
+			"imba": "fs:24px/1.2",
+			"css": ".scope-af { font-size: 24px;\n line-height: 30px;\n --u_lh: 30px;}"
+		},
+		{
+			"cat": "rule",
+			"rule": "string-props-autoquote",
+			"imba": "prefix:\"hi\"",
+			"css": ".scope-af::before { content: \"hi\";}"
+		},
+		{
+			"cat": "keyword",
+			"imba": "pos:abs",
+			"css": ".scope-af { position: absolute;}"
+		},
+		{
+			"cat": "keyword",
+			"imba": "pos:rel",
+			"css": ".scope-af { position: relative;}"
+		},
+		{
+			"cat": "keyword",
+			"imba": "tt:up",
+			"css": ".scope-af { text-transform: uppercase;}"
+		},
+		{
+			"cat": "keyword",
+			"imba": "tt:cap",
+			"css": ".scope-af { text-transform: capitalize;}"
+		},
+		{
+			"cat": "alias",
+			"imba": "zi:10",
+			"css": ".scope-af { z-index: 10;}"
+		},
+		{
+			"cat": "alias",
+			"imba": "of:hidden",
+			"css": ".scope-af { overflow: hidden;}"
+		},
+		{
+			"cat": "alias",
+			"imba": "fl:1",
+			"css": ".scope-af { flex: 1;}"
+		},
+		{
+			"cat": "alias",
+			"imba": "ta:center",
+			"css": ".scope-af { text-align: center;}"
+		},
+		{
+			"cat": "alias",
+			"imba": "o:0.5",
+			"css": ".scope-af { opacity: 0.5;}"
+		},
+		{
+			"cat": "modifier",
+			"imba": "bg:blue5 @hover:blue6",
+			"note": "pseudo-class shim",
+			"css": ".scope-af { background: hsla(217.22,91.22%,59.80%,100%);}\n.scope-af:is(:hover,.\\@hover) { background: hsla(221.21,83.19%,53.33%,100%);}"
+		},
+		{
+			"cat": "modifier",
+			"imba": "fs:sm @md:lg",
+			"note": "breakpoint => @media",
+			"css": ".scope-af { font-size: 14px;\n line-height: 22px;\n --u_lh: 22px;}\n@media (min-width: 768px){ .scope-af { font-size: 18px;\n line-height: 28px;\n --u_lh: 28px;} }"
+		},
+		{
+			"cat": "modifier",
+			"imba": "c:red5 @dark:red3",
+			"note": "media query",
+			"css": ".scope-af { color: hsla(0.00,84.24%,60.20%,100%);}\n@media (prefers-color-scheme: dark){ .scope-af { color: hsla(0.00,93.55%,81.76%,100%);} }"
+		},
+		{
+			"cat": "modifier",
+			"imba": "bg:blue5 @hover@focus:blue6",
+			"note": "AND-stacked modifiers",
+			"css": ".scope-af { background: hsla(217.22,91.22%,59.80%,100%);}\n.scope-af:is(:hover,.\\@hover):is(:focus,.\\@focus) { background: hsla(221.21,83.19%,53.33%,100%);}"
+		},
+		{
+			"cat": "gotcha",
+			"imba": "inset:0",
+			"note": "inset:* ALSO sets position:absolute",
+			"css": ".scope-af { position: absolute;\n top: 0rem;\n right: 0rem;\n bottom: 0rem;\n left: 0rem;}"
+		},
+		{
+			"cat": "gotcha",
+			"imba": "d:block!",
+			"note": "the ! priority suffix is NOT valid Imba CSS",
+			"error": "Unexpected 'UNARY'"
+		},
+		{
+			"cat": "gotcha",
+			"imba": "fs:24px/1.2",
+			"note": "slash sets line-height, not division",
+			"css": ".scope-af { font-size: 24px;\n line-height: 30px;\n --u_lh: 30px;}"
+		}
+	]
+}
