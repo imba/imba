@@ -4275,7 +4275,7 @@ class Yield extends Statement {
   js() {
     var v = this._value;
     let k = M("yield", this.keyword());
-    return "" + k + " " + v.c({ expression: true });
+    return v ? "" + k + " " + v.c({ expression: true }) : k;
   }
 }
 

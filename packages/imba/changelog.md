@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fix a compiler crash on a bare `yield` with no value. The grammar accepts `yield` alone, but code generation read the missing value and failed with `Cannot read properties of undefined (reading 'c')`. A bare `yield` now compiles to `yield`.
+
 * Fix duplicate setup and rendering of tags returned by functions in loops, such as `<(item.node!)>`. Render-context keys `0`, `false` and `''` were treated as missing, causing returned tags to initialize and render twice. Nested first-child chains compounded the duplicate work exponentially and could block the browser or server; they now render once per visit.
 
 * Fix two compiler bugs around calls on `super`. A bang call on a super member (`super.foo!`) crashed the compiler with `this._args.traverse is not a function`, because the call rewrite handed the `Super` node a plain array where it expects an `ArgList`; it now compiles to `super.foo()` like the paren form, and a bare `super!` calls the parent method with no arguments (where bare `super` forwards `...arguments`). Chaining onto a super call dropped the call itself: `super.foo().concat(5)` compiled to `super.foo.concat(5)`, invoking `concat` on the inherited method rather than on its result — the same for `super.foo!.concat(5)`, index access (`super.foo()[0]`) and a super call passed as an argument. The call is now emitted before the chain.

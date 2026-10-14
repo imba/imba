@@ -3,6 +3,9 @@ def foo x
 		x = x * 2
 		yield x
 
+def nothing
+	yield
+
 class Hello
 
 	def something
@@ -15,6 +18,9 @@ test do
 	eq v.next!.value,2
 	eq v.next!.value,4
 	eq v.next!.value,8
+
+test do
+	eq Array.from(nothing!), [undefined]
 
 test do
 	let v = (new Hello).something!
