@@ -4264,7 +4264,8 @@ class GreedyReturn extends ImplicitReturn {}
 class Yield extends Statement {
   visit() {
     this._method = STACK.method() || STACK.up(Func);
-    return this._method.set({ yield: true, noreturn: true });
+    this._method.set({ yield: true, noreturn: true });
+    return super.visit(...arguments);
   }
 
   startLoc() {
