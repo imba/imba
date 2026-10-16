@@ -30,5 +30,6 @@ jobs:
         npm run build
         npm run test
         npm run test-cli
+        npm run test-server
       env:
         CI: true
