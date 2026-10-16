@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Move nodes when the server DOM inserts them, as the DOM does. `appendChild`, `insertBefore` and `replaceChild` added a node without removing it from its current parent, `insertBefore` did not set `parentNode`, and a missing reference node made it insert before the last child. A list places each new element twice (once when the element is created with the list as parent, once when the list adds it), so on the server an element in an `if` or `elif` branch inside a `for` loop rendered twice. Inserting a node that has a parent now moves it, and `removeChild` clears `parentNode`.
+
 * Escape dynamic text in server-rendered html. On node, a text child that comes from an expression (`<title> page.title`, `<p> "Hello {name}"`, text that a component renders) became a `Text` node, and `innerHTML` wrote its content without escaping. Only literal string children were escaped. A value such as `</title><script>…</script>` therefore became markup, and an app that renders user-controlled text on the server had a stored XSS. `innerHTML` now escapes `Text` children like string children. Text inside `<script>` and `<style>` stays raw, as before.
 
 * Fix a compiler crash on a bare `yield` with no value. The grammar accepts `yield` alone, but code generation read the missing value and failed with `Cannot read properties of undefined (reading 'c')`. A bare `yield` now compiles to `yield`.
