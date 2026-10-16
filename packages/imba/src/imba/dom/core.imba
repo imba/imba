@@ -564,6 +564,8 @@ export class Element < Node
 				o += escapeTextContent(item,self.nodeName)
 			elif item isa Number
 				o += "" + item
+			elif item isa Text
+				o += escapeTextContent(item.textContent,self.nodeName)
 			elif item
 				o += item.outerHTML
 		return o

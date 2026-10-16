@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Escape dynamic text in server-rendered html. On node, a text child that comes from an expression (`<title> page.title`, `<p> "Hello {name}"`, text that a component renders) became a `Text` node, and `innerHTML` wrote its content without escaping. Only literal string children were escaped. A value such as `</title><script>…</script>` therefore became markup, and an app that renders user-controlled text on the server had a stored XSS. `innerHTML` now escapes `Text` children like string children. Text inside `<script>` and `<style>` stays raw, as before.
+
 * Fix a compiler crash on a bare `yield` with no value. The grammar accepts `yield` alone, but code generation read the missing value and failed with `Cannot read properties of undefined (reading 'c')`. A bare `yield` now compiles to `yield`.
 
 * Fix name resolution inside `yield` expressions. The compiler marked the method as a generator but did not traverse the yielded value, so nothing in that value was resolved. An implicit-self call such as `yield helper(1)` compiled without `this.` and threw `ReferenceError: helper is not defined`, also when the call was an argument (`yield self.finish(build(u))`) or inside a closure. The same gap left amperfunctions untransformed (`yield items.map(&.name)` referenced an undefined `v$`), did not make a method with `await` inside `yield` async (a syntax error), read the wrong variable when a redeclared `let` was renamed, and crashed the compiler on a tag literal. A call inside `yield` to a module-level `def` that is declared after the class now compiles to `this.name()`, as the same call does outside `yield` — declare such a `def` above the class.
