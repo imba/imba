@@ -123,7 +123,7 @@ export class Logger
 
 	def debug do write('debug',*arguments)
 	def info do write('info',*arguments)
-	def warn do write('warn',*arguments)
+	def warn do write('warning',*arguments)
 	def error do write('error',*arguments)
 	def success do write('success',*arguments)
 
