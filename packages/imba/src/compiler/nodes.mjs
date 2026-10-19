@@ -9284,6 +9284,11 @@ class UnaryOp extends Op {
   }
 
   isTruthy() {
+    // only a negation is known from its operand - ++/-- are not,
+    // and the prefix forms keep their operand in _right
+    if (this.op() != "!" && this.op() != "not") {
+      return undefined;
+    }
     var val = AST.truthy(this._left);
     return val !== undefined ? !val : undefined;
   }
