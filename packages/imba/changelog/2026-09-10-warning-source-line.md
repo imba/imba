@@ -1,0 +1,1 @@
+Show the line of code with compiler warnings in build output. Warnings from the compile workers did not carry `lineText`, so the bundler showed them without the code excerpt. The warning for a method name that ends with `?` now also gives the name of the method: `Only getters/setters should end with ? (method: stopped?)`.
