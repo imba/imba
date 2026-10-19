@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Move nodes when the server DOM inserts them, as the DOM does. `appendChild`, `insertBefore` and `replaceChild` added a node without removing it from its current parent, `insertBefore` did not set `parentNode`, and a missing reference node made it insert before the last child. A list places each new element twice (once when the element is created with the list as parent, once when the list adds it), so on the server an element in an `if` or `elif` branch inside a `for` loop rendered twice. Inserting a node that has a parent now moves it, and `removeChild` clears `parentNode`.
+
 * Escape dynamic text in server-rendered html. On node, a text child that comes from an expression (`<title> page.title`, `<p> "Hello {name}"`, text that a component renders) became a `Text` node, and `innerHTML` wrote its content without escaping. Only literal string children were escaped. A value such as `</title><script>…</script>` therefore became markup, and an app that renders user-controlled text on the server had a stored XSS. `innerHTML` now escapes `Text` children like string children. Text inside `<script>` and `<style>` stays raw, as before.
 
 * Escape `&` in server-rendered text and attribute values. On node, `<p> 'Tom &amp; Jerry'` gave `<p>Tom &amp; Jerry</p>`, and a browser shows that html as "Tom & Jerry". The same tag rendered in the browser shows "Tom &amp; Jerry". Now the server html gives the same text as the browser. If server code writes a character reference such as `&nbsp;` in text or in an attribute, change it to the character itself.
