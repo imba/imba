@@ -34,8 +34,15 @@ check "text rendered by a component is escaped" do
 	assert.ok html.indexOf('<script>') == -1, html
 	assert.ok html.indexOf(ESCAPED) >= 0, html
 
+check "ampersands in text and attributes are escaped" do
+	let name = 'Tom &amp; Jerry'
+	assert.equal String(<p> name), "<p>Tom &amp;amp; Jerry</p>"
+	assert.equal String(<p> "AT&T"), "<p>AT&amp;T</p>"
+	let url = '/search?q=a&b=c'
+	assert.equal String(<a href=url>), "<a href=\"/search?q=a&amp;b=c\"></a>"
+
 check "dynamic text in script and style stays raw" do
-	let json = '{"name":"a > b"}'
+	let json = '{"name":"a > b & c"}'
 	assert.equal String(<script type="application/ld+json"> json), "<script type=\"application/ld+json\">{json}</script>"
 	let rule = '.row > div \{ color: red; \}'
 	assert.equal String(<style> rule), "<style>{rule}</style>"

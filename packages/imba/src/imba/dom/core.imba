@@ -126,6 +126,8 @@ export def getSuperTagType name, klass, cmp
 
 const escapeAttributeValue = do(val)
 	let str = typeof val == 'string' ? val : String(val)
+	if str.indexOf('&') >= 0
+		str = str.replace(/\&/g,"&amp;")
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	return str
@@ -136,6 +138,8 @@ const escapeTextContent = do(val, nodeName)
 	if nodeName == 'script' or nodeName == 'style'
 		return str
 
+	if str.indexOf('&') >= 0
+		str = str.replace(/\&/g,"&amp;")
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	if str.indexOf('<') >= 0
