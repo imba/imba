@@ -1,0 +1,1 @@
+Fix duplicate setup and rendering of tags returned by functions in loops, such as `<(item.node!)>`. Render-context keys `0`, `false` and `''` were treated as missing, causing returned tags to initialize and render twice. Nested first-child chains compounded the duplicate work exponentially and could block the browser or server; they now render once per visit.
