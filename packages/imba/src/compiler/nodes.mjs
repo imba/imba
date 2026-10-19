@@ -4264,7 +4264,8 @@ class GreedyReturn extends ImplicitReturn {}
 class Yield extends Statement {
   visit() {
     this._method = STACK.method() || STACK.up(Func);
-    return this._method.set({ yield: true, noreturn: true });
+    this._method.set({ yield: true, noreturn: true });
+    return super.visit(...arguments);
   }
 
   startLoc() {
@@ -4275,7 +4276,7 @@ class Yield extends Statement {
   js() {
     var v = this._value;
     let k = M("yield", this.keyword());
-    return "" + k + " " + v.c({ expression: true });
+    return v ? "" + k + " " + v.c({ expression: true }) : k;
   }
 }
 
@@ -9284,6 +9285,11 @@ class UnaryOp extends Op {
   }
 
   isTruthy() {
+    // only a negation is known from its operand - ++/-- are not,
+    // and the prefix forms keep their operand in _right
+    if (this.op() != "!" && this.op() != "not") {
+      return undefined;
+    }
     var val = AST.truthy(this._left);
     return val !== undefined ? !val : undefined;
   }
