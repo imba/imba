@@ -9593,14 +9593,16 @@ function isUnawaitedPredicateUse(node) {
 // never need to know which one it is. `render` produces the plain read.
 function compilePredicateRead(node, acc, render) {
   // the receiver is referenced twice - cache it unless it is a plain
-  // reference (self, a local variable, a global). IndexAccess only
-  // caches its index by default, so force the whole expression.
+  // reference (self, a local variable, a global) or already cached by
+  // guardOptionalChain. IndexAccess only caches its index by default, so
+  // force the whole expression.
   let recv = acc._left;
   let superSelf = acc._superSelf;
   let cacheRecv = !(
     superSelf ||
     recv instanceof ScopeContext ||
-    recv instanceof Self
+    recv instanceof Self ||
+    recv._cache
   );
   if (cacheRecv) {
     recv.cache({ pool: "val", force: recv instanceof IndexAccess });
@@ -9618,6 +9620,114 @@ function compilePredicateRead(node, acc, render) {
     recv.decache();
   }
   return out;
+}
+
+// A `?.` link short-circuits the rest of its chain: in `a?.b.c` a nullish
+// `a` skips `.b.c`. The parentheses of a predicate read end the chain, so
+// in `($1 = a?.b).cΦ` (`a..b.c?`) and `(typeof ... a?.bΦ ...).c`
+// (`a..b?.c`) the links after them would run on undefined and throw. The
+// outermost node of a chain looks for the last `?.` link that such
+// parentheses cut off, checks the value it guards first and renders the
+// rest of the chain with a plain `.`:
+//
+//   (($0 = a) == null ? undefined : (typeof ($2 = ($1 = $0.b).cΦ) ...))
+//
+// `render` produces the node itself, once the chain is guarded.
+function guardOptionalChain(top, render) {
+  let link = cutOptionalLink(top);
+  if (!link) {
+    return null;
+  }
+
+  let access = link instanceof Call ? link._callee.node() : link;
+  let base = access._left;
+  let op = access._op;
+  let fn = null;
+
+  // a cached node only parenthesizes its assignment inside an Access or Op,
+  // so write the assignment here (a plain reference is not cached at all)
+  base.cache({
+    pool: "val",
+    force: base instanceof IndexAccess,
+    manual: true,
+  });
+  let ref = base.cachevar();
+  let test =
+    (ref ? "(" + ref.c() + " = " + base.c() + ")" : base.c()) + " == null";
+  access._op = ".";
+
+  // `a?.b?.()` also short-circuits when `a.b` is nullish - read the
+  // function once and call it on `a`
+  if (link instanceof Call) {
+    fn = top.scope__().temporary(top, { pool: "val" });
+    access._call = link;
+    test += " || (" + fn.c() + " = " + access.c() + ") == null";
+    link._guardedCallee = { fn: fn, self: base };
+  }
+
+  let out = "(" + test + " ? undefined : " + render() + ")";
+
+  access._op = op;
+  if (fn) {
+    link._guardedCallee = null;
+    fn.free();
+  }
+  base.decache();
+  return out;
+}
+
+// Walks a chain from its outermost node and returns the last `?.` link
+// (an Access, or a Call rendered as `?.()`) that the parentheses of a
+// predicate read cut off, or null. A predicate read in the middle of the
+// chain cuts off its own link and everything before it. At the end of
+// the chain it only cuts off the links before its own, and only when it
+// reads the member with a plain `.`. Cached nodes below the top are
+// rendered as their temporary, so the walk stops there. The top itself
+// may be cached (`$1 = a..b.c?`) and is still walked.
+function cutOptionalLink(top) {
+  let cut = false;
+  let lastRead = null;
+  let isCallee = false;
+  let n = top;
+
+  while (n && (n === top || !n._cache)) {
+    if (n instanceof VarOrAccess) {
+      n = n._variable ? null : n._value;
+      continue;
+    }
+
+    let read = null;
+    let optional = false;
+
+    if (n instanceof Call) {
+      read = n._receiver || n._inNewChain ? null : n.predicateAccess();
+      let callee = n._callee.node();
+      optional = !read && callee instanceof Access && callee.op() == "?.";
+    } else if (n instanceof Access && !(n instanceof LocalVarAccess)) {
+      read = !isCallee && n.isPredicateRead() ? n : null;
+      optional = n.safechain();
+    } else {
+      break;
+    }
+
+    if (read && n !== top) {
+      cut = true;
+    } else if (read) {
+      lastRead = read;
+    }
+
+    if (optional && cut) {
+      return n;
+    }
+
+    if (n === lastRead && !optional) {
+      cut = true;
+    }
+
+    isCallee = n instanceof Call;
+    n = isCallee ? n._callee.node() : n._left;
+  }
+  return null;
 }
 
 // TypeScript cannot tell a predicate getter from a predicate method, so the
@@ -9737,6 +9847,17 @@ class Access extends Op {
     var rgt = this._right;
     var rgtexpr = null;
     var tsc = STACK.tsc();
+
+    // a predicate read must not end a `?.` chain - see guardOptionalChain
+    if (!tsc) {
+      let self = this;
+      let guarded = guardOptionalChain(this, function () {
+        return self.js(stack);
+      });
+      if (guarded) {
+        return guarded;
+      }
+    }
 
     if (lft instanceof VarOrAccess && lft._variable instanceof ImportProxy) {
       return lft._variable.access(rgt, lft).c();
@@ -12713,6 +12834,17 @@ class Call extends Node {
       return this._asset.ref.c();
     }
 
+    // a predicate read must not end a `?.` chain - see guardOptionalChain
+    if (!STACK.tsc()) {
+      let self = this;
+      let guarded = guardOptionalChain(this, function () {
+        return self.js(o);
+      });
+      if (guarded) {
+        return guarded;
+      }
+    }
+
     var opt = { expression: true };
     var rec = null;
     // var args = AST.compact(args) # really?
@@ -12948,7 +13080,14 @@ class Call extends Node {
     }
 
     // should just force expression from the start, no?
-    if (this._receiver) {
+    if (this._guardedCallee) {
+      // guardOptionalChain has read the function and checked it already
+      let g = this._guardedCallee;
+      let rest = args.count()
+        ? "," + args.c({ expression: true, mark: false })
+        : "";
+      out = g.fn.c() + ".call(" + g.self.c() + rest + ")";
+    } else if (this._receiver) {
       // quick workaround
       if (!(this._receiver instanceof ScopeContext)) {
         this._receiver.cache();

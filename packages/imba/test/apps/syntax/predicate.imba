@@ -365,3 +365,110 @@ test 'predicate reads and bindings in tag templates' do
 	el.doc.owner = 'you'
 	await imba.commit!
 	eq el.classList.contains('readable'), false
+
+# `..` short-circuits the rest of the chain, also past a predicate at the
+# end of it or in the middle of it
+class Turn
+	text = ''
+	next = null
+	parent = null
+	get has-content?
+		text.length > 0
+	def steerable? by = 'me'
+		by == 'me'
+
+class Draft
+	turn = new Turn
+	turns = [new Turn]
+	get open?
+		yes
+	get current?
+		turn
+	def latest
+		turn
+
+class Lane
+	draft = null
+	pending = null
+	blank = {}
+
+	get steer-pending?
+		return no if draft..turn.has-content?
+		!!pending..turn.steerable?
+
+	def checks
+		[draft..turn.has-content?, self.draft..turn.steerable?, draft..turn.has-content?!]
+
+test 'safe chaining before a predicate short-circuits the whole chain' do
+	let lane = new Lane
+	eq lane.draft..turn.has-content?, undefined
+	eq lane.draft..turn.steerable?, undefined
+	eq lane.draft..turn.has-content?!, undefined
+	eq lane.draft..turn.steerable?!, undefined
+	eq lane.draft..turns[0].has-content?, undefined
+	eq lane.draft..latest!.has-content?, undefined
+	eq lane.draft..turn..has-content?, undefined
+	eq lane.draft..open?.toString!, undefined
+	eq lane.draft..open?!.toString!, undefined
+	eq lane.checks!, [undefined, undefined, undefined]
+	eq lane.steer-pending?, false
+
+	lane.draft = new Draft
+	lane.pending = new Draft
+	eq lane.draft..turn.has-content?, false
+	eq lane.draft..turn.steerable?, true
+	eq lane.draft..turn.has-content?!, false
+	eq lane.draft..turns[0].has-content?, false
+	eq lane.draft..latest!.has-content?, false
+	eq lane.draft..open?.toString!, 'true'
+	eq lane.checks!, [false, true, false]
+	eq lane.steer-pending?, true
+	lane.draft.turn.text = 'hi'
+	eq lane.steer-pending?, false
+
+test 'safe-chained optional calls before a predicate' do
+	# `..latest!` is an optional call - a missing method short-circuits too
+	let lane = new Lane
+	lane.draft = {}
+	eq lane.draft..latest!.has-content?, undefined
+	lane.draft = new Draft
+	lane.draft.turn.text = 'hi'
+	eq lane.draft..latest!.has-content?, true
+	eq lane.draft..latest!.steerable?('you'), false
+
+test 'a link after the safe chain still throws on a missing value' do
+	# like `blank?.turn.text`, only `blank` is guarded
+	let lane = new Lane
+	let threw = no
+	try
+		lane.blank..turn.has-content?
+	catch e
+		threw = yes
+	eq threw, true
+
+test 'safe-chained predicate reads evaluate the receiver once' do
+	let made = 0
+	let make = do
+		made++
+		new Draft
+	eq make!..turn.has-content?, false
+	eq made, 1
+	let drafts = [null, new Draft]
+	let i = 0
+	eq drafts[i++]..turn.has-content?, undefined
+	eq drafts[i++]..turn.has-content?, false
+	eq i, 2
+	eq [new Lane, new Lane].map(&.draft..turn.has-content?), [undefined, undefined]
+
+test 'nested safe chains around a predicate read' do
+	# `draft..current?.next..parent.has-content?` needs a guard on `draft`
+	# inside the guard on `next`
+	let lane = new Lane
+	eq lane.draft..current?.next..parent.has-content?, undefined
+	lane.draft = new Draft
+	eq lane.draft..current?.next..parent.has-content?, undefined
+	lane.draft.turn.next = new Turn
+	lane.draft.turn.next.parent = new Turn
+	eq lane.draft..current?.next..parent.has-content?, false
+	lane.draft.turn.next.parent.text = 'hi'
+	eq lane.draft..current?.next..parent.has-content?, true

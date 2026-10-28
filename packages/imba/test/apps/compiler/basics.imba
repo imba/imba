@@ -228,6 +228,25 @@ test 'super predicate reads call the inherited member on self' do
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	assert res.js.indexOf("(typeof ($1 = super.okΦ) == 'function' ? $1.call(this) : $1)") >= 0
 
+test 'predicate reads keep a safe chain short-circuiting' do
+	let code = '''
+	let a = {}
+	let x = a..b.c?
+	let y = a..b?.c
+	let z = a..b!.c?
+	let w = a..b.c?(1)
+	let v = a..c?
+	'''
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	for part in [
+		"let x = (a == null ? undefined : (typeof ($2 = ($1 = a.b).cΦ) == 'function' ? $2.call($1) : $2));"
+		"let y = (a == null ? undefined : (typeof ($1 = a.bΦ) == 'function' ? $1.call(a) : $1).c);"
+		"let z = (a == null || ($1 = a.b) == null ? undefined : (typeof ($3 = ($2 = $1.call(a)).cΦ) == 'function' ? $3.call($2) : $3));"
+		"let w = a?.b.cΦ(1);"
+		"let v = (typeof ($1 = a?.cΦ) == 'function' ? $1.call(a) : $1);"
+	]
+		assert res.js.indexOf(part) >= 0
+
 test 'predicate reads are typed as their value in tsc mode' do
 	let code = '''
 	class Doc
