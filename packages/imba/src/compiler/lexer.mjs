@@ -392,6 +392,7 @@ Lexer.prototype.reset = function (){
 	this._indents = []; // The stack of all current indentation levels.
 	this._ends = []; // The stack for pairing up tokens.
 	this._contexts = []; // suplements @ends
+	this._ternaries = []; // @ends depth of each open ternary `?`
 	this._scopes = [];
 	this._nextScope = null; // the scope to add on the next indent
 	this._context = null;
@@ -649,9 +650,28 @@ Lexer.prototype.popEnd = function (val){
 	
 	this._contexts.pop();
 	this._context = this._contexts[this._contexts.length - 1];
+	this.dropTernaries(this._ends.length + 1);
 	
 	this.refreshScope();
 	return [popped,ctx];
+};
+
+// A `:` at the depth of the innermost open ternary is its else-branch
+Lexer.prototype.closeTernary = function (){
+	var t = this._ternaries;
+	if (t.length && t[t.length - 1] == this._ends.length) {
+		t.pop();
+		return true;
+	};
+	return false;
+};
+
+Lexer.prototype.dropTernaries = function (depth){
+	var t = this._ternaries;
+	while (t.length && t[t.length - 1] >= depth){
+		t.pop();
+	};
+	return;
 };
 
 Lexer.prototype.refreshScope = function (){
@@ -1259,7 +1279,10 @@ Lexer.prototype.identifierToken = function (){
 	
 	var forcedIdentifier = colon || lastTyp == '.' || lastTyp == '?.';
 	
-	if (colon && lastTyp == '?') { forcedIdentifier = false }; // for ternary
+	// `a ? b ?? null : c` - the colon belongs to the ternary, not an object key
+	if (colon && (this.closeTernary() || lastTyp == '?')) {
+		forcedIdentifier = lastTyp == '.' || lastTyp == '?.';
+	};
 	
 	if (!typ && !colon && (lastTyp == '.' || lastTyp == '?.')) {
 		this.token('IDENTIFIER',id,idlen);
@@ -1838,6 +1861,7 @@ Lexer.prototype.lineToken = function (){
 	// a loop header can span physical lines - via unfinished expressions or
 	// inside pairs (parens/brackets) opened after the loop keyword
 	if (!noNewlines && this._ends.length <= this._loopEnds) { this._seenLoop = false };
+	if (!noNewlines) { this.dropTernaries(this._ends.length) };
 	
 	if ((/^\n#\s/).test(this._chunk)) {
 		this.addLinebreaks(1);
@@ -2232,6 +2256,7 @@ Lexer.prototype.literalToken = function (){
 	if (value === ';') {
 		this._seenFor = false;
 		this._seenLoop = false;
+		this.dropTernaries(this._ends.length);
 		tokid = 'TERMINATOR';
 	};
 	
@@ -2372,6 +2397,12 @@ Lexer.prototype.literalToken = function (){
 		if (/\w|\(|\$/.test(this._chunk[1]) && (!prev || prev.spaced)) {
 			tokid = tokid + tokid + tokid;
 		};
+	};
+	
+	if (tokid == '?') {
+		this._ternaries.push(this._ends.length);
+	} else if (tokid == ':') {
+		this.closeTernary();
 	};
 	
 	this.token(tokid,value,value.length);

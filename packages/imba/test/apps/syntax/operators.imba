@@ -139,3 +139,35 @@ test '?' do
 	eq test(5), 10
 	eq test(-5), -10
 	eq test(0), 0
+
+test '? with keyword before :' do
+	class Picker
+		def nullish a, b, c
+			a ? b ?? null : c
+		def logic a, b
+			a ? b || true : false
+		def plus a, b
+			a ? b + null : b
+		def scoped a, b
+			a ? b ?? this : null
+		def prop a, o
+			a ? o.null : o.css
+
+	let p = new Picker
+	eq p.nullish(yes, undefined, 1), null
+	eq p.nullish(yes, 2, 1), 2
+	eq p.nullish(no, 2, 1), 1
+	eq p.logic(yes, 0), true
+	eq p.logic(no, 0), false
+	eq p.plus(yes, 1), 1
+	eq p.scoped(yes, undefined), p
+	eq p.scoped(no, 1), null
+	eq p.prop(yes, {null: 1, css: 2}), 1
+	eq p.prop(no, {null: 1, css: 2}), 2
+
+	# keys after binary operators are still object keys
+	let o = nill ?? null: 1, true: 2
+	eq o.null, 1
+	eq o.true, 2
+	let t = yes ? {null: 1} : 2
+	eq t.null, 1
