@@ -4169,7 +4169,13 @@ class Parens extends ValueNode {
   }
 
   isExpressable() {
-    return this._value.isExpressable();
+    let v = this._value;
+    if (v instanceof Array) {
+      return v.every(function (item) {
+        return !item.isExpressable || item.isExpressable();
+      });
+    }
+    return v.isExpressable();
   }
 
   consume(node) {
@@ -13611,6 +13617,9 @@ If.ternary = function (cond, body, alt) {
   // prefer to compile it this way as well
   var obj = new If(cond, new Block([body]), { type: "?" });
   obj.addElse(new Block([alt]));
+  // callers build ternaries during code output, after the traversal in
+  // which If#visit marks a ternary as an expression
+  if (obj.isExpressable()) obj.toExpression();
   // ternaries have no if-token to derive a location from - adopt the
   // span of their children so sourcecode() and diagnostics work
   let s = cond && cond.startLoc ? cond.startLoc() : null;

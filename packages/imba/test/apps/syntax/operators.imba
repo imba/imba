@@ -134,6 +134,22 @@ test '^=?' do
 	eq a,5
 	eq (a ^=? 2),true
 
+test 'set-if-changed as statement' do
+	let o = {a: 2, b: 1, c: 7, d: 7}
+	o.a =? 1
+	o.b |=? F.DONE
+	o.c ~=? F.DONE
+	o.d ^=? F.DONE
+	eq o.a, 1
+	eq o.b, 3
+	eq o.c, 5
+	eq o.d, 5
+
+	o.b |=? F.DONE
+	o.c ~=? F.DONE
+	eq o.b, 3
+	eq o.c, 5
+
 test '?' do
 	let test = do(v) v > 0 ? 10 : v < 0 ? -10 : 0
 	eq test(5), 10
