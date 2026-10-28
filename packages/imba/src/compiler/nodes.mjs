@@ -7491,7 +7491,8 @@ class MethodDeclaration extends Func {
     return closure instanceof ClassScope;
   }
 
-  // a `def foo?` that can be compiled as a getter: a member without parameters
+  // a `def foo?` that can be compiled as a getter: a member without
+  // parameters. Predicate defs with parameters stay regular methods.
   isPredicateDef() {
     return (
       this.hasPredicateName() && len$(this._params) == 0 && this.isMemberDef()
@@ -7499,8 +7500,10 @@ class MethodDeclaration extends Func {
   }
 
   // Runs once the body has been traversed, when async/yield are known.
-  // Predicate defs that cannot become getters stay methods and warn,
-  // since `x.foo?` on a method silently yields the function itself.
+  // Predicate defs with parameters are regular methods, called with their
+  // arguments like any other. A parameterless predicate def that cannot
+  // become a getter warns, since `foo?` without a call silently yields
+  // the function itself, which is always truthy.
   finalizePredicateDef() {
     if (!this.hasPredicateName() || this.isSetter()) {
       return;
@@ -7516,23 +7519,16 @@ class MethodDeclaration extends Func {
       why = "is a generator";
       this._type = "def";
       this._predicateGetter = false;
-    } else if (this.isGetter()) {
+    } else if (this.isGetter() || len$(this._params) > 0) {
       return;
-    } else if (len$(this._params) > 0) {
-      why = "takes parameters";
     } else {
       why = "is not a class member";
     }
 
     let raw = this._name.toRaw();
-    let base = raw.slice(0, -1);
-    let alt =
-      base.indexOf("-") >= 0
-        ? "is-" + base
-        : "is" + base[0].toUpperCase() + base.slice(1);
     let what = this.isMemberDef() ? "method" : "function";
     this._name.warn(
-      `def ${raw} ${why} and stays a plain ${what} (only parameterless predicates become getters) - name it ${alt} instead`,
+      `def ${raw} ${why} and stays a plain ${what}, so ${raw} without a call is the ${what} itself - call it as ${raw}!`,
     );
   }
 

@@ -19,9 +19,27 @@ class Group
 	def full?
 		data.items.length >= 3
 
-	# a predicate def with parameters stays a regular method
+	# a predicate def with parameters is a regular method
 	def bigger? than
 		data.items.length > than
+
+	def includes? item
+		data.items.indexOf(item) >= 0
+
+	def includesAll? ...items
+		items.every do includes?($1)
+
+	def within? min = 0, max = 10
+		min <= data.items.length <= max
+
+	def any? cb
+		data.items.some(cb)
+
+	def checkIncludes item
+		# implicit self - with and without parens
+		let a = includes?(item)
+		let b = includes? item
+		[a, b, self.includes?(item)]
 
 	static def registry?
 		yes
@@ -40,6 +58,23 @@ class Group
 extend class Group
 	def extended?
 		yes
+
+	def holds? item
+		includes?(item)
+
+tag predicate-list
+	items = [1,2]
+
+	def has? item
+		items.indexOf(item) >= 0
+
+	def render
+		<self>
+			<span.one .on=has?(1)> "one"
+			<span.three .on=has?(3)> "three"
+
+def matches? a, b
+	a == b
 
 class Custom
 	# a field holding a real function
@@ -77,6 +112,57 @@ test 'def predicates with params stay methods' do
 	eq group.bigger?(2), true
 	eq group.bigger?(5), false
 	eq (typeof group.bigger?), 'function'
+
+test 'predicate methods take arguments' do
+	let group = new Group(items: [1,2,3])
+	eq group.includes?(2), true
+	eq (group.includes? 4), false
+	eq group.includesAll?(1,3), true
+	eq group.includesAll?(1,4), false
+	eq group.within?!, true
+	eq group.within?(4), false
+	eq group.within?(1,2), false
+	eq group.any?(do $1 > 2), true
+	eq (group.any? do $1 > 5), false
+	eq group.checkIncludes(3), [true,true,true]
+	eq group.holds?(1), true
+	eq new Group(items: [5]).includes?(5), true
+
+test 'predicate methods in conditions' do
+	let group = new Group(items: [1,2,3])
+	let res = []
+	if group.includes? 1
+		res.push 'a'
+	unless group.includes? 9
+		res.push 'b'
+	res.push 'c' if group.bigger?(1) and !group.bigger?(3)
+	eq res, ['a','b','c']
+
+test 'predicate methods with safe chaining and amperfuncs' do
+	let nothing = null
+	eq nothing..includes?(1), undefined
+	let groups = [new Group(items: [1]), new Group(items: [2]), new Group(items: [1,2])]
+	eq groups.filter(&.includes?(1)).length, 2
+	let target = 2
+	eq groups.filter(&.includes?(target)).length, 2
+
+test 'predicate functions and object methods take arguments' do
+	eq matches?(1,1), true
+	eq (matches? 1, 2), false
+	let obj = {
+		def has? key
+			key == 'a'
+	}
+	eq obj.has?('a'), true
+	eq (obj.has? 'b'), false
+	eq (typeof obj.has?), 'function'
+
+test 'predicate methods in tag templates' do
+	let el = <predicate-list>
+	el.render!
+	eq el.has?(2), true
+	eq el.querySelector('.one').classList.contains('on'), true
+	eq el.querySelector('.three').classList.contains('on'), false
 
 test 'explicit calls work for getters and defs' do
 	let group = new Group(items: [1,2,3])

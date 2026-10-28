@@ -57,14 +57,14 @@ test 'platform: worker' do
 # diagnostics
 
 test 'warning source line survives serialization' do
-	let code = 'class Foo\n\tdef stopped? turn\n\t\tyes\n'
+	let code = 'class Foo\n\tdef stopped?\n\t\tyield 1\n'
 	let res = imbac.compile(code,sourcePath: 'warning.imba')
 	let warning = JSON.parse(JSON.stringify(res.warnings[0]))
-	eq warning.message, 'def stopped? takes parameters and stays a plain method (only parameterless predicates become getters) - name it isStopped instead'
+	eq warning.message, 'def stopped? is a generator and stays a plain method, so stopped? without a call is the method itself - call it as stopped?!'
 	eq warning.range.start.line, 1
 	eq warning.range.start.character, 5
 	eq warning.range.end.character, 13
-	eq warning.lineText, '\tdef stopped? turn'
+	eq warning.lineText, '\tdef stopped?'
 
 # predicate defs
 
@@ -96,18 +96,75 @@ test 'async predicate getter has no async keyword in tsc mode' do
 	assert res.js.indexOf('return (async () => {') >= 0
 	assert res.js.indexOf('async get') == -1
 
+test 'predicate def with parameters is a method and does not warn' do
+	let code = '''
+	class Foo
+		def contains? item
+			yes
+		static def valid? value
+			yes
+		def check x
+			contains?(x) and contains? x
+	extend class Foo
+		def covers? a, b = 1, ...rest
+			yes
+	tag foo-bar
+		def selected? item
+			yes
+	def Foo.known? key
+		yes
+	def matches? a, b
+		a == b
+	let obj = {
+		def has? key
+			yes
+	}
+	let foo = new Foo
+	foo.contains?(1)
+	foo.contains? 2
+	foo..contains?(3)
+	matches?(1,2)
+	obj.has? 1
+	'''
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 0
+	for part in [
+		'containsΦ(item){'
+		'static validΦ(value){'
+		'return this.containsΦ(x) && this.containsΦ(x);'
+		'coversΦ(a,b = 1,...rest){'
+		'selectedΦ(item){'
+		'function matchesΦ(a,b){'
+		'hasΦ(key){'
+		'foo.containsΦ(1);'
+		'foo.containsΦ(2);'
+		'foo?.containsΦ?.(3);'
+		'matchesΦ(1,2);'
+		'obj.hasΦ(1);'
+	]
+		assert res.js.indexOf(part) >= 0
+	assert res.js.indexOf('knownΦ') >= 0
+	assert res.js.indexOf('get containsΦ') == -1
+	assert res.js.indexOf('get hasΦ') == -1
+
+test 'predicate def with parameters is a method in tsc mode' do
+	let code = 'class Foo\n\tdef contains? item\n\t\tyes\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
+	eq res.warnings.length, 0
+	assert res.js.indexOf('containsΦ(item') >= 0
+	assert res.js.indexOf('get containsΦ') == -1
+
 test 'async predicate def with parameters stays an async method' do
 	let code = 'class Foo\n\tdef bigger? n\n\t\tawait 1\n\t\tn > 1\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
-	eq res.warnings.length, 1
-	assert res.warnings[0].message.indexOf('def bigger? takes parameters') == 0
+	eq res.warnings.length, 0
 	assert res.js.indexOf('async biggerΦ(n)') >= 0
 
 test 'generator predicate def stays a method and warns' do
 	let code = 'class Foo\n\tdef items?\n\t\tyield 1\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	eq res.warnings.length, 1
-	assert res.warnings[0].message.indexOf('def items? is a generator and stays a plain method') == 0
+	eq res.warnings[0].message, 'def items? is a generator and stays a plain method, so items? without a call is the method itself - call it as items?!'
 	assert res.js.indexOf('*itemsΦ(') >= 0
 
 test 'unawaited async predicate use in its own class warns' do
@@ -128,7 +185,7 @@ test 'predicate def outside a class stays a function and warns' do
 	let code = 'def ready?\n\tyes\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	eq res.warnings.length, 1
-	assert res.warnings[0].message.indexOf('def ready? is not a class member and stays a plain function') == 0
+	eq res.warnings[0].message, 'def ready? is not a class member and stays a plain function, so ready? without a call is the function itself - call it as ready?!'
 	assert res.js.indexOf('function readyΦ(') >= 0
 
 test 'explicit predicate call reads once and calls only functions' do

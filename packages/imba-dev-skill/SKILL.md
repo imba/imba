@@ -56,7 +56,8 @@ These are the mistakes AI assistants make most often with Imba:
 | Shadowing global `assert`/`eq` when testing compiler assertion payloads | Import/install the global test harness, then call unshadowed `assert`/`eq` | The compiler only sets `globalThis.IMBA_ASSERT` / `globalThis.IMBA_EQ` for unshadowed global calls; local/imported definitions are intentionally left alone |
 | Returning `self` from `@thenable def init/start` | Return `yes`, `null`, or another non-thenable value after initialization | Resolving a thenable method with the same thenable object can recurse/hang and triggers the "took more than 20000ms" warning |
 | Letting legitimate slow `@thenable` setup hit the default watchdog | Use `@thenable(timeout: 2minutes)` or another explicit duration | The decorator's default warning fires after 20s; browser/server startup paths may need a longer timeout |
-| `def admin-email? user` (predicate `def` with parameters) | `def is-admin-email user` / `def has-access user` | A parameterless `def ready?` compiles to a getter, but a predicate `def` that takes parameters stays a plain method and triggers a `stays a plain method` warning |
+| `if ready?` where `def ready?` is a top-level function or a generator | `if ready?!` | Only parameterless predicate members (class, tag, object) compile to getters; a top-level or generator predicate stays a function, so the bare name is the function itself (always truthy) and the compiler warns |
+| `eq list.includes? 1, true` | `eq (list.includes? 1), true` or `list.includes?(1)` | A call without parens takes every following comma-separated argument, so the inner predicate call swallows `true` |
 | `def is query` | `def ['is'] query` | Methods named after reserved keywords need bracket syntax |
 | `def begin` for lifecycle-style methods | Prefer `def start` | A method named `begin` can confuse Imba tooling/tsc compilation; use `start` for Q/run lifecycle methods |
 | `def exec *params` | `def exec ...params` | Imba rest parameters use `...`, not Imba1-style `*` |
@@ -77,7 +78,7 @@ These are the mistakes AI assistants make most often with Imba:
 
 ### Predicate Names and Trailing `?`
 
-Trailing `?` marks a property-like predicate, not a general boolean-method convention. Accessor declarations may end with `?`, and a parameterless `def` with a `?` name compiles to a getter too:
+Trailing `?` marks something that answers a yes/no question. It works on getters, setters, and methods with or without parameters:
 
 ```imba
 get media-emphasis?
@@ -87,24 +88,19 @@ set media-emphasis? value
 	# setter for that property
 
 def ready?
-	# also compiles to a getter - `item.ready?` yields the value
+	# no parameters: compiles to a getter - `item.ready?` yields the value
+
+def includes? item
+	# with parameters: a regular method - `list.includes? item`
 ```
 
-Reading `item.ready?` always yields the value. An explicit call `item.ready?!` also works regardless of whether `ready?` is a getter or a real method (it reads the property once and calls it only if it is a function), so prefer the plain property form.
+A parameterless predicate `def` in a class, tag, `extend class` or object literal compiles to a getter, so reading `item.ready?` always yields the value. An explicit call `item.ready?!` also works whether `ready?` is a getter or a real method (it reads the property once and calls it only if it is a function), so prefer the plain property form.
+
+A predicate `def` with parameters is a regular method: call it with its arguments (`list.includes?(x)`, `list.includes? x`, or `includes? x` on implicit self). There is no warning and no need for an `is`/`has` prefix.
 
 An async predicate (`def ready?` / `get ready?` with `await` inside) compiles to a getter returning a promise: always `await item.ready?`. Using it in a condition or assignment without `await` inside its own class is a compiler warning, since a promise is always truthy.
 
-Predicates that take arguments or a `block` (or are generators) cannot be getters, so they stay plain methods and must not end with `?`:
-
-```imba
-def has-media-emphasis block
-	# ok
-
-def media-emphasis? block
-	# warns: stays a plain method - name it is-media-emphasis instead
-```
-
-For predicate helpers with parameters, prefer names like `is-ready`, `has-media-emphasis`, or `should-render-media`; use `get something?` (or a parameterless `def something?`) only when the API is property-like and needs no parameters.
+Parameterless predicates that are generators or top-level functions cannot be getters. They stay plain functions and the compiler warns, because the bare name is the function itself. Call them explicitly as `ready?!`.
 
 ## Implicit Self & Global Identifiers
 

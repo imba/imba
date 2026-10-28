@@ -42,7 +42,7 @@ tag sized-list
         !items.length
 ```
 
-Predicates are property-like, so a `def` whose name ends with `?` and takes no parameters compiles to a getter, exactly as if it had been declared with `get`. Either way `list.empty?` yields the boolean, never a function. An explicit call like `list.empty?!` works too, whether the predicate turned out to be a getter or a real method – it reads the property once and only calls it if the value is a function.
+Predicates without parameters are property-like, so a `def` whose name ends with `?` and takes no parameters compiles to a getter, exactly as if it had been declared with `get`. Either way `list.empty?` yields the boolean, never a function. An explicit call like `list.empty?!` works too, whether the predicate turned out to be a getter or a real method – it reads the property once and only calls it if the value is a function.
 
 ```imba
 class List
@@ -56,7 +56,24 @@ list.empty? # => true
 list.empty?! # => true
 ```
 
-A predicate `def` that takes parameters (or is a generator) cannot become a getter. It stays a regular method and the compiler warns about it – name such methods `isEmpty` or `has-items` instead.
+Predicate methods can take parameters too. A predicate `def` with parameters is a regular method, and you call it with its arguments like any other method:
+
+```imba
+class List
+    items = []
+
+    def includes? item
+        items.indexOf(item) >= 0
+
+    def within? min, max
+        min <= items.length <= max
+
+let list = new List
+list.includes? 1 # => false
+list.within?(0, 10) # => true
+```
+
+Two kinds of parameterless predicate `def` cannot become getters: generators, and functions declared outside a class or object. They stay plain functions, so `ready?` without a call refers to the function itself, which is always truthy. The compiler warns about these; call them explicitly as `ready?!`.
 
 Predicates may be async. A `def ready?` (or `get ready?`) whose body awaits compiles to a getter that returns a promise, so `await item.ready?` works. A promise is always truthy, so using an async predicate in a condition, operator or assignment without `await` is a bug; inside its own class (`if ready?`, `let x = ready?`) the compiler warns about it, and elsewhere the TypeScript-based tooling reports it.
 
