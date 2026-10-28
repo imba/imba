@@ -354,6 +354,21 @@ test 'writing a predicate member never calls it' do
 	delete obj.flag?
 	eq obj.flag?, undefined
 
+test 'set-if-changed reads a predicate on the right' do
+	let doc = new Doc
+	let group = new Group(items: [1, 2, 3])
+	let state = {readable: null, full: null, changes: 0}
+	eq (state.readable =? doc.readable?), true
+	eq (state.readable =? doc.readable?), false
+	eq state.readable, true
+	if state.full =? group.full?
+		state.changes++
+	eq state.full, true
+	eq state.changes, 1
+	let open = yes
+	eq (open =? doc.open?), true
+	eq open, no
+
 test 'predicate reads and bindings in tag templates' do
 	let el = imba.mount(<doc-view>)
 	eq el.classList.contains('readable'), true

@@ -13411,6 +13411,12 @@ class If extends ControlFlow {
   js(o) {
     var v_, test_;
     var body = this._body;
+    // An if built while rendering (If.ternary for `=?`) is never visited, so
+    // its scope gets the enclosing scope as parent here - temporaries that
+    // its branches allocate while rendering go there
+    if (this._scope && !this._scope._parent) {
+      this._scope._parent = STACK.scope(1);
+    }
     // would possibly want to look up / out
     var brace = { braces: true, indent: true };
 
