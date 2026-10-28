@@ -1,0 +1,1 @@
+Fix a compiler crash on a bare `yield` with no value. The grammar accepts `yield` alone, but code generation read the missing value and failed with `Cannot read properties of undefined (reading 'c')`. A bare `yield` now compiles to `yield`.

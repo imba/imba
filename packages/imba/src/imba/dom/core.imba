@@ -126,6 +126,8 @@ export def getSuperTagType name, klass, cmp
 
 const escapeAttributeValue = do(val)
 	let str = typeof val == 'string' ? val : String(val)
+	if str.indexOf('&') >= 0
+		str = str.replace(/\&/g,"&amp;")
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	return str
@@ -136,6 +138,8 @@ const escapeTextContent = do(val, nodeName)
 	if nodeName == 'script' or nodeName == 'style'
 		return str
 
+	if str.indexOf('&') >= 0
+		str = str.replace(/\&/g,"&amp;")
 	if str.indexOf('"') >= 0
 		str = str.replace(/\"/g,"&quot;")
 	if str.indexOf('<') >= 0
@@ -489,7 +493,9 @@ export class Element < Node
 	get asset
 		#asset
 
+	# Like the DOM, inserting a node that already has a parent moves it.
 	def appendChild child
+		child.parentNode.removeChild(child) if child.parentNode
 		self.childNodes.push(child)
 		child.parentNode = self
 		return child
@@ -498,21 +504,29 @@ export class Element < Node
 		let idx = self.childNodes.indexOf(child)
 		if idx >= 0
 			self.childNodes.splice(idx, 1)
-		return self
+			child.parentNode = null
+		return child
 
 	def replaceChild newChild, oldChild
+		return oldChild if newChild == oldChild
+		newChild.parentNode.removeChild(newChild) if newChild.parentNode
 		let idx = childNodes.indexOf(oldChild)
 		if idx >= 0
 			childNodes.splice(idx,1,newChild)
 			newChild.parentNode = self
-		# self.childNodes.push(child)
-		# child.parentNode = self
+			oldChild.parentNode = null
 		return oldChild
 
 	def insertBefore node, before
+		return appendChild(node) unless before
+		node.parentNode.removeChild(node) if node.parentNode
 		let idx = self.childNodes.indexOf(before)
-		self.childNodes.splice(idx, 0, node)
-		self
+		if idx >= 0
+			self.childNodes.splice(idx, 0, node)
+		else
+			self.childNodes.push(node)
+		node.parentNode = self
+		return node
 
 	def setAttribute key, value
 		# match browser-observable behavior for imba tags - setting an
@@ -564,6 +578,8 @@ export class Element < Node
 				o += escapeTextContent(item,self.nodeName)
 			elif item isa Number
 				o += "" + item
+			elif item isa Text
+				o += escapeTextContent(item.textContent,self.nodeName)
 			elif item
 				o += item.outerHTML
 		return o

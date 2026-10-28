@@ -1,0 +1,1 @@
+Fix scoped css on elements returned from an expression (`<(render-thing!)>`) in production builds. The compiler added the css scope of the containing tag to such an element only when the `<(…)>` tag had a class. Development builds give every element an identity class, but production builds do not, so in production the scoped css rules of the tag did not match the element.

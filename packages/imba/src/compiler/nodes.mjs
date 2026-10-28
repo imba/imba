@@ -4264,7 +4264,8 @@ class GreedyReturn extends ImplicitReturn {}
 class Yield extends Statement {
   visit() {
     this._method = STACK.method() || STACK.up(Func);
-    return this._method.set({ yield: true, noreturn: true });
+    this._method.set({ yield: true, noreturn: true });
+    return super.visit(...arguments);
   }
 
   startLoc() {
@@ -4275,7 +4276,7 @@ class Yield extends Statement {
   js() {
     var v = this._value;
     let k = M("yield", this.keyword());
-    return "" + k + " " + v.c({ expression: true });
+    return v ? "" + k + " " + v.c({ expression: true }) : k;
   }
 }
 
@@ -9329,14 +9330,15 @@ class Op extends Node {
 
 class ComparisonOp extends Op {
   invert() {
-    // are there other comparison ops?
-    // what about a chain?
-    var op = this._op;
-    var pairs = ["==", "!=", "===", "!==", ">", "<=", "<", ">="];
-    var idx = pairs.indexOf(op);
-    idx += idx % 2 ? -1 : 1;
-    this._op = pairs[idx];
-    this._invert = !this._invert;
+    // Swap a single equality to its opposite operator. Negate other comparisons
+    // with `!`: `a <= b` is not `!(a > b)` when an operand is NaN or undefined,
+    // and a chain like `a == b == c` compiles to `a == b && b == c`.
+    var pairs = ["==", "!=", "===", "!=="];
+    var idx = pairs.indexOf(this._op);
+    if (idx == -1 || this._left instanceof ComparisonOp) {
+      return super.invert(...arguments);
+    }
+    this._op = pairs[idx + (idx % 2 ? -1 : 1)];
     return this;
   }
 
@@ -9388,6 +9390,11 @@ class UnaryOp extends Op {
   }
 
   isTruthy() {
+    // only a negation is known from its operand - ++/-- are not,
+    // and the prefix forms keep their operand in _right
+    if (this.op() != "!" && this.op() != "not") {
+      return undefined;
+    }
     var val = AST.truthy(this._left);
     return val !== undefined ? !val : undefined;
   }
@@ -18384,7 +18391,7 @@ class Tag extends TagLike {
             this.bvar() +
             " || " +
             this.parentCache() +
-            ".sym || !" +
+            ".sym != null || !" +
             this.tvar() +
             ".setup || " +
             this.tvar() +
@@ -18399,7 +18406,7 @@ class Tag extends TagLike {
         foot.push(
           "" +
             this.parentCache() +
-            ".sym || " +
+            ".sym != null || " +
             this.tvar() +
             this.domCall("end") +
             "(" +

@@ -1,0 +1,1 @@
+Do not write a text node again when its text did not change. Some text children, such as text inside an `if` block, were written on every render, also when the text was the same. Each write resets the caret and the selection inside the node, which broke editing in `contenteditable` elements. The renderer now writes the text only when it is different.

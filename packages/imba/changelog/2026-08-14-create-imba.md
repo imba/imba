@@ -1,0 +1,1 @@
+Remove the project templates from the `imba` package. They are now in the new `create-imba` package, which makes a new project with `npm create imba@latest` (or `pnpm create imba`, `bun create imba`, `npx create-imba`). The `imba create` command that used these templates was removed in an earlier release.
