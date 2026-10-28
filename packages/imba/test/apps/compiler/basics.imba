@@ -228,10 +228,55 @@ test 'super predicate reads call the inherited member on self' do
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	assert res.js.indexOf("(typeof ($1 = super.okΦ) == 'function' ? $1.call(this) : $1)") >= 0
 
-test 'predicate reads are plain in tsc mode' do
-	let code = 'let item = {}\nlet b = item.ready?\n'
+test 'predicate reads are typed as their value in tsc mode' do
+	let code = '''
+	class Doc
+		def readable? by = 1
+			by
+		def check
+			[readable?, self.readable?, readable?!, self.readable?()]
+	class Draft < Doc
+		def readable? by = 1
+			super.readable?
+	let doc = new Doc
+	let a = doc.readable?
+	let b = doc.readable?!
+	let c = doc.readable?()
+	let d = new Doc().readable?
+	'''
 	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
+	eq res.warnings.length, 0
+	for part in [
+		"return [ΦREAD(this.readableΦ)(),ΦREAD(this.readableΦ)(),ΦREAD(this.readableΦ)(),ΦREAD(this.readableΦ)()];"
+		"return ΦREAD(super.readableΦ)();"
+		"let a = ('readableΦ' in doc && ΦREAD(doc.readableΦ)());"
+		"let b = ('readableΦ' in doc && ΦREAD(doc.readableΦ)());"
+		"let c = ('readableΦ' in doc && ΦREAD(doc.readableΦ)());"
+		"let d = ('readableΦ' in new Doc() && ΦREAD(new Doc().readableΦ)());"
+	]
+		assert res.js.indexOf(part) >= 0
 	assert res.js.indexOf("typeof") == -1
+	# declared once, after the code, so the mappings are untouched
+	eq res.js.split('declare function ΦREAD<T>').length, 2
+	assert res.js.indexOf('declare function ΦREAD<T>') > res.js.indexOf('let d =')
+
+test 'predicate calls with arguments and writes stay plain in tsc mode' do
+	let code = '''
+	let doc = {}
+	doc.open? = yes
+	let changed = doc.open? =? no
+	let a = doc.ready?(1)
+	let b = <input type='checkbox' bind=doc.open?>
+	'''
+	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
+	for part in [
+		"('openΦ' in doc && doc).openΦ = true;"
+		"(('openΦ' in doc && doc).openΦ != false)"
+		"let a = ('readyΦ' in doc && doc.readyΦ instanceof Function && doc.readyΦ)(1);"
+		"τT.data=('openΦ' in doc && doc).openΦ;"
+	]
+		assert res.js.indexOf(part) >= 0
+	assert res.js.indexOf('ΦREAD') == -1
 
 test 'explicit predicate call caches a complex receiver' do
 	let code = 'def next\n\t{}\nlet a = next!.ready?!\n'

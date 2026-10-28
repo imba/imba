@@ -106,7 +106,7 @@ An async predicate (`def ready?` / `get ready?` with `await` inside) compiles to
 
 A parameterless predicate `def` outside a class or object is a plain local function. The bare name is the function itself, so the compiler warns; call it as `ready?!`.
 
-TypeScript-based tooling still types a predicate *method* read without arguments (`doc.readable?`) as the method, not its return value; getters are typed correctly.
+TypeScript-based tooling types a predicate read as the value it yields: a getter's value or a method's return value. Reading a method that has required parameters (`doc.writable?` for `def writable? by`) is reported as a missing argument.
 
 ## Implicit Self & Global Identifiers
 

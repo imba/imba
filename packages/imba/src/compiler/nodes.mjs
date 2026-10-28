@@ -1068,6 +1068,7 @@ class Stack {
     this._sourceId = null;
     this._symbols = {};
     this._fieldRegistryEntries = [];
+    this._predicateReads = false;
     this._css = new StyleSheet();
     this._theme = null;
     this._meta = {};
@@ -5450,6 +5451,9 @@ class Root extends Code {
           out += "\n" + registry + "\n";
         }
       }
+      if (STACK._predicateReads) {
+        out += "\n" + PREDICATE_READ_DECLARATION + "\n";
+      }
       // out = "import 'imba/index.d.ts';\n{out}"
       out = "export \{\};String();import * as imba from 'imba';\n" + out + "\n";
 
@@ -9616,6 +9620,28 @@ function compilePredicateRead(node, acc, render) {
   return out;
 }
 
+// TypeScript cannot tell a predicate getter from a predicate method, so the
+// tsc output passes the member through ΦREAD and calls the result with no
+// arguments. A function comes back as itself and anything else as a
+// function returning it. A getter is typed as its value and a method as its
+// return value. A method with required parameters fails the same way as a
+// call that leaves them out. The declaration is appended to every file
+// that uses it (see Root.compile), so it always matches this compiler.
+var PREDICATE_READ_DECLARATION =
+  "declare function ΦREAD<T>(value: T): [T] extends [never] ? () => T : T extends Function ? T : () => T;";
+
+// `val` is the plain member access. The whole call is mapped to the source
+// access, so an error on the call lands on `x.foo?`.
+function typePredicateRead(node, val) {
+  STACK._predicateReads = true;
+  let out = "ΦREAD(" + val + ")()";
+  let loc =
+    node instanceof ImplicitAccess
+      ? node._right._token || node._right._value
+      : node;
+  return loc && loc.startLoc() >= 0 && loc.endLoc() >= 0 ? M(out, loc) : out;
+}
+
 // Remember predicate reads on self inside a class body. Once the class has
 // been traversed and its async predicates are known, the unawaited ones
 // are warned about (ClassDeclaration.warnUnawaitedAsyncPredicates).
@@ -9700,8 +9726,7 @@ class Access extends Op {
       !this._call &&
       !this._assigns &&
       !this._rawPredicate &&
-      !this._inNewChain &&
-      !STACK.tsc()
+      !this._inNewChain
     );
   }
 
@@ -9718,7 +9743,7 @@ class Access extends Op {
     }
 
     // `x.foo?` calls the member when it is a method - see compilePredicateRead
-    if (this.isPredicateRead()) {
+    if (!tsc && this.isPredicateRead()) {
       let self = this;
       return compilePredicateRead(this, this, function () {
         self._rawPredicate = true;
@@ -9793,10 +9818,13 @@ class Access extends Op {
 
     if (tsc) {
       let check = "'" + rgt.c({ mark: false }) + "' in " + ctx.c();
+      // `'foo' in super` is not valid TypeScript
+      let isSuper = lft instanceof RawScript && String(lft._value) == "super";
       if (
         rgt instanceof Identifier &&
         rgt.isPredicate() &&
-        !(lft instanceof Self)
+        !(lft instanceof Self) &&
+        !isSuper
       ) {
         let val = "" + ctx.c() + "." + rgt.c();
 
@@ -9806,6 +9834,8 @@ class Access extends Op {
           );
         } else if (this._assigns) {
           return "(" + check + " && " + ctx.c() + ")." + rgt.c();
+        } else if (this.isPredicateRead()) {
+          return "(" + check + " && " + typePredicateRead(this, val) + ")";
         } else {
           return "(" + check + " && " + val + ")";
         }
@@ -9853,6 +9883,11 @@ class Access extends Op {
 
     if (this instanceof ImplicitAccess) {
       out = M(out, rgt._token || rgt._value);
+    }
+
+    // a predicate read on self or super - see typePredicateRead
+    if (tsc && this.isPredicateRead()) {
+      out = typePredicateRead(this, out);
     }
 
     // tricky?
@@ -12634,9 +12669,6 @@ class Call extends Node {
   // `x.foo?!` - an explicit zero-argument call of a predicate member.
   // Returns the property access (unwrapped from implicit self) or null.
   predicateAccess() {
-    if (STACK.tsc()) {
-      return null;
-    }
     let callee = this._callee.node();
     let acc =
       callee instanceof VarOrAccess && !callee._variable
@@ -12895,6 +12927,15 @@ class Call extends Node {
     // call parens belong to the constructor, so it stays a plain call.
     let acc = this._receiver || this._inNewChain ? null : this.predicateAccess();
 
+    // tsc output types the call exactly like a read - see typePredicateRead
+    if (acc && STACK.tsc()) {
+      let call = acc._call;
+      acc._call = null;
+      out = callee.c({ expression: true });
+      acc._call = call;
+      return out;
+    }
+
     if (acc) {
       return compilePredicateRead(this, acc, function () {
         return callee.c({ expression: true });
@@ -12968,7 +13009,7 @@ function pushNewIntoChain(node, keyword, fallback) {
       n = n._callee;
       isCallee = true;
     } else if (n instanceof Access) {
-      if (!isCallee && !STACK.tsc() && n.isPredicateAccess()) {
+      if (!isCallee && n.isPredicateAccess()) {
         reads.push(n);
       }
       n = n._left;

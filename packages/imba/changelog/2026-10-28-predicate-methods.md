@@ -7,5 +7,3 @@ Writing to a predicate member never calls it. Assignments, `=?` and the other se
 A parameterless predicate `def` outside a class or object stays a plain local function, so a bare `ready?` refers to the function itself. The compiler warns about it and suggests `ready?!`.
 
 Async predicates are supported. A `def ready?` or `get ready?` whose body awaits compiles to a getter returning the promise of an async arrow (`get readyΦ(){ return (async () => { ... })() }`), so `await item.ready?` works. This also replaces the invalid `async get` that any getter containing `await` used to emit. A promise is always truthy, so using an async predicate of the same class in a condition, operator or assignment without `await` (`if ready?`, `let x = ready?`, `<div .on=ready?>`) warns at compile time. Awaiting it, chaining onto it (`ready?.then`), returning it or passing it along does not warn.
-
-The TypeScript-based tooling still types a read of a predicate method without arguments as the method rather than its return value.
