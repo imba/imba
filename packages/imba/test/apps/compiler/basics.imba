@@ -57,10 +57,10 @@ test 'platform: worker' do
 # diagnostics
 
 test 'warning source line survives serialization' do
-	let code = 'class Foo\n\tdef stopped?\n\t\tyield 1\n'
+	let code = 'if yes\n\tdef stopped?\n\t\tyes\n'
 	let res = imbac.compile(code,sourcePath: 'warning.imba')
 	let warning = JSON.parse(JSON.stringify(res.warnings[0]))
-	eq warning.message, 'def stopped? is a generator and stays a plain method, so stopped? without a call is the method itself - call it as stopped?!'
+	eq warning.message, 'def stopped? is not a class member and stays a plain function, so stopped? without a call is the function itself - call it as stopped?!'
 	eq warning.range.start.line, 1
 	eq warning.range.start.character, 5
 	eq warning.range.end.character, 13
@@ -160,12 +160,12 @@ test 'async predicate def with parameters stays an async method' do
 	eq res.warnings.length, 0
 	assert res.js.indexOf('async biggerΦ(n)') >= 0
 
-test 'generator predicate def stays a method and warns' do
-	let code = 'class Foo\n\tdef items?\n\t\tyield 1\n'
+test 'generator predicate def stays a method and is called when read' do
+	let code = 'class Foo\n\tdef items?\n\t\tyield 1\nlet a = (new Foo).items?\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
-	eq res.warnings.length, 1
-	eq res.warnings[0].message, 'def items? is a generator and stays a plain method, so items? without a call is the method itself - call it as items?!'
+	eq res.warnings.length, 0
 	assert res.js.indexOf('*itemsΦ(') >= 0
+	assert res.js.indexOf(".itemsΦ) == 'function'") >= 0
 
 test 'unawaited async predicate use in its own class warns' do
 	let code = 'class Foo\n\tdef ready?\n\t\tawait 1\n\t\tyes\n\tdef check\n\t\tif ready?\n\t\t\t1\n\t\tlet a = self.ready?\n\t\tlet b = await ready?\n\t\tlet c = await ready?!\n\t\tlet d = ready?.then(do 1)\n\t\tlet e = await Promise.all([ready?])\n\t\tlet f = other.ready?\n\t\tready?\n'
@@ -192,8 +192,46 @@ test 'explicit predicate call reads once and calls only functions' do
 	let code = 'let item = {}\nlet a = item.ready?!\nlet b = item.ready?\nlet c = item.ready?(1)\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	assert res.js.indexOf("let a = (typeof ($1 = item.readyΦ) == 'function' ? $1.call(item) : $1);") >= 0
-	assert res.js.indexOf("let b = item.readyΦ;") >= 0
+	assert res.js.indexOf("let b = (typeof ($1 = item.readyΦ) == 'function' ? $1.call(item) : $1);") >= 0
 	assert res.js.indexOf("let c = item.readyΦ(1);") >= 0
+
+test 'predicate reads call methods, writes stay plain' do
+	let code = '''
+	class Doc
+		open? = no
+		def readable? by = 1
+			by
+		def check
+			readable?
+	let doc = new Doc
+	doc.open? = yes
+	let changed = doc.open? =? no
+	doc.count? ||= 1
+	doc.count?++
+	delete doc.open?
+	'''
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 0
+	for part in [
+		"return (typeof ($1 = this.readableΦ) == 'function' ? $1.call(this) : $1);"
+		"($$ && ($0 = $$.openΦ) !== undefined)"
+		"doc.openΦ = true;"
+		"let changed = (doc.openΦ != false) ? ((doc.openΦ = false,true)) : false;"
+		"doc.countΦ ||= 1;"
+		"doc.countΦ++;"
+		"delete doc.openΦ"
+	]
+		assert res.js.indexOf(part) >= 0
+
+test 'super predicate reads call the inherited member on self' do
+	let code = 'class A\n\tdef ok? x = 1\n\t\tx\nclass B < A\n\tdef ok? x = 1\n\t\tsuper.ok?\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	assert res.js.indexOf("(typeof ($1 = super.okΦ) == 'function' ? $1.call(this) : $1)") >= 0
+
+test 'predicate reads are plain in tsc mode' do
+	let code = 'let item = {}\nlet b = item.ready?\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba', platform: 'tsc')
+	assert res.js.indexOf("typeof") == -1
 
 test 'explicit predicate call caches a complex receiver' do
 	let code = 'def next\n\t{}\nlet a = next!.ready?!\n'
@@ -204,7 +242,7 @@ test 'explicit predicate call after new binds new to the constructor' do
 	let code = 'class Foo\n\tdef ready?\n\t\tyes\nlet a = new Foo().ready?!\nlet b = new Foo().ready?\nlet c = new Foo.ready?!\nlet d = new Foo().bar!\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	assert !!res.js.match(/let a = \(typeof \(\$\d+ = \(\$\d+ = new Foo\(\)\)\.readyΦ\) == 'function' \? \$\d+\.call\(\$\d+\) : \$\d+\);/)
-	assert res.js.indexOf("let b = new Foo().readyΦ;") >= 0
+	assert !!res.js.match(/let b = \(typeof \(\$\d+ = \(\$\d+ = new Foo\(\)\)\.readyΦ\) == 'function' \? \$\d+\.call\(\$\d+\) : \$\d+\);/)
 	assert res.js.indexOf("let c = new Foo.readyΦ();") >= 0
 	assert res.js.indexOf("let d = new Foo().bar();") >= 0
 

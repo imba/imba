@@ -42,7 +42,22 @@ tag sized-list
         !items.length
 ```
 
-Predicates without parameters are property-like, so a `def` whose name ends with `?` and takes no parameters compiles to a getter, exactly as if it had been declared with `get`. Either way `list.empty?` yields the boolean, never a function. An explicit call like `list.empty?!` works too, whether the predicate turned out to be a getter or a real method – it reads the property once and only calls it if the value is a function.
+Reading a predicate member always yields its value. If the member is a getter you get what it returns, and if it is a method it is called without arguments. This lets one predicate work both as a property and as a method with optional parameters:
+
+```imba
+class Doc
+    owner = 'me'
+
+    def readable? by = 'me'
+        by == owner
+
+let doc = new Doc
+doc.readable? # => true - called with the default
+doc.readable?('you') # => false
+doc.readable? 'me' # => true
+```
+
+A `def` whose name ends with `?` and takes no parameters compiles to a getter, exactly as if it had been declared with `get`, so the cheapest form is used whenever it can be. An explicit call like `list.empty?!` gives the same result as `list.empty?`, whichever form the predicate has.
 
 ```imba
 class List
@@ -51,29 +66,18 @@ class List
     def empty?
         !items.length
 
-let list = new List
-list.empty? # => true
-list.empty?! # => true
-```
-
-Predicate methods can take parameters too. A predicate `def` with parameters is a regular method, and you call it with its arguments like any other method:
-
-```imba
-class List
-    items = []
-
     def includes? item
         items.indexOf(item) >= 0
 
-    def within? min, max
-        min <= items.length <= max
-
 let list = new List
+list.empty? # => true
 list.includes? 1 # => false
-list.within?(0, 10) # => true
+list.includes?(1) # => false
 ```
 
-Two kinds of parameterless predicate `def` cannot become getters: generators, and functions declared outside a class or object. They stay plain functions, so `ready?` without a call refers to the function itself, which is always truthy. The compiler warns about these; call them explicitly as `ready?!`.
+Writing to a predicate member never calls it. Assignments (`doc.open? = yes`, `doc.open? =? no`, `doc.count? ||= 1`), `++`/`--`, `delete` and two-way bindings like `<input bind=open?>` all work on the property itself. There is no way to get the method itself through `doc.readable?`; wrap the call in a function instead, like `&.readable?(friend)` or `do doc.readable?(friend)`.
+
+A parameterless predicate `def` declared outside a class or object cannot become a getter. A top-level `def ready?` is a plain function, so `ready?` without a call refers to the function itself, which is always truthy. The compiler warns about these; call them explicitly as `ready?!`.
 
 Predicates may be async. A `def ready?` (or `get ready?`) whose body awaits compiles to a getter that returns a promise, so `await item.ready?` works. A promise is always truthy, so using an async predicate in a condition, operator or assignment without `await` is a bug; inside its own class (`if ready?`, `let x = ready?`) the compiler warns about it, and elsewhere the TypeScript-based tooling reports it.
 

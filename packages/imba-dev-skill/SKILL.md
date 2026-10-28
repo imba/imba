@@ -56,7 +56,8 @@ These are the mistakes AI assistants make most often with Imba:
 | Shadowing global `assert`/`eq` when testing compiler assertion payloads | Import/install the global test harness, then call unshadowed `assert`/`eq` | The compiler only sets `globalThis.IMBA_ASSERT` / `globalThis.IMBA_EQ` for unshadowed global calls; local/imported definitions are intentionally left alone |
 | Returning `self` from `@thenable def init/start` | Return `yes`, `null`, or another non-thenable value after initialization | Resolving a thenable method with the same thenable object can recurse/hang and triggers the "took more than 20000ms" warning |
 | Letting legitimate slow `@thenable` setup hit the default watchdog | Use `@thenable(timeout: 2minutes)` or another explicit duration | The decorator's default warning fires after 20s; browser/server startup paths may need a longer timeout |
-| `if ready?` where `def ready?` is a top-level function or a generator | `if ready?!` | Only parameterless predicate members (class, tag, object) compile to getters; a top-level or generator predicate stays a function, so the bare name is the function itself (always truthy) and the compiler warns |
+| `if ready?` where `def ready?` is a top-level function | `if ready?!` | Reading a predicate *member* calls it if it is a method, but a top-level `def ready?` is a local function, so the bare name is the function itself (always truthy) and the compiler warns |
+| `let check = doc.readable?` to get the method as a callback | `let check = do doc.readable?($1)` or `&.readable?(x)` | Reading a predicate member that is a method calls it with no arguments; there is no way to get the method itself through `doc.readable?` |
 | `eq list.includes? 1, true` | `eq (list.includes? 1), true` or `list.includes?(1)` | A call without parens takes every following comma-separated argument, so the inner predicate call swallows `true` |
 | `def is query` | `def ['is'] query` | Methods named after reserved keywords need bracket syntax |
 | `def begin` for lifecycle-style methods | Prefer `def start` | A method named `begin` can confuse Imba tooling/tsc compilation; use `start` for Q/run lifecycle methods |
@@ -88,19 +89,24 @@ set media-emphasis? value
 	# setter for that property
 
 def ready?
-	# no parameters: compiles to a getter - `item.ready?` yields the value
+	# no parameters: compiles to a getter
 
-def includes? item
-	# with parameters: a regular method - `list.includes? item`
+def readable? by = me
+	# with parameters: a method - `doc.readable?` calls it with the default,
+	# `doc.readable?(friend)` passes the argument
 ```
 
-A parameterless predicate `def` in a class, tag, `extend class` or object literal compiles to a getter, so reading `item.ready?` always yields the value. An explicit call `item.ready?!` also works whether `ready?` is a getter or a real method (it reads the property once and calls it only if it is a function), so prefer the plain property form.
+Predicate reads behave like Ruby: reading a predicate member (`doc.readable?`, `self.readable?`, implicit `readable?`, `super.readable?`) always yields its value. A getter returns its value; a method is called without arguments. The compiler emits `typeof (t = doc.readableΦ) == 'function' ? t.call(doc) : t` and evaluates the receiver once. So one predicate can be used as a property and as a method with optional parameters, and callers never need to know which form it has. `doc.readable?!` gives the same result.
 
-A predicate `def` with parameters is a regular method: call it with its arguments (`list.includes?(x)`, `list.includes? x`, or `includes? x` on implicit self). There is no warning and no need for an `is`/`has` prefix.
+A parameterless predicate `def` in a class, tag, `extend class` or object literal compiles to a getter, so plain reads of it are cheap. A predicate `def` with parameters is a regular method: call it with arguments (`list.includes?(x)`, `list.includes? x`, `includes? x` on implicit self). There is no warning and no need for an `is`/`has` prefix.
+
+Writing never calls the member. `doc.open? = yes`, `=?`, `||=`, `++`, `delete doc.open?` and `<input bind=open?>` all work on the property itself. A predicate field that holds a function is called when read, but the field value from the init object (`new Doc(open?: fn)`) is stored as-is.
 
 An async predicate (`def ready?` / `get ready?` with `await` inside) compiles to a getter returning a promise: always `await item.ready?`. Using it in a condition or assignment without `await` inside its own class is a compiler warning, since a promise is always truthy.
 
-Parameterless predicates that are generators or top-level functions cannot be getters. They stay plain functions and the compiler warns, because the bare name is the function itself. Call them explicitly as `ready?!`.
+A parameterless predicate `def` outside a class or object is a plain local function. The bare name is the function itself, so the compiler warns; call it as `ready?!`.
+
+TypeScript-based tooling still types a predicate *method* read without arguments (`doc.readable?`) as the method, not its return value; getters are typed correctly.
 
 ## Implicit Self & Global Identifiers
 

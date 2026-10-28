@@ -132,7 +132,7 @@ tag sized-list
     get empty? do !items.length
 ```
 
-A `def` with a predicate name and no parameters compiles to a getter as well, so `list.empty?` always yields the value, and an explicit `list.empty?!` works whether the predicate is a getter or a real method. A predicate `def` with parameters is a regular method, called with its arguments: `list.includes? item`. See [Predicate Identifiers](/docs/identifiers#predicate-identifiers).
+A `def` with a predicate name and no parameters compiles to a getter as well. Reading a predicate that is a method calls it without arguments, so `doc.readable?` and `doc.readable?(friend)` both work for `def readable? by = me`. See [Predicate Identifiers](/docs/identifiers#predicate-identifiers).
 
 ### Identifiers with special meanings
 

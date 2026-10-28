@@ -111,7 +111,9 @@ test 'def predicates with params stay methods' do
 	let group = new Group(items: [1,2,3])
 	eq group.bigger?(2), true
 	eq group.bigger?(5), false
-	eq (typeof group.bigger?), 'function'
+	eq (typeof Group.prototype['biggerΦ']), 'function'
+	# reading it calls it without arguments - `3 > undefined`
+	eq group.bigger?, false
 
 test 'predicate methods take arguments' do
 	let group = new Group(items: [1,2,3])
@@ -155,7 +157,8 @@ test 'predicate functions and object methods take arguments' do
 	}
 	eq obj.has?('a'), true
 	eq (obj.has? 'b'), false
-	eq (typeof obj.has?), 'function'
+	# reading it calls it without arguments
+	eq obj.has?, false
 
 test 'predicate methods in tag templates' do
 	let el = <predicate-list>
@@ -176,10 +179,19 @@ test 'explicit calls work for getters and defs' do
 	eq checks[2], true
 	eq checks[3], true
 
-test 'explicit call on a function-valued predicate calls it' do
+test 'function-valued predicate fields are called when read' do
 	let custom = new Custom
 	eq custom.checked?!, true
-	eq (typeof custom.checked?), 'function'
+	eq custom.checked?, true
+	eq (typeof custom['checkedΦ']), 'function'
+
+test 'predicate fields from the init object are stored, not called' do
+	let calls = 0
+	let custom = new Custom(checked?: do calls++)
+	eq calls, 0
+	eq (typeof custom['checkedΦ']), 'function'
+	eq custom.checked?, 0
+	eq calls, 1
 
 test 'explicit call evaluates the receiver once' do
 	calls = 0
@@ -256,3 +268,100 @@ test 'async predicates are promise-returning getters' do
 	eq f, false
 	let g = await loader.check!
 	eq g, true
+
+class Doc
+	owner = 'me'
+	open? = no
+
+	def readable? by = 'me'
+		by == owner
+
+	static def allowed? role = 'admin'
+		role == 'admin'
+
+	def checks
+		[readable?, self.readable?, readable?('you'), readable? 'me']
+
+class SharedDoc < Doc
+	def readable? by = 'me'
+		super.readable?(by) or (by == 'friend' and super.readable?)
+
+extend class Doc
+	def editable?
+		readable?
+
+tag doc-view
+	doc = new Doc
+	open? = yes
+
+	def render
+		<self .readable=doc.readable? .open=open?>
+			<input type='checkbox' bind=open?>
+
+test 'reading a predicate method calls it with its defaults' do
+	let doc = new Doc
+	eq doc.readable?, true
+	eq doc.readable?('you'), false
+	eq (doc.readable? 'me'), true
+	eq doc.checks!, [true, true, false, true]
+	eq Doc.allowed?, true
+	eq Doc.allowed?('guest'), false
+	eq doc.editable?, true
+	eq new Doc(owner: 'you').readable?, false
+	eq new Doc(owner: 'you').readable?('you'), true
+
+test 'super predicate reads call the inherited method on self' do
+	let doc = new SharedDoc
+	eq doc.readable?, true
+	eq doc.readable?('friend'), true
+	eq doc.readable?('stranger'), false
+	doc.owner = 'you'
+	eq doc.readable?, false
+	eq doc.readable?('you'), true
+
+test 'predicate method reads evaluate the receiver once' do
+	let made = 0
+	let make = do
+		made++
+		new Doc
+	eq make!.readable?, true
+	eq made, 1
+	let docs = [new Doc, new Doc(owner: 'you')]
+	let i = 0
+	eq docs[i++].readable?, true
+	eq i, 1
+
+test 'predicate method reads with safe chaining and amperfuncs' do
+	let nothing = null
+	eq nothing..readable?, undefined
+	let docs = [new Doc, new Doc(owner: 'you'), new SharedDoc]
+	eq docs.filter(&.readable?).length, 2
+	eq docs.filter(&.readable?('you')).length, 1
+
+test 'writing a predicate member never calls it' do
+	let doc = new Doc
+	doc.open? = yes
+	eq doc.open?, yes
+	eq (doc.open? =? yes), false
+	eq (doc.open? =? no), true
+	eq doc.open?, no
+	let obj = {count?: 0, flag?: null}
+	obj.count?++
+	obj.count? += 2
+	obj.flag? ||= 'set'
+	eq obj.count?, 3
+	eq obj.flag?, 'set'
+	delete obj.flag?
+	eq obj.flag?, undefined
+
+test 'predicate reads and bindings in tag templates' do
+	let el = imba.mount(<doc-view>)
+	eq el.classList.contains('readable'), true
+	eq el.classList.contains('open'), true
+	eq el.querySelector('input').checked, true
+	await spec.click('doc-view input')
+	eq el.open?, false
+	eq el.classList.contains('open'), false
+	el.doc.owner = 'you'
+	await imba.commit!
+	eq el.classList.contains('readable'), false

@@ -7500,35 +7500,32 @@ class MethodDeclaration extends Func {
   }
 
   // Runs once the body has been traversed, when async/yield are known.
-  // Predicate defs with parameters are regular methods, called with their
-  // arguments like any other. A parameterless predicate def that cannot
-  // become a getter warns, since `foo?` without a call silently yields
-  // the function itself, which is always truthy.
+  // A getter cannot be a generator, so a generator predicate reverts to a
+  // method - reading it still calls it, like any predicate method (see
+  // compilePredicateRead). A parameterless predicate function outside a
+  // class or object is a local function, and a bare `foo?` refers to the
+  // function itself (always truthy), so that one warns.
   finalizePredicateDef() {
     if (!this.hasPredicateName() || this.isSetter()) {
       return;
     }
 
-    let why = null;
-
     if (this._predicateGetter) {
       // an async body is fine - the getter returns a promise (see js)
-      if (!this.option("yield")) {
-        return;
+      if (this.option("yield")) {
+        this._type = "def";
+        this._predicateGetter = false;
       }
-      why = "is a generator";
-      this._type = "def";
-      this._predicateGetter = false;
-    } else if (this.isGetter() || len$(this._params) > 0) {
       return;
-    } else {
-      why = "is not a class member";
+    }
+
+    if (this.isGetter() || len$(this._params) > 0 || this.isMemberDef()) {
+      return;
     }
 
     let raw = this._name.toRaw();
-    let what = this.isMemberDef() ? "method" : "function";
     this._name.warn(
-      `def ${raw} ${why} and stays a plain ${what}, so ${raw} without a call is the ${what} itself - call it as ${raw}!`,
+      `def ${raw} is not a class member and stays a plain function, so ${raw} without a call is the function itself - call it as ${raw}!`,
     );
   }
 
@@ -9178,6 +9175,12 @@ class Op extends Node {
     var l = this._left;
     var r = this._right;
 
+    // set-if-changed (`=?`, `|=?`, ...) compares and assigns the property
+    // itself - a predicate member on the left is never called
+    if (l && /=\?$/.test(String(op))) {
+      l._assigns = r;
+    }
+
     // make the left and right consume valueOf
 
     if (op == "!&") {
@@ -9506,6 +9509,11 @@ class Delete extends Op {
     // TODO this will execute calls several times if the path is not directly to an object
     // need to cache the receiver
     var l = this._left;
+    // `delete x.foo?` removes the member itself - never call it
+    var target = l instanceof VarOrAccess ? l._value : l;
+    if (target instanceof Access) {
+      target._rawPredicate = true;
+    }
     var tmp = this.scope__().temporary(this, { pool: "val" });
     var o = OP("=", tmp, l);
     // FIXME
@@ -9573,6 +9581,41 @@ function isUnawaitedPredicateUse(node) {
   return false;
 }
 
+// Compiles a predicate member read like `x.foo?` (and `x.foo?!`). A
+// predicate is usually a getter, which is what a parameterless `def foo?`
+// compiles to, but it may be a method - typically one with optional
+// parameters like `def readable? by = me`. The property is read once and
+// called with no arguments when it turns out to be a function, so readers
+// never need to know which one it is. `render` produces the plain read.
+function compilePredicateRead(node, acc, render) {
+  // the receiver is referenced twice - cache it unless it is a plain
+  // reference (self, a local variable, a global). IndexAccess only
+  // caches its index by default, so force the whole expression.
+  let recv = acc._left;
+  let superSelf = acc._superSelf;
+  let cacheRecv = !(
+    superSelf ||
+    recv instanceof ScopeContext ||
+    recv instanceof Self
+  );
+  if (cacheRecv) {
+    recv.cache({ pool: "val", force: recv instanceof IndexAccess });
+  }
+  let tmp = node.scope__().temporary(node, { pool: "val" });
+  let val = render();
+  // `super.foo?` reads the inherited member but calls it on self
+  let self = superSelf ? superSelf.c() : recv.c();
+  let out =
+    "(typeof (" + tmp.c() + " = " + val + ") == 'function' ? " +
+    tmp.c() + ".call(" + self + ") : " + tmp.c() + ")";
+  // both temporaries are done once this expression is rendered
+  tmp.free();
+  if (cacheRecv) {
+    recv.decache();
+  }
+  return out;
+}
+
 // Remember predicate reads on self inside a class body. Once the class has
 // been traversed and its async predicates are known, the unawaited ones
 // are warned about (ClassDeclaration.warnUnawaitedAsyncPredicates).
@@ -9637,6 +9680,31 @@ class Access extends Op {
     return false;
   }
 
+  // A predicate member access written in the source - `x.foo?`, `self.foo?`,
+  // implicit `foo?` or `super.foo?`. Accesses the compiler builds itself
+  // (like reading field values from the init object) have no `.` token.
+  isPredicateAccess() {
+    let rgt = this._right;
+    return !!(
+      rgt instanceof Identifier &&
+      rgt.isPredicate() &&
+      (this._optok instanceof Token || this._sourceRead)
+    );
+  }
+
+  // A plain read of a predicate member, as opposed to calling it, assigning
+  // to it or deleting it.
+  isPredicateRead() {
+    return !!(
+      this.isPredicateAccess() &&
+      !this._call &&
+      !this._assigns &&
+      !this._rawPredicate &&
+      !this._inNewChain &&
+      !STACK.tsc()
+    );
+  }
+
   js(stack) {
     var opjs, r;
     var raw = null;
@@ -9647,6 +9715,17 @@ class Access extends Op {
 
     if (lft instanceof VarOrAccess && lft._variable instanceof ImportProxy) {
       return lft._variable.access(rgt, lft).c();
+    }
+
+    // `x.foo?` calls the member when it is a method - see compilePredicateRead
+    if (this.isPredicateRead()) {
+      let self = this;
+      return compilePredicateRead(this, this, function () {
+        self._rawPredicate = true;
+        let out = self.js(stack);
+        self._rawPredicate = false;
+        return out;
+      });
     }
 
     if (rgt instanceof Token) {
@@ -10131,6 +10210,7 @@ class VarOrAccess extends ValueNode {
           new Self().traverse(),
           this._value,
         ); // .set(datatype: datatype)
+        this._value._sourceRead = true;
 
         if (this._identifier.isPredicate()) {
           recordPredicateUse(this, this._identifier.toRaw(), this);
@@ -10149,6 +10229,11 @@ class VarOrAccess extends ValueNode {
     }
 
     let val = this._variable || this._value;
+
+    // an assignment to implicit self (`foo? = yes`) is not a predicate read
+    if (this._assigns && val instanceof Access) {
+      val._assigns = this._assigns;
+    }
 
     if (STACK.tsc()) {
       let typ = this.datatype();
@@ -12561,8 +12646,7 @@ class Call extends Node {
       acc instanceof Access &&
       acc._right instanceof Identifier &&
       acc._right.isPredicate() &&
-      this._args.count() == 0 &&
-      !(acc._left instanceof Super)
+      this._args.count() == 0
     ) {
       return acc;
     }
@@ -12621,6 +12705,9 @@ class Call extends Node {
       callee._call = this;
       lft = callee._left;
       rgt = callee._right;
+    } else if (callee instanceof VarOrAccess && callee._value instanceof Access) {
+      // implicit self (`foo? x`) - the access is called, not read
+      callee._value._call = this;
     }
 
     if (callee instanceof Super) {
@@ -12809,25 +12896,9 @@ class Call extends Node {
     let acc = this._receiver || this._inNewChain ? null : this.predicateAccess();
 
     if (acc) {
-      // the receiver is referenced twice - cache it unless it is a plain
-      // reference (self, a local variable, a global). IndexAccess only
-      // caches its index by default, so force the whole expression.
-      let recv = acc._left;
-      let cacheRecv = !(recv instanceof ScopeContext || recv instanceof Self);
-      if (cacheRecv) {
-        recv.cache({ pool: "val", force: recv instanceof IndexAccess });
-      }
-      let tmp = this.scope__().temporary(this, { pool: "val" });
-      let val = callee.c({ expression: true });
-      out =
-        "(typeof (" + tmp.c() + " = " + val + ") == 'function' ? " +
-        tmp.c() + ".call(" + recv.c() + ") : " + tmp.c() + ")";
-      // both temporaries are done once this expression is rendered
-      tmp.free();
-      if (cacheRecv) {
-        recv.decache();
-      }
-      return out;
+      return compilePredicateRead(this, acc, function () {
+        return callee.c({ expression: true });
+      });
     }
 
     let safeop = "";
@@ -12887,13 +12958,21 @@ class BangCall extends Call {}
 // the caller should render the chain without the prefix.
 function pushNewIntoChain(node, keyword, fallback) {
   let calls = [];
+  // plain predicate reads (`new Foo(1).bar?`) are wrapped the same way
+  let reads = [];
   let n = node;
+  let isCallee = false;
   while (n) {
     if (n instanceof Call) {
       calls.push(n);
       n = n._callee;
+      isCallee = true;
     } else if (n instanceof Access) {
+      if (!isCallee && !STACK.tsc() && n.isPredicateAccess()) {
+        reads.push(n);
+      }
       n = n._left;
+      isCallee = false;
     } else if (n instanceof VarOrAccess) {
       n = n._value instanceof Access ? n._value : null;
     } else {
@@ -12901,14 +12980,26 @@ function pushNewIntoChain(node, keyword, fallback) {
     }
   }
 
-  let predicates = calls.filter(function (c) {
-    return c.predicateAccess();
-  });
+  let predicates = calls
+    .filter(function (c) {
+      return c.predicateAccess();
+    })
+    .concat(reads);
   if (!predicates.length) {
     return false;
   }
 
   let inner = calls[calls.length - 1];
+
+  // no separate constructor call (`new Foo.bar?`) - the predicate member
+  // is what gets constructed, so it stays a plain read
+  if (!inner) {
+    for (let i = 0; i < reads.length; i++) {
+      reads[i]._inNewChain = true;
+    }
+    return false;
+  }
+
   inner._inNewChain = true;
 
   if (fallback || inner instanceof New) {
@@ -14581,6 +14672,12 @@ class TagAttr extends TagPart {
 
     if (this._ns == "bind") {
       STACK.use("dom_bind");
+      // a two-way binding target is read and written as a property,
+      // never called - see Access.isPredicateRead
+      let target = this.value();
+      if (target instanceof VarOrAccess || target instanceof Access) {
+        target._assigns = this;
+      }
     }
 
     if (!this._ns && this._key == "ease") {
@@ -21727,6 +21824,9 @@ class Super extends Node {
         return M(CALL(target, args || fallbackArgs).c(), this._keyword);
       } else if (this._member) {
         op = OP(".", sup, this._member);
+        // a predicate read (`super.foo?`) calls the member on self
+        op._superSelf = this.slf();
+        op._sourceRead = true;
       } else if (m) {
         op = OP(".", sup, m.name());
         if (m.isSetter()) {
@@ -21745,6 +21845,9 @@ class Super extends Node {
 
     if (this._member) {
       op = OP(".", sup, this._member);
+      // a predicate read (`super.foo?`) calls the member on self
+      op._superSelf = this.slf();
+      op._sourceRead = true;
       // something is chained onto a super call (super.foo().bar) -
       // the call itself still has to be emitted before the chain
       if (args) {
