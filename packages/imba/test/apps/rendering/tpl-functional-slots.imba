@@ -143,3 +143,113 @@ describe "functional slots" do
 		app.render!
 		eq body.querySelectorAll('.maybe').length, 1
 		eq body.firstElementChild.className.split(' ')[0], 'maybe'
+
+describe "functional slots with fallback content" do
+	let calls = 0
+
+	tag fs-fallback
+		show = no
+		label = 'given'
+
+		def card
+			calls++
+			<div.card> <slot> "fallback"
+
+		def pane
+			<div.pane>
+				<div.side> <slot name='side'> <i.none> "no side"
+				<div.main> <slot> <i.none> "no main"
+
+		<self>
+			<div$given> <card()> <b.child> label
+			<div$text> <card()> "plain text"
+			<div$empty> <card()>
+			<div$cond> <card()>
+				if show
+					<b.maybe> "shown"
+			<div$named> <pane()>
+				<em slot='side'> "side"
+
+	let app = imba.mount <fs-fallback>
+
+	test "children replace the fallback from the first render" do
+		let card = app.$given.querySelector('.card')
+		eq card.textContent, 'given'
+		eq card.querySelectorAll('.child').length, 1
+
+	test "text children replace the fallback" do
+		eq app.$text.querySelector('.card').textContent, 'plain text'
+
+	test "the fallback shows without children" do
+		eq app.$empty.querySelector('.card').textContent, 'fallback'
+
+	test "named slots: given slot replaces its fallback, the other keeps it" do
+		let pane = app.$named.querySelector('.pane')
+		eq pane.querySelector('.side').textContent, 'side'
+		eq pane.querySelector('.main').textContent, 'no main'
+
+	test "children keep their identity across renders" do
+		let child = app.$given.querySelector('.child')
+		app.label = 'again'
+		app.render!
+		eq app.$given.querySelector('.child'), child
+		eq child.textContent, 'again'
+
+	test "conditional children toggle the fallback" do
+		let card = app.$cond.querySelector('.card')
+		eq card.textContent, 'fallback'
+		app.show = yes
+		app.render!
+		eq card.textContent, 'shown'
+		app.show = no
+		app.render!
+		eq card.textContent, 'fallback'
+
+	test "later renders call the template once per call site" do
+		let before = calls
+		app.render!
+		eq calls - before, 4
+
+describe "functional slots behind a condition" do
+	let calls = {plain: 0, fallback: 0}
+
+	tag fs-hidden
+		open = yes
+
+		def plain
+			calls.plain++
+			<div.plain>
+				if open
+					<slot>
+
+		def withfallback
+			calls.fallback++
+			<div.fb>
+				if open
+					<slot> "fallback"
+
+		<self>
+			<plain()> <b.p> "plain"
+			<withfallback()> <b.f> "given"
+
+	let app = imba.mount <fs-hidden>
+
+	test "the slot shows while the condition holds" do
+		eq app.querySelector('.plain').textContent, 'plain'
+		eq app.querySelector('.fb').textContent, 'given'
+
+	test "a hidden slot does not render the template twice" do
+		app.open = no
+		app.render!
+		eq app.querySelector('.plain').textContent, ''
+		eq app.querySelector('.fb').textContent, ''
+		calls.plain = calls.fallback = 0
+		app.render!
+		app.render!
+		eq calls, {plain: 2, fallback: 2}
+
+	test "the slot comes back with its children" do
+		app.open = yes
+		app.render!
+		eq app.querySelector('.plain').textContent, 'plain'
+		eq app.querySelector('.fb').textContent, 'given'
