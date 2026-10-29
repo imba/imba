@@ -790,6 +790,17 @@ Rewriter.prototype.addImplicitParentheses = function (){
 	let stack = [];
 	let currPair = null;
 	
+	// whether the source had a space before tokens[i]. Implicit calls that
+	// close right before it (`a ? fn x : y`) insert generated CALL_END tokens
+	// which never carry the spacing, so look past them.
+	var spacedBefore = function(i) {
+		let j = i - 1;
+		while (j > 0 && tokens[j].generated && tokens[j]._type == 'CALL_END'){
+			j--;
+		};
+		return j >= 0 && tokens[j].spaced;
+	};
+	
 	var parensAction = function(token,i,tokens) {
 		let tok = new Token('CALL_END',')',-1,0);
 		tok.generated = true;
@@ -822,7 +833,7 @@ Rewriter.prototype.addImplicitParentheses = function (){
 			return true;
 		};
 		
-		if (type == ':' && stack[stack.length - 1] == '?' && tokens[i - 1].spaced) {
+		if (type == ':' && stack[stack.length - 1] == '?' && spacedBefore(i)) {
 			return true;
 		};
 		
@@ -887,7 +898,7 @@ Rewriter.prototype.addImplicitParentheses = function (){
 			continue;
 		};
 		
-		if (type == ':' && tokens[i - 1].spaced && stack[stack.length - 1] == '?') {
+		if (type == ':' && spacedBefore(i) && stack[stack.length - 1] == '?') {
 			stack.pop();
 		};
 		

@@ -135,8 +135,6 @@ describe "ternaries as tag content" do
 			<span$interp> "{count} {count == 1 ? 'view' : 'views'}"
 			<span$nested> busy ? 'Draft' : (count == 1 ? '1 reply' : "{count} replies")
 			<b$chained> aborted ? "Aborted" : busy ? (count > 2 ? "Failed" : "Wrote") : "Write"
-			# (kept before $mixed: a tag-with-content ternary followed by a
-			# ternary on a tag with attributes fails to parse - reported)
 			<p$tags> busy ? <sw-item data='busy'> : <em> "idle"
 			<p$mixed>
 				<b> "count:"
@@ -250,3 +248,36 @@ describe "postfix conditionals and text content" do
 		app.render!
 		eq app.$mixed.textContent, 'Hello Bo!'
 		eq app.$mixed.children.length, 1
+
+describe "ternaries after a tag ternary with content" do
+	tag sw-ternary-seq
+		a = yes
+		b = no
+		<self>
+			<p$first> a ? <i> "m" : <s>
+			<p$flag> b ? <a.x> : <i.y>
+			<p$attr> a ? <a title='t'> : <i>
+			<p$handler> b ? <a @click=(do yes)> : <i.z>
+			<p$last> a ? <b> "last" : <s> "never"
+
+	let app = imba.mount <sw-ternary-seq>
+
+	test "each ternary renders its own branch" do
+		eq app.$first.innerHTML, '<i>m</i>'
+		eq app.$flag.firstElementChild.nodeName, 'I'
+		assert app.$flag.firstElementChild.classList.contains('y')
+		eq app.$attr.innerHTML, '<a title="t"></a>'
+		eq app.$handler.firstElementChild.nodeName, 'I'
+		assert app.$handler.firstElementChild.classList.contains('z')
+		eq app.$last.textContent, 'last'
+
+	test "branches switch on re-render" do
+		app.a = no
+		app.b = yes
+		app.render!
+		eq app.$first.innerHTML, '<s></s>'
+		eq app.$flag.firstElementChild.nodeName, 'A'
+		assert app.$flag.firstElementChild.classList.contains('x')
+		eq app.$attr.innerHTML, '<i></i>'
+		eq app.$handler.firstElementChild.nodeName, 'A'
+		eq app.$last.textContent, 'never'

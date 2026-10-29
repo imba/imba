@@ -215,6 +215,26 @@ describe 'ternary with an implicit call branch' do
 		let flag = no
 		eq (flag ? double 2 : double 3), 6
 
+	test 'a ternary inside an implicit call after one with a call branch' do
+		def wrap x
+			[x]
+		let a = yes
+		let b = no
+		let v = a ? double 2 : 0
+		let w = wrap b ? 3 : 4
+		eq v, 4
+		eq w, [4]
+
+	test 'several call-branch ternaries in a row' do
+		def wrap x
+			[x]
+		let flag = yes
+		let one = flag ? double 1 : 0
+		let two = flag ? double 2 : 0
+		let three = wrap flag ? 'y' : 'n'
+		let four = wrap !flag ? 'y' : 'n'
+		eq [one, two, three, four], [2, 4, ['y'], ['n']]
+
 describe 'debugger' do
 
 	test 'a debugger statement in a branch that is not taken' do
