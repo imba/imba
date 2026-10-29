@@ -160,6 +160,68 @@ describe "key= outside of loops" do
 		eq app.querySelector('.page'), div
 		eq row.textContent, 'one'
 
+describe "keyed plain elements outside of loops" do
+	tag k-plain-slot
+		<self> <slot>
+
+	tag k-plain
+		page = {id: 1, name: 'one'}
+		<self>
+			<header> "head"
+			<div.static key=1> "static"
+			<section.wrap>
+				<i> "before"
+				<div.dynamic key=page> page.name
+				<i> "after"
+			<k-plain-slot> <b.slotted key=page> page.name
+			<footer> "foot"
+
+	let app = imba.mount <k-plain>
+	let one = app.page
+	let two = {id: 2, name: 'two'}
+
+	def names el
+		Array.from(el.children).map(do $1.nodeName.toLowerCase!).join(',')
+
+	test "are inserted in document order" do
+		eq names(app), 'header,div,section,k-plain-slot,footer'
+		eq app.querySelector('.static').textContent, 'static'
+		eq texts(app.querySelector('.wrap').children), 'before,one,after'
+		eq app.querySelector('.slotted').textContent, 'one'
+
+	test "keep their element when the key is unchanged" do
+		let st = app.querySelector('.static')
+		let dyn = app.querySelector('.dynamic')
+		let sl = app.querySelector('.slotted')
+		app.render!
+		eq app.querySelector('.static'), st
+		eq app.querySelector('.dynamic'), dyn
+		eq app.querySelector('.slotted'), sl
+
+	test "are replaced in place when the key changes" do
+		let dyn = app.querySelector('.dynamic')
+		let sl = app.querySelector('.slotted')
+		app.page = two
+		app.render!
+		assert app.querySelector('.dynamic') != dyn
+		assert app.querySelector('.slotted') != sl
+		eq texts(app.querySelector('.wrap').children), 'before,two,after'
+		eq app.querySelectorAll('.dynamic').length, 1
+		eq app.querySelectorAll('.slotted').length, 1
+		eq app.querySelector('.slotted').textContent, 'two'
+		eq names(app), 'header,div,section,k-plain-slot,footer'
+
+	test "get their old element back for an earlier key" do
+		app.page = one
+		app.render!
+		let dyn = app.querySelector('.dynamic')
+		app.page = two
+		app.render!
+		app.page = one
+		app.render!
+		eq app.querySelector('.dynamic'), dyn
+		eq texts(app.querySelector('.wrap').children), 'before,one,after'
+
 describe "keyed tags returned from template methods" do
 	tag k-methods
 		items = mk('a','b','c')

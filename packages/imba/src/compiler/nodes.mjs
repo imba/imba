@@ -17214,7 +17214,6 @@ class Tag extends TagLike {
       stack.use("router");
     }
 
-    var dynamicKey = null;
     var ownCache = this.option("ownCache") || false;
 
     if (this._asset) {
@@ -17500,7 +17499,7 @@ class Tag extends TagLike {
     if (
       this._dynamics.length == 0 &&
       !this.hasDynamicFlags() &&
-      !dynamicKey &&
+      !this.option("key") &&
       !isDynamicType &&
       !this.option("slotted")
     ) {
@@ -18171,7 +18170,9 @@ class Tag extends TagLike {
 
         this._ref = this.tvar();
 
-        if (dynamicKey) {
+        // a keyed element can be swapped for another one, so its children
+        // must memoize on the element itself rather than on the parent
+        if (key) {
           ownCache = true;
         }
 
@@ -18757,12 +18758,12 @@ class Tag extends TagLike {
     } else if (
       parent &&
       !(parent instanceof TagSwitchFragment) &&
-      (isComponent || dynamicKey || this.option("reference"))
+      (isComponent || this.option("key") || this.option("reference"))
     ) {
       let pref = fragment.ref();
       let cref = this._cref;
 
-      if (dynamicKey || isDynamicType || this.isDetached()) {
+      if (isDynamicType || this.isDetached()) {
         if (fragment instanceof TagSlotProxy) {
           foot.push(
             "(" +
