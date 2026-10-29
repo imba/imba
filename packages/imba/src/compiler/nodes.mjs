@@ -13426,6 +13426,31 @@ class If extends ControlFlow {
     return this;
   }
 
+  // An `if $env$` body that is unwrapped lands its let/const declarations in
+  // the enclosing block. When one of them is already declared there (or by an
+  // earlier unwrapped block) the body keeps its braces instead, so it does not
+  // redeclare the name.
+  unwrapWouldRedeclare() {
+    let scope = this._scope;
+    let names = scope && scope._varmap ? Object.keys(scope._varmap) : [];
+    let up = scope && scope._parent;
+    if (!names.length || !up) {
+      return false;
+    }
+
+    let taken = up._unwrappedNames || (up._unwrappedNames = {});
+    for (let name of names) {
+      if (taken[name] || (up._varmap && up._varmap.hasOwnProperty(name))) {
+        return true;
+      }
+    }
+
+    for (let name of names) {
+      taken[name] = true;
+    }
+    return false;
+  }
+
   js(o) {
     var v_, test_;
     var body = this._body;
@@ -13440,9 +13465,10 @@ class If extends ControlFlow {
 
     if (this._pretest === true && this._preunwrap) {
       // what if it is inside expression?
-      let js = body ? body.c({ braces: !!this._prevIf }) : "true";
+      let braces = !!this._prevIf || this.unwrapWouldRedeclare();
+      let js = body ? body.c({ braces: braces }) : "true";
 
-      if (!this._prevIf) {
+      if (!braces) {
         js = helpers.normalizeIndentation(js);
       }
 
