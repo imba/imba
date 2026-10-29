@@ -129,3 +129,40 @@ describe 'env-flagged exports' do
 		assert js.includes("export * from 'node:fs'")
 		assert !js.includes('export {a}')
 		assert !js.includes('./s.imba')
+
+describe 'env flags on export declarations' do
+
+	test '$web$ export const / def is kept in the browser' do
+		let env = await load-env!
+		eq env.web-const, 'web-const'
+		eq env.web-fn!, 'web-fn'
+
+	test '$node$ export const / def / class is stripped in the browser' do
+		let env = await load-env!
+		eq env.node-const, undefined
+		eq env.node-fn, undefined
+		eq env.NodeOnly, undefined
+
+	test 'several flags on one export are or-ed' do
+		let env = await load-env!
+		eq env.either-const, 'either'
+
+	test '$node$ export default is stripped in the browser' do
+		let env = await load-env!
+		eq env.default, undefined
+
+	test 'flagged export declarations in a node build' do
+		let code = "$web$ export const a = 1\n$node$ export const b = 2\n$node$ export def c\n\t3\n$web$ export class D\n$node$ export default 'x'"
+		let js = compile(code, platform: 'node')
+		assert js.includes('export const b = 2')
+		assert js.includes('export function c')
+		assert js.includes("export default 'x'")
+		assert !js.includes('const a = 1')
+		assert !js.includes('class D')
+
+	test 'flagged export declarations in a browser build' do
+		let code = "$web$ export const a = 1\n$node$ export const b = 2\n$node$ export default 'x'"
+		let js = compile(code)
+		assert js.includes('export const a = 1')
+		assert !js.includes('const b = 2')
+		assert !js.includes('export default')

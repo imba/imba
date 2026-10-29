@@ -19748,7 +19748,28 @@ class Export extends ValueNode {
     return super.consume(...arguments);
   }
 
+  // `$node$ export const x = 1` - same rules as env flags on imports and members
+  isExcluded() {
+    if (!this._envs) {
+      return false;
+    }
+
+    if (STACK.tsc()) {
+      return this._envs.some(function (_0) {
+        return _0._key == "JS";
+      });
+    }
+
+    return !this._envs.some(function (_0) {
+      return _0.isTruthy();
+    });
+  }
+
   visit() {
+    if (this.isExcluded()) {
+      return this;
+    }
+
     this.value().set({
       export: this.option("keyword") || this,
       return: this.option("return"),
@@ -19766,6 +19787,10 @@ class Export extends ValueNode {
     // 	return "exports.{value.c} = {value.c};"
     var self = this;
     let isDefault = self.option("default");
+
+    if (self.isExcluded()) {
+      return "";
+    }
 
     if (self.value() instanceof ListNode) {
       self.value().map(function (item) {
