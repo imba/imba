@@ -235,13 +235,34 @@ export def createSlot bitflags, par
 	return el
 
 extend class Node
-	def #registerFunctionalSlot name
+	def #registerFunctionalSlot name, fallback
 		let map = #functionalSlots ||= {}
-		map[name] ||= createSlot(0,self)
+		let slot = map[name] ||= createSlot(0,self)
+		# a slot with fallback content notes that the template rendered it in
+		# this pass, for #functionalSlotPending
+		slot.#slotRendered = yes if fallback
+		return slot
 
 	def #getFunctionalSlot name, context
 		let map = #functionalSlots
 		return map and map[name] or #getSlot(name,context)
+
+	# whether the children added to a functional slot after the template
+	# function ran disagree with what it rendered: fallback content in place
+	# of a slot that now has children, or a placed slot that is now empty.
+	# Only slots with fallback content that the template rendered in this pass
+	# can disagree - a slot behind a false condition stays unplaced either way.
+	def #functionalSlotPending
+		return no unless #functionalSlots
+		let pending = no
+		for own name,slot of #functionalSlots
+			continue unless slot.#slotRendered
+			slot.#slotRendered = no
+			if slot.parentNode
+				pending = yes unless slot.hasChildNodes!
+			elif slot.hasChildNodes!
+				pending = yes
+		return pending
 
 	def #getSlot name, context
 		if (name == '__' and !self.render) or !__slots

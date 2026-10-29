@@ -17381,7 +17381,14 @@ class Tag extends TagLike {
           this.root().tvar(),
           this.gsym("#registerFunctionalSlot"),
         ).c();
-        slotPath = "" + fn + "(" + STR(this.option("name")).c() + ")";
+        // the second argument marks slots with fallback content
+        slotPath =
+          "" +
+          fn +
+          "(" +
+          STR(this.option("name")).c() +
+          (this.hasChildren() ? ",1" : "") +
+          ")";
       }
     }
 
@@ -17633,7 +17640,8 @@ class Tag extends TagLike {
       nodes[0] instanceof TagContent &&
       nodes[0].isStatic() &&
       !isSelf &&
-      !isSlot
+      !isSlot &&
+      !isDynamicType
     ) {
       params[3] = nodes[0].value().c();
       nodes = [];
@@ -18869,6 +18877,26 @@ class Tag extends TagLike {
           "" + this.tvar() + this.domCall("end") + "(" + this.dvar() + ")",
         );
       }
+    }
+
+    // A template function (`<card()> children`) runs before its children are
+    // added to its functional slots, so it decides between a slot and its
+    // fallback content on the previous render's children. Render it once more
+    // when the children changed that decision.
+    if (isDynamicType && this._slots && Object.keys(this._slots).length) {
+      foot.push(
+        "!" +
+          this.tvar() +
+          "[" +
+          this.gsym("#functionalSlotPending") +
+          "]?.() || (" +
+          this.runtime().renderContext +
+          ".context=" +
+          this.owncvar() +
+          "," +
+          tagType.c() +
+          ")",
+      );
     }
 
     // horrible hacks to work around the way we join the tag parts
