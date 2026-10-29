@@ -394,3 +394,63 @@ describe 'env flags per platform' do
 		assert tsc.includes('web-impl')
 		assert !tsc.includes('js-pkg')
 		assert !tsc.includes('js-impl')
+
+# an unwrapped `if $web$` body shares the enclosing block, so a let that is
+# already declared there must not be redeclared (this used to break the page)
+let shadowed-top = 'outer'
+if $web$
+	let shadowed-top = 'inner'
+	globalThis.ENV_SHADOW_INNER = shadowed-top
+
+if $web$
+	def env-unwrapped-helper
+		'helper'
+	const env-unwrapped-const = 'const'
+
+describe 'block-scoped declarations in unwrapped env blocks' do
+
+	test 'a let that shadows an outer let' do
+		def run
+			let a = 5
+			let seen = null
+			if $web$
+				let a = 1
+				seen = a
+			[a, seen]
+		eq run!, [5, 1]
+
+	test 'a let that shadows a parameter' do
+		def run x
+			let seen = null
+			if $web$
+				let x = 2
+				seen = x
+			[x, seen]
+		eq run(7), [7, 2]
+
+	test 'two env blocks declaring the same name' do
+		def run
+			let seen = []
+			if $web$
+				let y = 1
+				seen.push y
+			if $web$
+				let y = 2
+				seen.push y
+			seen
+		eq run!, [1, 2]
+
+	test 'a shadowing let at the top level' do
+		eq shadowed-top, 'outer'
+		eq globalThis.ENV_SHADOW_INNER, 'inner'
+
+	test 'declarations without a clash still land in the enclosing block' do
+		eq env-unwrapped-helper!, 'helper'
+		eq env-unwrapped-const, 'const'
+
+	test 'shadowing bodies keep their braces in the output' do
+		let js = compile 'export def f\n\tlet a = 5\n\tif $web$\n\t\tlet a = 1\n\ta\n'
+		eq js.split('let a').length, 3
+		assert js.indexOf('{') < js.indexOf('let a = 1')
+		let plain = compile 'export def f\n\tif $web$\n\t\tlet b = 1\n\t\tb\n'
+		eq plain.indexOf('if (true)'), -1
