@@ -7,7 +7,7 @@ import * as esbuild from 'esbuild'
 
 const helpers = compiler.helpers
 
-const PORT = 8089
+const PORT = Number(process.env.IMBA_TEST_PORT or 8089)
 
 const args = [
 	'--disable-web-security',
@@ -287,8 +287,9 @@ def serve
 				<script src='/spec.js' type='module'></script>
 				<script src='/std.js' type='module'></script>
 				</head><body>
-				<script src='./{barename}.imba' type='module'></script>
-				<script type='module'>SPEC.run();</script>
+				<script>window.addEventListener('error',function()\{ window.PAGE_ERRORED = true; \});</script>
+				<script src='./{barename}.imba' type='module' onerror="window.PAGE_ERRORED = true; console.log('page:error',\{message: 'could not load {barename}.imba or one of its imports'\})"></script>
+				<script type='module'>if (!window.PAGE_ERRORED) SPEC.run();</script>
 				</body></html>
 			"""
 
@@ -432,6 +433,6 @@ def main
 		console.log (crashed.map do " - {$1.path}").join('\n')
 
 	if !options.debug
-		process.exit(failed.length ? 1 : 0)
+		process.exit(failed.length or crashed.length ? 1 : 0)
 
 main()
