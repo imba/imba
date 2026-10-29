@@ -16815,6 +16815,18 @@ class Tag extends TagLike {
     }
 
     self._attributes = self._attributes.filter(function (item) {
+      // a flag with a literal condition (`.on=yes` / `.on=no`) is either
+      // always set or never set
+      if (item instanceof TagFlag && item._condition && !STACK.tsc()) {
+        let cond = item._condition;
+        let literal = cond.isPrimitive() ? AST.truthy(cond) : undefined;
+        if (literal === false) {
+          return false;
+        } else if (literal === true) {
+          item._condition = null;
+        }
+      }
+
       if (item instanceof TagFlag && item.isStatic()) {
         self._classNames.push(item);
         return false;
@@ -18275,7 +18287,9 @@ class Tag extends TagLike {
           let vref;
           let batched = !isDynamicType;
 
-          if (cond && !cond.isPrimitive()) {
+          // literal true/false conditions are resolved in visit, so any
+          // condition left here is checked at runtime
+          if (cond) {
             cref = "" + this.cvar() + "[" + cond.osym() + "]";
             add(
               "(" +
@@ -18336,10 +18350,8 @@ class Tag extends TagLike {
               );
             } else if (vref) {
               flagsToConcat.push("(" + vref + "||'')");
-            } else if (val instanceof MixinIdentifier) {
-              flagsToConcat.push(val.c({ as: "string" }));
             } else {
-              flagsToConcat.push("'" + val.c({ as: "substring" }) + "'");
+              flagsToConcat.push(val.c({ as: "string" }));
             }
           } else {
             if (cref) {

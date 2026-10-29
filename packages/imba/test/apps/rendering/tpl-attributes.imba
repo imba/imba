@@ -222,3 +222,57 @@ describe "ids" do
 		app.name = 'other'
 		app.render!
 		eq app.$dyn.id, 'other'
+
+describe "flags with literal conditions" do
+	tag at-literal-flags
+		x = 1
+		name = 'dyn'
+		<self>
+			<div$yes .checked=yes> "yes"
+			<div$no .checked=no .on=(x > 1)> "no"
+			<div$nums .one=1 .zero=0 .nil=null .undef=undefined> "nums"
+			<div$named .{name}=yes .{name}-off=no> "named"
+			<div$str .str="s" .empty=""> "str"
+			<op-button$button .checked=no .active=yes> "button"
+			<div$style [c:rgb(255,0,0)]=yes [bg:rgb(0,0,255)]=no> "style"
+
+	let app = imba.mount <at-literal-flags>
+
+	test "a true literal sets the flag from the first render" do
+		assert app.$yes.classList.contains('checked')
+		assert app.$nums.classList.contains('one')
+		assert app.$button.classList.contains('active')
+
+	test "a false literal never sets the flag" do
+		eq app.$no.classList.contains('checked'), no
+		eq app.$button.classList.contains('checked'), no
+		for name in ['zero','nil','undef']
+			eq app.$nums.classList.contains(name), no
+
+	test "literal flags next to a dynamic flag" do
+		eq app.$no.classList.contains('on'), no
+		app.x = 2
+		app.render!
+		assert app.$no.classList.contains('on')
+		eq app.$no.classList.contains('checked'), no
+		app.x = 1
+		app.render!
+		eq app.$no.classList.contains('on'), no
+
+	test "flag names are never quoted into the class list" do
+		for el in [app.$yes, app.$no, app.$nums, app.$button]
+			eq el.className.indexOf('`'), -1
+			eq el.className.indexOf("'"), -1
+
+	test "dynamic flag names with a literal condition" do
+		assert app.$named.classList.contains('dyn')
+		eq app.$named.classList.contains('dyn-off'), no
+
+	test "string literal conditions" do
+		assert app.$str.classList.contains('str')
+		eq app.$str.classList.contains('empty'), no
+
+	test "style flags with a literal condition" do
+		let style = window.getComputedStyle(app.$style)
+		eq style.color, 'rgb(255, 0, 0)'
+		eq style.backgroundColor, 'rgba(0, 0, 0, 0)'
