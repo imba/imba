@@ -6971,6 +6971,18 @@ class Func extends Code {
       braces: true,
     });
 
+    // arrow functions keep `this`, which matters when a statement is wrapped
+    // so it can be used as an expression inside a method
+    if (this.option("arrow")) {
+      return (
+        (this.option("async") ? "async " : "") +
+        "(" +
+        this._params.c() +
+        ")=>" +
+        code
+      );
+    }
+
     var name = typeof this._name == "string" ? this._name : this._name.c();
     name = name ? " " + name.replace(/\./g, "_") : "";
     var keyword = o && o.keyword != undefined ? o.keyword : this.funcKeyword();
@@ -13696,7 +13708,7 @@ class Loop extends Statement {
       // this will resut in an infinite loop, no?!?
       this._scope.closeScope();
 
-      var ast = CALL(FN([], [this]), []);
+      var ast = CALL(FN([], [this]).set({ arrow: true }), []);
       return ast.c(o);
     } else if (
       this.stack().current() instanceof Block ||
@@ -13707,7 +13719,7 @@ class Loop extends Statement {
       return super.c(0);
     } else {
       this._scope.closeScope();
-      ast = CALL(FN([], [this]), []);
+      ast = CALL(FN([], [this]).set({ arrow: true }), []);
       // scope.context.reference
       return ast.c(o);
       // need to wrap in function
@@ -14381,7 +14393,7 @@ class Switch extends ControlFlowStatement {
 
   c(o) {
     if (this.stack().isExpression() || this.isExpression()) {
-      var ast = CALL(FN([], [this]), []);
+      var ast = CALL(FN([], [this]).set({ arrow: true }), []);
       return ast.c(o);
     }
 
