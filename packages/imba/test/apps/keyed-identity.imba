@@ -30,6 +30,11 @@ test "numeric keys keep element identity across commits" do
 	let doc = app.querySelector('keyed-doc')
 	let div = app.querySelector('div')
 	let sec = app.querySelector('section')
+	assert doc isa Element
+	assert div isa Element
+	assert sec isa Element
+	eq div.textContent, "numbered div"
+	eq sec.textContent, "string key"
 
 	app.page = 2
 	imba.commit!

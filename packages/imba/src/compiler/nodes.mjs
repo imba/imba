@@ -6989,6 +6989,18 @@ class Func extends Code {
       braces: true,
     });
 
+    // arrow functions keep `this`, which matters when a statement is wrapped
+    // so it can be used as an expression inside a method
+    if (this.option("arrow")) {
+      return (
+        (this.option("async") ? "async " : "") +
+        "(" +
+        this._params.c() +
+        ")=>" +
+        code
+      );
+    }
+
     var name = typeof this._name == "string" ? this._name : this._name.c();
     name = name ? " " + name.replace(/\./g, "_") : "";
     var keyword = o && o.keyword != undefined ? o.keyword : this.funcKeyword();
@@ -13432,6 +13444,31 @@ class If extends ControlFlow {
     return this;
   }
 
+  // An `if $env$` body that is unwrapped lands its let/const declarations in
+  // the enclosing block. When one of them is already declared there (or by an
+  // earlier unwrapped block) the body keeps its braces instead, so it does not
+  // redeclare the name.
+  unwrapWouldRedeclare() {
+    let scope = this._scope;
+    let names = scope && scope._varmap ? Object.keys(scope._varmap) : [];
+    let up = scope && scope._parent;
+    if (!names.length || !up) {
+      return false;
+    }
+
+    let taken = up._unwrappedNames || (up._unwrappedNames = {});
+    for (let name of names) {
+      if (taken[name] || (up._varmap && up._varmap.hasOwnProperty(name))) {
+        return true;
+      }
+    }
+
+    for (let name of names) {
+      taken[name] = true;
+    }
+    return false;
+  }
+
   js(o) {
     var v_, test_;
     var body = this._body;
@@ -13446,9 +13483,10 @@ class If extends ControlFlow {
 
     if (this._pretest === true && this._preunwrap) {
       // what if it is inside expression?
-      let js = body ? body.c({ braces: !!this._prevIf }) : "true";
+      let braces = !!this._prevIf || this.unwrapWouldRedeclare();
+      let js = body ? body.c({ braces: braces }) : "true";
 
-      if (!this._prevIf) {
+      if (!braces) {
         js = helpers.normalizeIndentation(js);
       }
 
@@ -13714,7 +13752,7 @@ class Loop extends Statement {
       // this will resut in an infinite loop, no?!?
       this._scope.closeScope();
 
-      var ast = CALL(FN([], [this]), []);
+      var ast = CALL(FN([], [this]).set({ arrow: true }), []);
       return ast.c(o);
     } else if (
       this.stack().current() instanceof Block ||
@@ -13725,7 +13763,7 @@ class Loop extends Statement {
       return super.c(0);
     } else {
       this._scope.closeScope();
-      ast = CALL(FN([], [this]), []);
+      ast = CALL(FN([], [this]).set({ arrow: true }), []);
       // scope.context.reference
       return ast.c(o);
       // need to wrap in function
@@ -14399,7 +14437,7 @@ class Switch extends ControlFlowStatement {
 
   c(o) {
     if (this.stack().isExpression() || this.isExpression()) {
-      var ast = CALL(FN([], [this]), []);
+      var ast = CALL(FN([], [this]).set({ arrow: true }), []);
       return ast.c(o);
     }
 
@@ -16833,6 +16871,18 @@ class Tag extends TagLike {
     }
 
     self._attributes = self._attributes.filter(function (item) {
+      // a flag with a literal condition (`.on=yes` / `.on=no`) is either
+      // always set or never set
+      if (item instanceof TagFlag && item._condition && !STACK.tsc()) {
+        let cond = item._condition;
+        let literal = cond.isPrimitive() ? AST.truthy(cond) : undefined;
+        if (literal === false) {
+          return false;
+        } else if (literal === true) {
+          item._condition = null;
+        }
+      }
+
       if (item instanceof TagFlag && item.isStatic()) {
         self._classNames.push(item);
         return false;
@@ -17232,7 +17282,6 @@ class Tag extends TagLike {
       stack.use("router");
     }
 
-    var dynamicKey = null;
     var ownCache = this.option("ownCache") || false;
 
     if (this._asset) {
@@ -17255,7 +17304,14 @@ class Tag extends TagLike {
           this.root().tvar(),
           this.gsym("#registerFunctionalSlot"),
         ).c();
-        slotPath = "" + fn + "(" + STR(this.option("name")).c() + ")";
+        // the second argument marks slots with fallback content
+        slotPath =
+          "" +
+          fn +
+          "(" +
+          STR(this.option("name")).c() +
+          (this.hasChildren() ? ",1" : "") +
+          ")";
       }
     }
 
@@ -17507,7 +17563,8 @@ class Tag extends TagLike {
       nodes[0] instanceof TagContent &&
       nodes[0].isStatic() &&
       !isSelf &&
-      !isSlot
+      !isSlot &&
+      !isDynamicType
     ) {
       params[3] = nodes[0].value().c();
       nodes = [];
@@ -17518,7 +17575,7 @@ class Tag extends TagLike {
     if (
       this._dynamics.length == 0 &&
       !this.hasDynamicFlags() &&
-      !dynamicKey &&
+      !this.option("key") &&
       !isDynamicType &&
       !this.option("slotted")
     ) {
@@ -18189,7 +18246,9 @@ class Tag extends TagLike {
 
         this._ref = this.tvar();
 
-        if (dynamicKey) {
+        // a keyed element can be swapped for another one, so its children
+        // must memoize on the element itself rather than on the parent
+        if (key) {
           ownCache = true;
         }
 
@@ -18292,7 +18351,9 @@ class Tag extends TagLike {
           let vref;
           let batched = !isDynamicType;
 
-          if (cond && !cond.isPrimitive()) {
+          // literal true/false conditions are resolved in visit, so any
+          // condition left here is checked at runtime
+          if (cond) {
             cref = "" + this.cvar() + "[" + cond.osym() + "]";
             add(
               "(" +
@@ -18353,10 +18414,8 @@ class Tag extends TagLike {
               );
             } else if (vref) {
               flagsToConcat.push("(" + vref + "||'')");
-            } else if (val instanceof MixinIdentifier) {
-              flagsToConcat.push(val.c({ as: "string" }));
             } else {
-              flagsToConcat.push("'" + val.c({ as: "substring" }) + "'");
+              flagsToConcat.push(val.c({ as: "string" }));
             }
           } else {
             if (cref) {
@@ -18743,6 +18802,26 @@ class Tag extends TagLike {
       }
     }
 
+    // A template function (`<card()> children`) runs before its children are
+    // added to its functional slots, so it decides between a slot and its
+    // fallback content on the previous render's children. Render it once more
+    // when the children changed that decision.
+    if (isDynamicType && this._slots && Object.keys(this._slots).length) {
+      foot.push(
+        "!" +
+          this.tvar() +
+          "[" +
+          this.gsym("#functionalSlotPending") +
+          "]?.() || (" +
+          this.runtime().renderContext +
+          ".context=" +
+          this.owncvar() +
+          "," +
+          tagType.c() +
+          ")",
+      );
+    }
+
     // horrible hacks to work around the way we join the tag parts
     // to expressions and/or statements
     if (isDynamicType) {
@@ -18775,12 +18854,12 @@ class Tag extends TagLike {
     } else if (
       parent &&
       !(parent instanceof TagSwitchFragment) &&
-      (isComponent || dynamicKey || this.option("reference"))
+      (isComponent || this.option("key") || this.option("reference"))
     ) {
       let pref = fragment.ref();
       let cref = this._cref;
 
-      if (dynamicKey || isDynamicType || this.isDetached()) {
+      if (isDynamicType || this.isDetached()) {
         if (fragment instanceof TagSlotProxy) {
           foot.push(
             "(" +
@@ -19620,7 +19699,28 @@ class Export extends ValueNode {
     return super.consume(...arguments);
   }
 
+  // `$node$ export const x = 1` - same rules as env flags on imports and members
+  isExcluded() {
+    if (!this._envs) {
+      return false;
+    }
+
+    if (STACK.tsc()) {
+      return this._envs.some(function (_0) {
+        return _0._key == "JS";
+      });
+    }
+
+    return !this._envs.some(function (_0) {
+      return _0.isTruthy();
+    });
+  }
+
   visit() {
+    if (this.isExcluded()) {
+      return this;
+    }
+
     this.value().set({
       export: this.option("keyword") || this,
       return: this.option("return"),
@@ -19638,6 +19738,10 @@ class Export extends ValueNode {
     // 	return "exports.{value.c} = {value.c};"
     var self = this;
     let isDefault = self.option("default");
+
+    if (self.isExcluded()) {
+      return "";
+    }
 
     if (self.value() instanceof ListNode) {
       self.value().map(function (item) {
