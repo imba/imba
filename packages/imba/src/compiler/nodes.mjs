@@ -4442,7 +4442,25 @@ class Param extends Node {
 
     // include type??
     if (this._defaults) {
-      return "" + val + " = " + this._defaults.c();
+      if (STACK.tsc()) {
+        return "" + val + " = " + this._defaults.c();
+      }
+      // Default expressions evaluate in a separate scope from the function body.
+      let scope = this.scope__();
+      let previous = scope._systemscope;
+      let local = new Scope(this, scope);
+      let value;
+      scope._systemscope = local;
+      try {
+        value = this._defaults.c();
+      } finally {
+        scope._systemscope = previous;
+      }
+      let declarations = local._vars.c();
+      if (declarations) {
+        value = "(()=>{" + declarations + ";return " + value + ";})()";
+      }
+      return "" + val + " = " + value;
     } else if (this.option("splat")) {
       return "..." + val;
     } else {
