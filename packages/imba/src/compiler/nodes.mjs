@@ -1071,6 +1071,7 @@ class Stack {
     this._symbols = {};
     this._fieldRegistryEntries = [];
     this._predicateReads = false;
+    this._declarationLists = new Set();
     this._css = new StyleSheet();
     this._theme = null;
     this._meta = {};
@@ -5014,6 +5015,18 @@ class ParamList extends ListNode {
 
 // Legacy. Should move away from this?
 class ScopeVariables extends ListNode {
+  // a list that gets a declaration is checked after the compilation - see
+  // checkDeclarations
+  push(item) {
+    STACK._declarationLists.add(this);
+    return super.push(item);
+  }
+
+  unshift(item, br) {
+    STACK._declarationLists.add(this);
+    return super.unshift(item, br);
+  }
+
   add(name, init, pos) {
     if (pos === undefined) pos = -1;
     var vardec = new VariableDeclarator(name, init);
@@ -5045,6 +5058,10 @@ class ScopeVariables extends ListNode {
     if (this.count() == 1 && !this.isExpressable()) {
       this.first().variable().autodeclare();
       return this.first().assignment().c();
+    }
+
+    for (let item of this.nodes()) {
+      (item._variable || item)._emitted = true;
     }
 
     var keyword = "var";
@@ -5445,6 +5462,33 @@ class Root extends Code {
     }
   }
 
+  // Reports each variable that the output uses but that no declaration list
+  // emitted. In strict code such a variable throws a ReferenceError. Output
+  // for tsc only supplies types and is not checked.
+  checkDeclarations() {
+    if (STACK.tsc()) {
+      return;
+    }
+    let reported = new Set();
+    for (let list of STACK._declarationLists) {
+      for (let item of list.nodes()) {
+        let variable = item._variable || item;
+        if (variable._emitted || variable._proxy || !variable._c) {
+          continue;
+        }
+        if (reported.has(variable)) {
+          continue;
+        }
+        reported.add(variable);
+        variable._scope.node().error(
+          "Compiler bug: the output uses '" +
+            variable._c +
+            "' but does not declare it",
+        );
+      }
+    }
+  }
+
   compile(o, script) {
     var registry;
     if (script === undefined) script = {};
@@ -5500,6 +5544,7 @@ class Root extends Code {
     var out;
     try {
       out = this.c(o);
+      this.checkDeclarations();
     } catch (e) {
       let err = ImbaTraverseError.wrap(
         e instanceof Error ? e : new Error(String(e)),
