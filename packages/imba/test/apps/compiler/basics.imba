@@ -181,6 +181,13 @@ test 'unawaited async predicate in a tag flag warns' do
 	eq res.warnings.length, 1
 	eq res.warnings[0].range.start.line, 5
 
+test 'unawaited async predicate in a parameter default warns' do
+	let code = 'class Foo\n\tdef ready?\n\t\tawait 1\n\t\tyes\n\tdef check value = ready?\n\t\tvalue\n\tdef unpack [value = ready?] = []\n\t\tvalue\n\tdef waited value = ready?.then(do $1)\n\t\tvalue\n'
+	let res = imbac.compile(code,sourcePath: 'predicate.imba')
+	eq res.warnings.length, 2
+	eq res.warnings[0].range.start.line, 4
+	eq res.warnings[1].range.start.line, 6
+
 test 'predicate def outside a class stays a function and warns' do
 	let code = 'def ready?\n\tyes\n'
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
