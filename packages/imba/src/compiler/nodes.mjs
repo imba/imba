@@ -4442,25 +4442,7 @@ class Param extends Node {
 
     // include type??
     if (this._defaults) {
-      if (STACK.tsc()) {
-        return "" + val + " = " + this._defaults.c();
-      }
-      // Default expressions evaluate in a separate scope from the function body.
-      let scope = this.scope__();
-      let previous = scope._systemscope;
-      let local = new Scope(this, scope);
-      let value;
-      scope._systemscope = local;
-      try {
-        value = this._defaults.c();
-      } finally {
-        scope._systemscope = previous;
-      }
-      let declarations = local._vars.c();
-      if (declarations) {
-        value = "(()=>{" + declarations + ";return " + value + ";})()";
-      }
-      return "" + val + " = " + value;
+      return "" + val + " = " + this._defaults.c();
     } else if (this.option("splat")) {
       return "..." + val;
     } else {
@@ -4470,9 +4452,11 @@ class Param extends Node {
 
   visit(stack) {
     if (this._defaults) {
+      this._defaults = new ParamDefault(this._defaults);
       this._defaults.traverse();
     }
     if (this._value) {
+      wrapPatternDefaults(this._value);
       this._value.traverse({ declaring: "param" });
     }
 
@@ -4511,6 +4495,56 @@ class Param extends Node {
       name: this._name,
       defaults: this._defaults,
     };
+  }
+}
+
+// The default value of a parameter, or of a name in a destructured
+// parameter. JavaScript evaluates it in the parameter list, where the
+// variables of the function body are not visible. The default declares its
+// own variables in a ParamDefaultScope and, when it has any, compiles to an
+// arrow function call that declares them.
+class ParamDefault extends ValueNode {
+  visit() {
+    this._scope = new ParamDefaultScope(this, null);
+    this._scope.visit();
+    // names in the default are references, not parameter declarations
+    this._value.traverse({});
+    return this;
+  }
+
+  toJSON() {
+    return this._value;
+  }
+
+  js(o) {
+    let value = this._value.c({ expression: true });
+    let declarations = this._scope._vars.c();
+    if (declarations) {
+      value = "(()=>{" + declarations + ";return " + value + ";})()";
+    }
+    return value;
+  }
+}
+
+// Puts each default value in a destructuring pattern, like `a = 1` in
+// `[a = 1]` or `{a = 1, b: c = 2}`, in a ParamDefault.
+function wrapPatternDefaults(node) {
+  if (node instanceof Arr) {
+    for (let item of node.nodes()) {
+      wrapPatternDefaults(item);
+    }
+  } else if (node instanceof Obj) {
+    for (let attr of node.value().nodes()) {
+      wrapPatternDefaults(attr);
+    }
+  } else if (node instanceof ObjAttr) {
+    if (node._defaults) {
+      node._defaults = new ParamDefault(node._defaults);
+    }
+    wrapPatternDefaults(node._value);
+  } else if (node instanceof Assign && node._right) {
+    node._right = new ParamDefault(node._right);
+    wrapPatternDefaults(node._left);
   }
 }
 
@@ -9604,7 +9638,10 @@ function isUnawaitedPredicateUse(node) {
     if (up instanceof If || up instanceof Loop) {
       return up._test === child;
     }
-    return up instanceof Op || up instanceof TagPart;
+    // a parameter default is assigned to the parameter
+    return (
+      up instanceof Op || up instanceof TagPart || up instanceof ParamDefault
+    );
   }
   return false;
 }
@@ -21141,6 +21178,30 @@ class LambdaScope extends Scope {
   }
 }
 
+// The scope of a ParamDefault. Its variables are declared in the default
+// itself, because the function declares its own variables in the body.
+class ParamDefaultScope extends Scope {
+  // `$1` in a default is the first parameter of the function
+  params() {
+    return this.parent().params();
+  }
+
+  // A function that gets self from an outer scope gives the same self to its
+  // defaults. A function with its own self gives a ParamDefaultContext.
+  context() {
+    if (!this._context) {
+      let ctx = this.parent().context();
+      this._context =
+        ctx.constructor == ScopeContext ? new ParamDefaultContext(this) : ctx;
+    }
+    return this._context;
+  }
+
+  isInExtend() {
+    return this.parent().isInExtend();
+  }
+}
+
 class FlowScope extends Scope {
   params() {
     if (this._parent) {
@@ -21954,6 +22015,18 @@ class ScopeContext extends Node {
 // use that for further references. Might clean things
 // up for the cases where we have yet to decide the
 // name of the variable etc?
+
+// Self in a parameter default is the self of the function. The self variable
+// of the function is declared in the body, so a default that needs one (for a
+// closure) declares its own.
+class ParamDefaultContext extends ScopeContext {
+  reference() {
+    return (
+      this._reference ||
+      (this._reference = this._scope.declare("self", new This()))
+    );
+  }
+}
 
 class IndirectScopeContext extends ScopeContext {
   constructor(scope, parent) {

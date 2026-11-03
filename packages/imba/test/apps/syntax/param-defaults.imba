@@ -6,6 +6,15 @@ class Defaults
 	count = 2
 	items = [1, 2]
 
+	def calc
+		count
+
+	def between value = 1 < calc! < 3
+		value
+
+	def taken target, value = (delete target.x)
+		value
+
 	def doubled value = (for item in items then item * 2)
 		value
 
@@ -25,6 +34,16 @@ class Defaults
 
 	def picker
 		do(a, b = a, c = $1, d = active) [a, b, c, d]
+
+test 'chained comparison in a default' do
+	let defaults = new Defaults
+	eq defaults.between!, yes
+	eq defaults.between(no), no
+
+test 'delete in a default' do
+	let target = {x: 1}
+	eq (new Defaults).taken(target), 1
+	eq target.x, undefined
 
 test 'loop in a default' do
 	eq (new Defaults).doubled!, [2, 4]
