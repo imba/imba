@@ -698,8 +698,10 @@ var STDCALL = function (name, pars) {
 };
 
 var IIFE = function (body) {
-  // possibly return instead(!)
-  return new IifeFunc([], body);
+  let fn = new IifeFunc([], body);
+  // the function is made while the code compiles, in the current scope
+  fn._scope._parent = STACK.scope();
+  return fn;
 };
 
 var GET = function (left, right) {
@@ -7096,7 +7098,13 @@ class IsolatedFunc extends Func {
   }
 }
 
+// An arrow function that is called at once. Like any arrow function, it
+// shares self and the variables of the function that contains it.
 class IifeFunc extends Func {
+  scopetype() {
+    return FlowScope;
+  }
+
   js(s, o) {
     if (!this.option("noreturn")) {
       this.body().consume(new ImplicitReturn());
@@ -13756,12 +13764,7 @@ class Loop extends Statement {
     var curr = s.current();
 
     if (this.stack().isExpression() || this.isExpression()) {
-      // what the inner one should not be an expression though?
-      // this will resut in an infinite loop, no?!?
-      this._scope.closeScope();
-
-      var ast = CALL(FN([], [this]), []);
-      return ast.c(o);
+      return IIFE([this]).c(o);
     } else if (
       this.stack().current() instanceof Block ||
       (s.up() instanceof Block && s.current()._consumer == this)
@@ -13770,11 +13773,7 @@ class Loop extends Statement {
     } else if (this._tag) {
       return super.c(0);
     } else {
-      this._scope.closeScope();
-      ast = CALL(FN([], [this]), []);
-      // scope.context.reference
-      return ast.c(o);
-      // need to wrap in function
+      return IIFE([this]).c(o);
     }
   }
 }
@@ -14445,8 +14444,7 @@ class Switch extends ControlFlowStatement {
 
   c(o) {
     if (this.stack().isExpression() || this.isExpression()) {
-      var ast = CALL(FN([], [this]), []);
-      return ast.c(o);
+      return IIFE([this]).c(o);
     }
 
     return super.c(o);
@@ -20710,10 +20708,6 @@ class Scope {
   toString() {
     return "" + this.constructor.name;
   }
-
-  closeScope() {
-    return this;
-  }
 }
 
 // def cssMixinFlag name
@@ -21256,14 +21250,6 @@ class FlowScope extends Scope {
 
   context() {
     return this._context || (this._context = this.parent().context());
-  }
-
-  closeScope() {
-    // FIXME
-    if (this._context) {
-      this._context.reference();
-    }
-    return this;
   }
 
   temporary(refnode, o, name) {
