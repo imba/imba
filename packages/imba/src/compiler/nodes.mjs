@@ -3294,10 +3294,16 @@ Block.wrap = function (ary) {
 
 // Should this create the function as well?
 
+// The `static {}` block of a class. The values of static fields and the
+// decorators declare their variables in the scope of the block.
 class ClassInitBlock extends Block {
   c(o) {
     let out = super.c(...arguments);
-    if (this._nodes.length > 1) {
+    let vars = this._scope._vars.c();
+    if (vars) {
+      out = vars + ";\n" + out;
+    }
+    if (this._nodes.length > 1 || vars) {
       return "static {\n" + helpers.indent(out) + "\n}";
     } else {
       return "static { " + out.replace(/\;$/, "") + " }";
@@ -3547,7 +3553,7 @@ class ClassField extends Node {
   }
 
   c() {
-    var fn, fn1;
+    var fn1;
     if (this.option("struct")) {
       return;
     }
@@ -3779,9 +3785,7 @@ class ClassField extends Node {
 
     if (this.isStatic() && up instanceof ClassInitBlock) {
       if (this._vscope) {
-        if ((fn = STACK.up(Func))) {
-          this._vscope.mergeScopeInto(fn._scope);
-        }
+        this._vscope.mergeScopeInto(up._scope);
       }
       out =
         OP("=", OP(".", THIS, this._name), this.value() || UNDEFINED).c() +
@@ -6123,6 +6127,7 @@ class ClassDeclaration extends Code {
     let tsc = STACK.tsc();
     var inits = new InstanceInitBlock();
     var staticInits = (this._staticInits = new ClassInitBlock());
+    staticInits._scope = new MethodScope(staticInits, this.scope());
     var patches = new InstancePatchBlock();
 
     if (this._mixins[0] && !tsc && !this.isExtension()) {
@@ -21155,6 +21160,8 @@ class FieldScope extends Scope {
       k = keys[i];
       v = o[k];
       if (k == "self") {
+        // closures in the field value refer to this variable
+        v.proxy(other.context().reference());
         continue;
       }
       v.resolve(other, true);
@@ -21164,7 +21171,16 @@ class FieldScope extends Scope {
     if (this._context && this._context._reference) {
       this._context._reference = other.context().reference();
     }
+    // the value compiles after the merge, and its temporaries go to other
+    this._systemscope = other;
     return true;
+  }
+
+  autodeclare(variable) {
+    if (this._systemscope) {
+      return this._systemscope.autodeclare(variable);
+    }
+    return super.autodeclare(variable);
   }
 }
 
