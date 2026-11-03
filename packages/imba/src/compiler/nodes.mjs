@@ -698,8 +698,10 @@ var STDCALL = function (name, pars) {
 };
 
 var IIFE = function (body) {
-  // possibly return instead(!)
-  return new IifeFunc([], body);
+  let fn = new IifeFunc([], body);
+  // the function is made while the code compiles, in the current scope
+  fn._scope._parent = STACK.scope();
+  return fn;
 };
 
 var GET = function (left, right) {
@@ -1069,6 +1071,7 @@ class Stack {
     this._symbols = {};
     this._fieldRegistryEntries = [];
     this._predicateReads = false;
+    this._declarationLists = new Set();
     this._css = new StyleSheet();
     this._theme = null;
     this._meta = {};
@@ -3294,10 +3297,16 @@ Block.wrap = function (ary) {
 
 // Should this create the function as well?
 
+// The `static {}` block of a class. The values of static fields and the
+// decorators declare their variables in the scope of the block.
 class ClassInitBlock extends Block {
   c(o) {
     let out = super.c(...arguments);
-    if (this._nodes.length > 1) {
+    let vars = this._scope._vars.c();
+    if (vars) {
+      out = vars + ";\n" + out;
+    }
+    if (this._nodes.length > 1 || vars) {
       return "static {\n" + helpers.indent(out) + "\n}";
     } else {
       return "static { " + out.replace(/\;$/, "") + " }";
@@ -3547,7 +3556,7 @@ class ClassField extends Node {
   }
 
   c() {
-    var fn, fn1;
+    var fn1;
     if (this.option("struct")) {
       return;
     }
@@ -3779,9 +3788,7 @@ class ClassField extends Node {
 
     if (this.isStatic() && up instanceof ClassInitBlock) {
       if (this._vscope) {
-        if ((fn = STACK.up(Func))) {
-          this._vscope.mergeScopeInto(fn._scope);
-        }
+        this._vscope.mergeScopeInto(up._scope);
       }
       out =
         OP("=", OP(".", THIS, this._name), this.value() || UNDEFINED).c() +
@@ -4442,25 +4449,7 @@ class Param extends Node {
 
     // include type??
     if (this._defaults) {
-      if (STACK.tsc()) {
-        return "" + val + " = " + this._defaults.c();
-      }
-      // Default expressions evaluate in a separate scope from the function body.
-      let scope = this.scope__();
-      let previous = scope._systemscope;
-      let local = new Scope(this, scope);
-      let value;
-      scope._systemscope = local;
-      try {
-        value = this._defaults.c();
-      } finally {
-        scope._systemscope = previous;
-      }
-      let declarations = local._vars.c();
-      if (declarations) {
-        value = "(()=>{" + declarations + ";return " + value + ";})()";
-      }
-      return "" + val + " = " + value;
+      return "" + val + " = " + this._defaults.c();
     } else if (this.option("splat")) {
       return "..." + val;
     } else {
@@ -4470,9 +4459,11 @@ class Param extends Node {
 
   visit(stack) {
     if (this._defaults) {
+      this._defaults = new ParamDefault(this._defaults);
       this._defaults.traverse();
     }
     if (this._value) {
+      wrapPatternDefaults(this._value);
       this._value.traverse({ declaring: "param" });
     }
 
@@ -4511,6 +4502,56 @@ class Param extends Node {
       name: this._name,
       defaults: this._defaults,
     };
+  }
+}
+
+// The default value of a parameter, or of a name in a destructured
+// parameter. JavaScript evaluates it in the parameter list, where the
+// variables of the function body are not visible. The default declares its
+// own variables in a ParamDefaultScope and, when it has any, compiles to an
+// arrow function call that declares them.
+class ParamDefault extends ValueNode {
+  visit() {
+    this._scope = new ParamDefaultScope(this, null);
+    this._scope.visit();
+    // names in the default are references, not parameter declarations
+    this._value.traverse({});
+    return this;
+  }
+
+  toJSON() {
+    return this._value;
+  }
+
+  js(o) {
+    let value = this._value.c({ expression: true });
+    let declarations = this._scope._vars.c();
+    if (declarations) {
+      value = "(()=>{" + declarations + ";return " + value + ";})()";
+    }
+    return value;
+  }
+}
+
+// Puts each default value in a destructuring pattern, like `a = 1` in
+// `[a = 1]` or `{a = 1, b: c = 2}`, in a ParamDefault.
+function wrapPatternDefaults(node) {
+  if (node instanceof Arr) {
+    for (let item of node.nodes()) {
+      wrapPatternDefaults(item);
+    }
+  } else if (node instanceof Obj) {
+    for (let attr of node.value().nodes()) {
+      wrapPatternDefaults(attr);
+    }
+  } else if (node instanceof ObjAttr) {
+    if (node._defaults) {
+      node._defaults = new ParamDefault(node._defaults);
+    }
+    wrapPatternDefaults(node._value);
+  } else if (node instanceof Assign && node._right) {
+    node._right = new ParamDefault(node._right);
+    wrapPatternDefaults(node._left);
   }
 }
 
@@ -4974,6 +5015,18 @@ class ParamList extends ListNode {
 
 // Legacy. Should move away from this?
 class ScopeVariables extends ListNode {
+  // a list that gets a declaration is checked after the compilation - see
+  // checkDeclarations
+  push(item) {
+    STACK._declarationLists.add(this);
+    return super.push(item);
+  }
+
+  unshift(item, br) {
+    STACK._declarationLists.add(this);
+    return super.unshift(item, br);
+  }
+
   add(name, init, pos) {
     if (pos === undefined) pos = -1;
     var vardec = new VariableDeclarator(name, init);
@@ -5005,6 +5058,10 @@ class ScopeVariables extends ListNode {
     if (this.count() == 1 && !this.isExpressable()) {
       this.first().variable().autodeclare();
       return this.first().assignment().c();
+    }
+
+    for (let item of this.nodes()) {
+      (item._variable || item)._emitted = true;
     }
 
     var keyword = "var";
@@ -5405,6 +5462,33 @@ class Root extends Code {
     }
   }
 
+  // Reports each variable that the output uses but that no declaration list
+  // emitted. In strict code such a variable throws a ReferenceError. Output
+  // for tsc only supplies types and is not checked.
+  checkDeclarations() {
+    if (STACK.tsc()) {
+      return;
+    }
+    let reported = new Set();
+    for (let list of STACK._declarationLists) {
+      for (let item of list.nodes()) {
+        let variable = item._variable || item;
+        if (variable._emitted || variable._proxy || !variable._c) {
+          continue;
+        }
+        if (reported.has(variable)) {
+          continue;
+        }
+        reported.add(variable);
+        variable._scope.node().error(
+          "Compiler bug: the output uses '" +
+            variable._c +
+            "' but does not declare it",
+        );
+      }
+    }
+  }
+
   compile(o, script) {
     var registry;
     if (script === undefined) script = {};
@@ -5460,6 +5544,7 @@ class Root extends Code {
     var out;
     try {
       out = this.c(o);
+      this.checkDeclarations();
     } catch (e) {
       let err = ImbaTraverseError.wrap(
         e instanceof Error ? e : new Error(String(e)),
@@ -6089,6 +6174,7 @@ class ClassDeclaration extends Code {
     let tsc = STACK.tsc();
     var inits = new InstanceInitBlock();
     var staticInits = (this._staticInits = new ClassInitBlock());
+    staticInits._scope = new MethodScope(staticInits, this.scope());
     var patches = new InstancePatchBlock();
 
     if (this._mixins[0] && !tsc && !this.isExtension()) {
@@ -7057,7 +7143,13 @@ class IsolatedFunc extends Func {
   }
 }
 
+// An arrow function that is called at once. Like any arrow function, it
+// shares self and the variables of the function that contains it.
 class IifeFunc extends Func {
+  scopetype() {
+    return FlowScope;
+  }
+
   js(s, o) {
     if (!this.option("noreturn")) {
       this.body().consume(new ImplicitReturn());
@@ -9604,7 +9696,10 @@ function isUnawaitedPredicateUse(node) {
     if (up instanceof If || up instanceof Loop) {
       return up._test === child;
     }
-    return up instanceof Op || up instanceof TagPart;
+    // a parameter default is assigned to the parameter
+    return (
+      up instanceof Op || up instanceof TagPart || up instanceof ParamDefault
+    );
   }
   return false;
 }
@@ -9612,49 +9707,53 @@ function isUnawaitedPredicateUse(node) {
 // Compiles a predicate member read like `x.foo?` (and `x.foo?!`). A
 // predicate is usually a getter, which is what a parameterless `def foo?`
 // compiles to, but it may be a method - typically one with optional
-// parameters like `def readable? by = me`. The property is read once and
-// called with no arguments when it turns out to be a function, so readers
-// never need to know which one it is. `render` produces the plain read.
+// parameters like `def readable? by = me`. A runtime helper reads the
+// property once and calls it with no arguments when it is a function, so
+// readers never need to know which one it is. The helper call needs no
+// temporary variable, so the read compiles the same way in every context.
+// `render` produces the plain read.
 function compilePredicateRead(node, acc, render) {
-  // the receiver is referenced twice - cache it unless it is a plain
-  // reference (self, a local variable, a global) or already cached by
-  // guardOptionalChain. IndexAccess only caches its index by default, so
-  // force the whole expression.
   let recv = acc._left;
   let superSelf = acc._superSelf;
-  let cacheRecv = !(
-    superSelf ||
+
+  // a plain receiver is referenced twice and the member is read inline.
+  // `super.foo?` reads the inherited member but calls it on self.
+  if (superSelf || isPlainReceiver(recv)) {
+    let val = render();
+    let self = superSelf ? superSelf.c() : recv.c();
+    return new Util.PredicateRead([LIT(self), LIT(val)]).c();
+  }
+
+  // any other receiver is evaluated once, and the helper reads the member
+  let args = [LIT(recv.c()), LIT(acc._right.c({ as: "value" }))];
+  if (acc.safechain()) {
+    args.push(LIT("true"));
+  }
+  return new Util.PredicateKeyRead(args).c();
+}
+
+// Self, a variable, or a receiver that guardOptionalChain cached already.
+// Evaluating it twice is cheap and has no side effects.
+function isPlainReceiver(recv) {
+  return !!(
     recv instanceof ScopeContext ||
     recv instanceof Self ||
-    recv._cache
+    recv instanceof LocalVarAccess ||
+    recv._cache ||
+    (recv instanceof VarOrAccess && (recv._variable || recv._isGlobal))
   );
-  if (cacheRecv) {
-    recv.cache({ pool: "val", force: recv instanceof IndexAccess });
-  }
-  let tmp = node.scope__().temporary(node, { pool: "val" });
-  let val = render();
-  // `super.foo?` reads the inherited member but calls it on self
-  let self = superSelf ? superSelf.c() : recv.c();
-  let out =
-    "(typeof (" + tmp.c() + " = " + val + ") == 'function' ? " +
-    tmp.c() + ".call(" + self + ") : " + tmp.c() + ")";
-  // both temporaries are done once this expression is rendered
-  tmp.free();
-  if (cacheRecv) {
-    recv.decache();
-  }
-  return out;
 }
 
 // A `?.` link short-circuits the rest of its chain: in `a?.b.c` a nullish
-// `a` skips `.b.c`. The parentheses of a predicate read end the chain, so
-// in `($1 = a?.b).cΦ` (`a..b.c?`) and `(typeof ... a?.bΦ ...).c`
-// (`a..b?.c`) the links after them would run on undefined and throw. The
-// outermost node of a chain looks for the last `?.` link that such
-// parentheses cut off, checks the value it guards first and renders the
-// rest of the chain with a plain `.`:
+// `a` skips `.b.c`. A predicate read compiles to a helper call, and the call
+// ends the chain. In `predkey$(a?.b,'cΦ')` (`a..b.c?`) and
+// `pred$(a,a?.bΦ).c` (`a..b?.c`), a nullish `a` makes the helper, or the
+// link after it, read a member of undefined, which throws. The outermost
+// node of a chain looks for the last `?.` link that such a call cuts off,
+// checks the value it guards first and renders the rest of the chain with a
+// plain `.`:
 //
-//   (($0 = a) == null ? undefined : (typeof ($2 = ($1 = $0.b).cΦ) ...))
+//   (a == null ? undefined : predkey$(a.b,'cΦ'))
 //
 // `render` produces the node itself, once the chain is guarded.
 function guardOptionalChain(top, render) {
@@ -9701,8 +9800,8 @@ function guardOptionalChain(top, render) {
 }
 
 // Walks a chain from its outermost node and returns the last `?.` link
-// (an Access, or a Call rendered as `?.()`) that the parentheses of a
-// predicate read cut off, or null. A predicate read in the middle of the
+// (an Access, or a Call rendered as `?.()`) that the helper call of a
+// predicate read cuts off, or null. A predicate read in the middle of the
 // chain cuts off its own link and everything before it. At the end of
 // the chain it only cuts off the links before its own, and only when it
 // reads the member with a plain `.`. Cached nodes below the top are
@@ -13710,12 +13809,7 @@ class Loop extends Statement {
     var curr = s.current();
 
     if (this.stack().isExpression() || this.isExpression()) {
-      // what the inner one should not be an expression though?
-      // this will resut in an infinite loop, no?!?
-      this._scope.closeScope();
-
-      var ast = CALL(FN([], [this]), []);
-      return ast.c(o);
+      return IIFE([this]).c(o);
     } else if (
       this.stack().current() instanceof Block ||
       (s.up() instanceof Block && s.current()._consumer == this)
@@ -13724,11 +13818,7 @@ class Loop extends Statement {
     } else if (this._tag) {
       return super.c(0);
     } else {
-      this._scope.closeScope();
-      ast = CALL(FN([], [this]), []);
-      // scope.context.reference
-      return ast.c(o);
-      // need to wrap in function
+      return IIFE([this]).c(o);
     }
   }
 }
@@ -14399,8 +14489,7 @@ class Switch extends ControlFlowStatement {
 
   c(o) {
     if (this.stack().isExpression() || this.isExpression()) {
-      var ast = CALL(FN([], [this]), []);
-      return ast.c(o);
+      return IIFE([this]).c(o);
     }
 
     return super.c(o);
@@ -20052,6 +20141,30 @@ Util.Isa = class Isa extends Util.Is {
   }
 };
 
+// See compilePredicateRead. The arguments are the receiver and the value
+// that was read from it.
+Util.PredicateRead = class PredicateRead extends Util {
+  helper() {
+    return "function pred$__(self,value){ return typeof value == 'function' ? value.call(self) : value; };";
+  }
+
+  js(o) {
+    return this.called(this._args, "pred$", "pred$__");
+  }
+};
+
+// See compilePredicateRead. The arguments are the receiver, the member name
+// and, for `?.`, true.
+Util.PredicateKeyRead = class PredicateKeyRead extends Util {
+  helper() {
+    return "function predkey$__(self,key,optional){ if(optional && self == null) return undefined; let value = self[key]; return typeof value == 'function' ? value.call(self) : value; };";
+  }
+
+  js(o) {
+    return this.called(this._args, "predkey$", "predkey$__");
+  }
+};
+
 Util.Promisify = class Promisify extends Util {
   helper() {
     // should also check if it is a real promise
@@ -20640,10 +20753,6 @@ class Scope {
   toString() {
     return "" + this.constructor.name;
   }
-
-  closeScope() {
-    return this;
-  }
 }
 
 // def cssMixinFlag name
@@ -21090,6 +21199,8 @@ class FieldScope extends Scope {
       k = keys[i];
       v = o[k];
       if (k == "self") {
+        // closures in the field value refer to this variable
+        v.proxy(other.context().reference());
         continue;
       }
       v.resolve(other, true);
@@ -21099,7 +21210,16 @@ class FieldScope extends Scope {
     if (this._context && this._context._reference) {
       this._context._reference = other.context().reference();
     }
+    // the value compiles after the merge, and its temporaries go to other
+    this._systemscope = other;
     return true;
+  }
+
+  autodeclare(variable) {
+    if (this._systemscope) {
+      return this._systemscope.autodeclare(variable);
+    }
+    return super.autodeclare(variable);
   }
 }
 
@@ -21110,6 +21230,30 @@ class LambdaScope extends Scope {
       this._context = this.parent().context().fromScope(this);
     }
     return this._context;
+  }
+}
+
+// The scope of a ParamDefault. Its variables are declared in the default
+// itself, because the function declares its own variables in the body.
+class ParamDefaultScope extends Scope {
+  // `$1` in a default is the first parameter of the function
+  params() {
+    return this.parent().params();
+  }
+
+  // A function that gets self from an outer scope gives the same self to its
+  // defaults. A function with its own self gives a ParamDefaultContext.
+  context() {
+    if (!this._context) {
+      let ctx = this.parent().context();
+      this._context =
+        ctx.constructor == ScopeContext ? new ParamDefaultContext(this) : ctx;
+    }
+    return this._context;
+  }
+
+  isInExtend() {
+    return this.parent().isInExtend();
   }
 }
 
@@ -21151,14 +21295,6 @@ class FlowScope extends Scope {
 
   context() {
     return this._context || (this._context = this.parent().context());
-  }
-
-  closeScope() {
-    // FIXME
-    if (this._context) {
-      this._context.reference();
-    }
-    return this;
   }
 
   temporary(refnode, o, name) {
@@ -21926,6 +22062,18 @@ class ScopeContext extends Node {
 // use that for further references. Might clean things
 // up for the cases where we have yet to decide the
 // name of the variable etc?
+
+// Self in a parameter default is the self of the function. The self variable
+// of the function is declared in the body, so a default that needs one (for a
+// closure) declares its own.
+class ParamDefaultContext extends ScopeContext {
+  reference() {
+    return (
+      this._reference ||
+      (this._reference = this._scope.declare("self", new This()))
+    );
+  }
+}
 
 class IndirectScopeContext extends ScopeContext {
   constructor(scope, parent) {

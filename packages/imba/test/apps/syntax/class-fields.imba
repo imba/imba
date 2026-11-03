@@ -101,3 +101,18 @@ test do
 	item.desc3
 	eq $1.log, ['d1','d12','d123']
 ###
+
+# a loop in a field value needs variables of its own
+let numbers = [1, 2]
+
+test 'loop in a field value' do
+	class Lists
+		doubled = (for item in numbers then item * 2)
+
+	eq (new Lists).doubled, [2, 4]
+
+test 'loop in a static field value' do
+	class StaticLists
+		static tripled = (for item in numbers then item * 3)
+
+	eq StaticLists.tripled, [3, 6]

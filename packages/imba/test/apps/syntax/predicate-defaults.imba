@@ -27,8 +27,20 @@ class PredicateDefaults
 	def pair value = ready?
 		[value, ready?]
 
+	def first [value = ready?] = []
+		value
+
+	def named {value = self.ready?} = {}
+		value
+
+	def reader
+		do(value = ready?) value
+
 class InheritedPredicateDefaults < PredicateDefaults
 	def inherited value = super.ready?
+		value
+
+	def inherited-match value = super.matches?
 		value
 
 test 'predicate defaults run only for omitted or undefined arguments' do
@@ -76,4 +88,27 @@ test 'closure defaults can read predicates' do
 	reader.active = no
 	eq read!, no
 	eq read(null), null
+	eq reader.reads, 2
+
+test 'super predicate method defaults call the method on self' do
+	let reader = new InheritedPredicateDefaults
+	eq reader.inherited-match!, yes
+	reader.active = no
+	eq reader.inherited-match!, no
+
+test 'destructured predicate defaults' do
+	let reader = new PredicateDefaults
+	eq reader.first!, yes
+	eq reader.first([no]), no
+	eq reader.named!, yes
+	eq reader.named(value: no), no
+	eq reader.reads, 2
+
+test 'implicit predicate reads in closure defaults' do
+	let reader = new PredicateDefaults
+	let read = reader.reader!
+	eq read!, yes
+	reader.active = no
+	eq read!, no
+	eq read(yes), yes
 	eq reader.reads, 2

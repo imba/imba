@@ -3,10 +3,10 @@ name: Node CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -15,18 +15,19 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x,18.x]
+        node-version: [20.x,22.x]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
     - name: npm install, bootstrap, build and test
       run: |
         cd packages/imba
         npm install
+        npx playwright install --with-deps chromium
         npm run build
         npm run test
         npm run test-cli

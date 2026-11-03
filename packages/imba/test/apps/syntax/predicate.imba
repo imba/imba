@@ -487,3 +487,91 @@ test 'nested safe chains around a predicate read' do
 	eq lane.draft..current?.next..parent.has-content?, false
 	lane.draft.turn.next.parent.text = 'hi'
 	eq lane.draft..current?.next..parent.has-content?, true
+
+# A predicate read works in each place that takes an expression: field values,
+# decorator arguments, computed names, amperfunctions and try.
+let sources = {other: {ready?: yes, key?: 'computed'}}
+
+def make-sources
+	sources
+
+def @recorded target, key, desc
+	desc.value.recorded = this[0]
+	desc
+
+tag predicate-prop
+	prop shown = ready?
+
+	get ready?
+		yes
+
+test 'predicate read in a field value' do
+	class Fields
+		copy = ready?
+
+		get ready?
+			yes
+
+	eq (new Fields).copy, true
+
+test 'safe predicate read in a field value' do
+	class SafeFields
+		chained = make-sources!..other.ready?
+
+	eq (new SafeFields).chained, true
+
+test 'predicate read in a static field value' do
+	class Statics
+		static shared = sources.other.ready?
+
+	eq Statics.shared, true
+
+test 'safe predicate read in a static field value' do
+	class SafeStatics
+		static chained = make-sources!..other.ready?
+
+	eq SafeStatics.chained, true
+
+test 'predicate read in a decorator argument' do
+	class Decorated
+		@recorded(sources.other.ready?) def decorated
+			yes
+
+	eq (new Decorated).decorated.recorded, true
+
+test 'predicate read in a computed method name' do
+	class Computed
+		def [sources.other.key?]
+			yes
+
+	eq (new Computed).computed!, true
+
+test 'predicate read in an amperfunction ternary' do
+	class Marks
+		def marks items
+			items.map(&.ready? ? 1 : 0)
+
+	eq (new Marks).marks([{ready?: yes}, {ready?: no}]), [1, 0]
+
+test 'predicate read in a try expression' do
+	class Attempt
+		get ready?
+			yes
+
+		def attempt
+			[try ready? catch e no]
+
+	eq (new Attempt).attempt!, [true]
+
+test 'predicate read in a tag prop default' do
+	eq (<predicate-prop>).shown, true
+
+test 'private predicate read on a call result' do
+	class Hidden
+		#hidden? = yes
+
+		def peek make
+			make!.#hidden?
+
+	let hidden = new Hidden
+	eq hidden.peek(do hidden), true
