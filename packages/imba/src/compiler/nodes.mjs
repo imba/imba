@@ -9612,49 +9612,53 @@ function isUnawaitedPredicateUse(node) {
 // Compiles a predicate member read like `x.foo?` (and `x.foo?!`). A
 // predicate is usually a getter, which is what a parameterless `def foo?`
 // compiles to, but it may be a method - typically one with optional
-// parameters like `def readable? by = me`. The property is read once and
-// called with no arguments when it turns out to be a function, so readers
-// never need to know which one it is. `render` produces the plain read.
+// parameters like `def readable? by = me`. A runtime helper reads the
+// property once and calls it with no arguments when it is a function, so
+// readers never need to know which one it is. The helper call needs no
+// temporary variable, so the read compiles the same way in every context.
+// `render` produces the plain read.
 function compilePredicateRead(node, acc, render) {
-  // the receiver is referenced twice - cache it unless it is a plain
-  // reference (self, a local variable, a global) or already cached by
-  // guardOptionalChain. IndexAccess only caches its index by default, so
-  // force the whole expression.
   let recv = acc._left;
   let superSelf = acc._superSelf;
-  let cacheRecv = !(
-    superSelf ||
+
+  // a plain receiver is referenced twice and the member is read inline.
+  // `super.foo?` reads the inherited member but calls it on self.
+  if (superSelf || isPlainReceiver(recv)) {
+    let val = render();
+    let self = superSelf ? superSelf.c() : recv.c();
+    return new Util.PredicateRead([LIT(self), LIT(val)]).c();
+  }
+
+  // any other receiver is evaluated once, and the helper reads the member
+  let args = [LIT(recv.c()), LIT(acc._right.c({ as: "value" }))];
+  if (acc.safechain()) {
+    args.push(LIT("true"));
+  }
+  return new Util.PredicateKeyRead(args).c();
+}
+
+// Self, a variable, or a receiver that guardOptionalChain cached already.
+// Evaluating it twice is cheap and has no side effects.
+function isPlainReceiver(recv) {
+  return !!(
     recv instanceof ScopeContext ||
     recv instanceof Self ||
-    recv._cache
+    recv instanceof LocalVarAccess ||
+    recv._cache ||
+    (recv instanceof VarOrAccess && (recv._variable || recv._isGlobal))
   );
-  if (cacheRecv) {
-    recv.cache({ pool: "val", force: recv instanceof IndexAccess });
-  }
-  let tmp = node.scope__().temporary(node, { pool: "val" });
-  let val = render();
-  // `super.foo?` reads the inherited member but calls it on self
-  let self = superSelf ? superSelf.c() : recv.c();
-  let out =
-    "(typeof (" + tmp.c() + " = " + val + ") == 'function' ? " +
-    tmp.c() + ".call(" + self + ") : " + tmp.c() + ")";
-  // both temporaries are done once this expression is rendered
-  tmp.free();
-  if (cacheRecv) {
-    recv.decache();
-  }
-  return out;
 }
 
 // A `?.` link short-circuits the rest of its chain: in `a?.b.c` a nullish
-// `a` skips `.b.c`. The parentheses of a predicate read end the chain, so
-// in `($1 = a?.b).cΦ` (`a..b.c?`) and `(typeof ... a?.bΦ ...).c`
-// (`a..b?.c`) the links after them would run on undefined and throw. The
-// outermost node of a chain looks for the last `?.` link that such
-// parentheses cut off, checks the value it guards first and renders the
-// rest of the chain with a plain `.`:
+// `a` skips `.b.c`. A predicate read compiles to a helper call, and the call
+// ends the chain. In `predkey$(a?.b,'cΦ')` (`a..b.c?`) and
+// `pred$(a,a?.bΦ).c` (`a..b?.c`), a nullish `a` makes the helper, or the
+// link after it, read a member of undefined, which throws. The outermost
+// node of a chain looks for the last `?.` link that such a call cuts off,
+// checks the value it guards first and renders the rest of the chain with a
+// plain `.`:
 //
-//   (($0 = a) == null ? undefined : (typeof ($2 = ($1 = $0.b).cΦ) ...))
+//   (a == null ? undefined : predkey$(a.b,'cΦ'))
 //
 // `render` produces the node itself, once the chain is guarded.
 function guardOptionalChain(top, render) {
@@ -9701,8 +9705,8 @@ function guardOptionalChain(top, render) {
 }
 
 // Walks a chain from its outermost node and returns the last `?.` link
-// (an Access, or a Call rendered as `?.()`) that the parentheses of a
-// predicate read cut off, or null. A predicate read in the middle of the
+// (an Access, or a Call rendered as `?.()`) that the helper call of a
+// predicate read cuts off, or null. A predicate read in the middle of the
 // chain cuts off its own link and everything before it. At the end of
 // the chain it only cuts off the links before its own, and only when it
 // reads the member with a plain `.`. Cached nodes below the top are
@@ -20049,6 +20053,30 @@ Util.Isa = class Isa extends Util.Is {
     }
 
     return this.called([this.left(), this.right()], "isa$", "isa$");
+  }
+};
+
+// See compilePredicateRead. The arguments are the receiver and the value
+// that was read from it.
+Util.PredicateRead = class PredicateRead extends Util {
+  helper() {
+    return "function pred$__(self,value){ return typeof value == 'function' ? value.call(self) : value; };";
+  }
+
+  js(o) {
+    return this.called(this._args, "pred$", "pred$__");
+  }
+};
+
+// See compilePredicateRead. The arguments are the receiver, the member name
+// and, for `?.`, true.
+Util.PredicateKeyRead = class PredicateKeyRead extends Util {
+  helper() {
+    return "function predkey$__(self,key,optional){ if(optional && self == null) return undefined; let value = self[key]; return typeof value == 'function' ? value.call(self) : value; };";
+  }
+
+  js(o) {
+    return this.called(this._args, "predkey$", "predkey$__");
   }
 };
 

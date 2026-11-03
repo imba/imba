@@ -565,3 +565,13 @@ test 'predicate read in a try expression' do
 
 test 'predicate read in a tag prop default' do
 	eq (<predicate-prop>).shown, true
+
+test 'private predicate read on a call result' do
+	class Hidden
+		#hidden? = yes
+
+		def peek make
+			make!.#hidden?
+
+	let hidden = new Hidden
+	eq hidden.peek(do hidden), true

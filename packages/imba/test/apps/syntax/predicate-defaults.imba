@@ -40,6 +40,9 @@ class InheritedPredicateDefaults < PredicateDefaults
 	def inherited value = super.ready?
 		value
 
+	def inherited-match value = super.matches?
+		value
+
 test 'predicate defaults run only for omitted or undefined arguments' do
 	let reader = new PredicateDefaults
 	eq reader.read!, yes
@@ -86,6 +89,12 @@ test 'closure defaults can read predicates' do
 	eq read!, no
 	eq read(null), null
 	eq reader.reads, 2
+
+test 'super predicate method defaults call the method on self' do
+	let reader = new InheritedPredicateDefaults
+	eq reader.inherited-match!, yes
+	reader.active = no
+	eq reader.inherited-match!, no
 
 test 'destructured predicate defaults' do
 	let reader = new PredicateDefaults

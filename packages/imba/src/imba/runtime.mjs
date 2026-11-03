@@ -84,6 +84,20 @@ export function statics$(scope){
 	return statics.get(scope) || statics.set(scope,{}).get(scope);
 }
 
+// Reads a predicate member: `value` is the member read from `self`. A method
+// is called on `self` with no arguments, any other value is returned as is.
+export function pred$(self,value){
+	return typeof value == 'function' ? value.call(self) : value;
+}
+
+// Reads the predicate member `key` of `self` like pred$. When `optional` is
+// true, a nullish `self` gives undefined, like `self?.key`.
+export function predkey$(self,key,optional){
+	if(optional && self == null) return undefined;
+	let value = self[key];
+	return typeof value == 'function' ? value.call(self) : value;
+}
+
 // $1 extends {$accessor: (...args: any[]) => infer X} ? X : $1
 export function iterable$(a){
 	return a?.toIterable?.() || a;
