@@ -224,3 +224,18 @@ describe 'selectors with brackets and comments' do
 
 	test ':has with child combinator' do
 		eq cs(el.$has).fontWeight, '300'
+
+describe 'animation lists' do
+	tag AnimLists
+		<self>
+			<div$both[animation:fade 1s linear both, slide 2s linear both]>
+			<div$short[animation:a 1s linear]>
+
+	let el = imba.mount <AnimLists>
+
+	test 'keywords repeat in every animation of a list' do
+		eq cs(el.$both).animationName, 'fade, slide'
+		eq cs(el.$both).animationFillMode, 'both, both'
+
+	test 'a single letter animation name' do
+		eq cs(el.$short).animationName, 'a'

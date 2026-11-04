@@ -148,3 +148,10 @@ describe 'mixins in global css' do
 
 	test '%name followed by a descendant' do
 		eq cs(el.$tile.$h2).color, 'rgb(0, 0, 255)'
+
+describe '%name on the first line of a file' do
+	test 'compiles as a mixin declaration' do
+		let imbac = await import('imba/compiler')
+		let res = imbac.compile("%stamp fw:700\n\ntag a-b\n\t<self%stamp>\n", sourcePath: 'first.imba', platform: 'browser')
+		eq res.errors.length, 0
+		assert res.js.includes('font-weight: 700')

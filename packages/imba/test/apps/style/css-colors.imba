@@ -317,3 +317,86 @@ describe 'color definitions' do
 		el.$override.classList.remove('dark')
 		eq cs(el.$override).color, cs(el.$local).color
 		near cs(el.$override).color, hex2rgb('#14b8a6')
+
+describe 'runtime hue values' do
+	tag HueRuntime
+		kind = 'teal'
+		<self>
+			<div$dyn[hue:{kind} c:hue5 bg:hue1]>
+			<div$wrap[hue:{kind}]>
+				<div$child[c:hue7]>
+			<div$teal5[hue:teal c:hue5 bg:hue1]>
+			<div$teal7[hue:teal c:hue7]>
+			<div$rose5[hue:rose c:hue5 bg:hue1]>
+
+	let el = imba.mount <HueRuntime>
+
+	test 'a runtime hue gives the same colors as a static hue' do
+		eq cs(el.$dyn).color, cs(el.$teal5).color
+		eq cs(el.$dyn).backgroundColor, cs(el.$teal5).backgroundColor
+
+	test 'descendants use the runtime hue' do
+		eq cs(el.$child).color, cs(el.$teal7).color
+
+	test 'changing the hue updates the colors' do
+		el.kind = 'rose'
+		el.render!
+		eq cs(el.$dyn).color, cs(el.$rose5).color
+		eq cs(el.$dyn).backgroundColor, cs(el.$rose5).backgroundColor
+		el.kind = 'teal'
+		el.render!
+		eq cs(el.$dyn).color, cs(el.$teal5).color
+
+describe 'colors with alpha and lookalike names' do
+	tag ColorEdges
+		<self>
+			<div$red[c:red/50]>
+			<div$grad[bgi:linear-gradient(red/25, blue/75)]>
+			<div$glow[$glow-alpha:40% #glow:blue5/$glow-alpha c:#glow]>
+			<div$g0[c:gray0]>
+			<div$g05[c:gray05]>
+			<div$g1[c:gray1]>
+			<div$grid[d:grid gta:"area1"]>
+				<div$area[ga:area1]>
+			<div$names[animation-name:pop2 container-name:card2]>
+
+	let el = imba.mount <ColorEdges>
+
+	test 'named colors keep their alpha' do
+		eq cs(el.$red).color, 'rgba(255, 0, 0, 0.5)'
+		let bg = cs(el.$grad).backgroundImage
+		assert bg.includes('rgba(255, 0, 0, 0.25)')
+		assert bg.includes('rgba(0, 0, 255, 0.75)')
+
+	test 'a #color defined with a $var alpha' do
+		eq paint(cs(el.$glow).color)[3], 0.4
+
+	test 'a step between 0 and 1 stays in its own family' do
+		let [r,g,b] = channels(cs(el.$g05).color)
+		assert Math.abs(r - b) <= 2, "gray05 should be neutral, got {cs(el.$g05).color}"
+		let lo = channels(cs(el.$g1).color)
+		let hi = channels(cs(el.$g0).color)
+		assert r >= lo[0] and r <= hi[0]
+
+	test 'names ending in a digit that are not palette colors' do
+		eq cs(el.$area).gridArea, 'area1'
+		eq cs(el.$names).animationName, 'pop2'
+		eq cs(el.$names).containerName, 'card2'
+
+	test 'a #color from the current hue is a compile warning' do
+		let imbac = await import('imba/compiler')
+		let res = imbac.compile("tag a-b\n\t<self[hue:yellow #bc:hue4 c:#bc]>\n", sourcePath: 'hue.imba', platform: 'browser')
+		eq res.errors.length, 0
+		eq res.warnings.length, 1
+		assert res.warnings[0].message.includes('#bc')
+
+describe 'names that look like palette colors' do
+	test 'an unknown family in a color property is a compile warning' do
+		let imbac = await import('imba/compiler')
+		let code = "tag a-b\n\t<self[bg:night6 bdt:1px solid night7 ga:area1 c:gray05]>\n"
+		let res = imbac.compile(code, sourcePath: 'names.imba', platform: 'browser')
+		eq res.errors.length, 0
+		eq res.warnings.map(do $1.message), [
+			'night6 is not a color in the palette'
+			'night7 is not a color in the palette'
+		]

@@ -218,3 +218,39 @@ describe 'font-size and line-height' do
 	test 'letter-spacing numbers are 0.05em steps' do
 		eq cs(el.$ls).letterSpacing, '1px'
 		eq cs(el.$lsem).letterSpacing, '5px'
+
+describe 'font-family lists' do
+	tag FontLists
+		<self>
+			<div$sys[ff:system-ui, sans-serif]>
+			<div$apple[ff:-apple-system, Roboto, sans-serif]>
+			<div$quoted[ff:"Helvetica Neue", system-ui, sans-serif]>
+			<div$theme[ff:mono, monospace]>
+
+	let el = imba.mount <FontLists>
+
+	test 'every name in the list is kept' do
+		eq cs(el.$sys).fontFamily, 'system-ui, sans-serif'
+		eq cs(el.$apple).fontFamily, '-apple-system, Roboto, sans-serif'
+		eq cs(el.$quoted).fontFamily, '"Helvetica Neue", system-ui, sans-serif'
+
+	test 'theme fonts still resolve inside a list' do
+		eq cs(el.$theme).fontFamily, MONO + ', monospace'
+
+describe 'lh units after a unitless line-height' do
+	tag LhUnits
+		<self>
+			<div$parent[fs:10px lh:1.5]>
+				<div$one[h:1lh]>
+				<div$two[h:2lh]>
+			<div$zero[fs:10px lh:0]>
+				<div$zchild[h:3lh]>
+
+	let el = imba.mount <LhUnits>
+
+	test 'the lh unit is the line-height in em' do
+		eq cs(el.$one).height, '15px'
+		eq cs(el.$two).height, '30px'
+
+	test 'a zero line-height gives zero lh units' do
+		eq cs(el.$zchild).height, '0px'

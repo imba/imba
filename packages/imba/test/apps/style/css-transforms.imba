@@ -126,3 +126,25 @@ describe '3d and skew transforms' do
 		m = matrix(el.$flagz)
 		eq m.e, 3
 		assert m.is2D
+
+describe 'plain numbers in transforms' do
+	tag PlainTransforms
+		<self>
+			<div$px[x:2 y:-3]>
+			<div$turn[rotate:0.25]>
+			<div$zero[x:0 rotate:0]>
+
+	let el = imba.mount <PlainTransforms>
+
+	test 'x and y default to px' do
+		let m = matrix(el.$px)
+		eq m.e, 2
+		eq m.f, -3
+
+	test 'rotate defaults to turns' do
+		let m = matrix(el.$turn)
+		close m.a, 0
+		close m.b, 1
+
+	test 'zero stays a plain zero' do
+		assert matrix(el.$zero).isIdentity

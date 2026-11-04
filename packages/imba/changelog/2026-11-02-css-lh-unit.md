@@ -1,0 +1,1 @@
+The `lh` unit works after a unitless line-height. With `lh:1.5`, the variable behind the unit was set to the plain number `1.5` instead of `1.5em`, so `h:2lh` on the element or its children gave an invalid height (or `3px` on pages in quirks mode). `lh:0` now gives `0em` as well.

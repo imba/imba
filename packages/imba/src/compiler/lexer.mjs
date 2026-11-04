@@ -1321,7 +1321,7 @@ Lexer.prototype.identifierToken = function (){
 	} else if (typ == '%') {
 		// use for something else
 		let ltyp = this._lastTyp;
-		if (ltyp == 'TERMINATOR' || ltyp == 'INDENT' || ltyp == 'EXPORT') {
+		if (!ltyp || ltyp == 'TERMINATOR' || ltyp == 'INDENT' || ltyp == 'EXPORT') {
 			this.token('CSS',id,0);
 			this.queueScope('CSS');
 			return this.lexStyleRule(0,true);

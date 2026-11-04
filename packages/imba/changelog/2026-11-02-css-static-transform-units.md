@@ -1,0 +1,1 @@
+Plain numbers in `x`, `y`, `z` and `rotate` get the same default units in static styles as in runtime values: `x:2` is `2px` and `rotate:0.25` is `0.25turn`. They used to compile to `--t_x: 2` and `--t_rotate: 0.25`, which are invalid, so the transform did nothing. `0` stays `0`.

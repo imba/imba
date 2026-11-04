@@ -148,3 +148,30 @@ describe 'ease transitions' do
 	test 'eo and ec together' do
 		eq timing(el.$mixed,'opacity'), "0.3s {QUINT} 0s"
 		eq timing(el.$mixed,'border-color'), "1s {QUINT} 0s"
+
+describe 'plain numbers as ease times' do
+	tag EaseNumbers
+		<self>
+			<div$zero[eo:0 ec:300ms]>
+			<div$num[ec:150]>
+			<div$delay[eo:40ms linear 20]>
+			<div$long[eod:0 ecd:200 ecw:0]>
+
+	let el = imba.mount <EaseNumbers>
+
+	def duration el, name
+		timing(el,name).split(' ')[0]
+
+	test 'eo:0 turns off the opacity transition only' do
+		eq prop(el.$zero,'--e_od'), '0ms'
+		eq duration(el.$zero,'opacity'), '0s'
+		eq duration(el.$zero,'color'), '0.3s'
+
+	test 'other plain numbers are milliseconds' do
+		eq duration(el.$num,'color'), '0.15s'
+		eq timing(el.$delay,'opacity'), '0.04s linear 0.02s'
+
+	test 'duration and delay longhands with plain numbers' do
+		eq duration(el.$long,'opacity'), '0s'
+		eq duration(el.$long,'color'), '0.2s'
+		eq prop(el.$long,'--e_cw'), '0ms'

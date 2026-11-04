@@ -1,0 +1,1 @@
+A `ff` / `font-family` list keeps every font in it. `ff:system-ui, sans-serif` used to compile to `font-family: var(--font-system-ui,system-ui)` and drop everything after the first name, so the fallbacks never applied. Every plain name in the list now gets its own `--font-*` fallback, so `ff:mono, monospace` still resolves the theme's mono stack.
