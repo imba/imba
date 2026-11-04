@@ -22284,8 +22284,16 @@ class Super extends Node {
         op = OP(".", sup, m.name());
         if (m.isSetter()) {
           op = OP("=", op, m.params().at(0));
-        } else if (!m.isGetter()) {
-          args || (args = [LIT("...arguments")]);
+        } else if (!m.isGetter() && !args) {
+          // apply forwards the call's arguments without the iterator and
+          // array a spread allocates on every call; tsc keeps the spread,
+          // which strictBindCallApply would reject as an apply argument
+          if (STACK.tsc()) {
+            args = [LIT("...arguments")];
+          } else {
+            op = OP(".", op, "apply");
+            args = [this.slf(), LIT("arguments")];
+          }
         }
       }
 
@@ -22319,6 +22327,9 @@ class Super extends Node {
 
 Super.callOp = function (name, params) {
   let op = OP(".", LIT("super"), name);
+  if (!params && !STACK.tsc()) {
+    return CALL(OP(".", op, "apply"), [LIT("this"), LIT("arguments")]);
+  }
   return CALL(op, params || [LIT("...arguments")]);
 };
 
