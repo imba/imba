@@ -218,3 +218,52 @@ describe 'top level nesting rules' do
 		el.$scroller.scrollTop = 50
 		await frames(3)
 		eq cs(el.$s).fontWeight, '800'
+
+tag TopLevelNested
+	css @md
+		.a fw:700
+		&.flagged c:rgb(0 0 255)
+		* hr d:none
+	css @@!600
+		.b fw:800
+
+	<self.flagged>
+		<div$a.a> 'a'
+		<hr$hr>
+		<div$b.b> 'b'
+
+global css @lg
+	.tl-glob fw:900
+
+describe 'rules nested in top level modifiers' do
+	let el = imba.mount <TopLevelNested>
+
+	test 'nested rules under @media match' do
+		await viewport(800)
+		eq cs(el.$a).fontWeight, '700'
+		eq cs(el.$hr).display, 'none'
+		await viewport(700)
+		eq cs(el.$a).fontWeight, '400'
+		eq cs(el.$hr).display, 'block'
+		await viewport(800)
+
+	test '& rules under @media apply to the component' do
+		eq cs(el).color, 'rgb(0, 0, 255)'
+
+	test 'nested rules under a container query match' do
+		eq cs(el.$b).fontWeight, '400'
+		let box = <div[container-type:inline-size w:300px]>
+		document.body.appendChild(box)
+		let inner = <TopLevelNested>
+		box.appendChild(inner)
+		eq cs(inner.$b).fontWeight, '800'
+		box.remove!
+
+	test 'nested rules in global css under @media' do
+		let g = <div.tl-glob> 'g'
+		document.body.appendChild(g)
+		await viewport(1100)
+		eq cs(g).fontWeight, '900'
+		await viewport(800)
+		eq cs(g).fontWeight, '400'
+		g.remove!

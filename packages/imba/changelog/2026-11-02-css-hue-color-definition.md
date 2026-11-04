@@ -1,0 +1,1 @@
+Defining a `#color` from the current hue, as in `#accent:hue4`, is now a compile warning. Such a color used to compile to black, because the hue is only known at runtime and the lightness, chroma and hue of a `#color` are computed when compiling. Use the hue color directly (`c:hue4`) or a palette color (`#accent:blue4`).

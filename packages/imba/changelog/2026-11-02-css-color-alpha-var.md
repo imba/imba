@@ -1,0 +1,1 @@
+A `#color` defined with a variable alpha, as in `#glow:blue5/$alpha`, now compiles to `var(--alpha,100%)`. It used to write the literal `$alpha` into the CSS, which is invalid, so the color always had full opacity.

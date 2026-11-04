@@ -185,4 +185,11 @@ extend class Element
 	def css$var name, value, unit, key, param = null
 		let cssval = styles.toValue(value,unit,key,param)
 		self.style.setProperty(name,cssval)
+		# a runtime hue sets one variable per level, which the compiled
+		# style maps to --hue0 through --hue9
+		if key == 'hue' or key == 'tint'
+			let levels = CSS_COLORS[value]
+			for i in [0 ... 10]
+				let level = levels and levels[i]
+				self.style.setProperty("{name}-{i}",level ? "{level[0]},{level[1]}%,{level[2]}%" : '')
 		return

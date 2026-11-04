@@ -749,6 +749,27 @@ export class StyleTheme {
 		return this.$ease(pars,'s');
 	}
 	
+	// a duration or delay needs a unit in css, so `eod:0` means 0ms
+	$easeTime([v]){
+		if (v && isNumber(v)) {
+			return [v.clone(v._number,'ms')];
+		};
+		return;
+	}
+	
+	ease_all_duration(pars){ return this.$easeTime(pars) }
+	ease_all_delay(pars){ return this.$easeTime(pars) }
+	ease_styles_duration(pars){ return this.$easeTime(pars) }
+	ease_styles_delay(pars){ return this.$easeTime(pars) }
+	ease_opacity_duration(pars){ return this.$easeTime(pars) }
+	ease_opacity_delay(pars){ return this.$easeTime(pars) }
+	ease_colors_duration(pars){ return this.$easeTime(pars) }
+	ease_colors_delay(pars){ return this.$easeTime(pars) }
+	ease_box_duration(pars){ return this.$easeTime(pars) }
+	ease_box_delay(pars){ return this.$easeTime(pars) }
+	ease_transform_duration(pars){ return this.$easeTime(pars) }
+	ease_transform_delay(pars){ return this.$easeTime(pars) }
+	
 	ease_all(pars){
 		return this.$ease(pars,'a');
 	}
@@ -778,19 +799,23 @@ export class StyleTheme {
 		
 		let o = {__ease__: k};
 		
-		if (pars[0]?.unit) {
-			o[("--e_" + k + "d")] = pars[0];
+		// a time needs a unit in css, so a plain number such as `eo:0` means ms
+		let isTime = function(par) { return par && (par.unit || isNumber(par)); };
+		let toTime = function(par) { return isNumber(par) ? par.clone(par._number,'ms') : par; };
+		
+		if (isTime(pars[0])) {
+			o[("--e_" + k + "d")] = toTime(pars[0]);
 			pars.shift();
 		};
 		
-		if (pars[0] && !(pars[0].unit)) {
+		if (pars[0] && !isTime(pars[0])) {
 			let ev = this.$varFallback('ease',[pars[0]]);
 			o[("--e_" + k + "f")] = ev;
 			pars.shift();
 		};
 		
-		if (pars[0] && pars[0].unit) {
-			o[("--e_" + k + "w")] = pars[0];
+		if (isTime(pars[0])) {
+			o[("--e_" + k + "w")] = toTime(pars[0]);
 			pars.shift();
 		};
 		
@@ -816,9 +841,9 @@ export class StyleTheme {
 			none: 3,forwards: 3,backwards: 3,both: 3,
 			running: 4,paused: 4
 		};
-		let used = {};
 		for (let k = 0, $20 = iter$__(params), $23 = $20.length; k < $23; k++) {
 			let anim = $20[k];
+			let used = {};
 			let name = null;
 			let ease = null;
 			for (let i = 0, $21 = iter$__(anim), $22 = $21.length; i < $22; i++) {
@@ -1007,12 +1032,15 @@ export class StyleTheme {
 		return;
 	}
 	
-	font_family(params){
-		let m;
-		if (m = this.$varFallback('font',params)) {
-			return m;
+	font_family(...params){
+		let changed = false;
+		for (let i = 0, $39 = iter$__(params), $40 = $39.length, m; i < $40; i++) {
+			if (m = this.$varFallback('font',$39[i])) {
+				params[i] = m;
+				changed = true;
+			};
 		};
-		return;
+		return changed ? params : undefined;
 	}
 	
 	text_shadow(...params){
@@ -1129,7 +1157,7 @@ export class StyleTheme {
 	line_height([v]){
 		let uvar = v;
 		// TODO what if it has u unit?
-		if (v._number && !v._unit) {
+		if (typeof v._number == 'number' && !isNaN(v._number) && !v._unit) {
 			uvar = v.clone(v._number,'em');
 		};
 		
@@ -1317,6 +1345,19 @@ export class StyleTheme {
 		return o;
 	}
 	
+	// plain numbers: px for x/y/z and turns for rotate, as for runtime values
+	$transformUnit([v],unit){
+		if (v && isNumber(v) && v._number != 0) {
+			return [v.clone(v._number,unit)];
+		};
+		return;
+	}
+	
+	x(pars){ return this.$transformUnit(pars,'px') }
+	y(pars){ return this.$transformUnit(pars,'px') }
+	z(pars){ return this.$transformUnit(pars,'px') }
+	rotate(pars){ return this.$transformUnit(pars,'turn') }
+	
 	tint([v]){
 		return this.hue([v]);
 	}
@@ -1325,6 +1366,11 @@ export class StyleTheme {
 		let o = {'--hue': v};
 
 		for (let i = 0; i < 10; i++) {
+			if (v.isInterpolated?.()) {
+				// a runtime value: css$var sets `--<id>-<level>` for each level
+				o[("--hue" + i)] = v.c().replace(/\)$/,"-" + i + ")");
+				continue;
+			};
 			let color = this.$color("" + v + i);
 			o[("--hue" + i)] = color ? color.toVar() : ("" + v + i);
 		};
@@ -1343,10 +1389,16 @@ export class StyleTheme {
 		
 		if (val?.lcha) {
 			[l,c,h,a] = val.lcha();
+		} else if (isa$(val?._resolvedValue,Tint)) {
+			// the current hue is only known at runtime as an hsl triple
+			return null;
 		} else if (isa$(val?._resolvedValue,Color)) {
 			[l,c,h,a] = val._resolvedValue.lcha();
 			if (val.param && val.param.toAlpha) {
 				a = val.param.toAlpha();
+			};
+			if (typeof a == 'string' && a[0] == '$') {
+				a = ("var(--" + a.slice(1) + ",100%)");
 			};
 		};
 		
@@ -1411,12 +1463,17 @@ export class StyleTheme {
 				return this.$color(this.palette[ns] + name.slice(ns.length));
 			};
 			
-			while (n0 > 1 && !from){
+			while (n0 > 0 && !from){
 				from = this.palette[ns + (--n0)];
 			};
 			
 			while (n1 < 9 && !to){
 				to = this.palette[ns + (++n1)];
+			};
+			
+			// not a palette color, such as `area1` or `pop2`
+			if (!from && !to) {
+				return null;
 			};
 			
 			// only when we could not find colors?
@@ -1771,30 +1828,12 @@ export class StyleRule {
 	}
 	
 	toString(o = {}){
-		if (!(this.parent) && this.selector) {
-			// parse the nested groups here
-			let selast;
-			let layers;
-			
-			try {
-				selast = selparser.parse(this.selector,this.options);
-				layers = selparser.layerize(selast,this.options);
-				
-				if (layers[1] && layers[1][0]) {
-					[this.ownsel,...this.ownrules] = layers[1];
-				};
-			} catch (e) {
-				console.log('error',e,selast,this.selector);
-			};
-		};
-		
 		let parts = [];
 		let subrules = [];
 		let subrule;
 		
 		let out = "";
 		
-		let suffix = [];
 		let indent = o.indent || '';
 		
 		if (this.isKeyFrames) {
@@ -1855,12 +1894,6 @@ export class StyleRule {
 				};
 				
 				let subsel = selparser.unwrap(this.selector,key);
-				if (this.ownsel) {
-					// subsel = selparser.unwrap('&',key)
-										// only replace the first one?
-					subsel = key.replace(/&/g,':scope');
-				};
-				
 				subrules.push(new StyleRule(this,subsel,value,this.options));
 				continue;
 			} else if (key.indexOf('§') >= 0) {
@@ -1990,45 +2023,12 @@ export class StyleRule {
 		
 		o.indent = indent;
 		
-		if (!(this.parent) && this.ownsel) {
-			out = '';
-			let ind = indent;// + '\t'
-			
-			for (let $85 = 0, $86 = iter$__(this.ownsel), $87 = $86.length; $85 < $87; $85++) {
-				let layer = $86[$85];
-				out += ind + layer + '{\n';
-				suffix.push('\n' + ind + '}');
-				ind += '\t';
-			};
-			
-			for (let $88 = 0, $89 = iter$__(this.ownrules), $90 = $89.length; $88 < $90; $88++) {
-				let ownrule = $89[$88];
-				out += ind + ownrule + ' {\n';
-				suffix.push('\n' + ind + '}');
-				ind += '\t';
-				// suffix += '}'
-			};
-			
-			if (content) {
-				out += parts.map(function(_0) { return ind + _0; }).join('\n');
-			};
-			
-			if (negIndex$__(this.ownrules,-1) == ':scope') {
-				ind = ind.slice(0,-1);
-				out += negIndex$__(suffix,-1);
-				suffix.pop();
-			};
-			
-			o.indent = ind;
-		};
-		
 		for (let $91 = 0, $92 = iter$__(subrules), $93 = $92.length; $91 < $93; $91++) {
 			let subrule = $92[$91];
 			out += '\n' + subrule.toString(o);
 		};
 		
 		o.indent = indent;
-		out += suffix.toReversed().join('');
 		
 		return out;
 	}

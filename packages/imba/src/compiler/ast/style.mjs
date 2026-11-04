@@ -477,6 +477,16 @@ export function defineStyleNodes(deps) {
       let expanded = [];
       if (self._property.isColor && self._property.isColor()) {
         res = theme.colormix(name.slice(1), self._expr.toArray());
+        if (res === null) {
+          self.warn(
+            "A color from the current hue cannot define " +
+              name +
+              ", its value is only known at runtime",
+            { loc: self._expr.toArray()[0][0]._value },
+          );
+          list.replace(self, []);
+          return;
+        }
         // console.log "prop is color!!!",res
       } else if (theme[method] && !self.option("plain")) {
         res = theme[method].apply(theme, self._expr.toArray());
@@ -898,6 +908,10 @@ export function defineStyleNodes(deps) {
   }
 
   class StyleInterpolationExpression extends StyleTerm {
+    isInterpolated() {
+      return true;
+    }
+
     name(v) {
       return this._name;
     }
@@ -1061,17 +1075,33 @@ export function defineStyleNodes(deps) {
 
     visit(stack) {
       let raw = this.toString();
-      if (raw.match(/^[lcha]$/)) {
+      // l, c, h and a are color channels only inside a color mix
+      let mix = raw.match(/^[lcha]$/) && stack.up(StyleColorMix);
+      if (mix) {
         super.visit(...arguments);
-        let mix = stack.up(StyleColorMix);
         this._colormix = mix;
         return (this._resolvedValue =
           "var(--u_" + this._colormix._name + raw.toUpperCase() + ")");
       } else {
-        if (raw.match(/^([a-zA-Z]+\d+|black|white)$/)) {
+        if (
+          raw.match(/^([a-zA-Z]+\d+|black|white)$/) ||
+          (this.param && raw.match(/^[a-zA-Z]+$/))
+        ) {
           this.setColor("" + raw);
         }
-        return super.visit(...arguments);
+        super.visit(...arguments);
+        // `night6` looks like a palette color but is not one
+        let prop = this._propname && String(this._propname);
+        let expanded = prop && stack.theme().expandProperty(prop);
+        prop = String((expanded instanceof Array ? expanded[0] : expanded) || prop);
+        if (
+          this.color() &&
+          /color|^background$|^border|^outline|^fill$|^stroke$|shadow/.test(prop) &&
+          !stack.theme().$color(this.color())
+        ) {
+          this.warn(raw + " is not a color in the palette");
+        }
+        return this;
       }
     }
 
@@ -1258,7 +1288,11 @@ export function defineStyleNodes(deps) {
     clone(num, unit) {
       if (num === undefined) num = this._number;
       if (unit === undefined) unit = this._unit;
-      let cloned = new StyleDimension(this.value());
+      let cloned = new StyleDimension(
+        num === this._number && unit === this._unit
+          ? this.value()
+          : "" + num + (unit || ""),
+      );
       cloned._unit = unit;
       cloned._number = num;
       return cloned;
