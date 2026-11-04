@@ -357,3 +357,89 @@ describe 'loop' do
 		let n = 0
 		loop if ++n > 3 then break
 		eq n, 4
+
+describe 'loop and switch expressions as arguments inside methods' do
+	class Offsetter
+		offset = 10
+		label = 'n'
+
+		def for-arg list
+			String(for x in list
+				x + offset)
+
+		def postfix-arg list
+			String(x + offset for x in list)
+
+		def while-arg n
+			let i = 0
+			String(while i < n
+				offset + i++)
+
+		def switch-arg v
+			String(switch v
+				when 1 then offset
+				when 2 then label
+				else 0)
+
+		def nested list
+			JSON.stringify(for x in list
+				for y in [1,2]
+					x * y + offset)
+
+		def in-callback list
+			[1].map do
+				String(for x in list
+					x + offset)
+
+		def calls list
+			String(for x in list
+				add(x))
+
+		def add x
+			x + offset
+
+		static def from-static list
+			String(for x in list
+				x + base)
+
+		static get base
+			100
+
+	let o = new Offsetter
+
+	test 'for loop argument reads self' do
+		eq o.for-arg([1,2]), '11,12'
+
+	test 'postfix for argument reads self' do
+		eq o.postfix-arg([1,2]), '11,12'
+
+	test 'while loop argument reads self' do
+		eq o.while-arg(3), '10,11,12'
+
+	test 'switch argument reads self' do
+		eq o.switch-arg(1), '10'
+		eq o.switch-arg(2), 'n'
+		eq o.switch-arg(3), '0'
+
+	test 'nested loop arguments read self' do
+		eq o.nested([1,2]), '[[11,12],[12,14]]'
+
+	test 'inside a do block in a method' do
+		eq o.in-callback([1,2]), ['11,12']
+
+	test 'calling methods on self' do
+		eq o.calls([5]), '15'
+
+	test 'static methods read the class' do
+		eq Offsetter.from-static([1]), '101'
+
+	test 'in a tag render' do
+		tag loop-arg-tag
+			items = [1,2]
+			lead = 'i'
+			<self> String(for x in items
+				lead + x)
+
+		let el = imba.mount <loop-arg-tag>
+		eq el.textContent, 'i1,i2'
+		el.remove!
