@@ -4289,7 +4289,9 @@ class Yield extends Statement {
 
   js() {
     var v = this._value;
-    let k = M("yield", this.keyword());
+    let kw = this.keyword();
+    // the lexer gives `yield*` (delegation) as a single keyword token
+    let k = M(kw && String(kw) == "yield*" ? "yield*" : "yield", kw);
     return v ? "" + k + " " + v.c({ expression: true }) : k;
   }
 }
