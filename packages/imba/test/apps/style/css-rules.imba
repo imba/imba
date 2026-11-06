@@ -279,6 +279,7 @@ tag MediaLists
 	css @!700 .l[title="("], .m fw:700
 	css @!700 .n, .o\,p fw:700
 	css @focus @!700 .q, .r fw:700
+	css !@700 .s, .t fw:700
 
 	<self>
 		<div$a.a> 'a'
@@ -297,6 +298,8 @@ tag MediaLists
 		<div$o> 'o'
 		<div$q.q> 'q'
 		<div$r.r> 'r'
+		<div$s.s> 's'
+		<div$t.t> 't'
 
 describe 'modifiers on selector lists' do
 	let el = imba.mount <MediaLists>
@@ -360,3 +363,9 @@ describe 'modifiers on selector lists' do
 		eq cs(el.$r).fontWeight, '700'
 		await viewport(800)
 		eq cs(el.$r).fontWeight, '400'
+
+	test 'a negated media modifier with ! in front applies to every selector' do
+		await viewport(600)
+		eq cs(el.$t).fontWeight, '700'
+		await viewport(800)
+		eq cs(el.$t).fontWeight, '400'

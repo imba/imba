@@ -516,8 +516,8 @@ export function parse(str,options){
 	return out;
 };
 
-// One modifier, such as `@md`, `@!700`, `@@!600` or `@media(min-width:300px)`
-const MODIFIER = /@@?!?[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?/y;
+// One modifier, such as `@md`, `@!700`, `!@md`, `@@!600` or `@media(min-width:300px)`
+const MODIFIER = /!?@@?!?[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?/y;
 
 function splitSelectors(str){
 	let sels = [];
@@ -549,7 +549,7 @@ function splitSelectors(str){
 // selector in the list: `@md .a, .b` compiles as `@md .a, .b@md`.
 // Other modifiers in front of the list apply to the first selector only.
 export function spreadQueries(str){
-	if (str[0] != '@' || str.indexOf(',') == -1) { return str };
+	if (!(/^!?@/.test(str)) || str.indexOf(',') == -1) { return str };
 	
 	let sels = splitSelectors(str);
 	if (sels.length < 2) { return str };
