@@ -1,8 +1,9 @@
 # Rule-level behaviours: helper rules (transform/outline/ease) wrapped in
 # media queries, merged duplicate nested selectors, custom units with
 # modifier values, multi-property aliases, radius/border shorthands with
-# zero, ::pseudo-element blocks, @off size rules, conditional style flags
-# and top level @media/@container/scroll-state rules.
+# zero, ::pseudo-element blocks, @off size rules, conditional style flags,
+# top level @media/@container/scroll-state rules and modifiers on selector
+# lists.
 
 def cs el, pseudo = null
 	window.getComputedStyle(el,pseudo)
@@ -267,3 +268,72 @@ describe 'rules nested in top level modifiers' do
 		await viewport(800)
 		eq cs(g).fontWeight, '400'
 		g.remove!
+
+tag MediaLists
+	css @!700 .a, .b fw:700
+	css .c@!700, .d fw:700
+	css .e
+		@!700 .f, .g fw:700
+	css @!700@focus .h, .i fw:700
+	css @@!600 .j, .k fw:700
+
+	<self>
+		<div$a.a> 'a'
+		<div$b.b> 'b'
+		<div$c.c> 'c'
+		<div$d.d> 'd'
+		<div.e>
+			<div$f.f> 'f'
+			<div$g.g> 'g'
+		<div$h.h> 'h'
+		<div$i.i> 'i'
+		<div$j.j> 'j'
+		<div$k.k> 'k'
+
+describe 'modifiers on selector lists' do
+	let el = imba.mount <MediaLists>
+
+	test 'a media modifier in front of a list applies to every selector' do
+		await viewport(600)
+		eq cs(el.$a).fontWeight, '700'
+		eq cs(el.$b).fontWeight, '700'
+		await viewport(800)
+		eq cs(el.$a).fontWeight, '400'
+		eq cs(el.$b).fontWeight, '400'
+
+	test 'a media modifier after a selector applies to that selector only' do
+		await viewport(600)
+		eq cs(el.$c).fontWeight, '700'
+		eq cs(el.$d).fontWeight, '700'
+		await viewport(800)
+		eq cs(el.$c).fontWeight, '400'
+		eq cs(el.$d).fontWeight, '700'
+
+	test 'a media modifier in front of a nested list applies to every selector' do
+		await viewport(600)
+		eq cs(el.$f).fontWeight, '700'
+		eq cs(el.$g).fontWeight, '700'
+		await viewport(800)
+		eq cs(el.$f).fontWeight, '400'
+		eq cs(el.$g).fontWeight, '400'
+
+	test 'a state modifier in front of a list applies to the first selector only' do
+		await viewport(600)
+		eq cs(el.$h).fontWeight, '400'
+		eq cs(el.$i).fontWeight, '700'
+		el.flags.add('@focus')
+		eq cs(el.$h).fontWeight, '700'
+		el.flags.remove('@focus')
+		await viewport(800)
+		eq cs(el.$i).fontWeight, '400'
+
+	test 'a container modifier in front of a list applies to every selector' do
+		eq cs(el.$j).fontWeight, '400'
+		eq cs(el.$k).fontWeight, '400'
+		let box = <div[container-type:inline-size w:300px]>
+		document.body.appendChild(box)
+		let inner = <MediaLists>
+		box.appendChild(inner)
+		eq cs(inner.$j).fontWeight, '700'
+		eq cs(inner.$k).fontWeight, '700'
+		box.remove!

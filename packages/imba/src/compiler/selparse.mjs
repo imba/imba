@@ -451,12 +451,9 @@ export function layerize(root,options = {}){
 			nestings.push(str);
 		};
 		
-		for (let i = 0, $23 = iter$__(nestings), $24 = $23.length; i < $24; i++) {
-			let nesting = $23[i];
-			if (group[0][i] != nesting) {
-				groups.push(group = [nestings]);
-				break;
-			};
+		// a selector joins the previous group only when it has the same at-rules
+		if (nestings.length != group[0].length || nestings.some(function(nesting,i) { return nesting != group[0][i]; })) {
+			groups.push(group = [nestings]);
 		};
 		
 		group.push(sel);
@@ -517,6 +514,58 @@ export function parse(str,options){
 	let sel = selparser.parse(str,options);
 	let out = sel && rewrite(sel,null,options);
 	return out;
+};
+
+// One modifier, such as `@md`, `@!700`, `@@!600` or `@media(min-width:300px)`
+const MODIFIER = /@@?!?[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?/y;
+
+function splitSelectors(str){
+	let sels = [];
+	let depth = 0;
+	let start = 0;
+	for (let i = 0; i < str.length; i++) {
+		let chr = str[i];
+		if (chr == '(' || chr == '[') {
+			depth++;
+		} else if (chr == ')' || chr == ']') {
+			depth--;
+		} else if (chr == ',' && depth == 0) {
+			sels.push(str.slice(start,i));
+			start = i + 1;
+		};
+	};
+	sels.push(str.slice(start));
+	return sels;
+};
+
+// Media and container modifiers in front of a selector list apply to every
+// selector in the list: `@md .a, .b` compiles as `@md .a, .b@md`.
+// Other modifiers in front of the list apply to the first selector only.
+export function spreadQueries(str){
+	if (str[0] != '@' || str.indexOf(',') == -1) { return str };
+	
+	let sels = splitSelectors(str);
+	if (sels.length < 2) { return str };
+	
+	let first = sels[0];
+	let queries = '';
+	let pos = 0;
+	let m;
+	
+	while (true){
+		MODIFIER.lastIndex = pos;
+		if (!(m = MODIFIER.exec(first))) { break; };
+		pos = MODIFIER.lastIndex;
+		let probe = parse(m[0],{});
+		if (probe.media.length || probe.container.length) {
+			queries += m[0];
+		};
+	};
+	
+	// the modifiers must stand alone in front of the first selector
+	if (!queries || !(/\s/.test(first[pos] || ''))) { return str };
+	
+	return [first].concat(sels.slice(1).map(function(sel) { return sel.trimEnd() + queries; })).join(',');
 };
 
 export function test(str,log = false){

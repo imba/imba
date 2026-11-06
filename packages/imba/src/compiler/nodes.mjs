@@ -8,6 +8,7 @@ import { ImbaParseError, ImbaTraverseError } from "./errors.mjs";
 import { Token as Token } from "./token.mjs";
 import { SourceMap as SourceMap } from "./sourcemap.mjs";
 import { StyleRule, StyleTheme, Color, StyleSheet, parseColorString } from "./styler.mjs";
+import * as selparser from "./selparse.mjs";
 import { Compilation } from "./compilation.mjs";
 import { SourceMapper } from "./sourcemapper.mjs";
 import { ClassFlags as ClassFlags } from "../imba/runtime.mjs";
@@ -19961,6 +19962,7 @@ var {
   StyleTheme,
   Color,
   colord,
+  selparser,
   constants,
   helpers,
   iter$,
