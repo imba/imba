@@ -222,7 +222,7 @@ export class Router < EventEmitter
 			win.addEventListener('hashchange',onhashchange)
 			win.addEventListener('click',onclick,capture: yes)
 			win.document.documentElement.emit('routerinit',self)
-			refresh
+			refresh!
 		self
 
 	def onclick e
