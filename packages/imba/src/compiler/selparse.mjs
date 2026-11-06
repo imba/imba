@@ -557,20 +557,25 @@ export function spreadQueries(str){
 	let first = sels[0];
 	let queries = '';
 	let pos = 0;
+	let end = 0;
 	let m;
-	
+
 	while (true){
 		MODIFIER.lastIndex = pos;
 		if (!(m = MODIFIER.exec(first))) { break; };
-		pos = MODIFIER.lastIndex;
+		pos = end = MODIFIER.lastIndex;
 		let probe = parse(m[0],{});
 		if (probe.media.length || probe.container.length) {
 			queries += m[0];
 		};
+		// `@md @lg .a` has two modifiers in front of the selector
+		while (/\s/.test(first[pos] || '')){
+			pos++;
+		};
 	};
-	
+
 	// the modifiers must stand alone in front of the first selector
-	if (!queries || !(/\s/.test(first[pos] || ''))) { return str };
+	if (!queries || !(/\s/.test(first[end] || ''))) { return str };
 	
 	return [first].concat(sels.slice(1).map(function(sel) { return sel.trimEnd() + queries; })).join(',');
 };

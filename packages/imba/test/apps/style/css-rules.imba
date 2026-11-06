@@ -278,6 +278,7 @@ tag MediaLists
 	css @@!600 .j, .k fw:700
 	css @!700 .l[title="("], .m fw:700
 	css @!700 .n, .o\,p fw:700
+	css @focus @!700 .q, .r fw:700
 
 	<self>
 		<div$a.a> 'a'
@@ -294,6 +295,8 @@ tag MediaLists
 		<div$l.l title='('> 'l'
 		<div$m.m> 'm'
 		<div$o> 'o'
+		<div$q.q> 'q'
+		<div$r.r> 'r'
 
 describe 'modifiers on selector lists' do
 	let el = imba.mount <MediaLists>
@@ -351,3 +354,9 @@ describe 'modifiers on selector lists' do
 		await viewport(800)
 		eq cs(el.$m).fontWeight, '400'
 		eq cs(el.$o).fontWeight, '400'
+
+	test 'a media modifier after a space in front of a list applies to every selector' do
+		await viewport(600)
+		eq cs(el.$r).fontWeight, '700'
+		await viewport(800)
+		eq cs(el.$r).fontWeight, '400'
