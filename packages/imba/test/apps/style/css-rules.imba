@@ -276,6 +276,8 @@ tag MediaLists
 		@!700 .f, .g fw:700
 	css @!700@focus .h, .i fw:700
 	css @@!600 .j, .k fw:700
+	css @!700 .l[title="("], .m fw:700
+	css @!700 .n, .o\,p fw:700
 
 	<self>
 		<div$a.a> 'a'
@@ -289,6 +291,9 @@ tag MediaLists
 		<div$i.i> 'i'
 		<div$j.j> 'j'
 		<div$k.k> 'k'
+		<div$l.l title='('> 'l'
+		<div$m.m> 'm'
+		<div$o> 'o'
 
 describe 'modifiers on selector lists' do
 	let el = imba.mount <MediaLists>
@@ -337,3 +342,12 @@ describe 'modifiers on selector lists' do
 		eq cs(inner.$j).fontWeight, '700'
 		eq cs(inner.$k).fontWeight, '700'
 		box.remove!
+
+	test 'quoted text and escaped commas do not split a list' do
+		el.$o.classList.add('o,p')
+		await viewport(600)
+		eq cs(el.$m).fontWeight, '700'
+		eq cs(el.$o).fontWeight, '700'
+		await viewport(800)
+		eq cs(el.$m).fontWeight, '400'
+		eq cs(el.$o).fontWeight, '400'

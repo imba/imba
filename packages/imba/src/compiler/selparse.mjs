@@ -522,10 +522,17 @@ const MODIFIER = /@@?!?[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?/y;
 function splitSelectors(str){
 	let sels = [];
 	let depth = 0;
+	let quote = null;
 	let start = 0;
 	for (let i = 0; i < str.length; i++) {
 		let chr = str[i];
-		if (chr == '(' || chr == '[') {
+		if (chr == '\\') {
+			i++;
+		} else if (quote) {
+			if (chr == quote) { quote = null };
+		} else if (chr == '"' || chr == "'") {
+			quote = chr;
+		} else if (chr == '(' || chr == '[') {
 			depth++;
 		} else if (chr == ')' || chr == ']') {
 			depth--;
