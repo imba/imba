@@ -516,8 +516,8 @@ export function parse(str,options){
 	return out;
 };
 
-// One modifier, such as `@md`, `@!700`, `!@md`, `@@!600` or `@media(min-width:300px)`
-const MODIFIER = /!?@@?!?[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?/y;
+// One modifier, such as `@md`, `@!700`, `!@md`, `@@!600`, `@.flag` or `@media(min-width:300px)`
+const MODIFIER = /!?@@?(?:\.!?|!)?[\w-]+(?:\((?:[^()]|\([^()]*\))*\))?/y;
 
 function splitSelectors(str){
 	let sels = [];
