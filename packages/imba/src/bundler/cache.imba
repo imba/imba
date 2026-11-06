@@ -13,6 +13,9 @@ const keyPathCache  = {
 }
 import log from '../utils/logger'
 
+# Makes the temporary file names of one process unique.
+let tmpcount = 0
+
 export default class Cache
 	def constructor options
 		#key = Symbol!
@@ -138,11 +141,19 @@ export default class Cache
 		let val = await nodefs.promises.readFile(path,'utf8')
 		JSON.parse(val)
 
+	# Writes the value to a temporary file and renames that file to the key
+	# path. Other processes that share the cache dir then read either the old
+	# value or the new value, never a partly written file.
 	def setKeyValue key, value
 		return unless persistToDisk # dont use if in-memory
 		let path = fullKeyPath(key)
-		let json = JSON.stringify(value)
-		nodefs.promises.writeFile(path,json)
+		let tmp = "{path}.{process.pid}.{tmpcount++}.tmp"
+		try
+			await nodefs.promises.writeFile(tmp,JSON.stringify(value))
+			await nodefs.promises.rename(tmp,path)
+		catch error
+			console.warn "Could not write the cache file {path}: {error.message}"
+			nodefs.promises.unlink(tmp).catch(do null)
 
 	def memo name, time, cb
 		let key = normalizeKey(name)
@@ -161,8 +172,10 @@ export default class Cache
 
 		if (keytime > time) and !process.env.CI
 			let promise = getKeyValue(key).catch do(error)
-				console.warn "Error compiling file in getKeyValue name: {name}, key: {key}", error
-				cb!.then do(val) setKeyValue(key,val)
+				console.warn "Could not read the cache file for {name}, compiling it again: {error.message}"
+				let val = await cb!
+				setKeyValue(key,val)
+				val
 
 			cached = cache[key] = {
 				time: Date.now!

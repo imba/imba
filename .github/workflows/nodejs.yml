@@ -32,5 +32,6 @@ jobs:
         npm run test
         npm run test-cli
         npm run test-server
+        npm run test-bundler
       env:
         CI: true
