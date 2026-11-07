@@ -61,3 +61,11 @@ test 'await inside yield makes an async generator' do
 	# A sync generator with await is a JS syntax error that stops this file from loading, so the test checks the compiled code
 	let res = imbac.compile("def gen\n\tyield await 1", sourcePath: 'gen.imba', platform: 'browser')
 	ok res.js.match(/async function\*\s*gen\(/)
+
+test 'yield* delegates to another generator' do
+	# Compiled from a string, so that a compiler without yield* fails this test instead of the whole file
+	let res = imbac.compile("def inner\n\tyield 1\n\tyield 2\ndef outer\n\tyield 0\n\tyield* inner!\n\tyield 3", sourcePath: 'gen.imba', platform: 'browser')
+	ok res.js.match(/yield\*\s*inner\(\)/)
+	let load = new Function(res.js + '\nreturn outer')
+	let outer = load!
+	eq Array.from(outer!), [0,1,2,3]
