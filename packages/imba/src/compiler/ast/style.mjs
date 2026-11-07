@@ -12,6 +12,7 @@ export function defineStyleNodes(deps) {
     StyleTheme,
     Color,
     colord,
+    selparser,
     constants,
     helpers,
     iter$,
@@ -166,7 +167,7 @@ export function defineStyleNodes(deps) {
         STACK.root().mixinExports().add(this._mixin.name(), this._mixin._options);
       }
 
-      let sel = String(this._selectors).trim();
+      let sel = selparser.spreadQueries(String(this._selectors).trim());
 
       if (stack.parent() instanceof ClassBody) {
         // Declaration in a tag declaration
@@ -207,11 +208,7 @@ export function defineStyleNodes(deps) {
           this._sel || (this._sel = sel);
         }
       } else if (o.rule) {
-        this._sel ||
-          (this._sel =
-            this._selectors &&
-            this._selectors.toString &&
-            this._selectors.toString().trim());
+        this._sel || (this._sel = sel);
         // console.log "inside other rule? {@sel} | {o:rule.@sel} |"
         if (this._sel.indexOf("&") == -1) {
           this._sel = "& " + this._sel;
