@@ -10736,7 +10736,8 @@ class VarReference extends ValueNode {
       }
     }
 
-    let typ = STACK.tsc() && this.datatype();
+    // as an expression, the variable gets its type where it is declared
+    let typ = STACK.tsc() && !this._expression && this.datatype();
 
     if (typ) {
       out = TYPED(out, typ);
@@ -13415,6 +13416,7 @@ class If extends ControlFlow {
     this._body = body;
     this._alt = null;
     this._type = o.type;
+    this._postfix = !!o.postfix;
     if (this._type == "unless") this.invert();
     this._scope = new IfScope(this);
     this;
@@ -13422,6 +13424,14 @@ class If extends ControlFlow {
 
   test(v) {
     return this._test;
+  }
+
+  // The variable reference of `let x = y if cond`, or null
+  postfixDeclaration() {
+    let node = this._postfix && this._body && this._body.first();
+    let ref = node instanceof Assign && node._left;
+    let kind = ref instanceof VarReference && ref._type;
+    return kind == "let" || kind == "const" ? ref : null;
   }
 
   body(v) {
@@ -13499,6 +13509,15 @@ class If extends ControlFlow {
     // the let-variables declared in if(*test*) should be
     // local to the inner scope, but will technically be
     // declared in the outer scope. Must get unique name
+
+    let declaration = this.postfixDeclaration();
+    if (declaration) {
+      let kind = String(this._type);
+      declaration.warn(
+        `a ${declaration._type} in a postfix ${kind} is only available inside the ${kind}, so the code after this line cannot read it - declare the variable on the line before the ${kind}`,
+        { loc: declaration.option("type") },
+      );
+    }
 
     if (!stack._analyzing && !stack.tsc()) {
       this._pretest = AST.truthy(this._test);
