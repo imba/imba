@@ -322,6 +322,75 @@ test 'explicit predicate call inside an amperfunc needs no temporary' do
 	let res = imbac.compile(code,sourcePath: 'predicate.imba')
 	assert res.js.indexOf("(v$)=>predkey$(v$,'readyΦ')") >= 0
 
+# implicit self before a later declaration
+
+test 'closure reading self before a later let of the same name warns' do
+	let code = 'class A\n\tdef run\n\t\tlet a = do b!\n\t\tlet b = do 1\n\t\ta!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 1
+	eq res.warnings[0].message, '`b` is declared with let further down - here it reads self.b. Declare it above (`let b`) or write self.b'
+	eq res.warnings[0].range.start.line, 2
+	eq res.warnings[0].range.start.character, 13
+	# only a warning - b still reads self
+	assert res.js.indexOf('return self.b();') >= 0
+
+test 'closure reading a let declared above it does not warn' do
+	let code = 'class A\n\tdef run\n\t\tlet b\n\t\tlet a = do b!\n\t\tb = do 1\n\t\ta!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 0
+	assert res.js.indexOf('return b();') >= 0
+
+test 'explicit self before a later let of the same name does not warn' do
+	let code = 'class A\n\tdef run\n\t\tlet a = do self.b!\n\t\tlet b = do 1\n\t\ta!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 0
+
+# a let in a sibling block or in another closure is not visible from the use
+# wherever it is declared, so moving it would change nothing
+test 'later let in a block or closure that does not enclose the use does not warn' do
+	let code = 'class A\n\tdef run\n\t\tlet a = do b!\n\t\tif true\n\t\t\tlet b = 1\n\t\tlet c = do\n\t\t\tlet b = 2\n\t\ta!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 0
+
+test 'later let in a block or closure that encloses the use warns' do
+	let code = 'class A\n\tdef run\n\t\tif true\n\t\t\tlet a = do b!\n\t\t\tlet b = 1\n\t\t\ta!\n\t\tlet c = do\n\t\t\tlet d = do e!\n\t\t\tlet e = 2\n\t\t\td!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 2
+	eq res.warnings[0].range.start.line, 3
+	eq res.warnings[1].range.start.line, 7
+
+# outside a closure the use runs before the let, while the variable has no
+# value yet, so self is what it means
+test 'reading self before a later let outside a closure does not warn' do
+	let code = 'class A\n\tdef run\n\t\tlet x = b\n\t\tlet b = x + 1\n\t\tb\n\tdef copy\n\t\tlet b = b\n\t\tb\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 0
+
+test 'calling a later local def warns' do
+	let code = 'class A\n\tdef run\n\t\thelper!\n\t\tdef helper\n\t\t\t1\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 1
+	eq res.warnings[0].message, '`helper` is defined with def further down - here it reads self.helper. Define it above or write self.helper'
+
+# a closure default runs when the closure is called, a method default cannot
+# see the body of the method
+test 'closure default reading a later let warns, method default does not' do
+	let code = 'class A\n\tdef run x = b\n\t\tlet a = do(y = b) y\n\t\tlet b = 1\n\t\ta!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 1
+	eq res.warnings[0].range.start.line, 2
+
+test 'closure in a tag method reading self before a later let warns' do
+	let code = 'tag app-root\n\tdef render\n\t\tlet a = do b!\n\t\tlet b = 1\n\t\t<self> a!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 1
+
+test 'top-level def reading a later let does not warn' do
+	let code = 'def run\n\tlet a = do b!\n\tlet b = do 1\n\ta!\n'
+	let res = imbac.compile(code,sourcePath: 'later-let.imba')
+	eq res.warnings.length, 0
+	assert res.js.indexOf('return b();') >= 0
+
 test 'indentation error' do
 	let res = compile('indenterr')
 	eq res.errors.length, 1

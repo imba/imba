@@ -5452,6 +5452,7 @@ class Root extends Code {
     try {
       this.scope().visit();
       this.body().traverse();
+      this.warnImplicitSelfBeforeDeclaration();
       if (this.body().first() instanceof Terminator) {
         return (this.body().first()._first = true);
       }
@@ -5460,6 +5461,76 @@ class Root extends Code {
       err._sourcePath = OPTS.sourcePath;
       err._loc = STACK.currentRegion();
       throw err;
+    }
+  }
+
+  // A bare name that is not declared yet reads self in a method, so in
+  //
+  //   def run
+  //     let a = do b!
+  //     let b = do 1
+  //
+  // `a` calls self.b, while the same lines in a top-level def call the local
+  // b. The uses were recorded in VarOrAccess.visit, and the scopes have all
+  // their variables now. Only the scopes from the use up to the function that
+  // owns self count: a let in a sibling block or in another closure is not
+  // visible from the use wherever it is declared, so it does not warn.
+  //
+  // A use outside a closure runs before the declaration, while the variable
+  // has no value yet, so self is what such a use means. Only a use in a
+  // closure, which can run after the declaration, warns. A def is hoisted
+  // and can be called before it, so a use of a later def always warns.
+  warnImplicitSelfBeforeDeclaration() {
+    let uses = this._scope._implicitSelfUses;
+    if (!uses) {
+      return;
+    }
+    for (let i = 0; i < uses.length; i++) {
+      let use = uses[i];
+      let name = AST.sym(use._identifier.symbol());
+      let scope = use._lookupScope;
+      let variable = null;
+      while (scope) {
+        if (scope._varmap.hasOwnProperty(name)) {
+          variable = scope._varmap[name];
+          break;
+        }
+        if (!scope.selfless()) {
+          break;
+        }
+        // a parameter default does not see the body of its function
+        if (scope instanceof ParamDefaultScope) {
+          scope = scope._parent;
+          if (!scope || !scope.selfless()) {
+            break;
+          }
+        }
+        scope = scope._parent;
+      }
+
+      let decl = variable && variable._declarator;
+      let loc = decl && decl.loc instanceof Function && decl.loc();
+      let tok = use._token;
+      let at = tok && tok.startLoc instanceof Function ? tok.startLoc() : -1;
+      // `let b = b` declares b before the use that reads self.b
+      if (!loc || !(at >= 0) || !(loc[0] > at)) {
+        continue;
+      }
+
+      let raw = use._identifier.toRaw();
+      let does = use._assigns ? "sets" : "reads";
+      if (decl instanceof MethodDeclaration) {
+        use.warn(
+          `\`${raw}\` is defined with def further down - here it ${does} self.${raw}. Define it above or write self.${raw}`,
+        );
+      } else if (
+        /^(let|const|var)$/.test(variable.type()) &&
+        use._lookupScope.closure() != variable.scope().closure()
+      ) {
+        use.warn(
+          `\`${raw}\` is declared with ${variable.type()} further down - here it ${does} self.${raw}. Declare it above (\`let ${raw}\`) or write self.${raw}`,
+        );
+      }
     }
   }
 
@@ -10494,6 +10565,15 @@ class VarOrAccess extends ValueNode {
 
         if (this._identifier.isPredicate()) {
           recordPredicateUse(this, this._identifier.toRaw(), this);
+        }
+
+        // a let of this name further down is only registered later - see
+        // Root.warnImplicitSelfBeforeDeclaration
+        if (!variable) {
+          this._lookupScope = scope;
+          (
+            STACK.ROOT._implicitSelfUses || (STACK.ROOT._implicitSelfUses = [])
+          ).push(this);
         }
       }
     } else {
