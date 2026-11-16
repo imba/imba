@@ -1073,6 +1073,7 @@ class Stack {
     this._fieldRegistryEntries = [];
     this._predicateReads = false;
     this._declarationLists = new Set();
+    this._initializing = [];
     this._css = new StyleSheet();
     this._theme = null;
     this._meta = {};
@@ -10537,6 +10538,8 @@ class VarOrAccess extends ValueNode {
       (STACK.ROOT._amperSelfRefs || (STACK.ROOT._amperSelfRefs = [])).push(
         this,
       );
+    } else if (!variable && this.closureInInitializer(name, scope)) {
+      // bound in Assign.visit
     } else if (!this._identifier.isCapitalized()) {
       let selfvar = scope.lookup("self");
       let ctx = scope.context();
@@ -10581,6 +10584,24 @@ class VarOrAccess extends ValueNode {
     }
 
     return this;
+  }
+
+  // A use of `name` in a closure inside the initializer of `let name = ...`.
+  // Outside a closure there the variable has no value yet, so `let item =
+  // item` still reads self.item.
+  closureInInitializer(name, scope) {
+    let list = STACK._initializing;
+    for (let i = list.length - 1; i >= 0; i--) {
+      let entry = list[i];
+      if (entry.name == name) {
+        if (scope.closure() == entry.closure) {
+          return false;
+        }
+        entry.uses.push(this);
+        return true;
+      }
+    }
+    return false;
   }
 
   js(o) {
@@ -10957,12 +10978,50 @@ class Assign extends Op {
       l.traverse();
     }
 
+    // A closure further inside the right side runs after the declaration, so
+    // the name in it is the variable too: `let timer = setInterval(&, 1s) do
+    // clearInterval(timer)`. VarOrAccess.visit collects those uses, and they
+    // are bound once the variable is declared.
+    let initializing = null;
+    if (
+      l instanceof VarReference &&
+      r &&
+      !(r instanceof Lambda) &&
+      l._value instanceof Identifier
+    ) {
+      initializing = {
+        name: l._value.symbol(),
+        closure: this.scope__().closure(),
+        uses: [],
+      };
+      STACK._initializing.push(initializing);
+    }
+
     if (r) {
       r.traverse({ assignment: true });
     }
 
+    if (initializing) {
+      STACK._initializing.pop();
+    }
+
     if (l) {
       l.traverse();
+    }
+
+    let declared = initializing && l._value._variable;
+    if (declared) {
+      for (let use of initializing.uses) {
+        use._variable = declared;
+        declared.addReference(use);
+        use._value = declared;
+        use._token._variable = declared;
+        // the closure can be created before the variable has its value, so an
+        // amperfunction must not memoize it with the value at that point
+        (
+          STACK.ROOT._amperUnresolved || (STACK.ROOT._amperUnresolved = [])
+        ).push(use);
+      }
     }
 
     if (l.datatype() && r && !r.datatype()) {
