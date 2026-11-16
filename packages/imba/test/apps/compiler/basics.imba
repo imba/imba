@@ -66,6 +66,27 @@ test 'warning source line survives serialization' do
 	eq warning.range.end.character, 13
 	eq warning.lineText, '\tdef stopped?'
 
+# postfix if declarations
+
+test 'a let in a postfix if warns at the let' do
+	let code = 'def read src\n\tlet x = src.x if src\n\tlet a\n\ta = src.a if src\n\tvar b = src.b if src\n\tif src\n\t\tlet c = src.c\n\tif let d = src.d\n\t\td\n'
+	let res = imbac.compile(code,sourcePath: 'postfix.imba')
+	eq res.warnings.length, 1
+	eq res.warnings[0].message, 'a let in a postfix if is only available inside the if, so the code after this line cannot read it - declare the variable on the line before the if'
+	eq res.warnings[0].range.start.line, 1
+	eq res.warnings[0].range.start.character, 1
+	eq res.warnings[0].range.end.character, 4
+
+test 'a const in a postfix unless warns' do
+	let res = imbac.compile('def read src\n\tconst {x} = src unless src.skip\n',sourcePath: 'postfix.imba')
+	eq res.warnings.length, 1
+	assert res.warnings[0].message.indexOf('a const in a postfix unless is only available inside the unless') == 0
+
+test 'typed if let compiles to valid typescript' do
+	let res = imbac.compile('def read src\n\tif let x\\string = src.x\n\t\tx\n',sourcePath: 'iflet.imba', platform: 'tsc')
+	assert res.js.indexOf('let x:string;') >= 0
+	assert res.js.indexOf('if (x = src.x as string)') >= 0
+
 # predicate defs
 
 test 'predicate def without params compiles to a getter' do

@@ -1311,8 +1311,8 @@ var grammar = {
 	// *if* and *unless*.
 	If: [
 		o('IfBlock'),
-		o('Statement  POST_IF Expression',function() { return new If(A3,new Block([A1]),{type: A2,statement: true}); }),
-		o('Expression POST_IF Expression',function() { return new If(A3,new Block([A1]),{type: A2}); }) // , statement: true # why is this a statement?!?
+		o('Statement  POST_IF Expression',function() { return new If(A3,new Block([A1]),{type: A2,statement: true,postfix: true}); }),
+		o('Expression POST_IF Expression',function() { return new If(A3,new Block([A1]),{type: A2,postfix: true}); }) // , statement: true # why is this a statement?!?
 	],
 	
 	Ternary: [
