@@ -99,7 +99,7 @@
     "ignore": "^5.2.4",
     "image-size": "^0.9.3",
     "imba-monarch": "file:../imba-monarch",
-    "playwright": "^1.60.0",
+    "playwright": "^1.65.1",
     "sourcemap-codec": "^1.4.8",
     "tmp": "^0.2.7",
     "workerpool": "^6.0.3"
