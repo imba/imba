@@ -117,7 +117,9 @@ describe 'outline' do
 	let el = imba.mount <Outlines>
 
 	test 'three params' do
-		eq cs(el.$full).outline, 'rgb(255, 0, 0) solid 2px'
+		eq cs(el.$full).outlineWidth, '2px'
+		eq cs(el.$full).outlineStyle, 'solid'
+		eq cs(el.$full).outlineColor, 'rgb(255, 0, 0)'
 
 	test 'none' do
 		eq cs(el.$none).outlineStyle, 'none'

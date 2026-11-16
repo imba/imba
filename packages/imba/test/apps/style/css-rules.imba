@@ -8,6 +8,19 @@
 def cs el, pseudo = null
 	window.getComputedStyle(el,pseudo)
 
+# Browsers do not agree on how the computed value of an alignment keyword is
+# written: Chromium 159 reports flex-start as flow-start. Ask the browser how
+# it writes a keyword instead of spelling it out here.
+const keywords = {}
+def keyword value
+	return keywords[value] if keywords[value]
+	let el = document.createElement('div')
+	el.style.alignContent = value
+	document.body.appendChild(el)
+	let res = window.getComputedStyle(el).alignContent
+	el.remove!
+	keywords[value] = res
+
 def prop el, name
 	cs(el).getPropertyValue(name).trim!
 
@@ -146,8 +159,8 @@ describe 'rules' do
 	test 'j and a set both justify and align properties' do
 		eq cs(el.$ja).justifyContent, 'center'
 		eq cs(el.$ja).justifyItems, 'center'
-		eq cs(el.$ja).alignContent, 'flex-end'
-		eq cs(el.$ja).alignItems, 'flex-end'
+		eq cs(el.$ja).alignContent, keyword('flex-end')
+		eq cs(el.$ja).alignItems, keyword('flex-end')
 
 	test 'named radius reads --border-radius-name' do
 		eq cs(el.$pill).borderTopLeftRadius, '999px'

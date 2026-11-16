@@ -5,8 +5,21 @@
 def cs el
 	window.getComputedStyle(el)
 
+# Browsers do not agree on how the computed value of an alignment keyword is
+# written: Chromium 159 reports flex-start as flow-start. Ask the browser how
+# it writes a keyword instead of spelling it out here.
+const keywords = {}
+def keyword value
+	return keywords[value] if keywords[value]
+	let el = document.createElement('div')
+	el.style.alignContent = value
+	document.body.appendChild(el)
+	let res = window.getComputedStyle(el).alignContent
+	el.remove!
+	keywords[value] = res
+
 def flex fld, jc, ai, ac = ai
-	{display: 'flex', flexDirection: fld, justifyContent: jc, alignItems: ai, alignContent: ac}
+	{display: 'flex', flexDirection: fld, justifyContent: keyword(jc), alignItems: keyword(ai), alignContent: keyword(ac)}
 
 tag Named
 	<self>
@@ -138,7 +151,7 @@ describe 'layouts as modifier values' do
 		eq cs(el.$combo).flexDirection, 'column'
 		eq cs(el.$combo).justifyContent, 'center'
 		eq cs(el.$override).justifyContent, 'center'
-		eq cs(el.$override).alignItems, 'flex-start'
+		eq cs(el.$override).alignItems, keyword('flex-start')
 
 describe 'grid templates' do
 	let el = imba.mount <Grids>

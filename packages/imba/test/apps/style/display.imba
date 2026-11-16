@@ -1,5 +1,16 @@
 import 'imba/spec'
 
+# Browsers do not agree on how the computed value of an alignment keyword is
+# written: Chromium 159 reports flex-start as flow-start. Ask the browser how
+# it writes a keyword instead of spelling it out here.
+def keyword value
+	let el = document.createElement('div')
+	el.style.alignContent = value
+	document.body.appendChild(el)
+	let res = window.getComputedStyle(el).alignContent
+	el.remove!
+	res
+
 tag App
 	<self[d:hflex ja:center g:10]>
 		css section d:hflex ja:center g:10
@@ -13,7 +24,7 @@ tag App
 			<div[d:hbox] eq={display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}>
 			<div[d:vbox] eq={display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'}>
 		<section title="justify-align">
-			<div[d:flex ja:center flex-start] eq={display: 'flex', justifyContent: 'center', alignItems: 'flex-start'}>
+			<div[d:flex ja:center flex-start] eq={display: 'flex', justifyContent: 'center', alignItems: keyword('flex-start')}>
 			<div[d:flex ja:stretch] eq={display: 'flex', justifyContent: 'stretch', alignItems: 'stretch'}>
 
 imba.mount(let app = <App>)
