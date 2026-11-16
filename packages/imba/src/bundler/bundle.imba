@@ -10,7 +10,7 @@ import {
 	createHash,diagnosticToESB,builtInModules,
 	extendObject,replaceAll,normalizePath,
 	relativePath,ImageRegex,FontRegex,resolvePackage,
-	dedupePropertyRules
+	dedupePropertyRules,mergeSharedRules
 } from './utils'
 
 import print-info from '../utils/print-info'
@@ -1506,8 +1506,10 @@ export default class Bundle < Component
 					mappings: ""
 				}
 
-				# every chunk registers the css properties it relies on
+				# every chunk registers the css properties it relies on, and
+				# repeats the rules that the compiler shares between selectors
 				let chunks = dedupePropertyRules(cssinputs.map(do $1.#csschunk or ''),yes)
+				chunks = mergeSharedRules(chunks,yes)
 
 				for item,i in cssinputs
 					let chunk = chunks[i]
@@ -1607,7 +1609,7 @@ export default class Bundle < Component
 			# lines are kept, so that the sourcemap of the file still matches.
 			if asset.type == 'css' and asset.#file
 				let text = asset.#file.text
-				let body = dedupePropertyRules([text])[0]
+				let body = mergeSharedRules(dedupePropertyRules([text]))[0]
 				asset.#text = asset.#contents = body if body != text
 
 			if asset.type == 'js' or asset.type == 'mjs'
