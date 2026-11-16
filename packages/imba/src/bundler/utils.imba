@@ -222,3 +222,60 @@ export def injectStringBefore target, toInject, patterns = ['']
 
 export def slash(str)
 	str.replace(/\\/g, "/")
+
+# The top-level @property rules of a stylesheet, as [start,end,key] triples.
+# Rules with the same key register the same property in the same way.
+def findPropertyRules body
+	let rules = []
+	let depth = 0
+	let i = 0
+	let len = body.length
+	while i < len
+		let chr = body[i]
+		if chr == '/' and body[i + 1] == '*'
+			let end = body.indexOf('*/',i + 2)
+			i = end == -1 ? len : end + 2
+			continue
+		if chr == '"' or chr == "'"
+			i++
+			while i < len and body[i] != chr
+				i++ if body[i] == '\\'
+				i++
+		elif chr == '{'
+			depth++
+		elif chr == '}'
+			depth--
+		elif chr == '@' and depth == 0 and body.startsWith('@property',i) and (/\s/).test(body[i + 9] or '')
+			let end = body.indexOf('}',i)
+			break if end == -1
+			let key = body.slice(i,end + 1).replace(/\s+/g,' ').replace(/\s?([{};:])\s?/g,'$1')
+			rules.push([i,end + 1,key])
+			i = end
+		i++
+	return rules
+
+# Every compiled stylesheet registers the css properties it relies on, so a
+# file that merges many of them repeats the same @property rules over and over.
+# Takes the stylesheets in the order they are merged and removes each rule that
+# is repeated further down. The last one is the one that counts in css, so the
+# merged result registers the same properties. With `collapse` the line of a
+# removed rule is removed as well, which changes the line numbers.
+export def dedupePropertyRules chunks, collapse = no
+	let seen = new Set
+	let out = chunks.slice(0)
+	let idx = chunks.length
+	while --idx >= 0
+		let body = out[idx]
+		continue unless body and body.indexOf('@property') >= 0
+		let rules = findPropertyRules(body)
+		let nr = rules.length
+		while --nr >= 0
+			let [start,end,key] = rules[nr]
+			unless seen.has(key)
+				seen.add(key)
+				continue
+			if collapse and body[end] == '\n' and (start == 0 or body[start - 1] == '\n')
+				end++
+			body = body.slice(0,start) + body.slice(end)
+		out[idx] = body
+	return out

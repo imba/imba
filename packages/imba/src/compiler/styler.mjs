@@ -1630,20 +1630,86 @@ export class StyleTheme {
 
 // should not happen at root - but create a theme instance
 
+// Registers a variable that does not inherit. Changing an inherited variable
+// restyles every descendant of the element, a registered one only the element.
+// Browsers without @property skip the rule and keep inheriting.
+function propertyRule(name,initial = null){
+	let parts = ['syntax:"*"','inherits:false'];
+	if (initial != null) { parts.push(("initial-value:" + initial)) };
+	return ("@property " + name + "{" + parts.join(';') + "}");
+};
+
+// Whether a rendered selector styles the element it is written on, as opposed
+// to one of its descendants or pseudo-elements, which need the variables of
+// the element to inherit.
+function isOwnElementSelector(sel){
+	if (typeof sel != 'string') { return false; };
+	sel = sel.trim();
+	if (/::|:(before|after|first-line|first-letter)\b/.test(sel)) { return false; };
+	let depth = 0;
+	for (let i = 0; i < sel.length; i++) {
+		let chr = sel[i];
+		if (chr == '\\') {
+			i++;
+		} else if (chr == '(' || chr == '[') {
+			depth++;
+		} else if (chr == ')' || chr == ']') {
+			depth--;
+		} else if (depth == 0 && /[\s>+~,]/.test(chr)) {
+			return false;
+		};
+	};
+	return true;
+};
+
+// Each ease group has a duration (d), a timing function (f) and a delay (w).
+// A group that is not set falls back to the group it extends, and `all` falls
+// back to the initial values of its registered properties:
+// all <- styles <- opacity, colors and box, and box <- transform.
+const EaseGroups = {a: null,s: 'a',o: 's',c: 's',b: 's',t: 'b'};
+const EaseDefaults = {d: '0ms',f: 'cubic-bezier(0.23, 1, 0.32, 1)',w: '0ms'};
+
+function easeVar(group,part){
+	let name = "--e_" + group + part;
+	let parent = EaseGroups[group];
+	return parent ? ("var(" + name + "," + easeVar(parent,part) + ")") : ("var(" + name + ")");
+};
+
+function easeTiming(group){
+	return Object.keys(EaseDefaults).map(function(_0) { return easeVar(group,_0); }).join(' ');
+};
+
+function easeProperties(){
+	let props = {};
+	for (let group of Object.keys(EaseGroups)) {
+		for (let part of Object.keys(EaseDefaults)) {
+			props["--e_" + group + part] = (group == 'a') ? EaseDefaults[part] : null;
+		};
+	};
+	props['--e_b'] = props['--e_c'] = null;
+	props['--e_rest'] = 'any';
+	return props;
+};
+
 export const StyleExtenders = {
 	transform: {
 		specificity: 0,
-		body: '--t_x:0;--t_y:0;--t_rotate:0;\n--t_scale:1;--t_scale-x:1;--t_scale-y:1;\ntransform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))\n	scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));'
+		properties: {'--t_x': '0','--t_y': '0','--t_rotate': '0','--t_scale': '1','--t_scale-x': '1','--t_scale-y': '1'},
+		body: 'transform: translate(var(--t_x),var(--t_y)) rotate(var(--t_rotate))\n\tscaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale));'
 	},
 	
 	transform_complex: {
 		specificity: 0,
-		body: '--t_z:0;--t_skew-x:0;--t_skew-y:0;\ntransform: translate3d(var(--t_x),var(--t_y),var(--t_z))\n					rotate(var(--t_rotate))\n					skewX(var(--t_skew-x)) skewY(var(--t_skew-y))\n					scaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale)) !important;'
+		properties: {'--t_z': '0','--t_skew-x': '0','--t_skew-y': '0'},
+		body: 'transform: translate3d(var(--t_x),var(--t_y),var(--t_z))\n\t\t\t\t\trotate(var(--t_rotate))\n\t\t\t\t\tskewX(var(--t_skew-x)) skewY(var(--t_skew-y))\n\t\t\t\t\tscaleX(var(--t_scale-x)) scaleY(var(--t_scale-y)) scale(var(--t_scale)) !important;'
 	},
 	
 	outline: {body: '--ol_s:solid;--ol_w:1px;--ol_o:0px; --ol_c:transparent;\noutline:var(--ol_w) var(--ol_s) var(--ol_c); outline-offset:var(--ol_o);\noutline:1px solid transparent; outline-offset:var(--ol_o);'},
 	
-	ease: {body: '--e_ad:0ms;--e_af:cubic-bezier(0.23, 1, 0.32, 1);--e_aw:0ms;\n--e_sd:var(--e_ad);--e_sf:var(--e_af);--e_sw:var(--e_aw);\n--e_od:var(--e_sd);--e_of:var(--e_sf);--e_ow:var(--e_sw);\n--e_cd:var(--e_sd);--e_cf:var(--e_sf);--e_cw:var(--e_sw);\n--e_bd:var(--e_sd);--e_bf:var(--e_sf);--e_bw:var(--e_sw);\n--e_td:var(--e_bd);--e_tf:var(--e_bf);--e_tw:var(--e_bw);\n--e_b:var(--e_bd) var(--e_bf) var(--e_bw);\n--e_c:var(--e_cd) var(--e_cf) var(--e_cw);\n--e_rest:any;\ntransition:\n	all var(--e_ad) var(--e_af) var(--e_aw),\n	opacity var(--e_od) var(--e_of) var(--e_ow),\n	transform var(--e_td) var(--e_tf) var(--e_tw),\n	color var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c), filter var(--e_c),\n	inset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),min-width var(--e_b),min-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),\n	var(--e_rest);'}
+	ease: {
+		properties: easeProperties(),
+		body: '--e_b:' + easeTiming('b') + ';--e_c:' + easeTiming('c') + ';\ntransition:\n\tall ' + easeTiming('a') + ',\n\topacity ' + easeTiming('o') + ',\n\ttransform ' + easeTiming('t') + ',\n\tcolor var(--e_c),background-color var(--e_c),border-color var(--e_c),fill var(--e_c),stroke var(--e_c), outline-color var(--e_c), box-shadow var(--e_c), filter var(--e_c),\n\tinset var(--e_b), width var(--e_b),height var(--e_b),max-width var(--e_b),max-height var(--e_b),min-width var(--e_b),min-height var(--e_b),border-width var(--e_b),outline-width var(--e_b),stroke-width var(--e_b),margin var(--e_b),padding var(--e_b),\n\tvar(--e_rest);'
+	}
 };
 
 export const AutoPrefixes = {
@@ -1660,6 +1726,8 @@ export class StyleSheet {
 		this[$apply$] = {transform_complex: [],transform: []};
 		this[$register$] = {};
 		this.transforms = null;
+		// variables of inline styles that are only read by the element itself
+		this.locals = [];
 	}
 	
 	get transitions(){
@@ -1676,6 +1744,14 @@ export class StyleSheet {
 					let item = $53[$52];
 					if (arr.indexOf(item) < 0) { arr.push(item) };
 				};
+			};
+		};
+
+		if (meta.ownLocals) {
+			let inherited = meta.inheritedLocals || [];
+			for (let $94 = 0, $95 = iter$__(meta.ownLocals), $96 = $95.length; $94 < $96; $94++) {
+				let name = $95[$94];
+				if (inherited.indexOf(name) < 0 && this.locals.indexOf(name) < 0) { this.locals.push(name) };
 			};
 		};
 		return;
@@ -1698,7 +1774,8 @@ export class StyleSheet {
 		
 		let js = [];
 		let parts = this[$parts$].slice(0);
-		
+		let properties = {};
+
 		let prepend = function(val) {
 			if (parts.indexOf(val) < 0) {
 				return parts.unshift(val);
@@ -1772,12 +1849,13 @@ export class StyleSheet {
 					};
 					
 					parts.unshift(str);
+					if (helper.properties) { Object.assign(properties,helper.properties) };
 				};
 			};
 			
 			let selectors = Object.keys(all);
 			if (k == 'transition' && selectors.length) {
-				prepend('.\\@enter:not(#_),.\\@leave:not(#_) {--e_ad:300ms;}');
+				prepend(':where(.\\@enter,.\\@leave) {--e_ad:300ms;}');
 				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }');// 
 			};
 			if (easing) {
@@ -1785,6 +1863,13 @@ export class StyleSheet {
 			};
 		};
 		
+		for (let $97 = 0, $98 = iter$__(this.locals), $99 = $98.length; $97 < $99; $97++) {
+			properties[$98[$97]] = null;
+		};
+
+		let rules = Object.keys(properties).map(function(_0) { return propertyRule(_0,properties[_0]); });
+		if (rules.length) { parts.unshift(rules.join('\n')) };
+
 		this[$string$] = parts.join('\n\n');
 
 		return this[$string$];
@@ -1825,6 +1910,26 @@ export class StyleRule {
 	register(kind,sel){
 		let arr = this.options.register[kind] ||= [];
 		return arr.push(sel);
+	}
+
+	// A runtime value is set as a variable on the element. When this rule
+	// styles that same element the variable never has to inherit, so the
+	// stylesheet can register it as non-inheriting.
+	registerLocals(sel,content){
+		let rules = (sel && sel[$rules$]) || [];
+		let own = rules.length > 0 && rules.every(function(_0) { return isOwnElementSelector(_0[$string$]); });
+		// the selector of a css block is scoped with a class on the target, so
+		// a rule for a descendant cannot be told apart by its rendered selector
+		if (this.options.localsInRootOnly && (this.parent || this.selector != '&')) { own = false };
+		let key = own ? 'ownLocals' : 'inheritedLocals';
+		for (let $100 = 0, $101 = iter$__(this.options.locals), $102 = $101.length; $100 < $102; $100++) {
+			let name = $101[$100];
+			if (content.indexOf(("var(" + name + ")")) >= 0) {
+				let arr = this.options[key] ||= [];
+				if (arr.indexOf(name) < 0) { arr.push(name) };
+			};
+		};
+		return;
 	}
 	
 	toString(o = {}){
@@ -1932,11 +2037,11 @@ export class StyleRule {
 					this.meta.transform_complex = true;
 				};
 				
-				parts.push(("--t_" + key + ": " + value + " !important;"));
+				parts.push(("--t_" + key + ": " + value + important + ";"));
 			} else if (key.match(/^(ease-.*)$/)) {
 				this.meta.ease = true;
 				let ref = key.replace('delay','wait').split('-').map(function(_0) { return _0[0]; }).join('');
-				parts.push(("--e_" + ref.slice(1) + ": " + value + " !important;"));
+				parts.push(("--e_" + ref.slice(1) + ": " + value + important + ";"));
 				
 				if (!abbreviations[key]) {
 					console.warn(("" + key + " is not a valid style property"));
@@ -1947,7 +2052,7 @@ export class StyleRule {
 					true;
 					// TODO warn about easings not making sense inside here
 				};
-				parts.push(("" + key + ": " + value + " !important;"));
+				parts.push(("" + key + ": " + value + important + ";"));
 			} else if (key.match(/^__ease__$/)) {
 				true;
 			} else if (key.match(/^raw-/)) {
@@ -2018,6 +2123,9 @@ export class StyleRule {
 			// should definitely be able to merge these back together
 			// content += indent
 			out = (content.match(/[^\n\s]/)) ? selparser.render(sel,content,this.options,o) : "";
+			if (out && this.options.locals && this.options.locals.length) {
+				this.registerLocals(sel,content);
+			};
 			out = indent + out;
 		};
 		
