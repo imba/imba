@@ -1855,7 +1855,8 @@ export class StyleSheet {
 			
 			let selectors = Object.keys(all);
 			if (k == 'transition' && selectors.length) {
-				prepend(':where(.\\@enter,.\\@leave) {--e_ad:300ms;}');
+				// one :where() per class, so that the browser can look the rule up by class
+				prepend(':where(.\\@enter),:where(.\\@leave) {--e_ad:300ms;}');
 				prepend('._instant_:not(#_):not(#_):not(#_):not(#_) { transition-duration:0ms !important; }');// 
 			};
 			if (easing) {
