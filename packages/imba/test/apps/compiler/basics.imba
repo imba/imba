@@ -391,6 +391,49 @@ test 'top-level def reading a later let does not warn' do
 	eq res.warnings.length, 0
 	assert res.js.indexOf('return b();') >= 0
 
+# a closure inside the initializer of a let runs after the declaration
+
+test 'closure inside its own let initializer reads the variable' do
+	let code = 'class A\n\tdef run\n\t\tlet timer = setInterval(&,10) do clearInterval(timer)\n\t\tlet walker = make(accept: do(node) check(node,walker))\n'
+	let res = imbac.compile(code,sourcePath: 'own-initializer.imba')
+	eq res.warnings.length, 0
+	assert res.js.indexOf('clearInterval(timer)') >= 0
+	assert res.js.indexOf('self.check(node,walker)') >= 0
+	assert res.js.indexOf('self.timer') == -1
+	assert res.js.indexOf('self.walker') == -1
+
+test 'own let initializer outside a closure still reads self' do
+	let code = 'class A\n\tdef run\n\t\tlet title = title\n\t\tlet items = items.map do(i) i + 1\n\t\tlet n = n + 1\n\t\tn\n'
+	let res = imbac.compile(code,sourcePath: 'own-initializer.imba')
+	assert res.js.indexOf('let title = this.title;') >= 0
+	assert res.js.indexOf('let items = this.items.map') >= 0
+	assert res.js.indexOf('let n = this.n + 1;') >= 0
+
+test 'closure inside its own let initializer in a tag method reads the variable' do
+	let code = 'tag app-root\n\tdef mount\n\t\tlet poll = setInterval(&,10) do\n\t\t\tif ready\n\t\t\t\tclearInterval(poll)\n'
+	let res = imbac.compile(code,sourcePath: 'own-initializer.imba')
+	assert res.js.indexOf('clearInterval(poll)') >= 0
+	assert res.js.indexOf('self.ready') >= 0
+
+test 'closure that declares the same name inside its own let initializer reads its own variable' do
+	let code = 'class A\n\tdef run\n\t\tlet q = setTimeout(&,10) do\n\t\t\tlet q = 2\n\t\t\tq + 1\n'
+	let res = imbac.compile(code,sourcePath: 'own-initializer.imba')
+	assert res.js.indexOf('let q = 2;') >= 0
+	assert res.js.indexOf('return q + 1;') >= 0
+
+class Ticker
+	count = 0
+	def start
+		let timer = setInterval(&,1) do
+			count++
+			clearInterval(timer) if count == 2
+
+test 'interval that clears itself from its own let initializer stops' do
+	let ticker = new Ticker
+	ticker.start!
+	await new Promise do(resolve) setTimeout(resolve,50)
+	eq ticker.count, 2
+
 test 'indentation error' do
 	let res = compile('indenterr')
 	eq res.errors.length, 1
