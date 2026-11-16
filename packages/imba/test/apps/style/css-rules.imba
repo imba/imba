@@ -114,7 +114,8 @@ describe 'helper rules inside media queries' do
 		await viewport(800)
 		eq prop(el.$eamd,'--e_ad'), '100ms'
 		await viewport(700)
-		eq prop(el.$eamd,'--e_ad'), ''
+		# the initial value of the registered property
+		eq prop(el.$eamd,'--e_ad'), '0ms'
 		await viewport(800)
 
 	test '3d transform only inside a media query' do

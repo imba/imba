@@ -288,6 +288,16 @@ export function defineStyleNodes(deps) {
           tags: tags,
           component: cmp,
           inline: !!this._flag,
+          // Runtime values are set as variables on the tag. In an inline style
+          // every rule styles that tag. In a css block of the tag tree only the
+          // declarations directly in a block without a selector do.
+          locals:
+            this._flag || this.option("inTagTree")
+              ? this._placeholders.map(function (ph) {
+                  return ph.name();
+                })
+              : null,
+          localsInRootOnly: !this._flag,
           global: !!this.isGlobal(),
           mixins: {},
           apply: {},

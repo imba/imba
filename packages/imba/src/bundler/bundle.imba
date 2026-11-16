@@ -9,7 +9,8 @@ import {startWorkers} from './pooler'
 import {
 	createHash,diagnosticToESB,builtInModules,
 	extendObject,replaceAll,normalizePath,
-	relativePath,ImageRegex,FontRegex,resolvePackage
+	relativePath,ImageRegex,FontRegex,resolvePackage,
+	dedupePropertyRules,mergeSharedRules
 } from './utils'
 
 import print-info from '../utils/print-info'
@@ -1505,8 +1506,13 @@ export default class Bundle < Component
 					mappings: ""
 				}
 
+				# every chunk registers the css properties it relies on, and
+				# repeats the rules that the compiler shares between selectors
+				let chunks = dedupePropertyRules(cssinputs.map(do $1.#csschunk or ''),yes)
+				chunks = mergeSharedRules(chunks,yes)
+
 				for item,i in cssinputs
-					let chunk = item.#csschunk
+					let chunk = chunks[i]
 
 					if chunk
 						let path = item.path.replace(/(^\w+\:)|(\?.+$)/g,'')
@@ -1598,6 +1604,13 @@ export default class Bundle < Component
 				if let meta = builder.meta[src]
 					let body = transformCompiledHTML(asset,asset.#file.text,meta,entryManifest)
 					asset.#text = asset.#contents = body
+
+			# esbuild has merged the stylesheets of the bundle into this file. The
+			# lines are kept, so that the sourcemap of the file still matches.
+			if asset.type == 'css' and asset.#file
+				let text = asset.#file.text
+				let body = mergeSharedRules(dedupePropertyRules([text]))[0]
+				asset.#text = asset.#contents = body if body != text
 
 			if asset.type == 'js' or asset.type == 'mjs'
 				let body = asset.#text or asset.#file.text
