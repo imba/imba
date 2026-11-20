@@ -175,7 +175,7 @@ async function bundle(o) {
 	} else {
 		o.resolveExtensions = ['.web.imba', '.imba', '.imba1', '.ts', '.mjs', '.cjs', '.js', '.css', '.json'];
 		o.nodePaths = [np.resolve(__dirname, '..', 'polyfills')]
-		o.target = ['chrome88','edge79','safari15']
+		o.target = ['chrome99','edge99','firefox97','safari15.4']
 	}
 
 	if (!o.outdir && !o.outfile) {

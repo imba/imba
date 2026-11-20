@@ -111,7 +111,7 @@ export const defaultConfig = {
 
 	options: {
 		base: {
-			target: ['chrome88','edge79','safari15']
+			target: ['chrome99','edge99','firefox97','safari15.4']
 		}
 		node: {
 			extends: 'base'
