@@ -248,6 +248,8 @@ export function multi$(symbol,sup,...mixins){
 
 let sup = {
 	cache: {},
+	// like cache, for the static members of class extensions
+	statics: {},
 	self: null,
 	target: null,
 	proxy: new Proxy({},{
@@ -265,9 +267,9 @@ let sup = {
 	})
 }
 
-export function sup$(self,symbol) {
+export function sup$(self,symbol,isStatic) {
 	sup.self = self;
-	sup.target = sup.cache[symbol];
+	sup.target = (isStatic ? sup.statics : sup.cache)[symbol];
 	return sup.proxy;
 }
 
@@ -296,9 +298,25 @@ export function register$(klass,symbol,name,flags,into = null) {
 				Object.getPrototypeOf(target),
 				Object.getOwnPropertyDescriptors(target)
 			)
+			if(into !== target){
+				sup.statics[symbol] = Object.create(
+					Object.getPrototypeOf(into),
+					Object.getOwnPropertyDescriptors(into)
+				)
+			}
 		}
 
 		extend$(target,klass.prototype);
+
+		// The static members of a class extension go to the class
+		if(into !== target){
+			let statics = Object.getOwnPropertyDescriptors(klass);
+			for(let key of ['prototype','name','length']){
+				// Not writable means that JavaScript defined it, not a static member
+				if(statics[key].writable === false) delete statics[key];
+			}
+			Object.defineProperties(into,statics);
+		}
 		return into;
 	}
 

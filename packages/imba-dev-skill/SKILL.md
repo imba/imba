@@ -304,9 +304,11 @@ extend class Dog               # reopen/extend existing class (no <)
 		L "{name} fetches!"
 ```
 
+**Static members in `extend class` / `extend tag`** reach the class: `static def`, `static get`, `static set` and static fields with a value. `self` is the extended class. `super` in a static method calls the static member that the class had before, or the one of the superclass. A static field without a value only declares the field.
+
 **`extend class` / `extend tag` limitations:**
-- You cannot override `static def` methods via `extend class`. The original static method will always be called. If you need to run init logic from an addon/extension, put it in a `static def init` on your own class instead.
-- You **cannot declare plain fields with default values** in `extend class` or `extend tag`. Declarations like `field = value` or `#field = value` will not work. OP field declarations (`field @string`, `field @int`, etc.) ARE allowed. For plain fields, initialize them lazily in a method instead (e.g., `#field ??= new Set` in the method that uses it).
+- You **cannot declare plain instance fields with default values** in `extend class` or `extend tag`. Declarations like `field = value` or `#field = value` will not work. OP field declarations (`field @string`, `field @int`, etc.) ARE allowed. For plain fields, initialize them lazily in a method instead (e.g., `#field ??= new Set` in the method that uses it).
+- `extend obj` (without `class`) defines its members on the object itself, so a `static` member there is a compile error.
 
 ### Static Members
 ```imba

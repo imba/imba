@@ -1,0 +1,7 @@
+Static members in the body of `extend class` and `extend tag` now reach the class. Before, an extension added only its instance members. It dropped `static def`, `static get`, `static set` and static fields with no message, so after `extend class Item` with `static def find`, a call of `Item.find` threw `Item.find is not a function`. A static member of an extension now works as it does in the class body: `self` is the extended class, subclasses inherit the member, and it replaces a static member of the class that has the same name. `super` in a static method, getter or setter of an extension calls the member that the class had before, or the member of the superclass.
+
+A static field with a value is assigned to the class when the extension runs, and the value can use the static members of the class, as in `static shared = make!`. Before, the value ran against a hidden class, so that example threw `this.make is not a function` when the file loaded. A static field without a value only declares the field, like an instance field in an extension, so it does not clear a value that the class has.
+
+Check your extensions for static members. They did nothing before, and they change the class now.
+
+`extend obj`, without `class`, defines its members on the object itself, so a static member has no meaning there. It is now the compile error `static member not supported in object extension`. Before, it was dropped with no message.
