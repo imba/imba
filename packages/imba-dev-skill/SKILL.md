@@ -272,7 +272,7 @@ if res isa Error
 	# handle/assert the failure
 ```
 
-Compiles to `(()=>{ try { return expr } catch(e) { return e } })()`. Idiomatic for tests asserting that something throws (`let err = rescue tree.add({as: Bad})` then `assert err isa Error`) and for tolerating expected failures without a `try` block. Note the success value and the error share one variable — only use it where `isa Error` (or similar) can distinguish them.
+Compiles to `(()=>{ try { return expr } catch(e) { return e } })()`. With `await` in the expression it compiles to `(await (async ()=>{ … })())`, so `(rescue await load!).data` reads `data` on the awaited value or on the error. Idiomatic for tests asserting that something throws (`let err = rescue tree.add({as: Bad})` then `assert err isa Error`) and for tolerating expected failures without a `try` block. Note the success value and the error share one variable — only use it where `isa Error` (or similar) can distinguish them.
 
 ### Template Control Flow
 Inside `<self>`, use `if` and `for` directly:
