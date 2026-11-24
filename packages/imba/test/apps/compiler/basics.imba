@@ -434,6 +434,15 @@ test 'interval that clears itself from its own let initializer stops' do
 	await new Promise do(resolve) setTimeout(resolve,50)
 	eq ticker.count, 2
 
+# a member access after rescue await reads the awaited value, not the promise
+
+test 'member access after rescue await applies to the awaited value' do
+	let code = 'def a path\n\t(rescue await load(path))..root\ndef d path\n\t(rescue await load(path)).root\n'
+	let res = imbac.compile(code,sourcePath: 'rescue-await.imba')
+	let call = '(await (async ()=>{ try { return await load(path) } catch(e) { return e; } })())'
+	assert res.js.indexOf("return {call}?.root;") >= 0
+	assert res.js.indexOf("return {call}.root;") >= 0
+
 test 'indentation error' do
 	let res = compile('indenterr')
 	eq res.errors.length, 1
