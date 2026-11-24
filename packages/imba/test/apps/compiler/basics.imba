@@ -443,6 +443,16 @@ test 'member access after rescue await applies to the awaited value' do
 	assert res.js.indexOf("return {call}?.root;") >= 0
 	assert res.js.indexOf("return {call}.root;") >= 0
 
+# a try, loop or switch in an expression runs in an arrow function, which must
+# be async when an await in the expression runs in it
+
+test 'try, loop and switch expressions with await compile to an awaited async function' do
+	let code = 'def run items, load\n\t[(try await load!), (for item in items then await item), (switch await load!\n\t\twhen 1 then 2), (try do await load!)]\n'
+	let res = imbac.compile(code,sourcePath: 'await-expression.imba')
+	eq res.js.split('(await (async ()=>').length - 1, 3
+	# the await in the closure runs in the closure
+	assert res.js.indexOf('(()=>{ try') >= 0
+
 test 'indentation error' do
 	let res = compile('indenterr')
 	eq res.errors.length, 1
