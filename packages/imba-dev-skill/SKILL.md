@@ -253,6 +253,8 @@ let doubled = for num in [1,2,3]
 	num * 2
 ```
 
+A loop, `switch` or `try` inside a larger expression, such as a call argument, compiles to an arrow function that runs at once. With `await` in it, that function is async and the code around it awaits the result. For example, `send(for item in items then await save(item))` gives `send` the array of results.
+
 ### Conditional Assignment
 `=?` only assigns if value changed, returns whether it changed:
 ```imba

@@ -702,7 +702,22 @@ var IIFE = function (body) {
   let fn = new IifeFunc([], body);
   // the function is made while the code compiles, in the current scope
   fn._scope._parent = STACK.scope();
+  // an await in the body runs in this function
+  if (
+    body.some(function (node) {
+      return node._awaits;
+    })
+  ) {
+    fn.set({ async: true });
+  }
   return fn;
+};
+
+// Calls the arrow function `fn` at once. An async function is awaited in
+// parentheses, so that a member access or a call after it applies to the
+// awaited value and not to the promise.
+var callArrow = function (fn, async) {
+  return async ? "(await (async " + fn + ")())" : "(" + fn + ")()";
 };
 
 var GET = function (left, right) {
@@ -1547,6 +1562,22 @@ class Stack {
         return node;
       }
       i -= 1;
+    }
+    return null;
+  }
+
+  // The current node awaits. The closest function above it becomes async and
+  // is returned. The current node and the nodes between them get `_awaits`.
+  markAwait() {
+    var i = this._nodes.length - 1;
+    this._nodes[i]._awaits = true;
+    while (--i >= 0) {
+      let node = this._nodes[i];
+      if (node instanceof Func) {
+        node.set({ async: true });
+        return node;
+      }
+      node._awaits = true;
     }
     return null;
   }
@@ -7229,7 +7260,7 @@ class IifeFunc extends Func {
     }
     var ind = this.body()._indentation;
     var out = this.body().c({ braces: true });
-    return "(()=>" + out + ")()";
+    return callArrow("()=>" + out, this.option("async"));
   }
 }
 
@@ -7559,9 +7590,9 @@ class RescueFunc extends Func {
     this._scope = null;
     this.body().traverse();
 
+    // the awaited call of an async rescue is an await in the code around it
     if (this.option("async")) {
-      var fnscope = o.up(Func);
-      fnscope && fnscope.set({ async: true });
+      o.markAwait();
     }
 
     return this;
@@ -7578,14 +7609,7 @@ class RescueFunc extends Func {
     out = this.body().c({ braces: false });
 
     let fn = "()=>{ try { " + out + " } catch(e) { return e; } }";
-
-    if (this.option("async")) {
-      // in parentheses, so that a member access or a call after it applies to
-      // the awaited value and not to the promise
-      return "(await (async " + fn + ")())";
-    } else {
-      return "(" + fn + ")()";
-    }
+    return callArrow(fn, this.option("async"));
   }
 }
 
@@ -14120,11 +14144,10 @@ class For extends Loop {
     this.declare();
 
     if (this._options.await) {
-      var fnscope = stack.up(Func); // do |item| item isa MethodDeclaration or item isa Fun
+      var fnscope = stack.markAwait();
 
       if (fnscope) {
         this.set({ native: true });
-        fnscope.set({ async: true });
       }
 
       // TODO Throw if for loop is not for of
@@ -19436,13 +19459,7 @@ class Await extends ValueNode {
     // things are now traversed in a somewhat chaotic order. Need to tighten
     // Create await function - push this value up to block, take the outer
     this.value().traverse();
-
-    var fnscope = o.up(Func); // do |item| item isa MethodDeclaration or item isa Fun
-
-    if (fnscope) {
-      fnscope.set({ async: true });
-    }
-
+    o.markAwait();
     return this;
 
     /*
