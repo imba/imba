@@ -7580,7 +7580,9 @@ class RescueFunc extends Func {
     let fn = "()=>{ try { " + out + " } catch(e) { return e; } }";
 
     if (this.option("async")) {
-      return "await (async " + fn + ")()";
+      // in parentheses, so that a member access or a call after it applies to
+      // the awaited value and not to the promise
+      return "(await (async " + fn + ")())";
     } else {
       return "(" + fn + ")()";
     }
