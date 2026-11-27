@@ -1,0 +1,1 @@
+Support `yield*` in generators. `yield* other!` delegates to another generator or iterable, as in JavaScript. The lexer read the `*` after `yield` as a multiplication, so every `yield*` failed to compile with `Unexpected 'MATH'`.

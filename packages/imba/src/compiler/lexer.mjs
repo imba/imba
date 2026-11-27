@@ -1509,6 +1509,11 @@ Lexer.prototype.identifierToken = function (){
 		this.pushEnd('EXPORT');
 		this.token(typ,id,idlen);
 		return len;
+	} else if (typ == 'YIELD' && this._chunk[idlen] == '*') {
+		// `yield*` delegates to another iterable. Lex it as one token,
+		// otherwise the `*` is read as a multiplication without a left side
+		this.token(typ,'yield*',idlen + 1);
+		return idlen + 1;
 	} else if (id == 'from' && ctx0 == 'IMPORT') {
 		typ = 'FROM';
 		this.pair('IMPORT');
