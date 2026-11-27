@@ -46,7 +46,8 @@ const stopCallback = do |e,el,combo|
 			return false
 		return true
 
-	if el.contentEditable && (el.contentEditable == 'true' || el.contentEditable == 'plaintext-only')
+	# An element with an EditContext takes text input without contenteditable
+	if el.editContext || (el.contentEditable && (el.contentEditable == 'true' || el.contentEditable == 'plaintext-only'))
 		if Globals[combo]
 			e.#inEditable = yes
 			return false

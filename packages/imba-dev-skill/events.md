@@ -199,6 +199,8 @@ The `.css` modifier creates custom CSS units from element dimensions. Default ar
 
 Additional modifiers: `.local` (restrict to element scope), `.repeat` (allow repeated key events).
 
+A hotkey does not trigger while the focus is in an `input`, `select`, `textarea`, a contenteditable element or an element with an `editContext` (`up` and `down` still trigger in an `input`). With `.capture` it triggers there too and stops the key from reaching the field; add `.passive` to let the key through.
+
 ### @selection — Text Selection
 
 Fires on `selectionchange` for focused `input` and `textarea` elements only (not arbitrary elements).

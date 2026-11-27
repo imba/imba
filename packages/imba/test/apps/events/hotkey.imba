@@ -205,3 +205,24 @@ describe "hotkeys grouping" do
 		# no longer in focus - none of the groups should trigger?
 		await spec.keyboard.type 'd'
 		eq $1.log,['footer-b']
+describe "hotkey in an element with an EditContext" do
+	# A code editor such as Monaco can take text input through an EditContext,
+	# on an element that has no contenteditable attribute
+	tag App
+		<self>
+			<div @hotkey('k').log('k')> "k"
+			<div @hotkey('q').capture.log('q')> "q"
+			<div$editor tabIndex=0> "editor"
+
+	let app = imba.mount <App>
+
+	test "keys go to the editor" do
+		await imba.commit!
+		app.$editor.editContext = new global.EditContext
+		app.$editor.focus!
+		await spec.keyboard.type 'k'
+		eq $1.log, []
+		# a capture hotkey still triggers, as it does in a textarea
+		await spec.keyboard.type 'q'
+		eq $1.log, ['q']
+		app.$editor.blur!
