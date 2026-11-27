@@ -13980,6 +13980,7 @@ class Loop extends Statement {
 
   addBody(body) {
     ((this._body = AST.blk(body)), this);
+    this._body._head = [this._scope._bodyvars];
     return this;
   }
 
@@ -21560,17 +21561,27 @@ class FlowScope extends Scope {
 
 class CatchScope extends FlowScope {}
 
-class WhileScope extends FlowScope {
+// JavaScript creates the variables in the body of a loop again for each
+// iteration. A variable from the body is declared at the start of the body.
+// A variable from the head of the loop is declared with the loop variables.
+class LoopScope extends FlowScope {
+  setup() {
+    super.setup();
+    this._bodyvars = new ScopeVariables([]);
+    this._head.push(this._bodyvars);
+  }
+
   autodeclare(variable) {
+    if (STACK.nodes().indexOf(this._node.body()) >= 0) {
+      return this._bodyvars.add(variable);
+    }
     return this._vars.add(variable);
   }
 }
 
-class ForScope extends FlowScope {
-  autodeclare(variable) {
-    return this._vars.add(variable);
-  }
-}
+class WhileScope extends LoopScope {}
+
+class ForScope extends LoopScope {}
 
 class IfScope extends FlowScope {}
 
@@ -21737,13 +21748,15 @@ class Variable extends Node {
     this._resolved = true;
     var closure = this._scope.closure();
     var item = this._shadowing || scope.lookup(this._name);
+    var names = scope;
 
     // console.log "resolving var {@name} {scope}",scope == @closure,@virtual
 
-    // if this is a let-definition inside a virtual scope we do need
+    // A let from a block that is declared in an outer block must not get
+    // the name of a variable that the block can see.
     if (this._scope != closure && this._type == "let" && this._virtual) {
-      // or if it is a system-variable
-      item = closure.lookup(this._name);
+      names = this._scope.parent();
+      item = names.lookup(this._name);
       scope = closure;
     }
 
@@ -21767,8 +21780,7 @@ class Variable extends Node {
       } else {
         var i = 0;
         var orig = this._name;
-        // it is the closure that we should use
-        while (scope.lookup(this._name)) {
+        while (names.lookup(this._name)) {
           this._name = "" + orig + (i += 1);
         }
       }
