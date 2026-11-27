@@ -1,0 +1,3 @@
+A `let` whose value is a `try` or a `switch` now gets a new variable in each iteration of a `for` or `while` loop. The compiler declares such a variable before the statement that gives its value. Before, it declared the variable in the `for` header or before the `while`. So when the `try` failed or no `switch` case matched, the variable kept the value of the previous iteration. For example, with `let url = try new URL(href)` in `for href in hrefs`, an address that is not a URL got the URL of the previous address. In a `while` loop, closures that used such a variable, or a variable from `if let`, got the value of the last iteration.
+
+Such a `let` in a nested block also no longer changes a `let` with the same name in an enclosing block.
