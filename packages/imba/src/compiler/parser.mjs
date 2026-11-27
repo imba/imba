@@ -937,10 +937,10 @@ case 554:
 self.$ = $$[$0-2].addElse($$[$0].set({ keyword: $$[$0-1] }));
 break;
 case 556:
-self.$ = new yy.If($$[$0], new yy.Block([$$[$0-2]]), { type: $$[$0-1], statement: true });
+self.$ = new yy.If($$[$0], new yy.Block([$$[$0-2]]), { type: $$[$0-1], statement: true, postfix: true });
 break;
 case 557:
-self.$ = new yy.If($$[$0], new yy.Block([$$[$0-2]]), { type: $$[$0-1] });
+self.$ = new yy.If($$[$0], new yy.Block([$$[$0-2]]), { type: $$[$0-1], postfix: true });
 break;
 case 558:
 self.$ = yy.If.ternary($$[$0-4], $$[$0-2], $$[$0]);
