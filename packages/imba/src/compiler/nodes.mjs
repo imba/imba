@@ -3339,11 +3339,26 @@ class ClassInitBlock extends Block {
     if (vars) {
       out = vars + ";\n" + out;
     }
-    if (this._nodes.length > 1 || vars) {
+    return this.wrap(out, this._nodes.length > 1 || vars);
+  }
+
+  wrap(out, multiline) {
+    if (multiline) {
       return "static {\n" + helpers.indent(out) + "\n}";
     } else {
       return "static { " + out.replace(/\;$/, "") + " }";
     }
+  }
+}
+
+// The static fields of a class extension. The block runs with the extended
+// class as `this`. The `register` option is the call that registers the
+// extension and returns that class.
+class ExtensionInitBlock extends ClassInitBlock {
+  wrap(out) {
+    let body = helpers.indent(out.trimEnd());
+    let register = this.option("register").c();
+    return "(function(){\n" + body + "\n}).call(" + register + ")";
   }
 }
 
@@ -6197,6 +6212,17 @@ class ClassDeclaration extends Code {
         mixins.push(node.value());
       }
 
+      // `extend obj` defines its members on the object itself
+      if (
+        this instanceof ExtendDeclaration &&
+        (node instanceof ClassField || node instanceof MethodDeclaration) &&
+        node.option("static") instanceof Token
+      ) {
+        node.error("static member not supported in object extension", {
+          loc: node.option("static"),
+        });
+      }
+
       if (node instanceof ClassField) {
         if (!node.isStatic()) {
           let name = String(node.name());
@@ -6279,6 +6305,11 @@ class ClassDeclaration extends Code {
     var inits = new InstanceInitBlock();
     var staticInits = (this._staticInits = new ClassInitBlock());
     staticInits._scope = new MethodScope(staticInits, this.scope());
+    var extInits = null;
+    if (this.isExtension()) {
+      extInits = new ExtensionInitBlock();
+      extInits._scope = new MethodScope(extInits, this.scope());
+    }
     var patches = new InstancePatchBlock();
 
     if (this._mixins[0] && !tsc && !this.isExtension()) {
@@ -6316,7 +6347,14 @@ class ClassDeclaration extends Code {
       }
 
       if (node.hasStaticInits() && !node.option("declareOnly")) {
-        staticInits.add(node);
+        if (extInits && node.isStatic()) {
+          // in an extension, a field without a value is only a declaration
+          if (node.value()) {
+            extInits.add(node);
+          }
+        } else {
+          staticInits.add(node);
+        }
       }
 
       if (node.hasConstructorInits()) {
@@ -6376,7 +6414,12 @@ class ClassDeclaration extends Code {
           desc,
         );
         allDecorators.push(node._decorators);
-        staticInits.add([op, BR]);
+        // a static field of an extension is decorated where it is set
+        let inits =
+          extInits && node instanceof ClassField && node.isStatic()
+            ? extInits
+            : staticInits;
+        inits.add([op, BR]);
       }
     }
 
@@ -6529,7 +6572,12 @@ class ClassDeclaration extends Code {
         }
       }
 
-      staticInits.add(CALL(STACK.corelib().register$, pars));
+      let register = CALL(STACK.corelib().register$, pars);
+      if (extInits && !extInits.isEmpty()) {
+        staticInits.add(extInits.set({ register: register }));
+      } else {
+        staticInits.add(register);
+      }
     }
 
     if (!staticInits.isEmpty() && !tsc) {
@@ -22421,7 +22469,12 @@ class Super extends Node {
 
     // need to know if our method is in the initial declaration
     if (virtual && this._class) {
-      sup = CALL(STACK.corelib().sup$, [this.slf(), this._class.refSym()]);
+      let pars = [this.slf(), this._class.refSym()];
+      // the static members of an extension have a super of their own
+      if (m.option("static")) {
+        pars.push(TRUE);
+      }
+      sup = CALL(STACK.corelib().sup$, pars);
       // sup = CALL(@class.virtualSuper,[slf])
     }
 
